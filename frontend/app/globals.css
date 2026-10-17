@@ -1501,12 +1501,6 @@
 .jp .jp-login-role strong { font-weight:500; font-size:15px; }
 .jp .jp-login-head { display:flex; align-items:center; justify-content:space-between; gap:12px; }
 .jp .jp-login-submit { width:100%; padding:12px; font-size:14px; }
-.jp .jp-login-or { display:flex; align-items:center; gap:10px; color:var(--jp-muted); font-size:12px; }
-.jp .jp-login-or::before,.jp .jp-login-or::after { content:""; flex:1; height:1px; background:var(--jp-line); }
 .jp .jp-login-note { font-size:12px; margin:0; }
 .jp .jp-login-card .jp-error { margin:0 0 14px; }
 .jp .jp-account { display:flex; align-items:center; gap:8px; font-size:12px; }
-.jp .jp-passkey-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 0; border-top:1px solid var(--jp-line); }
-.jp .jp-passkey-row svg { width:16px; height:16px; }
-.jp .jp-passkey-add { display:flex; gap:8px; flex-wrap:wrap; align-items:end; margin-top:14px; }
-.jp .jp-passkey-add .jp-field { flex:1 1 220px; margin:0; }

@@ -1,4 +1,4 @@
-"""Sign-in and server-side authorization: sessions, roles, CSRF origin check, single-use passkey challenges."""
+"""Sign-in and server-side authorization: sessions, roles, CSRF origin check."""
 
 from pathlib import Path
 
@@ -93,23 +93,11 @@ def test_cross_origin_writes_are_rejected(client):
     assert login(client).status_code == 200  # same origin still fine
 
 
-def test_passkey_challenge_is_single_use(client):
-    r = client.post("/auth/passkeys/login/options", headers={"origin": APP})
-    assert r.status_code == 200 and r.json()["rpId"] == "localhost" and r.json()["userVerification"] == "required"
-    challenge_cookie = client.cookies.get(auth.CHALLENGE_COOKIE)
-    fake = {"id": "AAAA", "rawId": "AAAA", "type": "public-key", "response": {}}
-    assert client.post("/auth/passkeys/login/verify", json={"credential": fake}, headers={"origin": APP}).status_code == 401
-    client.cookies.set(auth.CHALLENGE_COOKIE, challenge_cookie)
-    r = client.post("/auth/passkeys/login/verify", json={"credential": fake}, headers={"origin": APP})
-    assert r.status_code == 400  # consumed by the first attempt
-
-
-def test_passkey_registration_needs_a_session(client):
-    assert client.post("/auth/passkeys/register/options", headers={"origin": APP}).status_code == 401
+def test_passkey_routes_are_gone(client):
+    assert client.post("/auth/passkeys/login/options", headers={"origin": APP}).status_code == 401
     login(client)
-    r = client.post("/auth/passkeys/register/options", headers={"origin": APP})
-    assert r.status_code == 200
-    assert r.json()["authenticatorSelection"]["residentKey"] == "required"
+    assert client.post("/auth/passkeys/login/options", headers={"origin": APP}).status_code == 404
+    assert "passkeys" not in client.get("/auth/me").json()
 
 
 def test_supplier_token_pages_stay_public(client):

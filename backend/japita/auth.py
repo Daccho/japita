@@ -1,4 +1,4 @@
-"""Owner sign-in: login ID + password (Argon2id) and passkeys (WebAuthn), with server-side sessions.
+"""Owner sign-in: login ID + password (Argon2id), with server-side sessions.
 
 Every API route requires a restaurant session unless it is listed in PUBLIC_PATHS (see `require_session`).
 Accounts have a role: "restaurant" (the owner workspace) or "supplier" (a test supplier, linked to one supplier ID,
@@ -25,27 +25,19 @@ import uuid
 from collections import defaultdict, deque
 from datetime import datetime, timedelta, timezone
 from typing import Literal
-from urllib.parse import urlsplit
 
 from argon2 import PasswordHasher
 from argon2.exceptions import InvalidHashError, VerificationError
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, LargeBinary, String, delete, select
+from sqlalchemy import Column, DateTime, ForeignKey, String, delete, select
 from sqlalchemy.orm import Session
-from webauthn import (generate_authentication_options, generate_registration_options, verify_authentication_response,
-                      verify_registration_response)
-from webauthn.helpers import base64url_to_bytes, bytes_to_base64url, generate_user_handle, options_to_json_dict
-from webauthn.helpers.exceptions import WebAuthnException
-from webauthn.helpers.structs import (AuthenticatorSelectionCriteria, PublicKeyCredentialDescriptor,
-                                      ResidentKeyRequirement, UserVerificationRequirement)
 
 from . import portal, repo
 from .store import Store
 
 SESSION_TTL = timedelta(days=7)
-CHALLENGE_TTL = timedelta(minutes=5)
 LOGIN_FAILURES_MAX = 10          # per login ID within LOGIN_FAILURE_WINDOW
 LOGIN_FAILURE_WINDOW = 15 * 60   # seconds
 USERNAME_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{2,63}$")
@@ -53,7 +45,7 @@ MIN_PASSWORD_LEN = 12
 
 # Reached without a session. Everything else is denied by default, so new routes are protected automatically.
 PUBLIC_PATHS = [
-    re.compile(r"^/auth/(login|logout|me|passkeys/login/(options|verify))$"),
+    re.compile(r"^/auth/(login|logout|me)$"),
     re.compile(r"^/supplier/requests/[^/]+(/reply)?$"),  # test supplier page: secret link token
     re.compile(r"^/portal/[^/]+(/.*)?$"),                # supplier portal: secret link token
     re.compile(r"^/state/seed$"),                        # guarded by X-Admin-Key instead
@@ -65,12 +57,9 @@ UNSAFE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 
 
 def app_origins() -> list[str]:
-    """Browser origins of the frontend (comma-separated APP_ORIGIN). WebAuthn and the CSRF check use these."""
+    """Browser origins of the frontend (comma-separated APP_ORIGIN). CORS, the CSRF origin check and
+    the Secure/__Host- session cookie choice (https) use these."""
     return [o.strip().rstrip("/") for o in os.environ.get("APP_ORIGIN", "http://localhost:3000").split(",") if o.strip()]
-
-
-def rp_id() -> str:
-    return os.environ.get("WEBAUTHN_RP_ID") or urlsplit(app_origins()[0]).hostname or "localhost"
 
 
 def _secure_cookie() -> bool:
@@ -80,9 +69,6 @@ def _secure_cookie() -> bool:
 def cookie_name() -> str:
     # __Host- binds the cookie to the exact host, Secure and Path=/ (not possible over plain http in development).
     return "__Host-japita_session" if _secure_cookie() else "japita_session"
-
-
-CHALLENGE_COOKIE = "japita_webauthn"
 
 
 # --- tables (created by repo.engine() through the shared metadata) ---------------------------------
@@ -103,20 +89,9 @@ class User(repo.Base):
     role = Column(String, nullable=False, default="restaurant")
     supplier_id = Column(String)  # role "supplier" only
     password_hash = Column(String)
-    webauthn_user_id = Column(String, nullable=False, default=lambda: bytes_to_base64url(generate_user_handle()))
+    # Unused legacy column (passkeys were removed). Kept because databases created earlier have it as NOT NULL.
+    webauthn_user_id = Column(String, nullable=False, default=lambda: secrets.token_urlsafe(32))
     created_at = Column(DateTime(timezone=True), default=_now)
-
-
-class Passkey(repo.Base):
-    __tablename__ = "passkeys"
-    id = Column(String, primary_key=True)  # credential ID, base64url
-    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
-    public_key = Column(LargeBinary, nullable=False)
-    sign_count = Column(Integer, nullable=False, default=0)
-    transports = Column(repo.JsonType, nullable=False, default=list)
-    name = Column(String, nullable=False)
-    created_at = Column(DateTime(timezone=True), default=_now)
-    last_used_at = Column(DateTime(timezone=True))
 
 
 class AuthSession(repo.Base):
@@ -124,16 +99,6 @@ class AuthSession(repo.Base):
     token_hash = Column(String, primary_key=True)
     user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
     created_at = Column(DateTime(timezone=True), default=_now)
-    expires_at = Column(DateTime(timezone=True), nullable=False)
-
-
-class WebAuthnChallenge(repo.Base):
-    """Single-use challenge, referenced by a short-lived HttpOnly cookie."""
-    __tablename__ = "webauthn_challenges"
-    token_hash = Column(String, primary_key=True)
-    purpose = Column(String, nullable=False)  # "register" | "login"
-    challenge = Column(LargeBinary, nullable=False)
-    user_id = Column(String)
     expires_at = Column(DateTime(timezone=True), nullable=False)
 
 
@@ -236,29 +201,6 @@ def current_user(request: Request) -> User:
         return user
 
 
-# --- WebAuthn challenges ------------------------------------------------------------------------
-
-def _store_challenge(s: Session, response: Response, purpose: str, challenge: bytes, user_id: str | None) -> None:
-    token = secrets.token_urlsafe(32)
-    s.execute(delete(WebAuthnChallenge).where(WebAuthnChallenge.expires_at < _now()))
-    s.add(WebAuthnChallenge(token_hash=_hash_token(token), purpose=purpose, challenge=challenge, user_id=user_id,
-                            expires_at=_now() + CHALLENGE_TTL))
-    response.set_cookie(CHALLENGE_COOKIE, token, max_age=int(CHALLENGE_TTL.total_seconds()), path="/",
-                        httponly=True, secure=_secure_cookie(), samesite="strict")
-
-
-def _take_challenge(s: Session, request: Request, response: Response, purpose: str) -> WebAuthnChallenge:
-    """Consume the challenge exactly once; a replayed or expired ceremony fails."""
-    token = request.cookies.get(CHALLENGE_COOKIE)
-    response.delete_cookie(CHALLENGE_COOKIE, path="/")
-    row = s.get(WebAuthnChallenge, _hash_token(token)) if token else None
-    if row is None or row.purpose != purpose or _aware(row.expires_at) < _now():
-        raise HTTPException(400, "passkey request expired; try again")
-    s.delete(row)
-    s.flush()
-    return row
-
-
 # --- API ----------------------------------------------------------------------------------------
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -270,20 +212,12 @@ class Login(BaseModel):
     password: str = Field(max_length=1024)
 
 
-class PasskeyVerify(BaseModel):
-    credential: dict
-    name: str | None = Field(default=None, max_length=64)
-
-
 def _me(s: Session, user: User) -> dict:
-    keys = s.scalars(select(Passkey).where(Passkey.user_id == user.id).order_by(Passkey.created_at)).all()
     return {
         "username": user.username,
         "display_name": user.display_name,
         "role": user.role,
         "has_password": bool(user.password_hash),
-        "passkeys": [{"id": k.id, "name": k.name, "created_at": k.created_at.isoformat() if k.created_at else None,
-                      "last_used_at": k.last_used_at.isoformat() if k.last_used_at else None} for k in keys],
     }
 
 
@@ -325,101 +259,6 @@ def me(request: Request):
         if user is None:
             raise HTTPException(401, "not signed in")
         return _me(s, user)
-
-
-@router.post("/passkeys/register/options")
-def passkey_register_options(response: Response, user: User = Depends(current_user)):
-    with Session(repo.engine()) as s:
-        existing = s.scalars(select(Passkey).where(Passkey.user_id == user.id)).all()
-        options = generate_registration_options(
-            rp_id=rp_id(), rp_name="Japita", user_name=user.username, user_display_name=user.display_name,
-            user_id=user.webauthn_user_id.encode(),
-            exclude_credentials=[PublicKeyCredentialDescriptor(id=base64url_to_bytes(k.id)) for k in existing],
-            authenticator_selection=AuthenticatorSelectionCriteria(
-                resident_key=ResidentKeyRequirement.REQUIRED,  # discoverable: sign in without typing the ID
-                user_verification=UserVerificationRequirement.REQUIRED),
-        )
-        _store_challenge(s, response, "register", options.challenge, user.id)
-        s.commit()
-    return options_to_json_dict(options)
-
-
-@router.post("/passkeys/register/verify")
-def passkey_register_verify(body: PasskeyVerify, request: Request, response: Response,
-                            user: User = Depends(current_user)):
-    with Session(repo.engine()) as s:
-        ch = _take_challenge(s, request, response, "register")
-        if ch.user_id != user.id:
-            raise HTTPException(400, "passkey request expired; try again")
-        try:
-            v = verify_registration_response(credential=body.credential, expected_challenge=ch.challenge,
-                                             expected_rp_id=rp_id(), expected_origin=app_origins(),
-                                             require_user_verification=True)
-        except WebAuthnException as e:
-            s.commit()
-            raise HTTPException(400, f"passkey could not be verified: {e}")
-        cred_id = bytes_to_base64url(v.credential_id)
-        if s.get(Passkey, cred_id):
-            raise HTTPException(409, "this passkey is already registered")
-        transports = body.credential.get("response", {}).get("transports") or []
-        s.add(Passkey(id=cred_id, user_id=user.id, public_key=v.credential_public_key, sign_count=v.sign_count,
-                      transports=[t for t in transports if isinstance(t, str)][:8],
-                      name=(body.name or "").strip() or "Passkey"))
-        s.commit()
-        return _me(s, s.get(User, user.id))
-
-
-@router.delete("/passkeys/{passkey_id}")
-def passkey_delete(passkey_id: str, user: User = Depends(current_user)):
-    with Session(repo.engine()) as s:
-        key = s.get(Passkey, passkey_id)
-        if key is None or key.user_id != user.id:
-            raise HTTPException(404, "passkey not found")
-        others = s.scalars(select(Passkey).where(Passkey.user_id == user.id, Passkey.id != passkey_id)).all()
-        if not others and not user.password_hash:
-            raise HTTPException(409, "this is your only way to sign in")
-        s.delete(key)
-        s.commit()
-        return _me(s, s.get(User, user.id))
-
-
-@router.post("/passkeys/login/options")
-def passkey_login_options(response: Response):
-    # No allow_credentials: the authenticator offers its discoverable passkeys, so no login ID is revealed.
-    options = generate_authentication_options(rp_id=rp_id(), user_verification=UserVerificationRequirement.REQUIRED)
-    with Session(repo.engine()) as s:
-        _store_challenge(s, response, "login", options.challenge, None)
-        s.commit()
-    return options_to_json_dict(options)
-
-
-@router.post("/passkeys/login/verify")
-def passkey_login_verify(body: PasskeyVerify, request: Request, response: Response):
-    fail = HTTPException(401, "passkey sign-in failed")
-    with Session(repo.engine()) as s:
-        ch = _take_challenge(s, request, response, "login")
-        s.commit()
-        key = s.get(Passkey, str(body.credential.get("id", "")))
-        if key is None:
-            raise fail
-        user = s.get(User, key.user_id)
-        handle = (body.credential.get("response") or {}).get("userHandle")
-        if handle and handle != bytes_to_base64url(user.webauthn_user_id.encode()):
-            raise fail
-        try:
-            v = verify_authentication_response(credential=body.credential, expected_challenge=ch.challenge,
-                                               expected_rp_id=rp_id(), expected_origin=app_origins(),
-                                               credential_public_key=key.public_key,
-                                               credential_current_sign_count=key.sign_count,
-                                               require_user_verification=True)
-        except WebAuthnException:
-            raise fail
-        key.sign_count = v.new_sign_count
-        key.last_used_at = _now()
-        _start_session(s, response, user)
-        me = _me(s, user)
-        s.commit()
-        return me
 
 
 @router.get("/supplier/portal")

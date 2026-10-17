@@ -3,12 +3,9 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
-import { browserSupportsWebAuthn } from "@simplewebauthn/browser";
-import { ArrowLeft, Fingerprint, Loader2, Store, Truck } from "lucide-react";
+import { ArrowLeft, Loader2, Store, Truck } from "lucide-react";
 import { I18nProvider, LangToggle, useI18n, type Key } from "@/lib/i18n";
-import {
-  AuthError, cancelPasskey, isPasskeyCancel, login, loginWithPasskey, me, safeNext, supplierPortal, type Me, type Role,
-} from "@/lib/auth";
+import { AuthError, login, me, safeNext, supplierPortal, type Me, type Role } from "@/lib/auth";
 
 // The supplier side is Japanese, like the supplier portal it leads to.
 const JA: Partial<Record<Key, string>> = {
@@ -30,9 +27,8 @@ function LoginForm() {
   const [role, setRole] = useState<Role | null>(null);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [busy, setBusy] = useState<"password" | "passkey" | null>(null);
+  const [busy, setBusy] = useState<"password" | null>(null);
   const [error, setError] = useState<Key | null>(null);
-  const [passkeys, setPasskeys] = useState(false);
   const tr = (k: Key) => (role === "supplier" && JA[k]) || t(k);
 
   // The server decides where an account may go: restaurant -> workspace, supplier -> its own portal.
@@ -45,9 +41,7 @@ function LoginForm() {
   }
 
   useEffect(() => {
-    setPasskeys(browserSupportsWebAuthn());
     me().then((u) => u && enter(u)).catch(() => {});
-    return () => cancelPasskey();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -67,18 +61,6 @@ function LoginForm() {
     } catch (err) {
       setPassword("");
       fail(err, "au.invalid");
-      setBusy(null);
-    }
-  }
-
-  async function withPasskey() {
-    if (busy) return;
-    setBusy("passkey");
-    setError(null);
-    try {
-      await enter(await loginWithPasskey());
-    } catch (err) {
-      if (!isPasskeyCancel(err)) fail(err, "au.passkeyFailed");
       setBusy(null);
     }
   }
@@ -113,7 +95,7 @@ function LoginForm() {
         ) : (
           <>
             <div className="jp-login-head">
-              <button type="button" className="jp-action" onClick={() => { cancelPasskey(); setRole(null); setError(null); setBusy(null); }}>
+              <button type="button" className="jp-action" onClick={() => { setRole(null); setError(null); setBusy(null); }}>
                 <ArrowLeft aria-hidden />
                 {tr("au.back")}
               </button>
@@ -141,15 +123,6 @@ function LoginForm() {
                 {busy === "password" ? tr("au.signingIn") : tr("au.submit")}
               </button>
             </form>
-            {role === "restaurant" && passkeys && (
-              <>
-                <div className="jp-login-or"><span>{t("au.or")}</span></div>
-                <button type="button" className="jp-action jp-login-submit" onClick={withPasskey} disabled={!!busy}>
-                  {busy === "passkey" ? <Loader2 className="jp-spinner" aria-hidden /> : <Fingerprint aria-hidden />}
-                  {t("au.passkey")}
-                </button>
-              </>
-            )}
           </>
         )}
         <p className="jp-muted jp-login-note">{tr("au.noSignup")}</p>

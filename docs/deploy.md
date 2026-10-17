@@ -22,7 +22,7 @@ Status: prepared, not yet deployed.
    1. Choose New → Blueprint, then select the GitHub repo `Daccho/japita` (branch `main`). Render reads `render.yaml`.
    2. Fill in the secret values: `DATABASE_URL` (the Neon string), `LLM_API_KEY`, and `EVOLUS_API_KEY`, `EVOLUS_APPLICATION_ID`, `EVOLUS_AGENT_ID`, `EVOLUS_WORKFLOW_ID`. Copy them from your local `.env`. `ADMIN_KEY` is generated for you.
    3. Note the service URL, such as `https://japita-api.onrender.com`.
-   4. Set `APP_ORIGIN` to the Vercel URL (e.g. `https://japita.vercel.app`). Passkeys and the CSRF check are bound to it; changing it later invalidates registered passkeys.
+   4. Set `APP_ORIGIN` to the Vercel URL (e.g. `https://japita.vercel.app`). The CSRF origin check accepts writes only from it (comma-separate several origins), and an `https://` value makes the session cookie Secure.
 3. **Load the demo data** (once). Copy `ADMIN_KEY` from the Render dashboard, then run:
    ```bash
    curl -X POST https://<api>/state/seed -H "X-Admin-Key: <ADMIN_KEY>"
