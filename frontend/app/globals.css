@@ -383,6 +383,7 @@
    --------------------------------------------------------------------------- */
 :root {
   --aj-yolk:#F4BC2B;
+  --aj-container:#3A332B;
   --aj-ink:#1E1B18;
   --aj-ink-soft:#5A4512;
   --aj-muted:#625B52;
@@ -457,7 +458,8 @@
   --aj-underline-offset:3px;
   --aj-header-control-height:40px;
   --aj-header-alert-offset:-9px;
-  --aj-brand-plate-padding:8px;
+  --aj-brand-width:96px;
+  --aj-brand-height:64px;
   --aj-type-nav:15px;
   --aj-type-nav-note:11.5px;
   --aj-nav-height:42px;
@@ -731,10 +733,11 @@
   font-weight:var(--aj-weight-medium);
 }
 .jp .jp-app .jp-brand {
-  padding:0 var(--aj-brand-plate-padding);
-  border-radius:var(--aj-radius-badge);
-  background:var(--aj-surface);
+  padding:0;
+  border-radius:0;
+  background:transparent;
 }
+.jp .jp-app .jp-brand-logo { width:var(--aj-brand-width); height:var(--aj-brand-height); object-fit:contain; object-position:center; border-radius:0; }
 .jp .jp-app .jp-brand-divider { background:var(--aj-header-divider); }
 .jp .jp-app .jp-toolbar > .jp-action { min-height:var(--aj-header-control-height); }
 .jp .jp-app .jp-notification-bell {
@@ -1486,3 +1489,24 @@
 }
 /* Buying preferences (audit O4): Required badges in ink; accepted delivery days stay yolk-tint. */
 .jp .jp-app #jp-profile-content .jp-row .jp-badge:not(.jp-neutral) { background:var(--aj-ink); color:var(--aj-surface); }
+
+/* Product artwork is previewed independently until its approval step. */
+.jp .jp-product-drawing { display:block; overflow:visible; }
+.jp-drawings-review { padding:32px; min-height:100dvh; background:var(--aj-page); color:var(--aj-ink); }
+.jp-drawings-review > header { border-bottom:2px solid var(--aj-ink); padding-bottom:20px; }
+.jp-drawings-review h1 { font:400 32px/1.2 var(--aj-font-display); margin:8px 0; }
+.jp-drawings-review h2 { font:400 23px/1.3 var(--aj-font-display); margin:32px 0 12px; }
+.jp-drawings-review h3 { font:700 15px/1.4 var(--aj-font-ui); margin:0; }
+.jp-drawings-review p { color:var(--aj-muted); }
+.jp-drawing-review-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(270px,1fr)); gap:20px; }
+.jp-drawing-review-grid article { padding:18px 0; border-bottom:1px solid var(--aj-line); }
+.jp-drawing-sizes { display:flex; align-items:end; justify-content:space-evenly; gap:28px; min-height:180px; }
+.jp-drawing-sizes figure { margin:16px 0 0; text-align:center; }
+.jp-drawing-sizes figure:first-child svg { transform:scale(1.2); }
+.jp-drawing-sizes svg { margin:0 auto 12px; }
+.jp-drawing-sizes figcaption,.jp-drawing-review-grid article > p { font-size:12px; overflow-wrap:anywhere; }
+.jp .jp-menu-ingredient-editor { display:block; margin:14px 0; font:400 13px/1.45 var(--aj-font-menu-copy); }
+.jp .jp-menu-ingredient-editor textarea { display:block; width:100%; margin:6px 0; }
+.jp .jp-menu-ingredient-editor small { display:block; color:var(--aj-menu-muted); }
+.jp .jp-menu-add { margin-top:14px; }
+@media(max-width:480px) { .jp-drawings-review { padding:20px; } .jp-drawing-review-grid { grid-template-columns:1fr; } .jp { --aj-brand-width:84px; --aj-brand-height:56px; } }

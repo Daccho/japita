@@ -282,7 +282,7 @@ export default function SuppliersPage() {
   const setF = (patch: Partial<Filters>) => setFilters({ ...filters, [view]: { ...f, ...patch } });
   const discovering = view === "candidate";
   const showResults = !discovering || query !== null;
-  const ingredients = Object.keys(Object.values(state.profiles)[0]?.ingredients ?? {});
+  const ingredients = state.menu?.ingredients ?? Object.keys(Object.values(state.profiles)[0]?.ingredients ?? {}).map((id) => ({ id, name: label("ing", id) }));
   const offersOf = (id: string) => state.offers.filter((o) => o.supplier_id === id);
 
   let rows = Object.values(state.suppliers)
@@ -312,8 +312,8 @@ export default function SuppliersPage() {
       <select value={f.ingredient} onChange={(e) => setF({ ingredient: e.target.value })}>
         <option value="all">{t("flt.allIng")}</option>
         {ingredients.map((i) => (
-          <option key={i} value={i}>
-            {label("ing", i)}
+          <option key={i.id} value={i.id}>
+            {["noodles", "soy_sauce", "kikurage"].includes(i.id) ? label("ing", i.id) : i.name}
           </option>
         ))}
       </select>

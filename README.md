@@ -64,4 +64,6 @@ Deployment: [docs/deploy.md](docs/deploy.md). Own vLLM and Evolus setup: [docs/s
 
 The workspace assumes a restaurant that has already registered and signed in. A public homepage, pricing page, restaurant registration, and sign-in are future work. The static mockup in [`mockup/`](mockup/index.html) opens directly in a browser; see [docs/mockup-handoff.md](docs/mockup-handoff.md). Connecting the design to the backend follows [docs/design-integration.md](docs/design-integration.md).
 
+The connected restaurant menu supports adding dishes and saving their ingredients on the backend; those ingredients also populate My suppliers filters. The flat product drawing library has a separate [review preview](mockup/drawings-preview.html); photo replacement and automatic generation follow the staged review in [docs/product-drawings.md](docs/product-drawings.md).
+
 Licensed under [MIT](LICENSE).

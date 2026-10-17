@@ -167,7 +167,9 @@ def _dump(m: BaseModel) -> dict:
 
 @app.get("/state")
 def get_state():
-    return repo.load_state()
+    from .menu_api import menu_view
+    data = repo.load_state()
+    return {**data, "menu": menu_view(data)}
 
 
 FIXTURES = Path(__file__).resolve().parent.parent / "tests" / "fixtures"
@@ -200,7 +202,10 @@ def put_profile(profile_id: str, body: Profile):
 @app.put("/recipe")
 def put_recipe(body: Recipe):
     data = repo.load_state()
-    data["recipe"] = _dump(body)
+    recipe = _dump(body)
+    if "menu_items" not in recipe and "menu_items" in data.get("recipe", {}):
+        recipe["menu_items"] = data["recipe"]["menu_items"]
+    data["recipe"] = recipe
     repo.save_state(data)
     return data["recipe"]
 
@@ -510,3 +515,11 @@ app.include_router(orders_router)
 from .portal_api import router as portal_router  # noqa: E402
 
 app.include_router(portal_router)
+
+from .drawings_api import router as drawings_router  # noqa: E402
+
+app.include_router(drawings_router)
+
+from .menu_api import router as menu_router  # noqa: E402
+
+app.include_router(menu_router)

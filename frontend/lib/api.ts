@@ -139,13 +139,21 @@ export type Week = {
   stock: Record<string, { usable: number; confirmed_arrivals: number; unit: string; usable_until?: string | null }>;
 };
 export type RecipeLine = { ingredient: string; unit: "g" | "ml"; per_item: Record<string, number> };
+export type MenuDish = {
+  id: string; name: string; description: string; price_eur: number | null;
+  group: "ramen" | "extras" | "sides"; ingredients: string[]; ingredient_keys: string[];
+};
+export type RestaurantIngredient = { id: string; name: string };
+export type RestaurantMenu = { items: MenuDish[]; ingredients: RestaurantIngredient[] };
+
 export type State = {
   profiles: Record<string, Profile>;
   suppliers: Record<string, Supplier>;
   offers: Offer[];
   clarifications: Clarification[];
   review_flags: Record<string, Record<string, { read_1: unknown; read_2: unknown }>>;
-  recipe: { name?: string; lines: RecipeLine[] };
+  recipe: { name?: string; lines: RecipeLine[]; menu_items?: MenuDish[] };
+  menu?: RestaurantMenu;
   week: Week;
   purchase_orders?: PurchaseOrder[];
 };
@@ -281,6 +289,7 @@ const q = (profileId: string) => `profile_id=${encodeURIComponent(profileId)}`;
 
 export const api = {
   state: () => request<State>("/state"),
+  saveMenu: (items: MenuDish[]) => request<RestaurantMenu>("/menu", json("PUT", { items })),
   baskets: (profileId: string) => request<BasketResult>(`/baskets?${q(profileId)}`),
   timeline: (profileId: string) => request<Timeline>(`/stock/timeline?${q(profileId)}`),
   evidence: (offerId: string, profileId: string) => request<Evidence>(`/offers/${offerId}/evidence?${q(profileId)}`),

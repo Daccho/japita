@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 10 128 80" width="128" height="80" role="img" aria-labelledby="title description">
+  <title id="title">Japita</title>
+  <desc id="description">Flat illustrated shopping cart and chef hat above Japita. The right wheel is the dot of the i.</desc>
+  <!-- Shared center: word i = 4 + 50 * 1.55 = 81.5;
+       right wheel = 46.25 + 47 * .75 = 81.5. -->
+  <g transform="translate(46.25 17) scale(.75)" stroke="#1E1B18" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M25 29V19c-8 1-12-8-7-13 4-4 8-3 11-1 4-8 15-8 19 0 7-3 14 2 13 9-1 5-4 7-10 6v9z" fill="#F4BC2B"/>
+    <path d="M43 10c-5-4-11 2-4 5 8 3 2 9-4 5M39 7v17" fill="none"/>
+    <path d="M19 33h36l-5 17H25z" fill="#3A332B"/>
+    <path d="M7 28h9l9 22" fill="none"/>
+    <rect x="26" y="38" width="21" height="6" rx="1" fill="#F4BC2B"/>
+    <circle cx="28" cy="55" r="3.5" fill="#3A332B"/>
+    <circle cx="47" cy="55" r="3.5" fill="#E0482B"/>
+  </g>
+  <g transform="translate(4 55) scale(1.55)" fill="none" stroke="#1E1B18" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 0v10c0 7-11 7-11 1"/>
+    <path d="M29 5v10M29 10a5 5 0 1 1 0-.01"/>
+    <path d="M34 5v16M34 10a5 5 0 1 0 0-.01"/>
+    <path d="M50 5v10"/>
+    <path d="M57 1v11c0 3 3 4 6 2M54 6h9"/>
+    <path d="M76 5v10M76 10a5 5 0 1 1 0-.01"/>
+  </g>
+</svg>

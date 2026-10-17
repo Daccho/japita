@@ -64,6 +64,10 @@ export default function Shell({ children }: { children: ReactNode }) {
       <div className="jp-app">
         <header className="jp-top">
           <div className="jp-workspace-brands">
+            <Link href="/" className="jp-brand">
+              <Image className="jp-brand-logo" src="/japita-logo-ajitama-flat.svg" alt="Japita" width={128} height={80} priority />
+            </Link>
+            <span className="jp-brand-divider" aria-hidden />
             <div className="jp-restaurant">
               <Image className="jp-restaurant-logo" src="/kumo-demo-logo.webp" alt="Kumo Ramen demo logo" width={120} height={80} priority />
               <div>
@@ -72,10 +76,6 @@ export default function Shell({ children }: { children: ReactNode }) {
                 <span className="jp-muted">{t("workspace")}</span>
               </div>
             </div>
-            <span className="jp-brand-divider" aria-hidden />
-            <Link href="/" className="jp-brand">
-              <Image className="jp-brand-logo" src="/japita-logo.png" alt="Japita" width={112} height={56} priority />
-            </Link>
           </div>
           <div className="jp-top-controls">
             <div className="jp-segment" role="group" aria-label={t("profile.switch")}>

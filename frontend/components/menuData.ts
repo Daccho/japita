@@ -1,4 +1,4 @@
-// Display-only copy of the `menu` key in backend/tests/fixtures/kumo.json (the backend does not persist it).
+// Fallback copy of the fictional seed menu; owner edits persist through /menu in recipe.menu_items.
 // Weekly quantities are not here: they come from the purchasing week (GET /state -> week.servings).
 export type MenuItem = { id: string; name: string; price_eur: number | null; description: string };
 
