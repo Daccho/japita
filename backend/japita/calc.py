@@ -210,7 +210,10 @@ def eligible_offers(store: Store) -> tuple[dict[str, list[dict]], list[dict]]:
                 f"{m['rule']} = {m['outcome']}" for m in ev["mandatory"] if m["outcome"] != "ok"))
         reasons += od["reasons"]
         if reasons:
-            excluded.append({"offer_id": offer["id"], "product": offer["product"], "reasons": reasons})
+            missing = [{"field": m["field"], "rule": m["rule"], "resolved_by": m["resolved_by"]}
+                       for m in ev["mandatory"] if m["outcome"] in ("missing_evidence", "needs_review")]
+            excluded.append({"offer_id": offer["id"], "product": offer["product"], "reasons": reasons,
+                             "missing_fields": missing})
         else:
             eligible[offer["ingredient"]].append(offer)
     return eligible, excluded

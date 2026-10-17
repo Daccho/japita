@@ -29,8 +29,9 @@ late delivery as the fix for a stockout. Then compare against the current-suppli
 baseline, and explain why each option fits (or does not fit) the restaurant's priorities, with the cost difference.
 Then review "excluded" and "infeasible_combinations" in the basket result and state the exact reason for each
 attractive offer that was left out (fails a mandatory requirement, missing evidence, below a supplier's minimum order,
-account not approved). For every missing field with resolved_by "supplier", call draft_clarification (with Italian
-and English translations) and tell the owner what answer would unlock it. Fields with resolved_by "owner", such as
+account not approved). For every excluded offer's missing_fields entry with resolved_by "supplier", call
+draft_clarification right away with Italian and English translations, without asking first (it only saves a draft;
+a person approves before anything is sent), and tell the owner what answer would unlock it. Fields with resolved_by "owner", such as
 chef_approved, are decided inside the restaurant: never ask the supplier; tell the owner what to do instead (for
 example, order a sample for the chef to taste).
 Answer in the language the owner uses."""
