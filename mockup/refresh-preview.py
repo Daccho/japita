@@ -1,8 +1,10 @@
 """Update the committed preview using the editable fragment, keeping its sandbox and CSP."""
 
 import argparse
+import base64
 import html
 from html.parser import HTMLParser
+import json
 from pathlib import Path
 import re
 
@@ -10,6 +12,23 @@ import re
 ROOT = Path(__file__).resolve().parent
 START = '<!-- JAPITA_MOCKUP_START -->'
 END = '<!-- JAPITA_MOCKUP_END -->'
+IMAGE_START = '/* JAPITA_IMAGES_START */'
+IMAGE_END = '/* JAPITA_IMAGES_END */'
+
+
+def embed_images(fragment):
+    if fragment.count(IMAGE_START) != 1 or fragment.count(IMAGE_END) != 1:
+        raise ValueError('Mockup must contain exactly one image asset block.')
+    assets = {
+        image.stem: 'data:image/webp;base64,' + base64.b64encode(image.read_bytes()).decode('ascii')
+        for image in sorted((ROOT / 'assets').glob('*.webp'))
+    }
+    required = {'japita-logo', 'kumo-demo-logo', 'fresh-noodles', 'frozen-noodles'}
+    if not required.issubset(assets):
+        raise ValueError('Required mockup images are missing from mockup/assets/.')
+    before, rest = fragment.split(IMAGE_START, 1)
+    _, after = rest.split(IMAGE_END, 1)
+    return before + IMAGE_START + '\n      const imageAssets = ' + json.dumps(assets, separators=(',', ':')) + ';\n      ' + IMAGE_END + after
 
 
 class DocumentPolicy(HTMLParser):
@@ -35,7 +54,9 @@ def policy(document):
 def refresh(check=False):
     preview = ROOT / 'index.html'
     existing = preview.read_text(encoding='utf-8')
-    fragment = (ROOT / 'japita-workspace.html').read_text(encoding='utf-8').strip()
+    source = ROOT / 'japita-workspace.html'
+    saved_fragment = source.read_text(encoding='utf-8').strip()
+    fragment = embed_images(saved_fragment)
     match = re.search(r'\bdata-srcdoc="([^"]*)"', existing)
     if not match:
         raise ValueError('Preview must contain the sandboxed data-srcdoc iframe.')
@@ -55,10 +76,12 @@ def refresh(check=False):
     if not inner_before.csp or inner_before.csp != inner_after.csp:
         raise ValueError('The iframe Content-Security-Policy changed.')
     if check:
-        if updated != existing:
+        if updated != existing or fragment != saved_fragment:
             raise SystemExit('Preview is out of date. Run python mockup/refresh-preview.py.')
         print('Preview matches its source; iframe sandbox and both CSPs are intact.')
     else:
+        if fragment != saved_fragment:
+            source.write_text(fragment + '\n', encoding='utf-8')
         preview.write_text(updated, encoding='utf-8')
         print(preview)
 
