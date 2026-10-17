@@ -165,7 +165,7 @@ const STR = {
     "lvl.high": "alta",
     "ing.noodles": "Noodles Hakata",
     "ing.soy_sauce": "Salsa di soia (tare)",
-    "ing.mayu": "Mayu (olio d'aglio nero)",
+    "ing.kikurage": "Kikurage (funghi orecchio di Giuda)",
   },
   en: {
     tagline: "Kitchens in Italy · suppliers from Japan",
@@ -317,7 +317,7 @@ const STR = {
     "lvl.high": "high",
     "ing.noodles": "Hakata noodles",
     "ing.soy_sauce": "Soy sauce (tare)",
-    "ing.mayu": "Mayu (black garlic oil)",
+    "ing.kikurage": "Kikurage (wood ear mushroom)",
   },
 } as const;
 
