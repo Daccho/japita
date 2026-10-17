@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from japita import orders, stock
+from japita import calc, orders, stock
 from japita.store import Store
 
 FIXTURE = Path(__file__).parent / "fixtures" / "kumo.json"
@@ -124,3 +124,13 @@ def test_accepting_one_order_does_not_block_the_others():
     assert all(p["state"] == "acknowledged" for p in pos)
     assert orders.spending(store)["committed_eur"] == 444.10
     assert not orders.approval_status(store)["stale"]
+
+
+def test_ingredient_already_covered_is_left_out_of_baskets():
+    store = _unlocked_store()
+    po = _submitted(store, "S1")  # soy sauce, 5 x 1.8 L
+    orders.supplier_accept(store, "S1", po["id"])
+    result = calc.calculate_baskets(store)
+    assert result["needs"]["soy_sauce"]["required"] == 0
+    baseline = next(b for b in result["baskets"] if b["kind"] == "baseline")
+    assert {ln["ingredient"] for ln in baseline["lines"]} == {"noodles", "kikurage"}

@@ -243,7 +243,10 @@ def calculate_baskets(store: Store) -> dict:
     eligible, excluded = eligible_offers(store)
     budget = store.profile["weekly_budget_eur"]
 
-    missing = [ing for ing, offers in eligible.items() if not offers]
+    # Ingredients already covered (nothing to buy) stay out of the combinations: a 0-pack line must not
+    # count against a supplier's minimum order.
+    to_buy = [ing for ing in eligible if needs.get(ing, {}).get("required", 0) > 0]
+    missing = [ing for ing in to_buy if not eligible[ing]]
     if missing:
         return {"baskets": [], "excluded": excluded, "infeasible_combinations": 0,
                 "open_questions": open_questions(store),
@@ -251,7 +254,7 @@ def calculate_baskets(store: Store) -> dict:
 
     tl = stock_mod.timeline(store)
     stockouts = {ing: t["first_stockout"] for ing, t in tl.get("ingredients", {}).items() if t["first_stockout"]}
-    ingredients = list(eligible)
+    ingredients = to_buy
     priced = []
     infeasible = []
     for combo in itertools.product(*(eligible[i] for i in ingredients)):
