@@ -61,7 +61,9 @@ def engine():
         url = os.environ.get("DATABASE_URL")
         if not url:
             raise RuntimeError("DATABASE_URL is not set (see .env.example)")
-        _engine = create_engine(url)
+        # Hosted Postgres (e.g. Neon) hands out postgres:// or postgresql:// URLs; we use the psycopg 3 driver.
+        url = re.sub(r"^postgres(ql)?://", "postgresql+psycopg://", url)
+        _engine = create_engine(url, pool_pre_ping=True)
         Base.metadata.create_all(_engine)
         if _engine.dialect.name == "postgresql":  # column added after the table first shipped
             with _engine.begin() as conn:

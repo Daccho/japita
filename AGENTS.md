@@ -31,7 +31,7 @@ Keep it short: rules and pointers live here, details live in `docs/`. Each fact 
 | `docs/compliance.md` | Evidence rules and claims we must not make |
 | `docs/demo.md` | Demo scenario, dataset, verification |
 | `docs/hackathon.md` | Awards, build sequence, division of work, submission checklist, resources |
-| `docs/deploy.md` | Public demo on a DigitalOcean Premium AMD droplet (web, API, Postgres, HTTPS) |
+| `docs/deploy.md` | Public demo on free tiers: Vercel (web), Render (API), Neon (Postgres); inference on AMD TokenFactory |
 | `docs/deploy-amd.md` | Alternative, not pursued: everything on one AMD Developer Cloud MI300X droplet |
 | `docs/open-questions.md` | Unresolved questions |
 | `docs/mockup-handoff.md` | Current visual mockup, approved UI decisions, exclusions, and continuation prompt |
@@ -116,4 +116,4 @@ Record important decisions here (date — decision — reason) so every agent sh
 - 2026-10-17 — Menu follows the structure of common Hakata-style shops (user-supplied reference menu): one classic tonkotsu ramen, a full set and a refill set, full and half kaedama, toppings, rice, sides, drinks, dessert; the vegetarian miso bowl stays. Names and prices are our own. Kikurage replaces mayu as the third purchased item. Recipe lines now hold per-menu-item quantities (`per_item`), so a half refill uses 60 g.
 - 2026-10-17 — Daily stock: weeks carry daily servings, dated deliveries (confirmed, delayed, cancelled), and usable-until dates; baskets flag deliveries that arrive after a stockout and offer an `on_time` basket. Basket approval creates simulated supplier purchase orders with idempotent submit. Inference stays on AMD TokenFactory; no Developer Cloud GPU credits will be requested, so the droplet deployment in `docs/deploy-amd.md` is not pursued for now.
 - 2026-10-17 — Suppliers answer clarification requests in a mobile web form (typed value for the requested field plus an optional Japanese note) instead of uploading documents; free-text replies are still double-read by Gemma.
-
+- 2026-10-17 — Hosting on free tiers, as the user chose: Vercel for the Next.js frontend, Render for the FastAPI Docker backend (`render.yaml`), Neon for Postgres. Inference stays on AMD TokenFactory. Staying on Next.js: SvelteKit would not change hosting cost, and a rewrite before the deadline would discard the working frontend.

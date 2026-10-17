@@ -1,0 +1,34 @@
+# Render Blueprint: the FastAPI backend on Render's free plan (Docker). The frontend is on Vercel, Postgres on Neon.
+# Inference stays on AMD: Gemma on AMD Radeon Cloud TokenFactory, through the Evolus agent when configured.
+services:
+  - type: web
+    name: japita-api
+    runtime: docker
+    plan: free
+    region: frankfurt
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /docs
+    envVars:
+      - key: PORT
+        value: "8000"
+      - key: DATABASE_URL       # Neon connection string (postgresql://...?sslmode=require)
+        sync: false
+      - key: LLM_BASE_URL
+        value: https://developer.amd.com.cn/radeon/api/v1
+      - key: LLM_MODEL
+        value: Gemma-4-31B-IT
+      - key: LLM_BACKEND_LABEL
+        value: AMD Radeon Cloud TokenFactory
+      - key: LLM_API_KEY
+        sync: false
+      - key: EVOLUS_API_KEY
+        sync: false
+      - key: EVOLUS_APPLICATION_ID
+        sync: false
+      - key: EVOLUS_AGENT_ID
+        sync: false
+      - key: EVOLUS_WORKFLOW_ID
+        sync: false
+      - key: ADMIN_KEY          # required to reset demo data (POST /state/seed)
+        generateValue: true
