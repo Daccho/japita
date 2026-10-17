@@ -23,7 +23,7 @@ Japita centralizes restaurant suppliers, product offers, purchasing, and spendin
 - The user initially selected Japanese ramen businesses opening in Italy, then chose a normal purchasing week as the demo workflow.
 - The user confirmed both existing suppliers and discovery of new suppliers belong in the product.
 - The user wants choices tailored to quality, price, and restaurant preferences, with centralized management and advice.
-- The repository currently has no application implementation.
+- Implementation status and the boundary between the current visual mockup and the full website are tracked in [README.md](../README.md#current-design-scope).
 
 An AMD API key does not establish access to a GPU machine or an independently operated vLLM endpoint. The exact infrastructure and Gemma model remain to be confirmed (see [architecture.md](architecture.md)). Do not put credentials in docs or the repository.
 
