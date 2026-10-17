@@ -12,8 +12,10 @@ import {
   type Timeline,
   type WeeklyCheck,
 } from "@/lib/api";
+import snapshot from "@/lib/snapshot.json";
 
 const PROFILE_KEY = "japita.profile";
+const CACHE_KEY = "japita.cache.";
 export const PROFILES = ["kumo-authentic", "kumo-value"] as const;
 
 type Data = {
@@ -24,14 +26,25 @@ type Data = {
   spending: Spending;
 };
 
+// Seeded demo data computed at build time (backend/japita/snapshot.py): the first paint never waits for the API.
+const SNAPSHOT = snapshot as unknown as Record<string, Data>;
+
+function cached(pid: string): Data | null {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY + pid);
+    return raw ? (JSON.parse(raw) as Data) : null;
+  } catch {
+    return null;
+  }
+}
+
 type Job<T> = { running: boolean; startedAt: number | null; result: T | null; error: string | null; question?: string };
 
 type Ctx = {
   profileId: string;
   setProfileId: (id: string) => void;
   data: Data | null;
-  connecting: boolean; // first load still waiting (server may be waking up)
-  attempts: number;
+  live: boolean; // false while showing cached or build-time data and the API is still waking up
   refresh: () => Promise<void>;
   advisorOpen: boolean;
   setAdvisorOpen: (open: boolean) => void;
@@ -53,8 +66,8 @@ const idle = { running: false, startedAt: null, result: null, error: null };
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [profileId, setProfileState] = useState<string>("kumo-authentic");
-  const [data, setData] = useState<Data | null>(null);
-  const [attempts, setAttempts] = useState(0);
+  const [data, setData] = useState<Data | null>(SNAPSHOT["kumo-authentic"] ?? null);
+  const [live, setLive] = useState(false);
   const [advisorOpen, setAdvisorOpen] = useState(false);
   const [advisor, setAdvisor] = useState<Job<AgentAnswer>>(idle);
   const [weekly, setWeekly] = useState<Job<WeeklyCheck>>(idle);
@@ -67,6 +80,12 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       if (saved && (PROFILES as readonly string[]).includes(saved)) setProfileState(saved);
     } catch {}
   }, []);
+
+  // Show the last data this browser saw (or the build-time snapshot) at once; live data replaces it.
+  useEffect(() => {
+    setLive(false);
+    setData(cached(profileId) ?? SNAPSHOT[profileId] ?? null);
+  }, [profileId]);
 
   const setProfileId = (id: string) => {
     setProfileState(id);
@@ -84,7 +103,13 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       api.approval(pid),
       api.spending(pid),
     ]);
-    if (pid === profileRef.current) setData({ state, baskets, timeline, approval, spending });
+    if (pid !== profileRef.current) return;
+    const next = { state, baskets, timeline, approval, spending };
+    setData(next);
+    setLive(true);
+    try {
+      localStorage.setItem(CACHE_KEY + pid, JSON.stringify(next));
+    } catch {}
   }, []);
 
   // First load: retry until the (possibly sleeping) server answers. Never show an error for this.
@@ -96,7 +121,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         await load();
       } catch {
         if (cancelled) return;
-        setAttempts(n + 1);
         timer = setTimeout(() => attempt(n + 1), 4000);
       }
     };
@@ -147,8 +171,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         profileId,
         setProfileId,
         data,
-        connecting: data === null,
-        attempts,
+        live,
         refresh,
         advisorOpen,
         setAdvisorOpen,

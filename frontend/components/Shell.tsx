@@ -35,29 +35,23 @@ export function Footer() {
   );
 }
 
-function Loading() {
+// Small, non-blocking hint while cached data is shown and the API is waking up.
+function SyncHint() {
   const { t } = useI18n();
-  const { attempts } = useWorkspace();
+  const { live } = useWorkspace();
+  if (live) return null;
   return (
-    <section className="jp-panel" style={{ maxWidth: 520 }}>
-      <div className="jp-loading" style={{ padding: 0 }}>
-        <Loader2 className="jp-spinner" aria-hidden />
-        <h2>{t("load.title")}</h2>
-      </div>
-      <p className="jp-muted" style={{ fontSize: 13, marginTop: 10 }}>
-        {attempts > 0 ? t("load.retry") : t("load.note")}
-      </p>
-      <div className="jp-progress">
-        <span />
-      </div>
-    </section>
+    <span className="jp-muted" role="status" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12 }}>
+      <Loader2 className="jp-spinner" aria-hidden style={{ width: 14, height: 14 }} />
+      {t("load.sync")}
+    </span>
   );
 }
 
 export default function Shell({ children }: { children: ReactNode }) {
   const { t } = useI18n();
   const path = usePathname();
-  const { data, connecting, profileId, setProfileId } = useWorkspace();
+  const { data, profileId, setProfileId } = useWorkspace();
   const lines = suggestedBasket(data?.baskets)?.lines.length;
   return (
     <div className="jp">
@@ -87,6 +81,7 @@ export default function Shell({ children }: { children: ReactNode }) {
               ))}
             </div>
             <LangToggle />
+            <SyncHint />
           </div>
         </header>
         <div className="jp-shell">
@@ -110,11 +105,11 @@ export default function Shell({ children }: { children: ReactNode }) {
             </div>
           </aside>
           <main className="jp-body">
-            {connecting ? <Loading /> : children}
+            {children}
             <Footer />
           </main>
         </div>
-        {!connecting && <AdvisorDock />}
+        <AdvisorDock />
       </div>
     </div>
   );

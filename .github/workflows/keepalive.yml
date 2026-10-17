@@ -1,0 +1,13 @@
+# Keeps the free-tier Render API awake during the judging period, so the first visit is not a cold start.
+# GitHub may delay scheduled runs by several minutes; Render sleeps after about 15 minutes without traffic.
+name: keep API awake
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - run: curl -fsS -m 120 -o /dev/null -w "%{http_code} %{time_total}s\n" https://japita-api.onrender.com/docs
