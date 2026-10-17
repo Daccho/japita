@@ -2,31 +2,43 @@
 
 Japita centralizes restaurant suppliers and helps owners choose weekly purchases based on quality, delivered price, and their preferences. The fictional demo follows Kumo Ramen Milano, a Hakata-style tonkotsu restaurant in Milan.
 
+The agent runs on Gemma served by AMD Radeon Cloud TokenFactory, through an Evolus agent. Every model call is logged with its backend (`/llm-calls`). See [the architecture](docs/architecture.md).
+
+## Run locally
+
+Prerequisites: Docker, [uv](https://docs.astral.sh/uv/), Node.js 20+, [pnpm](https://pnpm.io/).
+
+```bash
+cp .env.example .env    # fill in LLM_* and EVOLUS_*
+
+docker compose up -d db
+cd backend && uv sync
+uv run python -m japita.repo seed tests/fixtures/kumo.json   # fictional demo data
+uv run uvicorn japita.api:app --reload                       # http://localhost:8000/docs
+
+# second terminal
+cd frontend && pnpm install && pnpm dev                      # http://localhost:3000
+```
+
+| Variable | Purpose |
+| --- | --- |
+| `DATABASE_URL` | Postgres. The default matches `docker compose up -d db`. |
+| `LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY`, `LLM_BACKEND_LABEL` | OpenAI-compatible model endpoint on AMD, and the label shown with each call. |
+| `EVOLUS_API_KEY`, `EVOLUS_APPLICATION_ID`, `EVOLUS_AGENT_ID`, `EVOLUS_WORKFLOW_ID` | Evolus agent and workflow. Without `EVOLUS_AGENT_ID` the app calls the model directly. |
+| `ADMIN_KEY` | Optional. When set, `POST /state/seed` requires `X-Admin-Key`. |
+| `NEXT_PUBLIC_API_BASE` | Frontend: API URL (default `http://localhost:8000`). |
+
+```bash
+cd backend
+uv run pytest                              # offline tests
+uv run python -m japita.smoke              # check the real model endpoint
+curl -X POST localhost:8000/state/seed     # reset demo data
+```
+
+Deployment: [docs/deploy.md](docs/deploy.md). Own vLLM and Evolus setup: [docs/setup.md](docs/setup.md). Project plan: [plan.md](plan.md).
+
 ## Current design scope
 
-**The current visual mockup shows the workspace after a restaurant has registered, signed in, and created its restaurant profile.** It explores the appearance and local interactions of that workspace using a prefilled fictional restaurant. Registration and sign-in are assumed steps in the scenario; the mockup does not perform them.
-
-The full Japita website will also need:
-
-- A public homepage explaining the product and its features.
-- A pricing page showing plans and prices, which are still to be defined.
-- A **Register your restaurant** flow for creating the owner's account and restaurant profile, with initial onboarding.
-- Sign-in and account recovery so registered restaurants can return to their workspace.
-
-These public pages and account flows are future design and implementation work. Current visual refinement focuses on the registered restaurant's workspace. The mockup has local demo interactions and remains separate from the Python backend; it does not establish a functioning registration, authentication, or purchasing service.
-
-## Open the interface mockup
-
-Open [`mockup/index.html`](mockup/index.html) in a browser, or ask Codex to open it in the right-hand browser panel beside the chat. No application server or package installation is needed. Approved CDN assets need an internet connection on initial load.
-
-The prototype includes a searchable supplier directory with compact image rows, supplier comparisons, an Offers section for promotions, a basket, and Restaurant profile with Overview, Menu, Buying preferences, and Links. A draggable advisor bubble opens purchasing advice. Natural-language search is a local demo interaction. It uses fictional data and is separate from the backend.
-
-See [mockup editing instructions](mockup/README.md) and the [handoff and next-chat prompt](docs/mockup-handoff.md) to continue visual refinement.
-
-## Backend and project plan
-
-The Python agent and deterministic basket calculations are in [`backend/`](backend/). Setup commands and environment configuration are in [the setup guide](docs/setup.md). The [project plan](plan.md) links the product, architecture, demo, and hackathon requirements.
-
-AMD-hosted Gemma inference has been smoke-tested through TokenFactory. The proposed own-vLLM serving path and Evolus-track eligibility still need verification; see [the architecture](docs/architecture.md) and [the decision log](AGENTS.md#4-decision-log). The mockup itself makes no model calls.
+The workspace assumes a restaurant that has already registered and signed in. A public homepage, pricing page, restaurant registration, and sign-in are future work. The static mockup in [`mockup/`](mockup/index.html) opens directly in a browser; see [docs/mockup-handoff.md](docs/mockup-handoff.md).
 
 Licensed under [MIT](LICENSE).
