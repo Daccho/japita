@@ -3,6 +3,14 @@
 from typing import Any
 
 INGREDIENT_JA = {"noodles": "麺", "soy_sauce": "醤油", "kikurage": "きくらげ"}
+INGREDIENT_EN = {"noodles": "Noodles", "soy_sauce": "Soy sauce", "kikurage": "Kikurage (wood ear)"}
+
+# English labels for the supplier portal's language toggle.
+FIELD_LABEL_EN = {
+    "hydration_pct": "Hydration", "contains_kansui": "Contains kansui", "fresh": "Fresh (not frozen)",
+    "origin_country": "Country of manufacture (e.g. JP)", "brewing_method": "Brewing method (e.g. honjozo)",
+    "additive_free": "Additive-free", "cut": "Cut (strips or whole)",
+}
 
 # How each requested field appears on the supplier's mobile form.
 FIELD_FORM_JA = {
@@ -17,7 +25,8 @@ FIELD_FORM_JA = {
 
 
 def form(field: str) -> dict:
-    return {"field": field, **FIELD_FORM_JA.get(field, {"label_ja": field, "input": "text"})}
+    return {"field": field, **FIELD_FORM_JA.get(field, {"label_ja": field, "input": "text"}),
+            "label_en": FIELD_LABEL_EN.get(field, field)}
 
 
 def spec_fields(data: dict, ingredient: str) -> dict[str, tuple[str, Any]]:

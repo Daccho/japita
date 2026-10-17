@@ -5,7 +5,7 @@ Suppliers never change restaurant data directly: product updates and new product
 
 import secrets
 
-from .forms import FIELD_FORM_JA, INGREDIENT_JA, coerce, form, spec_fields
+from .forms import FIELD_FORM_JA, INGREDIENT_EN, INGREDIENT_JA, coerce, form, spec_fields
 from .store import Store, _now
 
 OWNER_ONLY_FIELDS = {"chef_approved"}  # decided inside the restaurant, never entered by a supplier
@@ -111,7 +111,7 @@ def view(store: Store, sup: dict) -> dict:
     """Everything the supplier portal shows: only this supplier's requests, orders and products."""
     offer_ids = {o["id"] for o in store.offers if o["supplier_id"] == sup["id"]}
     requests = [{"id": c["id"], "token": c["token"], "offer_id": c["offer_id"], "question_ja": c["text_ja"],
-                 "form": form(c["field"]), "state": "awaiting_reply" if c["state"] == "sent" else "replied",
+                 "question_en": (c.get("translations") or {}).get("en"), "form": form(c["field"]), "state": "awaiting_reply" if c["state"] == "sent" else "replied",
                  "sent_at": c.get("sent_at"), "reply_ja": (c.get("reply") or {}).get("text_ja")}
                 for c in store.clarifications if c["offer_id"] in offer_ids and c.get("token")]
     orders = [{"id": po["id"], "state": po["state"], "submitted_at": po.get("submitted_at"),
@@ -119,12 +119,14 @@ def view(store: Store, sup: dict) -> dict:
                "shipping_eur": po["shipping_eur"], "acknowledgment": po.get("acknowledgment"),
                "delivery_changes": po.get("delivery_changes", []),
                "lines": [{"ingredient": ln["ingredient"], "ingredient_ja": INGREDIENT_JA.get(ln["ingredient"]),
+                          "ingredient_en": INGREDIENT_EN.get(ln["ingredient"]),
                           "product": ln["product"], "packs": ln["packs"], "pack_size": ln["pack_size"],
                           "unit": ln["unit"], "purchase_qty": ln["purchase_qty"], "cost_eur": ln["cost_eur"]}
                          for ln in po["lines"]]}
               for po in store.data["purchase_orders"]
               if po["supplier_id"] == sup["id"] and po["state"] in ("submitted", "acknowledged")]
     products = [{"id": o["id"], "ingredient": o["ingredient"], "ingredient_ja": INGREDIENT_JA.get(o["ingredient"]),
+                 "ingredient_en": INGREDIENT_EN.get(o["ingredient"]),
                  "product": o["product"], "unit": o["unit"], "pack_size": o["pack_size"], "price_eur": o["price_eur"],
                  "offer_date": o["offer_date"], "origin_route": o["origin_route"],
                  "attributes": {k: v for k, v in o["attributes"].items() if k not in OWNER_ONLY_FIELDS},
@@ -132,7 +134,8 @@ def view(store: Store, sup: dict) -> dict:
                  "form": product_form(store, o["ingredient"])}
                 for o in store.offers if o["supplier_id"] == sup["id"]]
     return {"notice_ja": "これはデモ用のテストサプライヤー画面です。実際の取引・発注は行われません。",
+            "notice_en": "This is a test supplier page for the demo. No real trades or orders take place.",
             "restaurant": store.profile["name"], "supplier": {"id": sup["id"], "name": sup["name"]},
             "requests": requests, "orders": orders, "products": products,
             "new_product_forms": {ing: product_form(store, ing) for ing in store.profile["ingredients"]},
-            "ingredient_ja": INGREDIENT_JA}
+            "ingredient_ja": INGREDIENT_JA, "ingredient_en": INGREDIENT_EN}
