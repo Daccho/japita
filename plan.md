@@ -8,6 +8,7 @@ Working draft, 17 October 2026. The plan is split by topic under `docs/`; this f
 | --- | --- |
 | [docs/product.md](docs/product.md) | Product, main promise, confirmed team context, positioning, roadmap |
 | [docs/mvp.md](docs/mvp.md) | What the MVP does: scope, screens, owner inputs, plan output, calculations, price comparisons, approval, out of scope |
+| [docs/supplier-data.md](docs/supplier-data.md) | Proposed supplier database, web discovery, quote collection, source evidence, updates, and private buyer terms |
 | [docs/architecture.md](docs/architecture.md) | Components, model selection, first integration test, how we use AMD strengths |
 | [docs/technical-requirements.md](docs/technical-requirements.md) | Numbered build requirements: vLLM on AMD, Evolus APIs, agent tools, API, data model, tests, deployment |
 | [docs/compliance.md](docs/compliance.md) | Evidence rules, regulatory claims we must not make, data handling |

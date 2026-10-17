@@ -23,6 +23,7 @@ Keep it short: rules and pointers live here, details live in `docs/`. Each fact 
 | `plan.md` | Index and one-line summary |
 | `docs/product.md` | Product, team context, positioning, roadmap |
 | `docs/mvp.md` | MVP behavior: screens, inputs, outputs, calculations, approval, out of scope |
+| `docs/supplier-data.md` | Proposed supplier data strategy: uploads, web discovery, quotes, provenance, updates, private buyer terms |
 | `docs/architecture.md` | Components, model selection, milestone 1, AMD strengths |
 | `docs/technical-requirements.md` | Numbered build requirements (T1–T37) |
 | `docs/compliance.md` | Evidence rules and claims we must not make |
@@ -98,3 +99,4 @@ Record important decisions here (date — decision — reason) so every agent sh
 - 2026-10-17 — Removed rendered proposal PNGs under `tmp/` from the repo and ignored `tmp/` — scratch output, not project source.
 - 2026-10-17 — Split `plan.md` into topic docs under `docs/` and kept `plan.md` as the index — agents load only the context a task needs.
 - 2026-10-17 — Added the user-supplied Kumo Ramen Milano scenario as a fictional demo fixture in `docs/demo.md`. Proposed lead decision: a delayed noodle delivery, supported by soy-sauce and mayu comparisons; make-or-buy costing remains outside the MVP. Dated demand and arrivals are required before claiming a stockout.
+- 2026-10-17 — Documented a proposed supplier data strategy in `docs/supplier-data.md`: combine restaurant uploads, web discovery, and supplier-confirmed terms; public discovery alone does not establish an orderable offer. Live web discovery remains a stretch proposal pending scope agreement.
