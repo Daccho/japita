@@ -25,7 +25,8 @@ Keep it short: rules and pointers live here, details live in `docs/`. Each fact 
 | `docs/mvp.md` | MVP behavior: screens, inputs, outputs, calculations, approval, out of scope |
 | `docs/supplier-data.md` | Proposed supplier data strategy: uploads, web discovery, quotes, provenance, updates, private buyer terms |
 | `docs/architecture.md` | Components, model selection, milestone 1, AMD strengths |
-| `docs/technical-requirements.md` | Numbered build requirements (T1–T37) |
+| `docs/technical-requirements.md` | Numbered build requirements (T1–T46), including agent instructions, output, and failure handling |
+| `docs/setup.md` | Standing up vLLM on AMD, configuring Evolus, running the app |
 | `docs/compliance.md` | Evidence rules and claims we must not make |
 | `docs/demo.md` | Demo scenario, dataset, verification |
 | `docs/hackathon.md` | Awards, build sequence, division of work, submission checklist, resources |
