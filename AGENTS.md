@@ -125,3 +125,4 @@ Record important decisions here (date — decision — reason) so every agent sh
 - 2026-10-17 — Adopted the user's new Japita logo for the mockup and website; current artwork and provenance are documented in `mockup/assets/README.md`.
 - 2026-10-17 — Made website design/backend reconciliation explicit in the build plan at the user's request; confirmed collaboration decisions and the natural-language search assessment are in `docs/design-integration.md`.
 - 2026-10-17 — Refined saved-supplier management and discovery from the user's filter feedback; approved view, search, country, and price-ordering behavior is in `docs/mockup-handoff.md`.
+- 2026-10-18 — Approved a quieter Japita header logo with its wordmark restored in the existing Ajitama style; current usage, generated variant, and preserved original artwork are documented in `docs/mockup-handoff.md` and `mockup/assets/README.md`.

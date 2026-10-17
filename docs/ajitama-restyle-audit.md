@@ -2,6 +2,8 @@
 
 Status: implementation and final source checks are complete. Diego approved Steps 1–10, then requested the remaining work together. His latest instruction cancels menu alternatives: keep the single approved Printed menu. Step 11 was therefore skipped; Step 12 is complete within the local-file inspection restriction. The separately authorized Offers behavior is recorded in the mockup handoff.
 
+Subsequent branding decision, 18 October: Diego explicitly authorized editing the Japita logo, restored its wordmark, and requested less prominence in the current Ajitama style. This supersedes the original brief's unchanged-artwork rule and G4 treatment for the Weekly workspace header. The current variant and placement are documented in the mockup handoff and assets README; the initial audit below remains a record of the original restyle.
+
 The target is the original **Weekly workspace** in `mockup/japita-workspace.html`, opened through `mockup/index.html`. The five proposals made in this chat have been removed. The historical Advisor first alternative is outside this restyle's target.
 
 ## Reference and working agreement
