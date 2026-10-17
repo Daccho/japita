@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #faf8f5;
+  --foreground: #1c1917;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+}
+
+.prose-answer table {
+  @apply my-3 w-full border-collapse text-sm;
+}
+.prose-answer th,
+.prose-answer td {
+  @apply border border-stone-200 px-2 py-1 text-left align-top;
+}
+.prose-answer th {
+  @apply bg-stone-100 font-semibold;
+}
+.prose-answer h3 {
+  @apply mb-1 mt-4 font-semibold;
+}
+.prose-answer h4 {
+  @apply mb-1 mt-3 font-semibold;
+}
+.prose-answer ul {
+  @apply my-2 list-disc pl-5;
+}
+.prose-answer ol {
+  @apply my-2 list-decimal pl-5;
+}
+.prose-answer p {
+  @apply my-2;
+}
+.prose-answer hr {
+  @apply my-3 border-stone-200;
+}
