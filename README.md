@@ -1,8 +1,31 @@
-# japita
+# Japita
 
-Japita centralizes restaurant suppliers and helps owners choose weekly purchases based on quality, delivered price, and their preferences. The fictional demo follows Kumo Ramen Milano, a Hakata-style tonkotsu restaurant in Milan.
+**Japita is the weekly purchasing advisor for restaurants.** It puts your suppliers, offers, and spending in one place. It recommends what to buy this week, and from which supplier, based on quality, delivered price, and your own preferences. Gemma on AMD reads Japanese specifications and drafts supplier questions. A person approves every message, basket, and order.
 
-The agent runs on Gemma served by AMD Radeon Cloud TokenFactory, through an Evolus agent. Every model call is logged with its backend (`/llm-calls`). See [the architecture](docs/architecture.md).
+Built for the [AMD Developer Hackathon ACT III](https://lablab.ai/ai-hackathons/amd-developer-hackathon-act-iii). Tracks: Reinvent Commerce, plus Evolus Business Agents on AMD. Demo: `<APP_URL>` (placeholder) · Submission texts: [docs/submission.md](docs/submission.md)
+
+> **All data is fictional.** The restaurant, suppliers, offers, prices, and supplier replies are invented for the demo. Supplier orders are simulated: no real purchases or payments.
+
+## How it works
+
+The demo restaurant is Kumo Ramen Milano, a Hakata-style tonkotsu shop in Milan. It buys fresh noodles, soy sauce, and dried kikurage.
+
+1. This week the Friday noodle delivery is late. The stock timeline shows a stockout on Friday (20.46 kg short). The usual basket (€493.80) arrives too late.
+2. A backup from an EU importer, frozen Japanese noodles, is missing its hydration spec. The agent drafts a question in business Japanese, with Italian and English translations. The owner approves it.
+3. The supplier answers on Japita's Japanese phone portal. Japita reads the answer twice and flags any disagreement for review. The owner applies it, and Japita builds an on-time basket for €444.10.
+4. The owner approves. Japita creates one purchase order per supplier. The supplier accepts with a delivery date, and the stockout clears.
+
+Python calculates all the numbers: needs, pack rounding, minimum orders, shipping, delivery timing, and daily stock with usable-until dates. Gemma interprets, translates, and explains. The restaurant workspace is in Italian and English (Next.js on Vercel). The API is FastAPI on Render, with Postgres on Neon.
+
+**AMD:** Inference runs on Google Gemma-4-31B-IT, served by AMD Radeon Cloud TokenFactory through an OpenAI-compatible API. Gemma on AMD handles:
+- agent tool calling;
+- double reads of Japanese specifications and replies;
+- translations and Japanese drafts;
+- a weekly intake of the whole catalog in one context.
+
+Every model call is logged with its model, backend, and latency (`/llm-calls`, `/health/model`).
+
+**Evolus:** We registered our TokenFactory Gemma in Evolus as an own model. It powers two Evolus building blocks: the agent "Japita purchasing advisor", which drives the purchasing conversation, and the workflow "Japita weekly intake", which runs the weekly consistency check across offers. The app calls both through the Evolus APIs. See [the architecture](docs/architecture.md).
 
 ## Run locally
 

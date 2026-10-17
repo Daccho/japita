@@ -99,7 +99,7 @@ Use expressly labeled synthetic prices if needed for calculation tests. They are
 
 **Key moment:** a weekly basket changes for an understandable reason: a restaurant preference or a supplier answer. Show why the recommended choice fits the restaurant, not just which unit price is lowest. A premium and an affordable ramen profile can illustrate this with the same offer catalog, provided the relevant preferences are explicit.
 
-**AMD moment:** show the evidence listed in [architecture.md](architecture.md#using-amd-strengths): the model running unquantized on one GPU, all offers analyzed in parallel with measured timing, and a field flagged by the double read.
+**AMD moment:** shown in the video and slides only, not in the UI. Use the evidence in [architecture.md](architecture.md#how-japita-uses-amd): server-side call log rows for Gemma on AMD TokenFactory, the Evolus model test and executions, and parallel double reads with measured timing.
 
 ## Dataset
 
@@ -132,7 +132,7 @@ Data rules are in [compliance.md](compliance.md#data-handling).
 - Measure workflow latency and time to an approved plan.
 - Compare basket cost with a stated baseline using the same assumptions.
 - Display model/backend identity and preserve Evolus run IDs for judging evidence.
-- Record GPU memory use, tokens per second, and parallel-offer throughput on AMD during a full demo run.
+- Record measured latency of the agent, the double read, and the weekly intake workflow during a full demo run, from the server-side call log.
 - Check that the double read of a specification flags real disagreements and does not hide them.
 
 Report synthetic-data outcomes as demo results. There is no validated customer ROI, willingness-to-pay evidence, or real supplier coverage yet.
