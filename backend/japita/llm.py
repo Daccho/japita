@@ -29,6 +29,7 @@ class CallRecord:
     latency_ms: int
     prompt_tokens: int | None
     completion_tokens: int | None
+    evolus_conversation_id: str | None = None
 
 
 class LLM:

@@ -3,6 +3,7 @@
 Run: uv run uvicorn japita.api:app --reload
 """
 
+import os
 import time
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -14,6 +15,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from . import calc, repo
 from .agent import run_agent
+from .evolus import EvolusAgent, run_agent_evolus
 from .extract import double_read
 from .llm import LLM
 from .store import Store
@@ -110,6 +112,8 @@ class Reply(BaseModel):
 class Question(BaseModel):
     question: str
     profile_id: str = "kumo-authentic"
+    # "evolus": Evolus main agent (our Gemma on AMD) drives the loop; "direct": call the model endpoint directly
+    via: Literal["evolus", "direct"] = "evolus" if os.environ.get("EVOLUS_AGENT_ID") else "direct"
 
 
 def _store(profile_id: str | None = None) -> Store:
@@ -309,11 +313,17 @@ def get_evidence(offer_id: str, profile_id: str | None = None):
 @app.post("/agent/ask")
 def ask_agent(body: Question):
     store = _store(body.profile_id)
-    llm = LLM()
-    result = run_agent(llm, store, body.question)
+    if body.via == "evolus":
+        agent = EvolusAgent()
+        result = run_agent_evolus(agent, store, body.question)
+        calls = agent.calls
+    else:
+        llm = LLM()
+        result = run_agent(llm, store, body.question)
+        calls = llm.calls
     repo.save_state(store.data)  # the agent may have saved clarification drafts
-    repo.log_calls(llm.calls, "agent")
-    return {"answer": result.answer, "steps": result.steps, "clarifications": store.clarifications}
+    repo.log_calls(calls, f"agent:{body.via}")
+    return {"via": body.via, "answer": result.answer, "steps": result.steps, "clarifications": store.clarifications}
 
 
 @app.get("/clarifications")

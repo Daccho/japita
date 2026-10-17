@@ -31,6 +31,7 @@ Keep it short: rules and pointers live here, details live in `docs/`. Each fact 
 | `docs/compliance.md` | Evidence rules and claims we must not make |
 | `docs/demo.md` | Demo scenario, dataset, verification |
 | `docs/hackathon.md` | Awards, build sequence, division of work, submission checklist, resources |
+| `docs/deploy-amd.md` | Deploying everything on one AMD Developer Cloud MI300X droplet |
 | `docs/open-questions.md` | Unresolved questions |
 | `docs/mockup-handoff.md` | Current visual mockup, approved UI decisions, exclusions, and continuation prompt |
 
@@ -109,3 +110,4 @@ Record important decisions here (date — decision — reason) so every agent sh
 - 2026-10-17 — Connected the agent to `Gemma-4-31B-IT` on AMD Radeon Cloud TokenFactory (`https://developer.amd.com.cn/radeon/api/v1`, OpenAI-compatible, hackathon API key). Smoke test passed: Japanese spec reading and native tool calling work. This is an AMD-hosted service, not our own vLLM; whether it satisfies the Evolus track's "own vLLM endpoint" rule is still unconfirmed.
 - 2026-10-17 — Preserved the selected Weekly workspace mockup in `mockup/` for cross-chat editing. UI decisions, explicit exclusions, preview instructions, and the continuation prompt are in `docs/mockup-handoff.md`; the mockup remains separate from the backend.
 - 2026-10-17 — Clarified the workspace mockup and future website scope in `README.md`, following the user's confirmation that public pricing and restaurant registration belong to the full product.
+- 2026-10-17 — Evolus: registered our TokenFactory Gemma as an OpenAI-compatible model (Evolus test: answers, tool calling, streaming OK) and created the main agent. Evolus agent chat ignores client-supplied `tools`, so we use option B: the app runs the loop and the Evolus agent replies with JSON actions in one `X-Conversation-Id` conversation (`backend/japita/evolus.py`). Option A (our MCP server as an Evolus connector) needs a public URL; revisit after deployment.

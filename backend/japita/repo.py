@@ -46,6 +46,7 @@ class LLMCallLog(Base):
     prompt_tokens = Column(Integer)
     completion_tokens = Column(Integer)
     purpose = Column(String)
+    evolus_conversation_id = Column(String, index=True)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
@@ -60,6 +61,9 @@ def engine():
             raise RuntimeError("DATABASE_URL is not set (see .env.example)")
         _engine = create_engine(url)
         Base.metadata.create_all(_engine)
+        if _engine.dialect.name == "postgresql":  # column added after the table first shipped
+            with _engine.begin() as conn:
+                conn.exec_driver_sql("ALTER TABLE llm_calls ADD COLUMN IF NOT EXISTS evolus_conversation_id VARCHAR")
     return _engine
 
 
@@ -115,7 +119,8 @@ def seed(path: Path) -> None:
 def log_calls(calls, purpose: str) -> None:
     with Session(engine()) as s, s.begin():
         s.add_all(LLMCallLog(request_id=c.request_id, model=c.model, backend=c.backend, latency_ms=c.latency_ms,
-                             prompt_tokens=c.prompt_tokens, completion_tokens=c.completion_tokens, purpose=purpose)
+                             prompt_tokens=c.prompt_tokens, completion_tokens=c.completion_tokens, purpose=purpose,
+                             evolus_conversation_id=c.evolus_conversation_id)
                   for c in calls)
 
 
@@ -124,7 +129,7 @@ def recent_calls(limit: int = 50) -> list[dict]:
         rows = s.scalars(select(LLMCallLog).order_by(LLMCallLog.pk.desc()).limit(limit))
         return [{"request_id": r.request_id, "model": r.model, "backend": r.backend, "latency_ms": r.latency_ms,
                  "prompt_tokens": r.prompt_tokens, "completion_tokens": r.completion_tokens, "purpose": r.purpose,
-                 "created_at": r.created_at.isoformat()} for r in rows]
+                 "evolus_conversation_id": r.evolus_conversation_id, "created_at": r.created_at.isoformat()} for r in rows]
 
 
 if __name__ == "__main__":

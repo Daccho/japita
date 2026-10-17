@@ -55,3 +55,18 @@ def test_agent_answers_from_tools_and_drafts_clarification():
     assert "calculate_baskets" in tools_used
     assert "850.8" in result.answer.replace(",", "")  # baseline total from code, not the model
     assert all(c["state"] == "draft" for c in store.clarifications)
+
+
+@pytest.mark.skipif(not os.environ.get("EVOLUS_AGENT_ID"), reason="Evolus agent not configured")
+def test_agent_through_evolus():
+    from japita.evolus import EvolusAgent, run_agent_evolus
+
+    agent = EvolusAgent()
+    store = Store.load(FIXTURE)
+    result = run_agent_evolus(agent, store, "今週のおすすめバスケットを、今の仕入先との差額と理由つきで教えてください。")
+    report(agent)
+    print("  evolus conversation:", agent.conversation_id)
+    print("  tools:", [s.get("name") for s in result.steps if s["type"] == "tool"])
+    print("  answer:", result.answer[:800])
+    assert any(s.get("name") == "calculate_baskets" for s in result.steps)
+    assert "850.8" in result.answer.replace(",", "")

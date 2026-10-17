@@ -1,0 +1,74 @@
+# Everything on one AMD Developer Cloud MI300X droplet: Gemma via vLLM (ROCm), API, Postgres, HTTPS proxy.
+# Usage on the droplet:  cd japita/deploy && cp amd.env.example .env && docker compose -f docker-compose.amd.yml up -d --build
+services:
+  vllm:
+    image: vllm/vllm-openai-rocm:gemma4
+    devices: ["/dev/kfd", "/dev/dri"]
+    group_add: ["video"]
+    ipc: host
+    security_opt: ["seccomp=unconfined"]
+    shm_size: 16g
+    environment:
+      HF_TOKEN: ${HF_TOKEN}
+    volumes:
+      - hf-cache:/root/.cache/huggingface
+    command: >
+      --model ${VLLM_MODEL}
+      --served-model-name ${VLLM_MODEL}
+      --max-model-len ${VLLM_MAX_MODEL_LEN:-32768}
+      --enable-auto-tool-choice --tool-call-parser gemma4
+      --api-key ${VLLM_API_KEY}
+      --port 8000
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf -H 'Authorization: Bearer ${VLLM_API_KEY}' localhost:8000/v1/models"]
+      interval: 15s
+      retries: 80   # first start downloads the model
+    restart: unless-stopped
+
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: japita
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: japita
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U japita"]
+      interval: 2s
+      retries: 15
+    restart: unless-stopped
+
+  api:
+    build: ../backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://japita:${POSTGRES_PASSWORD}@db:5432/japita
+      LLM_BASE_URL: ${LLM_BASE_URL:-http://vllm:8000/v1}
+      LLM_MODEL: ${LLM_MODEL:-${VLLM_MODEL}}
+      LLM_API_KEY: ${LLM_API_KEY:-${VLLM_API_KEY}}
+      LLM_BACKEND_LABEL: ${LLM_BACKEND_LABEL:-vLLM on AMD Instinct MI300X (AMD Developer Cloud)}
+      EVOLUS_API_KEY: ${EVOLUS_API_KEY:-}
+      EVOLUS_APPLICATION_ID: ${EVOLUS_APPLICATION_ID:-}
+      EVOLUS_AGENT_ID: ${EVOLUS_AGENT_ID:-}
+      EVOLUS_WORKFLOW_ID: ${EVOLUS_WORKFLOW_ID:-}
+    depends_on:
+      db: {condition: service_healthy}
+    restart: unless-stopped
+
+  # web: add the Next.js frontend here once it exists (build: ../frontend), and route "/" to it in the Caddyfile.
+
+  caddy:
+    image: caddy:2
+    ports: ["80:80", "443:443"]
+    environment:
+      SITE_HOST: ${SITE_HOST}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+    depends_on: [api]
+    restart: unless-stopped
+
+volumes:
+  hf-cache:
+  pgdata:
+  caddy-data:

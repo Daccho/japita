@@ -1,0 +1,14 @@
+# Automatic HTTPS. Without a domain, use <droplet-ip with dashes>.sslip.io, e.g. 129-212-1-2.sslip.io
+{$SITE_HOST} {
+	# OpenAI-compatible Gemma endpoint for Evolus: https://{$SITE_HOST}/llm/v1  (protected by VLLM_API_KEY)
+	handle_path /llm/* {
+		reverse_proxy vllm:8000
+	}
+	handle_path /api/* {
+		reverse_proxy api:8000
+	}
+	# Until the frontend exists, the API docs are the landing page.
+	handle {
+		reverse_proxy api:8000
+	}
+}
