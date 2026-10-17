@@ -14,7 +14,7 @@ import uuid
 import httpx
 from dotenv import load_dotenv
 
-from .agent import AgentResult
+from .agent import AgentResult, missing_drafts_nudge
 from .llm import CallRecord
 from .store import Store
 from .tools import TOOLS, call_tool
@@ -92,7 +92,7 @@ def parse_action(text: str) -> dict | None:
 def run_agent_evolus(agent: EvolusAgent, store: Store, user_message: str, max_steps: int = 10) -> AgentResult:
     steps: list[dict] = []
     message = PROTOCOL.format(tools=_tool_catalog()) + f"\n\nOwner's request:\n{user_message}"
-    retried = False
+    retried = nudged = False
     for _ in range(max_steps):
         reply = agent.send(message)
         call = agent.calls[-1]
@@ -108,6 +108,12 @@ def run_agent_evolus(agent: EvolusAgent, store: Store, user_message: str, max_st
             continue
         retried = False
         if action["action"] == "answer":
+            nudge = None if nudged or not any(s.get("name") == "calculate_baskets" for s in steps) \
+                else missing_drafts_nudge(store)
+            if nudge:
+                nudged = True
+                message = nudge + "\nReply with one JSON object as specified."
+                continue
             steps.append({"type": "answer", **meta})
             return AgentResult(answer=action["text"], steps=steps)
         results = []

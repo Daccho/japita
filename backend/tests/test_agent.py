@@ -45,3 +45,23 @@ def test_agent_runs_tools_and_answers():
     assert "850.8" in fake.seen[1][-1]["content"]  # basket result reached the model
     assert store.clarifications[0]["state"] == "draft"
     assert len(llm.calls) == 3 and llm.calls[0].model == "fake-gemma"
+
+
+def test_agent_is_reminded_once_to_draft_supplier_questions():
+    script = [
+        (None, [tool_call(1, "calculate_baskets", {})]),
+        ("Keep the baseline.", None),  # forgot the open question -> reminded
+        (None, [tool_call(2, "draft_clarification", {
+            "offer_id": "O-noo-3", "field": "hydration_pct",
+            "text_ja": "博多細麺の加水率をご教示ください。", "reason": "hydration not stated"})]),
+        ("Keep the baseline; asked EuroAsia about hydration.", None),
+    ]
+    fake = FakeCompletions(script)
+    llm = LLM(LLMConfig(base_url="http://fake", model="fake-gemma"), client=NS(chat=NS(completions=fake)))
+    store = Store.load(FIXTURE)
+
+    result = run_agent(llm, store, "おすすめは？")
+
+    assert "O-noo-3" in fake.seen[2][-1]["content"] and "chef_approved" not in fake.seen[2][-1]["content"]
+    assert result.answer.startswith("Keep the baseline; asked")
+    assert [c["field"] for c in store.clarifications] == ["hydration_pct"]

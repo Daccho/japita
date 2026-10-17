@@ -183,6 +183,25 @@ def eligible_offers(store: Store) -> tuple[dict[str, list[dict]], list[dict]]:
     return eligible, excluded
 
 
+def open_questions(store: Store) -> list[dict]:
+    """Mandatory rules an offer cannot be checked against yet, and who can answer each one.
+
+    `drafted` is true when a clarification for the same offer and field is already open.
+    """
+    open_ = {(c["offer_id"], c["field"]) for c in store.clarifications if c["state"] != "replied"}
+    out = []
+    for offer in store.offers:
+        if offer["ingredient"] not in store.profile["ingredients"]:
+            continue
+        for m in check_evidence(store, offer["id"])["mandatory"]:
+            if m["outcome"] == "missing_evidence":
+                out.append({"offer_id": offer["id"], "product": offer["product"],
+                            "supplier": store.suppliers[offer["supplier_id"]]["name"],
+                            "field": m["field"], "rule": m["rule"], "resolved_by": m["resolved_by"],
+                            "drafted": (offer["id"], m["field"]) in open_})
+    return out
+
+
 def calculate_baskets(store: Store) -> dict:
     needs = week_needs(store)
     eligible, excluded = eligible_offers(store)
@@ -191,6 +210,7 @@ def calculate_baskets(store: Store) -> dict:
     missing = [ing for ing, offers in eligible.items() if not offers]
     if missing:
         return {"baskets": [], "excluded": excluded, "infeasible_combinations": 0,
+                "open_questions": open_questions(store),
                 "conflict": f"No eligible offer for: {', '.join(missing)}. Ask which constraint may change."}
 
     ingredients = list(eligible)
@@ -234,6 +254,7 @@ def calculate_baskets(store: Store) -> dict:
         "needs": needs,
         "baskets": baskets,
         "excluded": excluded,
+        "open_questions": open_questions(store),
         "infeasible_combinations": [
             {"offers": [ln["offer_id"] for ln in b["lines"]], "problems": b["problems"]} for b in infeasible
         ],
