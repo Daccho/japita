@@ -2,42 +2,46 @@
 
 ## Fictional customer fixture
 
-Use the user-supplied **Kumo Ramen Milano** scenario as the proposed customer fixture. It describes an independent 42-seat neighborhood ramen shop in Milan, positioned between casual lunch dining and enthusiast-level ramen. This is a fictional scenario, not a customer interview or validated operating benchmark.
+Use **Kumo Ramen Milano** as the proposed customer fixture: an independent 42-seat Hakata-style tonkotsu specialist in Milan, positioned between casual lunch dining and enthusiast-level ramen, with one vegetarian bowl for local demand. This is a fictional scenario, not a customer interview or validated operating benchmark.
 
-All menu prices, volumes, supplier relationships, ordering patterns, and storage policies below are simulation assumptions. The pasted scenario includes no traceable citations for its general industry claims. Do not present those claims as verified research.
+The concept is modeled on common Hakata-style tonkotsu shops in Japan (single broth, thin noodles, kaedama refills, simple toppings). Real chains served only as general reference. Do not use any real brand's name, logo, menu wording, photos, or signature items.
+
+All menu prices, volumes, supplier relationships, ordering patterns, and storage policies below are simulation assumptions. The scenario includes no traceable citations for its general industry claims. Do not present those claims as verified research.
 
 ### Menu and volume
 
 | Item | Target selling price | Planned weekly servings |
 | --- | --- | --- |
-| Shoyu chicken ramen | EUR 14 | 420 |
-| Tonkotsu ramen | EUR 15 | 300 |
-| Spicy tonkotsu | EUR 16 | 120 |
-| Veggie miso ramen | EUR 14 | 160 |
-| Gyoza, six pieces | EUR 6 | Not specified |
-| Karaage | EUR 7 | Not specified |
+| Tonkotsu ramen | EUR 14 | 550 |
+| Tonkotsu set (extra chashu, seasoned egg, one kaedama) | EUR 18 | 200 |
+| Kuro mayu tonkotsu | EUR 16 | 120 |
+| Veggie miso ramen (kombu and shiitake broth) | EUR 14 | 130 |
+| Kaedama (noodle refill) | EUR 3 | Owner-entered rate per bowl |
+| Toppings: seasoned egg, chashu, kikurage, green onion, nori, garlic | Various | Not specified |
+| Sides and drinks: rice, beer, almond tofu | Various | Not specified |
 
-The ramen volumes sum to 1,000 bowls. They are owner-entered planning assumptions, not model forecasts or observed sales. The menu is context; the MVP does not need complete recipes or cost coverage for every dish.
+The ramen volumes sum to 1,000 bowls. They are owner-entered planning assumptions, not model forecasts or observed sales. Kaedama means noodle demand exceeds one portion per bowl: noodle quantity comes from bowls, the set's included refill, and an owner-entered refill rate, never a model estimate. The menu is context; the MVP does not need complete recipes or cost coverage for every dish.
 
 ### Kitchen model
 
-- Prepare chicken, pork-bone, and vegetable broths in-house.
-- Blend shoyu and miso tare in-house using purchased ingredients.
-- Prepare toppings in-house.
-- Buy noodles, specialty soy sauces, chiyu, and mayu.
+- Prepare pork-bone broth and the vegetarian kombu-shiitake broth in-house.
+- Blend tonkotsu and miso tare in-house using purchased ingredients.
+- Prepare chashu, seasoned eggs, and other toppings in-house.
+- Buy noodles, specialty soy sauces, mayu, and Japanese condiments and dried goods.
 
-Do not introduce a 70/30 production split. Record make-or-buy per component. The scenario does not establish whether stock concentrate is used. Its Japanese summary describes the chicken broth more specifically than the English text; retain "chicken broth" until clarified.
+Record make-or-buy per component. The scenario does not establish whether stock concentrate is used. Vegetarian items must not share pork-based tare or oil; record this as a mandatory requirement on those ingredients, not as a model judgment.
 
 ### Representative purchased items
 
 | Item | Purchasing unit | Stated preferences and requirements | Replenishment assumption |
 | --- | --- | --- | --- |
-| Fresh noodles | 10 kg crate | Thin, straight, firm; low-to-medium hydration; another fresh product or an approved frozen product may be acceptable | Twice weekly |
-| Koikuchi soy sauce | 20 L container | Naturally brewed; Japanese origin preferred; consistent salinity; sensory fit requires chef judgment | Every three weeks |
-| Pork bones | kg | Femur/backbone mix; traceability; fresh preferred; approved frozen alternative possible | Three deliveries weekly |
-| Chicken carcasses | kg | Consistent specification and yield; suitability assessed by the kitchen | Twice weekly |
-| Chiyu | 5 L container | Chef-approved aroma and batch consistency | Monthly |
+| Hakata-style noodles | 10 kg crate | Thin, straight, firm; low hydration; another fresh product or an approved frozen product may be acceptable | Twice weekly |
+| Koikuchi soy sauce | 20 L container | Naturally brewed, for tare; Japanese origin preferred; consistent salinity; sensory fit requires chef judgment | Every three weeks |
 | Mayu | 1 L bottle | Chef-approved aroma and bitterness | Every two weeks |
+| Pork bones | kg | Femur/backbone mix; traceability; fresh preferred; approved frozen alternative possible | Three deliveries weekly |
+| Pork back fat and chashu pork | kg | Consistent trim; traceability | Twice weekly |
+| Kombu and dried shiitake | 1 kg bag | For vegetarian broth; Japanese origin preferred | Monthly |
+| Beni shoga, karashi takana, kikurage | Pack | Table condiments and toppings | Every two weeks |
 
 The scenario calls Japanese soy-sauce origin "preferred" but lists only Japanese alternatives. Keep that constraint unresolved until the owner specifies whether it is mandatory. Do not silently treat it as either a hard restriction or permission to substitute.
 
@@ -47,27 +51,27 @@ The stated shelf lives and storage instructions are fictional placeholders, not 
 
 | Fictional supplier | Relationship | Reason to compare alternatives |
 | --- | --- | --- |
-| A: Lombardy noodle manufacturer | Custom noodles, Tuesday/Friday deliveries | A reported missed delivery, capacity uncertainty, transport surcharge |
-| B: Japanese food importer | Soy sauce, miso, bamboo shoots | Lead times, minimum orders, changing prices |
-| C: local meat distributor | Pork bones and chicken carcasses | Variable specification and delivery windows |
-| D: specialty ramen importer | Chiyu and mayu | Dependence on one supplier and unknown availability |
+| A: Lombardy noodle manufacturer | Custom Hakata-style noodles, Tuesday/Friday deliveries | A reported missed delivery, capacity uncertainty, transport surcharge |
+| B: Japanese food importer | Soy sauce, miso, kombu, shiitake, condiments | Lead times, minimum orders, changing prices |
+| C: local meat distributor | Pork bones, back fat, chashu pork | Variable specification and delivery windows |
+| D: specialty ramen importer | Mayu | Dependence on one supplier and unknown availability |
 
-These are invented supplier histories, not measured reliability ratings. Show actual dated events if the demo uses them, and do not derive an authoritative supplier score from one event.
+A candidate Japanese noodle maker offering frozen Hakata-style noodles, with a Japanese specification sheet, is a natural discovered alternative for the primary demo. These are invented supplier histories, not measured reliability ratings. Show actual dated events if the demo uses them, and do not derive an authoritative supplier score from one event.
 
 ### Decision priority
 
-1. **Primary demo: Friday noodle delivery at risk.** Compare existing and newly discovered backup offers on required date, product fit, pack size, minimum order, and delivered cost. An unapproved product or candidate account stays pending. A clarification can resolve a missing delivery commitment, then the owner approves a replacement order.
-2. **Secondary: evaluate a new soy sauce.** Compare specifications, purchasing terms, price per unit, and chef sample notes. Leave unknown prices unknown. Origin and sensory requirements must be explicit.
+1. **Primary demo: Friday noodle delivery at risk.** Compare existing and newly discovered backup offers on required date, product fit, pack size, minimum order, and delivered cost. Kaedama makes the noodle quantity visibly larger than the bowl count. An unapproved product or candidate account stays pending. A clarification can resolve a missing delivery commitment, then the owner approves a replacement order.
+2. **Secondary: evaluate a new soy sauce for tare.** Compare specifications, purchasing terms, price per unit, and chef sample notes. Leave unknown prices unknown. Origin and sensory requirements must be explicit.
 3. **Later: make or buy mayu.** This requires a recipe, batch yield, prep time, labor/energy assumptions, and chef validation. It is not part of the hackathon calculation engine.
 
-The first two decisions plus mayu quote comparison provide three active purchase items. Pork bones, chicken carcasses, and chiyu can appear as background catalog records without adding full purchasing workflows.
+The first two decisions plus mayu quote comparison provide three active purchase items. Pork bones, back fat, chashu pork, kombu, shiitake, and condiments can appear as background catalog records without adding full purchasing workflows. Japanese specification sheets for these background items add work for the parallel AMD analysis.
 
 ### Data still required before numerical claims
 
 | Missing input | Why it is needed |
 | --- | --- |
 | Dated daily servings or directly entered ingredient usage | Determines when demand occurs; a weekly total cannot locate a stockout |
-| Noodle portion weight and coverage by menu item | Converts bowls into kg without assuming every dish uses the same product |
+| Noodle portion weight, kaedama rate, and coverage by menu item | Converts bowls and refills into kg without assuming every dish uses the same product |
 | Opening usable stock and usable-until dates | Establishes the actual stock available for each service |
 | Expected deliveries, quantities, revised dates, and confirmation status | A delayed arrival must not count as available before receipt |
 | Comparable offers, quoted/synthetic prices, minimum orders, shipping, and storage capacity | Establishes feasible orders and delivered cost |
