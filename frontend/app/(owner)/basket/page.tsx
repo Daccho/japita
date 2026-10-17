@@ -53,7 +53,10 @@ export default function BasketPage() {
   if (!data) return null;
   const { baskets, approval, state } = data;
   const approvedBasket = approval ? findBasket(baskets, approval.kind) : undefined;
-  const selected = (kind ? findBasket(baskets, kind) : undefined) ?? approvedBasket ?? suggestedBasket(baskets);
+  const candidate = (kind ? findBasket(baskets, kind) : undefined) ?? approvedBasket ?? suggestedBasket(baskets) ?? baskets.baskets[0];
+  // Once the approved orders cover every need, there is nothing left to buy: show the approved basket instead.
+  const settled = !!approval && !approval.stale && (!candidate || candidate.lines.length === 0);
+  const selected = settled ? undefined : candidate;
   const budget = baskets.budget_eur ?? 0;
   const isApproved = !!approval && !approval.stale && approvedBasket === selected;
   const orders = approval ? (state.purchase_orders ?? []).filter((po) => po.approval_id === approval.id) : [];
@@ -203,6 +206,42 @@ export default function BasketPage() {
             </section>
 
             {approval && orders.length > 0 && (
+              <section className="jp-panel">
+                <div className="jp-line-head">
+                  <h2>{t("po.title")}</h2>
+                </div>
+                <Orders orders={orders.filter((po) => po.state !== "cancelled")} canSubmit={!approval.stale} />
+              </section>
+            )}
+          </>
+        ) : settled && approval ? (
+          <>
+            <section className="jp-panel">
+              <div className="jp-line-head">
+                <h2>{label("kind", approval.kind)}</h2>
+                <span className="jp-badge">
+                  <Check size={14} aria-hidden />
+                  {t("bk.approvedThis")} · {d.time(approval.approved_at)}
+                </span>
+              </div>
+              <p className="jp-section-note">{t("wk.allClear")}</p>
+              {approval.lines.map((ln) => (
+                <div key={ln.offer_id} className="jp-row">
+                  <div>
+                    <h3>{ln.product}</h3>
+                    <p>
+                      {label("ing", ln.ingredient)} · {state.suppliers[ln.supplier_id]?.name} · {ln.packs} × {qty(ln.pack_size, ln.unit)}
+                    </p>
+                  </div>
+                  <span className="jp-number">{money(ln.cost_eur)}</span>
+                </div>
+              ))}
+              <div className="jp-budget">
+                <span>{t("bk.total")}</span>
+                <strong className="jp-number">{money(approval.delivered_total_eur)}</strong>
+              </div>
+            </section>
+            {orders.length > 0 && (
               <section className="jp-panel">
                 <div className="jp-line-head">
                   <h2>{t("po.title")}</h2>

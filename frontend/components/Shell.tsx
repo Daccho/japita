@@ -96,7 +96,7 @@ export default function Shell({ children }: { children: ReactNode }) {
                 <Link key={href} href={href} aria-current={(href === "/" ? path === "/" : path.startsWith(href)) ? "page" : undefined}>
                   <Icon aria-hidden />
                   {t(key)}
-                  {href === "/basket" && lines !== undefined && <span className="jp-nav-count">{lines}</span>}
+                  {href === "/basket" && !!lines && <span className="jp-nav-count">{lines}</span>}
                 </Link>
               ))}
             </nav>

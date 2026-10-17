@@ -12,6 +12,26 @@ import { suggestedBasket } from "@/components/helpers";
 
 const POS_KEY = "japita.advisor.position";
 
+// The agent sometimes returns its final JSON envelope ({"action":"answer","text":...}) instead of plain text,
+// and may mention internal ids. Show only readable text: ids become product/supplier names.
+export function cleanAnswer(raw: string, names: Record<string, string>): string {
+  let text = raw.trim();
+  const fenced = text.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/);
+  const body = fenced ? fenced[1] : text;
+  if (body.startsWith("{")) {
+    try {
+      // Models sometimes emit invalid escapes such as \\le inside LaTeX: keep them as literal backslashes.
+      const parsed = JSON.parse(body.replace(/\\(?!["\\/bfnrtu])/g, "\\\\"));
+      if (typeof parsed.text === "string") text = parsed.text;
+      else if (typeof parsed.answer === "string") text = parsed.answer;
+    } catch {}
+  }
+  return text
+    .replace(/\s*\((?:ID|id)\s*`?C\d+`?\)/g, "")
+    .replace(/`?\b((?:O-[\w-]+)|S\d+)\b`?/g, (m, id) => names[id] ?? m)
+    .replace(/`(\w+_\w+)`/g, "$1");
+}
+
 export function Markdown({ text }: { text: string }) {
   return (
     <div className="jp-md">
@@ -119,7 +139,15 @@ function AdvisorBody() {
         {advisor.result && !advisor.running && (
           <div style={{ marginTop: 14 }}>
             {advisor.question && <p style={{ fontStyle: "italic" }}>“{advisor.question}”</p>}
-            <Markdown text={advisor.result.answer} />
+            <Markdown
+              text={cleanAnswer(
+                advisor.result.answer,
+                Object.fromEntries([
+                  ...offers.map((o) => [o.id, o.product]),
+                  ...Object.values(data?.state.suppliers ?? {}).map((s) => [s.id, s.name]),
+                ]),
+              )}
+            />
             {drafts.length > 0 && (
               <div className="jp-quote">
                 <h3>{t("adv.drafted")}</h3>
