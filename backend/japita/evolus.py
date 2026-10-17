@@ -75,10 +75,15 @@ def parse_action(text: str) -> dict | None:
     m = re.search(r"\{.*\}", text, re.S)
     if not m:
         return None
+    raw = m.group(0)
     try:
-        action = json.loads(m.group(0))
+        action = json.loads(raw)
     except json.JSONDecodeError:
-        return None
+        # Models sometimes write LaTeX like "$\\le 30\\%$": escape backslashes that JSON does not allow.
+        try:
+            action = json.loads(re.sub(r'\\(?![\\/"bfnrtu])', r"\\\\", raw))
+        except json.JSONDecodeError:
+            return None
     if action.get("action") == "answer" and isinstance(action.get("text"), str):
         return action
     if action.get("action") == "call":

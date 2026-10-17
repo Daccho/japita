@@ -2,41 +2,1487 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Restaurant workspace styles, ported from the partner mockup and restyled with the Ajitama design
+   (docs/design.md). Base layout rules come first; the Ajitama layer at the end overrides colors,
+   borders, shadows and typography. Scoped under .jp; the supplier portal uses the same :root tokens. */
+.jp { color:var(--jp-text); font:400 14px/1.5 Inter, ui-sans-serif, system-ui, sans-serif; } /* Palette: see the Ajitama layer at the end of this file. */
+.jp * { box-sizing:border-box; }
+.jp [hidden] { display:none!important; }
+.jp .jp-app { --jp-radius:14px; --jp-pad:20px; background:var(--jp-bg); border:1px solid var(--jp-line); border-radius:16px; min-height:780px; overflow:clip; color:var(--jp-text); }
+.jp .jp-app.jp-compact { --jp-pad:14px; }
+.jp button,.jp input,.jp select,.jp textarea { font:inherit; color:inherit; }
+.jp button { border:0; background:transparent; }
+.jp button:focus-visible,.jp input:focus-visible,.jp select:focus-visible { outline:2px solid var(--jp-accent); outline-offset:3px; }
+.jp .jp-app h1,.jp .jp-app h2,.jp .jp-app h3,.jp .jp-app p { margin:0; }
+.jp .jp-app h1 { font-size:27px; line-height:1.22; font-weight:500; letter-spacing:-.8px; }
+.jp .jp-app h2 { font-size:18px; font-weight:500; letter-spacing:-.35px; }
+.jp .jp-app h3 { font-size:14px; font-weight:500; }
+.jp .jp-app small { font-size:12px; }
+.jp .jp-muted { color:var(--jp-muted); }
+.jp .jp-kicker { font-size:11px; letter-spacing:1.5px; text-transform:uppercase; font-weight:500; color:var(--jp-muted); }
+.jp .jp-number { font-variant-numeric:tabular-nums; }
+.jp .jp-workspace-brands { display:flex; align-items:center; flex-wrap:wrap; gap:18px; min-width:0; }
+.jp .jp-brand { display:flex; align-items:center; flex-shrink:0; }
+.jp .jp-brand-logo { display:block; width:112px; height:56px; object-fit:cover; object-position:50% 44%; border-radius:5px; }
+.jp .jp-brand-divider { width:1px; height:38px; background:var(--jp-line); }
+.jp .jp-top { background:var(--jp-paper); padding:12px 24px; border-bottom:1px solid var(--jp-line); display:flex; align-items:center; gap:15px; }
+.jp .jp-restaurant { display:flex; align-items:center; gap:11px; font-size:12px; min-width:0; }
+.jp .jp-restaurant-logo { display:block; width:120px; height:80px; object-fit:contain; flex-shrink:0; }
+.jp .jp-restaurant-name { font-size:16px; font-weight:500; overflow-wrap:anywhere; }
+.jp .jp-shell { display:grid; grid-template-columns:180px minmax(0,1fr); min-height:698px; }
+.jp .jp-sidebar { padding:23px 12px; border-right:1px solid var(--jp-line); display:flex; flex-direction:column; gap:22px; }
+.jp .jp-nav { display:flex; flex-direction:column; gap:5px; }
+.jp .jp-nav button { padding:11px 10px; text-align:left; display:flex; gap:8px; align-items:center; border-radius:8px; font-size:13px; white-space:normal; }
+.jp .jp-nav button[aria-current="page"] { background:var(--jp-nav); color:var(--jp-accent); font-weight:500; }
+.jp .jp-nav i,.jp .jp-nav svg { width:16px; height:16px; flex-shrink:0; }
+.jp .jp-sidebar-foot { margin-top:auto; padding:12px 7px; font-size:11px; color:var(--jp-muted); }
+.jp .jp-body { min-width:0; padding:26px; }
+.jp .jp-header { display:flex; justify-content:space-between; align-items:flex-start; gap:15px; margin-bottom:22px; }
+.jp .jp-header p { margin-top:7px; }
+.jp .jp-toolbar { position:relative; display:flex; align-items:center; justify-content:flex-end; gap:8px; flex-wrap:wrap; max-width:100%; }
+.jp .jp-notification-bell { position:relative; width:38px; height:38px; padding:9px; border:1px solid var(--jp-line); border-radius:8px; display:grid; place-items:center; background:var(--jp-paper); }
+.jp .jp-notification-bell i,.jp .jp-notification-bell svg { width:18px; height:18px; }
+.jp .jp-unread { position:absolute; top:-5px; right:-5px; min-width:17px; height:17px; display:grid; place-items:center; border-radius:9px; background:var(--jp-accent); color:var(--jp-on-accent); font-size:11px; }
+.jp .jp-notifications { position:absolute; top:calc(100% + 10px); right:0; width:330px; max-width:calc(100vw - 64px); z-index:20; padding:17px; background:var(--jp-paper); border:1px solid var(--jp-line); border-radius:var(--jp-radius); box-shadow:0 12px 30px light-dark(#23312b20,#00000050); text-align:left; }
+.jp .jp-notifications .jp-line-head { margin-bottom:12px; }
+.jp .jp-notifications p { margin:7px 0 13px; font-size:12px; color:var(--jp-muted); }
+.jp .jp-notifications .jp-close { display:grid; place-items:center; padding:5px; border-radius:5px; }
+.jp .jp-close i,.jp .jp-close svg { width:16px; height:16px; }
+.jp .jp-action { display:inline-flex; gap:7px; justify-content:center; align-items:center; border:1px solid var(--jp-line); border-radius:8px; background:var(--jp-paper); padding:9px 12px; font-size:12px; white-space:nowrap; font-weight:500; }
+.jp .jp-action i,.jp .jp-action svg { width:15px; height:15px; }
+.jp .jp-action.jp-primary { background:var(--jp-accent); color:var(--jp-on-accent); border-color:var(--jp-accent); }
+.jp .jp-action:disabled { opacity:.5; }
+.jp .jp-columns { display:grid; grid-template-columns:minmax(0,1fr) 230px; gap:18px; align-items:start; }
+.jp .jp-stack { display:grid; gap:18px; }
+.jp .jp-panel { background:var(--jp-paper); border:1px solid var(--jp-line); border-radius:var(--jp-radius); padding:var(--jp-pad); min-width:0; }
+.jp .jp-alert { background:var(--jp-warn-bg); border-radius:var(--jp-radius); padding:16px; display:flex; align-items:flex-start; gap:12px; }
+.jp .jp-alert>i,.jp .jp-alert>svg { color:var(--jp-warn); width:19px; height:19px; flex-shrink:0; margin-top:2px; }
+.jp .jp-alert p { font-size:12px; margin:5px 0 12px; color:var(--jp-muted); }
+.jp .jp-line-head { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:15px; }
+.jp .jp-badge { font-size:11px; font-weight:500; display:inline-flex; align-items:center; gap:5px; background:var(--jp-soft); color:var(--jp-accent); padding:4px 8px; border-radius:5px; }
+.jp .jp-badge.jp-warning { background:var(--jp-warn-bg); color:var(--jp-warn); }
+.jp .jp-row { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:12px; padding:15px 0; border-top:1px solid var(--jp-line); }
+.jp .jp-row:first-of-type { border-top:0; }
+.jp .jp-row p { font-size:12px; color:var(--jp-muted); margin-top:3px; }
+.jp .jp-row-right { text-align:right; }
+.jp .jp-row-right .jp-badge { margin-top:5px; }
+.jp .jp-budget { display:flex; justify-content:space-between; gap:12px; align-items:center; padding-top:16px; margin-top:4px; border-top:1px solid var(--jp-line); font-size:12px; }
+.jp .jp-budget strong { font-size:20px; font-weight:500; letter-spacing:-.7px; }
+.jp .jp-budget-track { height:5px; border-radius:3px; background:var(--jp-soft); margin-top:10px; overflow:hidden; }
+.jp .jp-budget-track span { display:block; height:100%; background:var(--jp-accent); }
+.jp .jp-advisor { background:var(--jp-soft); border:1px solid var(--jp-line); border-radius:var(--jp-radius); padding:18px; }
+.jp .jp-advisor-head { display:flex; gap:8px; align-items:center; margin-bottom:14px; }
+.jp .jp-advisor-head i,.jp .jp-advisor-head svg { width:16px; height:16px; color:var(--jp-accent); }
+.jp .jp-advisor p { margin:9px 0 14px; font-size:12px; color:var(--jp-muted); }
+.jp .jp-priority { display:flex; flex-wrap:wrap; gap:5px; margin:10px 0 16px; }
+.jp .jp-priority button { padding:6px 8px; border:1px solid var(--jp-line); border-radius:6px; background:var(--jp-paper); font-size:11px; }
+.jp .jp-priority button[aria-pressed="true"] { background:var(--jp-accent); color:var(--jp-on-accent); border-color:var(--jp-accent); }
+.jp .jp-recommendation { border-top:1px solid var(--jp-line); padding-top:14px; }
+.jp .jp-recommendation .jp-price { font-size:25px; letter-spacing:-1px; margin:10px 0 2px; }
+.jp .jp-proof { display:flex; gap:7px; align-items:flex-start; font-size:11px; color:var(--jp-muted); margin:7px 0; }
+.jp .jp-proof i,.jp .jp-proof svg { width:13px; height:13px; flex-shrink:0; margin-top:2px; }
+.jp .jp-full { width:100%; margin-top:12px; }
+.jp .jp-subnav { display:flex; align-items:center; gap:4px; padding:4px; background:var(--jp-soft); border-radius:8px; width:fit-content; margin:16px 0; }
+.jp .jp-subnav button { padding:7px 11px; font-size:12px; border-radius:5px; }
+.jp .jp-subnav button[aria-pressed="true"] { background:var(--jp-paper); color:var(--jp-accent); }
+.jp .jp-search { border:1px solid var(--jp-line); border-radius:8px; padding:10px 12px; background:var(--jp-paper); width:100%; font-size:13px; }
+.jp .jp-offer { padding:var(--jp-pad); border:1px solid var(--jp-line); background:var(--jp-paper); border-radius:var(--jp-radius); }
+.jp .jp-offer-identity { display:grid; grid-template-columns:144px minmax(0,1fr); align-items:center; gap:18px; margin:17px 0 4px; }
+.jp .jp-offer-photo { margin:0; }
+.jp .jp-offer-photo img { display:block; width:100%; height:108px; object-fit:cover; border-radius:8px; background:var(--jp-soft); }
+.jp .jp-offer-photo figcaption { margin-top:5px; color:var(--jp-muted); font-size:11px; }
+.jp .jp-offer-identity h3 { margin-top:0; }
+.jp .jp-offer h3 { font-size:16px; margin:9px 0 4px; }
+.jp .jp-offer p { font-size:12px; color:var(--jp-muted); margin-top:5px; }
+.jp .jp-offer .jp-supplier-country { display:flex; align-items:center; flex-wrap:wrap; gap:6px; color:var(--jp-text); margin:8px 0; font-size:13px; }
+.jp .jp-supplier-country i,.jp .jp-supplier-country svg { width:14px; height:14px; color:var(--jp-muted); }
+.jp .jp-supplier-country strong { font-weight:500; }
+.jp .jp-offer-meta { display:flex; flex-wrap:wrap; gap:7px 16px; margin:14px 0; font-size:12px; }
+.jp .jp-offer-actions { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; padding-top:12px; border-top:1px solid var(--jp-line); }
+.jp .jp-offer-price { font-size:20px; font-weight:500; }
+.jp .jp-discovery-search { margin:0 0 22px; padding:22px; border:1px solid var(--jp-accent); border-radius:var(--jp-radius); background:var(--jp-soft); }
+.jp .jp-discovery-search>label { display:block; margin:0 0 7px; font-size:21px; font-weight:500; letter-spacing:-.4px; }
+.jp .jp-discovery-search>p { font-size:13px; color:var(--jp-muted); margin-bottom:16px; }
+.jp .jp-directory-search { display:flex; align-items:flex-end; gap:12px; padding:13px; border:1px solid var(--jp-line); border-radius:10px; background:var(--jp-paper); }
+.jp .jp-directory-search>svg { width:19px; height:19px; color:var(--jp-accent); flex-shrink:0; }
+.jp .jp-directory-search textarea { min-width:0; flex:1; width:100%; min-height:76px; padding:4px 0; border:0; resize:vertical; background:transparent; font-size:15px; }
+.jp .jp-search-note { margin:8px 0 18px!important; color:var(--jp-muted); font-size:12px; }
+.jp .jp-directory-controls { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin:0 0 20px; }
+.jp .jp-directory-controls .jp-subnav { margin:0; }
+.jp .jp-directory-controls>.jp-action[aria-expanded="true"] { border-color:var(--jp-accent); background:var(--jp-soft); }
+.jp .jp-directory-filter-panel { margin:0 0 20px; padding:18px; background:var(--jp-paper); border:1px solid var(--jp-line); border-radius:var(--jp-radius); }
+.jp .jp-directory-filters { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+.jp .jp-directory-filters label { display:grid; gap:6px; min-width:0; font-size:12px; color:var(--jp-muted); }
+.jp .jp-directory-filters select,.jp .jp-directory-filters input { width:100%; min-width:0; color:var(--jp-text); }
+.jp .jp-directory-filters input,.jp .jp-directory-filters select { padding:10px 11px; border:1px solid var(--jp-line); border-radius:8px; background:var(--jp-paper); }
+.jp .jp-discovery-search .jp-search-note { margin:10px 0 0!important; }
+.jp .jp-directory-filter-foot { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-top:16px; }
+.jp .jp-directory-filter-foot p { font-size:12px; color:var(--jp-muted); }
+.jp .jp-directory-sort-note { font-size:12px; color:var(--jp-muted); margin:0 0 12px!important; }
+.jp .jp-directory-group { padding:12px 16px; font-size:12px; background:var(--jp-soft); border-top:1px solid var(--jp-line); }
+.jp .jp-directory-group:first-child { border-top:0; }
+.jp .jp-directory-count { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:0 0 10px; color:var(--jp-muted); font-size:12px; }
+.jp .jp-directory-list { background:var(--jp-paper); border:1px solid var(--jp-line); border-radius:var(--jp-radius); overflow:hidden; }
+.jp .jp-supplier-row { padding:16px; border-top:1px solid var(--jp-line); }
+.jp .jp-supplier-row:first-child { border-top:0; }
+.jp .jp-supplier-summary { display:grid; grid-template-columns:60px minmax(0,1fr) minmax(0,1.1fr) minmax(105px,auto) auto; gap:14px; align-items:center; }
+.jp .jp-supplier-thumb { display:block; width:60px; height:60px; border-radius:8px; object-fit:cover; background:var(--jp-soft); }
+.jp .jp-supplier-summary h3 { overflow-wrap:anywhere; }
+.jp .jp-supplier-summary p { margin-top:4px; font-size:12px; color:var(--jp-muted); }
+.jp .jp-supplier-product { min-width:0; font-size:13px; }
+.jp .jp-supplier-product small { display:block; margin-top:4px; color:var(--jp-muted); }
+.jp .jp-supplier-price { text-align:right; font-size:14px; font-weight:500; font-variant-numeric:tabular-nums; }
+.jp .jp-supplier-price small { display:block; max-width:145px; margin-top:4px; font-size:11px; font-weight:400; color:var(--jp-muted); }
+.jp .jp-match-reason { margin:10px 0 0 75px!important; font-size:12px; color:var(--jp-accent); }
+.jp .jp-supplier-expanded { padding-top:15px; margin-top:15px; border-top:1px solid var(--jp-line); }
+.jp .jp-supplier-expanded .jp-offer { border:0; padding:0; }
+.jp .jp-directory-empty { padding:24px; }
+.jp .jp-directory-empty p { margin-top:6px; color:var(--jp-muted); }
+.jp .jp-advisor-dock { position:fixed; right:20px; bottom:20px; width:56px; height:56px; z-index:40; }
+.jp .jp-advisor-launcher { display:grid; place-items:center; width:56px; height:56px; border:1px solid var(--jp-accent); border-radius:50%; background:var(--jp-accent); color:var(--jp-on-accent); box-shadow:0 6px 20px light-dark(#23312b30,#00000060); touch-action:none; cursor:grab; }
+.jp .jp-advisor-launcher:active { cursor:grabbing; }
+.jp .jp-advisor-launcher svg { width:23px; height:23px; }
+.jp .jp-advisor-popup { position:absolute; left:var(--jp-popup-left,auto); bottom:68px; width:350px; max-width:calc(100vw - 32px); max-height:var(--jp-popup-height,calc(100dvh - 110px)); overflow-y:auto; padding:18px; border:1px solid var(--jp-line); border-radius:16px; background:var(--jp-paper); box-shadow:0 16px 40px light-dark(#23312b25,#00000060); }
+.jp .jp-advisor-dock.jp-popup-below .jp-advisor-popup { top:68px; bottom:auto; }
+.jp .jp-popup-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:15px; }
+.jp .jp-advisor-popup .jp-advisor { padding:0; border:0; background:var(--jp-paper); }
+.jp .jp-detail { margin-top:14px; padding-top:12px; border-top:1px solid var(--jp-line); }
+.jp .jp-detail dl { display:grid; grid-template-columns:1fr 1fr; gap:7px; font-size:12px; margin:0; }
+.jp .jp-detail dt { color:var(--jp-muted); }
+.jp .jp-detail dd { margin:0; text-align:right; }
+.jp .jp-quote { margin-top:12px; background:var(--jp-soft); padding:13px; border-radius:8px; font-size:12px; }
+.jp .jp-quote p { margin-bottom:12px; }
+.jp .jp-pill-row { display:flex; flex-wrap:wrap; gap:7px; margin-top:12px; }
+.jp .jp-checkbox { display:flex; gap:10px; align-items:flex-start; padding:15px 0; border-bottom:1px solid var(--jp-line); font-size:13px; }
+.jp .jp-checkbox input { accent-color:var(--jp-accent); margin-top:4px; }
+.jp .jp-select-label { display:grid; gap:7px; font-size:12px; margin:18px 0; }
+.jp select { background:var(--jp-paper); border:1px solid var(--jp-line); border-radius:7px; padding:9px; max-width:100%; }
+.jp .jp-profile-tabs { display:flex; flex-wrap:wrap; gap:4px 18px; border-bottom:1px solid var(--jp-line); margin-bottom:24px; }
+.jp .jp-profile-tabs button { padding:11px 0; font-size:13px; border-bottom:2px solid transparent; }
+.jp .jp-profile-tabs button[aria-pressed="true"] { border-bottom-color:var(--jp-accent); color:var(--jp-accent); font-weight:500; }
+.jp .jp-profile-title { display:flex; align-items:flex-start; gap:14px; margin-bottom:20px; }
+.jp .jp-profile-mark { width:50px; height:50px; display:grid; place-items:center; flex-shrink:0; }
+.jp .jp-profile-mark img { display:block; width:50px; height:50px; object-fit:contain; }
+.jp .jp-description { max-width:720px; line-height:1.75; white-space:pre-line; }
+.jp .jp-facts { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px 30px; margin:22px 0 0; }
+.jp .jp-facts dt { color:var(--jp-muted); font-size:12px; margin-bottom:3px; }
+.jp .jp-facts dd { margin:0; font-size:13px; overflow-wrap:anywhere; }
+.jp .jp-source { border-top:1px solid var(--jp-line); padding:16px 0; }
+.jp .jp-source:first-child { border-top:0; padding-top:0; }
+.jp .jp-source:last-child { padding-bottom:0; }
+.jp summary { font-weight:500; }
+.jp .jp-source summary { font-size:13px; }
+.jp .jp-source-body { margin-top:13px; }
+.jp .jp-owner-notes { margin:0; padding-left:14px; border-left:2px solid var(--jp-line); font-size:13px; white-space:pre-line; }
+.jp .jp-field { display:grid; gap:7px; font-size:12px; min-width:0; margin-bottom:16px; }
+.jp .jp-field input,.jp .jp-field textarea { width:100%; min-width:0; background:var(--jp-bg); border:1px solid var(--jp-line); border-radius:7px; padding:10px; }
+.jp .jp-field textarea { resize:vertical; min-height:105px; }
+.jp .jp-field-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 16px; }
+.jp .jp-form-actions { display:flex; align-items:center; flex-wrap:wrap; gap:9px; margin-top:5px; }
+.jp .jp-section-note { margin:0 0 18px!important; font-size:12px; color:var(--jp-muted); }
+.jp .jp-sheet-edit { width:36px; height:36px; padding:9px; }
+.jp .jp-menu-detail { padding:4px 10px; font-size:13px; }
+.jp .jp-menu-detail p+p { margin-top:9px; }
+.jp .jp-menu-detail .jp-field { margin:8px 0; }
+.jp .jp-menu-editor { margin:0; }
+.jp .jp-menu-editbar { max-width:740px; margin:0 auto 16px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+.jp .jp-menu-editbar p { margin-top:3px; font-size:12px; color:var(--jp-muted); }
+.jp .jp-menu-editbar .jp-form-actions { margin:0; }
+.jp .jp-menu-editbar>.jp-error { flex-basis:100%; margin:0!important; }
+.jp .jp-menu-document { --jp-menu-paper:light-dark(#fffdf7,#ece5d7); --jp-menu-ink:light-dark(#293d30,#26392d); --jp-menu-faint:light-dark(#697266,#5b665a); --jp-menu-rule:light-dark(#d8d9c8,#c8c6b5); position:relative; max-width:740px; margin:0 auto; padding:36px 46px 30px; background:var(--jp-menu-paper); color:var(--jp-menu-ink); border:1px solid var(--jp-menu-rule); border-radius:3px; box-shadow:0 9px 28px light-dark(#23312b12,#00000030); }
+.jp .jp-menu-document>.jp-sheet-edit { position:absolute; right:18px; top:18px; color:var(--jp-menu-ink); background:var(--jp-menu-paper); border-color:var(--jp-menu-rule); }
+.jp .jp-menu-masthead { text-align:center; border-bottom:1px solid var(--jp-menu-rule); padding-bottom:24px; margin-bottom:26px; }
+.jp .jp-menu-masthead img { display:block; width:58px; height:58px; margin:0 auto 13px; object-fit:contain; }
+.jp .jp-menu-document .jp-menu-restaurant { font-family:Georgia,'Times New Roman',serif; font-size:28px; font-weight:400; letter-spacing:-.5px; }
+.jp .jp-menu-masthead p { margin-top:8px!important; font-size:12px; color:var(--jp-menu-faint); }
+.jp .jp-menu-label { display:block; margin-top:17px; font-size:11px; text-transform:uppercase; letter-spacing:4px; }
+.jp .jp-menu-chapter+.jp-menu-chapter { margin-top:28px; }
+.jp .jp-menu-document .jp-menu-chapter-title { font-size:11px; font-weight:500; letter-spacing:2.5px; text-transform:uppercase; margin-bottom:18px; }
+.jp .jp-menu-dish+.jp-menu-dish { margin-top:21px; }
+.jp .jp-menu-dish-line { display:flex; align-items:baseline; gap:10px; }
+.jp .jp-menu-document .jp-menu-dish-line h3 { min-width:0; overflow-wrap:anywhere; font-family:Georgia,'Times New Roman',serif; font-size:19px; font-weight:400; }
+.jp .jp-menu-leader { flex:1; min-width:12px; border-bottom:1px dotted var(--jp-menu-rule); }
+.jp .jp-menu-dish-price { flex-shrink:0; font-size:16px; font-variant-numeric:tabular-nums; }
+.jp .jp-menu-dish p { margin-top:6px!important; max-width:490px; font-size:12px; color:var(--jp-menu-faint); }
+.jp .jp-menu-document.jp-menu-editing .jp-menu-dish-line h3 { flex:0 1 70%; }
+.jp .jp-menu-document.jp-menu-editing .jp-menu-dish-line { align-items:flex-start; }
+.jp .jp-menu-document.jp-menu-editing .jp-menu-leader { margin-top:22px; }
+.jp .jp-menu-inline { display:block; box-sizing:border-box; width:100%; min-width:0; padding:0; border:0; border-radius:2px; background:transparent; color:inherit; font:inherit; line-height:inherit; box-shadow:0 1px 0 var(--jp-menu-rule); }
+.jp textarea.jp-menu-inline { resize:none; overflow:hidden; min-height:1.5em; }
+.jp .jp-menu-inline:hover,.jp .jp-menu-inline:focus { background:light-dark(#294a3409,#294a3412); }
+.jp .jp-menu-dish-price:has(input) { display:flex; align-items:baseline; gap:2px; }
+.jp .jp-menu-dish-price input { width:78px; text-align:right; font-variant-numeric:tabular-nums; appearance:textfield; }
+.jp .jp-menu-dish-price input::-webkit-inner-spin-button,.jp .jp-menu-dish-price input::-webkit-outer-spin-button { appearance:none; margin:0; }
+.jp .jp-menu-inline::placeholder { color:var(--jp-menu-faint); opacity:1; }
+.jp .jp-menu-paper-foot { margin-top:28px; padding-top:18px; border-top:1px solid var(--jp-menu-rule); text-align:center; font-size:11px; color:var(--jp-menu-faint); }
+.jp .jp-menu-planning { max-width:740px; margin:18px auto 0; padding:17px 20px; border:1px solid var(--jp-line); border-radius:var(--jp-radius); background:var(--jp-paper); }
+.jp .jp-menu-planning>summary { font-size:13px; }
+.jp .jp-menu-planning-row { padding:12px 0; border-top:1px solid var(--jp-line); }
+.jp .jp-menu-planning-row>summary { font-size:12px; }
+.jp .jp-menu-planning-row .jp-menu-detail { margin-top:12px; padding:0; }
+.jp .jp-menu-planning textarea[data-menu-autosize] { resize:none; overflow:hidden; }
+.jp .jp-ingredients { display:flex; flex-wrap:wrap; gap:6px; margin:12px 0; }
+.jp .jp-link-group+.jp-link-group { margin-top:26px; }
+.jp .jp-link-row { display:grid; grid-template-columns:24px minmax(0,1fr) auto; gap:12px; align-items:center; padding:17px 0; border-bottom:1px solid var(--jp-line); }
+.jp .jp-link-row>svg { width:18px; height:18px; color:var(--jp-muted); }
+.jp .jp-link-row p { margin-top:3px; font-size:12px; color:var(--jp-muted); overflow-wrap:anywhere; }
+.jp .jp-link-row.jp-link-edit { align-items:start; }
+.jp .jp-link-row .jp-field { margin:8px 0; }
+.jp .jp-link-row.jp-link-edit .jp-link-editor { grid-column:2/-1; }
+.jp .jp-error { font-size:12px; color:var(--jp-warn); margin-bottom:10px!important; }
+.jp .jp-toast { margin-top:14px; border-left:3px solid var(--jp-accent); padding:9px 12px; font-size:12px; background:var(--jp-soft); }
+.jp .jp-footer { margin-top:18px; display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; color:var(--jp-muted); font-size:11px; }
+@media(max-width:900px) {
+  .jp .jp-shell { grid-template-columns:130px minmax(0,1fr); }
+  .jp .jp-sidebar { padding:20px 8px; }
+  .jp .jp-nav button { font-size:12px; padding:10px 7px; }
+  .jp .jp-body { padding:23px 18px; }
+  .jp .jp-columns { grid-template-columns:minmax(0,1fr) 210px; gap:12px; }
+}
+@media(max-width:700px) {
+  .jp .jp-shell { grid-template-columns:1fr; }
+  .jp .jp-sidebar { border-right:0; border-bottom:1px solid var(--jp-line); padding:10px; }
+  .jp .jp-nav { flex-direction:row; gap:3px; flex-wrap:wrap; }
+  .jp .jp-nav button { font-size:12px; padding:10px; }
+  .jp .jp-sidebar-foot { display:none; }
+  .jp .jp-top { padding:12px 110px 12px 17px; }
+  .jp .jp-workspace-brands { gap:12px; }
+  .jp .jp-restaurant { font-size:11px; }
+  .jp .jp-advisor { order:-1; }
+  .jp .jp-header { flex-wrap:wrap; }
+  .jp .jp-toolbar { width:100%; }
+  .jp .jp-notifications { position:static; width:100%; max-width:100%; flex-basis:100%; box-shadow:none; }
+  .jp .jp-app h1 { font-size:25px; }
+  .jp .jp-facts,.jp .jp-field-grid { grid-template-columns:1fr; }
+  .jp .jp-profile-tabs { gap:4px 14px; }
+  .jp .jp-profile-tabs button { font-size:12px; }
+  .jp .jp-link-row { grid-template-columns:20px minmax(0,1fr); gap:10px; }
+  .jp .jp-link-row>.jp-action { grid-column:2; justify-self:start; }
+  .jp .jp-supplier-summary { grid-template-columns:52px minmax(0,1fr) auto; gap:12px; }
+  .jp .jp-supplier-thumb { width:52px; height:52px; }
+  .jp .jp-supplier-product { grid-column:2; }
+  .jp .jp-supplier-price { grid-column:2; text-align:left; }
+  .jp .jp-supplier-price small { max-width:none; }
+  .jp .jp-supplier-summary>.jp-action { grid-column:3; grid-row:1 / span 3; }
+  .jp .jp-match-reason { margin-left:64px!important; }
+}
+@media(max-width:480px) {
+  .jp .jp-discovery-search { padding:17px; }
+  .jp .jp-directory-search { flex-wrap:wrap; }
+  .jp .jp-directory-search textarea { flex-basis:100%; }
+  .jp .jp-directory-search>.jp-action { margin-left:auto; }
+  .jp .jp-brand-divider { display:none; }
+  .jp .jp-restaurant-logo { width:64px; height:64px; }
+  .jp .jp-restaurant-name { font-size:14px; }
+  .jp .jp-brand-logo { width:96px; height:48px; }
+  .jp .jp-offer-identity { grid-template-columns:88px minmax(0,1fr); gap:12px; align-items:start; }
+  .jp .jp-offer-photo img { height:88px; }
+  .jp .jp-directory-filters { grid-template-columns:1fr; gap:10px; }
+  .jp .jp-supplier-summary { grid-template-columns:48px minmax(0,1fr); }
+  .jp .jp-supplier-thumb { width:48px; height:48px; }
+  .jp .jp-supplier-summary>.jp-action { grid-column:2; grid-row:auto; justify-self:start; }
+  .jp .jp-match-reason { margin-left:60px!important; }
+  .jp .jp-menu-document { padding:30px 20px 23px; }
+  .jp .jp-menu-document .jp-menu-restaurant { font-size:24px; }
+  .jp .jp-menu-document .jp-menu-dish-line h3 { font-size:17px; }
+  .jp .jp-menu-masthead { padding-top:15px; }
+}
+@media(pointer:coarse) { .jp button,.jp summary { min-height:44px; } .jp input,.jp select,.jp textarea { font-size:16px; } }
+
+/* --- Next.js app additions (not in the mockup) --- */
+.jp { color-scheme:light; }
+.jp .jp-app { min-height:100vh; border:0; border-radius:0; overflow:visible; }
+.jp .jp-top { padding:12px 24px; justify-content:space-between; flex-wrap:wrap; }
+.jp .jp-top-controls { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.jp .jp-shell { min-height:calc(100vh - 106px); }
+.jp .jp-sidebar { position:relative; }
+.jp .jp-nav a { padding:11px 10px; text-align:left; display:flex; gap:8px; align-items:center; border-radius:8px; font-size:13px; color:inherit; text-decoration:none; }
+.jp .jp-nav a[aria-current="page"] { background:var(--jp-nav); color:var(--jp-accent); font-weight:500; }
+.jp .jp-nav a svg { width:16px; height:16px; flex-shrink:0; }
+.jp .jp-nav-count { margin-left:auto; font-size:11px; color:var(--jp-muted); font-variant-numeric:tabular-nums; }
+.jp .jp-body { padding-bottom:90px; }
+.jp .jp-segment { display:flex; align-items:center; gap:2px; padding:3px; background:var(--jp-soft); border-radius:8px; }
+.jp .jp-segment button { padding:5px 9px; font-size:12px; border-radius:5px; }
+.jp .jp-segment button[aria-pressed="true"] { background:var(--jp-paper); color:var(--jp-accent); font-weight:500; }
+.jp .jp-segment-label { font-size:11px; color:var(--jp-muted); padding:0 4px 0 6px; }
+.jp a.jp-action { color:inherit; text-decoration:none; }
+.jp a.jp-action.jp-primary { color:var(--jp-on-accent); }
+.jp .jp-action:not(:disabled) { cursor:pointer; }
+.jp .jp-badge.jp-danger { background:var(--jp-warn-bg); color:var(--jp-warn); }
+.jp .jp-badge.jp-neutral { background:var(--jp-soft); color:var(--jp-muted); }
+.jp .jp-notification-item+.jp-notification-item { margin-top:14px; padding-top:14px; border-top:1px solid var(--jp-line); }
+.jp .jp-notifications { max-height:min(70vh,560px); overflow-y:auto; }
+.jp .jp-spinner { width:15px; height:15px; animation:jp-spin 1s linear infinite; }
+@keyframes jp-spin { to { transform:rotate(360deg); } }
+.jp .jp-loading { display:flex; align-items:center; gap:10px; padding:22px; color:var(--jp-muted); font-size:13px; }
+.jp .jp-progress { height:4px; border-radius:2px; background:var(--jp-soft); overflow:hidden; margin-top:10px; }
+.jp .jp-progress span { display:block; height:100%; width:35%; background:var(--jp-accent); animation:jp-slide 1.6s ease-in-out infinite; }
+@keyframes jp-slide { 0% { transform:translateX(-100%); } 100% { transform:translateX(300%); } }
+.jp .jp-days { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:4px; margin-top:10px; }
+.jp .jp-day { text-align:center; font-size:11px; padding:5px 2px; border-radius:6px; background:var(--jp-soft); color:var(--jp-muted); }
+.jp .jp-day strong { display:block; font-weight:500; color:var(--jp-text); font-size:11px; }
+.jp .jp-day.jp-day-short { background:var(--jp-warn-bg); color:var(--jp-warn); }
+.jp .jp-day.jp-day-short strong { color:var(--jp-warn); }
+.jp .jp-day.jp-day-arrival { box-shadow:inset 0 0 0 1px var(--jp-accent); }
+.jp .jp-kv { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:6px 14px; font-size:12px; margin:0; }
+.jp .jp-kv dt { color:var(--jp-muted); }
+.jp .jp-kv dd { margin:0; text-align:right; font-variant-numeric:tabular-nums; }
+.jp .jp-check { display:flex; gap:7px; align-items:flex-start; font-size:12px; margin:5px 0; }
+.jp .jp-check svg { width:14px; height:14px; flex-shrink:0; margin-top:2px; }
+.jp .jp-check.jp-ok svg { color:var(--jp-accent); }
+.jp .jp-check.jp-bad svg { color:var(--jp-warn); }
+.jp .jp-ja { font-family:var(--font-noto),Inter,sans-serif; }
+.jp .jp-message { background:var(--jp-soft); border-radius:8px; padding:11px 13px; font-size:13px; white-space:pre-line; }
+.jp .jp-message-label { display:block; font-size:11px; color:var(--jp-muted); margin-bottom:5px; letter-spacing:.3px; }
+.jp .jp-diff { display:grid; grid-template-columns:auto minmax(0,1fr); gap:5px 14px; font-size:12px; margin:10px 0; }
+.jp .jp-diff dt { color:var(--jp-muted); }
+.jp .jp-diff dd { margin:0; }
+.jp .jp-diff s { color:var(--jp-muted); }
+.jp .jp-proposal { margin-top:14px; padding:14px; border:1px solid var(--jp-warn); border-radius:10px; background:var(--jp-warn-bg); }
+.jp .jp-proposal .jp-message { background:var(--jp-paper); }
+.jp .jp-basket-options { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr)); gap:10px; }
+.jp .jp-basket-option { text-align:left; padding:14px; border:1px solid var(--jp-line); border-radius:10px; background:var(--jp-paper); cursor:pointer; }
+.jp .jp-basket-option[aria-pressed="true"] { border-color:var(--jp-accent); box-shadow:inset 0 0 0 1px var(--jp-accent); background:var(--jp-soft); }
+.jp .jp-basket-option strong { display:block; font-size:20px; font-weight:500; letter-spacing:-.6px; margin:6px 0 2px; font-variant-numeric:tabular-nums; }
+.jp .jp-basket-option small { display:block; color:var(--jp-muted); font-size:11px; }
+.jp .jp-po + .jp-po { margin-top:12px; }
+.jp .jp-po { border:1px solid var(--jp-line); border-radius:10px; padding:14px; }
+.jp .jp-advisor-ask textarea { width:100%; min-height:70px; border:1px solid var(--jp-line); border-radius:8px; padding:9px 10px; background:var(--jp-bg); resize:vertical; font-size:13px; }
+.jp .jp-suggestions { display:grid; gap:6px; margin:10px 0; }
+.jp .jp-suggestions button { text-align:left; font-size:12px; padding:8px 10px; border:1px solid var(--jp-line); border-radius:8px; background:var(--jp-paper); cursor:pointer; }
+.jp .jp-suggestions button:hover { border-color:var(--jp-accent); }
+.jp .jp-advisor-popup { width:400px; }
+.jp .jp-thumb-icon { display:grid; place-items:center; color:var(--jp-accent); }
+.jp .jp-thumb-icon svg { width:24px; height:24px; }
+.jp .jp-offer-photo .jp-thumb-icon { width:100%; height:108px; border-radius:8px; background:var(--jp-soft); }
+
+/* Markdown answers (advisor, weekly check). */
+.jp .jp-md { font-size:13px; line-height:1.6; overflow-wrap:anywhere; }
+.jp .jp-md p { margin:8px 0!important; }
+.jp .jp-md h1,.jp .jp-md h2,.jp .jp-md h3,.jp .jp-md h4 { font-size:14px!important; font-weight:600!important; margin:14px 0 6px!important; letter-spacing:0!important; }
+.jp .jp-md ul { list-style:disc; padding-left:20px; margin:6px 0; }
+.jp .jp-md ol { list-style:decimal; padding-left:20px; margin:6px 0; }
+.jp .jp-md li { margin:3px 0; }
+.jp .jp-md table { width:100%; border-collapse:collapse; margin:10px 0; font-size:12px; display:block; overflow-x:auto; }
+.jp .jp-md th,.jp .jp-md td { border:1px solid var(--jp-line); padding:5px 7px; text-align:left; vertical-align:top; }
+.jp .jp-md th { background:var(--jp-soft); font-weight:500; }
+.jp .jp-md hr { border:0; border-top:1px solid var(--jp-line); margin:12px 0; }
+.jp .jp-md code { font-size:12px; background:var(--jp-soft); padding:1px 4px; border-radius:4px; }
+@media(max-width:700px) {
+  .jp .jp-columns { grid-template-columns:1fr; }
+  .jp .jp-nav a { font-size:12px; padding:10px; }
+  .jp .jp-top { padding:12px 17px; }
+}
+
+/* ---------------------------------------------------------------------------
+   Ajitama design layer (see docs/design.md). Ported from the approved Ajitama
+   restyle of the partner mockup. Tokens live on :root so the supplier portal
+   shares them; component rules are scoped to the restaurant workspace
+   (.jp .jp-app), one class stronger than the base rules above, so they win.
+   The palette is light in both host appearances (audit G2).
+   --------------------------------------------------------------------------- */
 :root {
-  --background: #faf8f5;
-  --foreground: #1c1917;
+  --aj-yolk:#F4BC2B;
+  --aj-ink:#1E1B18;
+  --aj-ink-soft:#5A4512;
+  --aj-muted:#625B52;
+  --aj-line:#ECE8DF;
+  --aj-page:#F5F4F0;
+  --aj-surface:#FFFFFF;
+  --aj-yolk-tint:#FFF2CC;
+  --aj-chili:#E0482B;
+  --aj-alert-ink:#12100E;
+  --aj-chili-tint:#FDE2DA;
+  --aj-chili-text:#A3260F;
+  --aj-pending-row:#FEF3F0;
+  --aj-detail-bg:#FFFAED;
+  --aj-detail-line:#B0AFAE;
+  --aj-menu-ink:#1A1A1A;
+  --aj-menu-muted:#57534D;
+  --aj-menu-tagline:#635F59;
+  --aj-menu-leader:#8B867E;
+  --aj-menu-edit:#8B1E2D;
+  --aj-header-divider:color-mix(in srgb,var(--aj-ink) 25%,transparent);
+  --aj-font-ui:var(--font-zen-kaku),'Zen Kaku Gothic New',system-ui,sans-serif;
+  --aj-font-display:var(--font-dela),'Dela Gothic One','Arial Black',sans-serif;
+  --aj-font-menu:var(--font-bodoni),'Bodoni Moda',Didot,serif;
+  --aj-font-menu-copy:var(--font-archivo),'Archivo',system-ui,sans-serif;
+  --aj-type-base:14px;
+  --aj-type-small:12px;
+  --aj-type-alert:11.5px;
+  --aj-type-request:15px;
+  --aj-type-touch:16px;
+  --aj-type-restaurant:25px;
+  --aj-type-subtitle:12.5px;
+  --aj-restaurant-name-size:clamp(var(--aj-type-base),2.5vw,var(--aj-type-restaurant));
+  --aj-restaurant-tracking:.01em;
+  --aj-line-display:1.05;
+  --aj-line-body:1.45;
+  --aj-weight-regular:400;
+  --aj-weight-medium:500;
+  --aj-weight-bold:700;
+  --aj-radius-badge:6px;
+  --aj-radius-control:10px;
+  --aj-radius-card:12px;
+  --aj-radius-table:14px;
+  --aj-radius-popup:16px;
+  --aj-radius-circle:50%;
+  --aj-radius-square:0;
+  --aj-shadow-control:0 3px 0 var(--aj-ink);
+  --aj-shadow-dropdown:0 2px 0 var(--aj-ink);
+  --aj-shadow-pressed:0 1px 0 var(--aj-ink);
+  --aj-shadow-bubble:0 4px 0 var(--aj-ink);
+  --aj-shadow-popup:7px 7px 0 var(--aj-ink);
+  --aj-shadow-none:none;
+  --aj-border-strong:2px solid var(--aj-ink);
+  --aj-border-light:1.5px solid var(--aj-line);
+  --aj-border-detail:1.5px dashed var(--aj-detail-line);
+  --aj-border-none:0;
+  --aj-transparent:transparent;
+  --aj-focus-outline:2px solid var(--aj-chili);
+  --aj-focus-offset:2px;
+  --aj-press-duration:80ms;
+  --aj-reduced-duration:0ms;
+  --aj-press-distance:2px;
+  --aj-control-height:38px;
+  --aj-dropdown-height:36px;
+  --aj-touch-size:44px;
+  --aj-alert-size:22px;
+  --aj-control-padding:16px;
+  --aj-field-padding:12px;
+  --aj-badge-padding:8px;
+  --aj-count-padding:6px;
+  --aj-icon-size:19px;
+  --aj-icon-stroke:1.8;
+  --aj-underline-offset:3px;
+  --aj-header-control-height:40px;
+  --aj-header-alert-offset:-9px;
+  --aj-brand-plate-padding:8px;
+  --aj-type-nav:15px;
+  --aj-type-nav-note:11.5px;
+  --aj-nav-height:42px;
+  --aj-nav-padding-block:22px;
+  --aj-nav-padding-inline:14px;
+  --aj-nav-item-padding:12px;
+  --aj-nav-icon-gap:12px;
+  --aj-nav-compact-padding:7px;
+  --aj-nav-compact-gap:8px;
+  --aj-type-page-title:36px;
+  --aj-type-page-title-compact:28px;
+  --aj-type-page-description:14.5px;
+  --aj-page-title-size:var(--aj-type-page-title);
+  --aj-page-title-tracking:.005em;
+  --aj-line-page-title:1;
+  --aj-page-description-gap:6px;
+  --aj-search-height:52px;
+  --aj-search-button-padding:24px;
+  --aj-search-icon-size:20px;
+  --aj-type-result:13px;
+  --aj-type-supplier:16px;
+  --aj-type-spec:12.5px;
+  --aj-type-price:19px;
+  --aj-supplier-row-height:68px;
+  --aj-supplier-row-padding-block:10px;
+  --aj-supplier-row-padding-inline:16px;
+  --aj-supplier-detail-padding:16px;
+  --aj-supplier-group-height:38px;
+  --aj-supplier-group-padding:8px;
+  --aj-shadow-pending:inset 6px 0 0 var(--aj-chili);
+  --aj-weight-menu-semibold:600;
+  --aj-weight-menu-heavy:800;
+  --aj-profile-tab-gap:8px;
+  --aj-type-menu-restaurant:40px;
+  --aj-type-menu-restaurant-compact:24px;
+  --aj-type-menu-tagline:16px;
+  --aj-type-menu-section:22px;
+  --aj-type-menu-dish:19px;
+  --aj-type-menu-dish-compact:17px;
+  --aj-type-menu-description:13.5px;
+  --aj-type-menu-note:11px;
+  --aj-type-menu-control:13px;
+  --aj-menu-restaurant-size:var(--aj-type-menu-restaurant);
+  --aj-menu-dish-size:var(--aj-type-menu-dish);
+  --aj-menu-paper-padding:40px 56px 38px;
+  --aj-menu-paper-padding-compact:30px 20px 23px;
+  --aj-menu-name-tracking:-.01em;
+  --aj-menu-section-gap:16px;
+  --aj-menu-leader-offset:-4px;
+  --aj-menu-description-width:58ch;
+  --aj-menu-pencil-size:36px;
+  --aj-menu-control-height:34px;
+  --aj-menu-pencil-padding:8px;
+  --aj-menu-field-offset:3px;
+  --aj-line-menu-heading:1.2;
+  --aj-line-menu-dish:1.3;
+  --aj-border-menu:1px solid var(--aj-menu-ink);
+  --aj-border-menu-control:1.5px solid var(--aj-menu-ink);
+  --aj-border-menu-leader:1.5px dotted var(--aj-menu-leader);
+  --aj-outline-menu-field:1px dashed var(--aj-menu-edit);
+  --aj-outline-menu-focus:2px solid var(--aj-menu-edit);
+  --aj-shadow-menu-frame:inset 0 0 0 7px var(--aj-surface),inset 0 0 0 8px var(--aj-menu-ink);
+  --aj-advisor-icon-size:26px;
+  --aj-advisor-icon-stroke:2.1;
+  --aj-border-advisor-bubble:2.5px solid var(--aj-ink);
+  --aj-type-advisor-title:17px;
+  --aj-type-advisor-context:12.5px;
+  --aj-type-advisor-main:16.5px;
+  --aj-type-advisor-copy:13.5px;
+  --aj-type-advisor-price:21px;
+  --aj-line-advisor:1.4;
+  --aj-advisor-body-padding:12px 18px;
+  --aj-advisor-card-padding:10px 12px;
+  --aj-advisor-control-height:36px;
+  --aj-advisor-control-padding:11px;
+  --aj-advisor-close-size:30px;
+  --aj-radius-advisor-close:8px;
+  --aj-type-section-title:18px;
+  --aj-type-promotion-price:26px;
+  --aj-type-basket-total:24px;
+  --aj-line-section-title:1.3;
+  --aj-border-notice:3px solid var(--aj-ink);
+}
+.jp {
+  /* Bridge the existing workspace to the new palette without changing its structure. */
+  --jp-bg:var(--aj-page);
+  --jp-paper:var(--aj-surface);
+  --jp-text:var(--aj-ink);
+  --jp-muted:var(--aj-muted);
+  --jp-line:var(--aj-line);
+  --jp-soft:var(--aj-yolk-tint);
+  --jp-accent:var(--aj-ink);
+  --jp-on-accent:var(--aj-surface);
+  --jp-warn:var(--aj-chili-text);
+  --jp-warn-bg:var(--aj-chili-tint);
+  --jp-nav:var(--aj-yolk-tint);
+  color-scheme:light;
+  font:var(--aj-weight-regular) var(--aj-type-base)/var(--aj-line-body) var(--aj-font-ui);
+}
+.jp .jp-app h1,
+.jp .jp-app .jp-restaurant-name,
+.jp .jp-app .jp-popup-head h2 {
+  font-family:var(--aj-font-display);
+  font-weight:var(--aj-weight-regular);
+}
+.jp .jp-app .jp-supplier-price,
+.jp .jp-app .jp-offer-price,
+.jp .jp-app .jp-price,
+.jp .jp-app .jp-promotion-prices strong,
+.jp .jp-app .jp-number,
+.jp .jp-app input[type="number"] {
+  font-family:var(--aj-font-ui);
+  font-variant-numeric:tabular-nums;
+}
+/* Step 2: shared controls, scoped to the original workspace. */
+.jp .jp-app :is(.jp-action:not(.jp-sheet-edit),.jp-subnav button,.jp-priority button,.jp-profile-tabs button) {
+  min-width:0;
+  max-width:100%;
+  min-height:var(--aj-control-height);
+  padding:0 var(--aj-control-padding);
+  border:var(--aj-border-strong);
+  border-radius:var(--aj-radius-control);
+  background:var(--aj-surface);
+  color:var(--aj-ink);
+  box-shadow:var(--aj-shadow-control);
+  font-family:var(--aj-font-ui);
+  font-size:var(--aj-type-base);
+  font-weight:var(--aj-weight-bold);
+  line-height:var(--aj-line-body);
+  white-space:normal;
+  text-align:center;
+  transition:transform var(--aj-press-duration),box-shadow var(--aj-press-duration);
+}
+.jp .jp-app .jp-action.jp-primary,
+.jp .jp-app :is(.jp-subnav,.jp-priority,.jp-profile-tabs) button[aria-pressed="true"] {
+  background:var(--aj-ink);
+  color:var(--aj-surface);
+  border-color:var(--aj-ink);
+}
+.jp .jp-app :is(.jp-action:not(.jp-sheet-edit),.jp-subnav button,.jp-priority button,.jp-profile-tabs button):not([data-act="clearDirectorySearch"]):not(:disabled):active,
+.jp .jp-app :is(.jp-notification-bell,.jp-close):not(:disabled):active {
+  transform:translateY(var(--aj-press-distance));
+  box-shadow:var(--aj-shadow-pressed);
+}
+.jp .jp-app :is(.jp-action,.jp-subnav button,.jp-priority button,.jp-profile-tabs button):disabled {
+  box-shadow:var(--aj-shadow-none);
+  transform:none;
+  cursor:not-allowed;
+}
+.jp .jp-app .jp-action[data-act="clearDirectorySearch"] {
+  min-height:0;
+  padding:0;
+  border:var(--aj-border-none);
+  background:var(--aj-transparent);
+  box-shadow:var(--aj-shadow-none);
+  text-decoration:underline;
+  text-underline-offset:var(--aj-underline-offset);
+}
+.jp .jp-app :is(.jp-notification-bell,.jp-close) {
+  display:inline-grid;
+  place-items:center;
+  width:var(--aj-control-height);
+  min-height:var(--aj-control-height);
+  padding:0;
+  border:var(--aj-border-strong);
+  border-radius:var(--aj-radius-control);
+  background:var(--aj-surface);
+  color:var(--aj-ink);
+  box-shadow:var(--aj-shadow-control);
+  transition:transform var(--aj-press-duration),box-shadow var(--aj-press-duration);
+}
+.jp.jp .jp-app :where(input:not([type="checkbox"]):not(.jp-menu-inline),textarea:not(.jp-menu-inline),select) {
+  min-width:0;
+  max-width:100%;
+  padding:8px var(--aj-field-padding);
+  border:var(--aj-border-strong);
+  border-radius:var(--aj-radius-control);
+  background:var(--aj-surface);
+  color:var(--aj-ink);
+  font-family:var(--aj-font-ui);
+  font-size:var(--aj-type-base);
+  font-weight:var(--aj-weight-medium);
+  line-height:var(--aj-line-body);
+}
+.jp .jp-app input:not([type="checkbox"]):not(.jp-menu-inline) { min-height:var(--aj-control-height); }
+.jp.jp .jp-app select {
+  min-height:var(--aj-dropdown-height);
+  padding:0 var(--aj-field-padding);
+  box-shadow:var(--aj-shadow-dropdown);
+  font-weight:var(--aj-weight-bold);
+}
+.jp .jp-app .jp-search { border-radius:var(--aj-radius-card); }
+.jp .jp-app .jp-directory-search {
+  border:var(--aj-border-strong);
+  border-radius:var(--aj-radius-card);
+  background:var(--aj-surface);
+  box-shadow:var(--aj-shadow-control);
+}
+.jp .jp-app .jp-directory-search textarea {
+  padding:4px 0;
+  border:var(--aj-border-none);
+  border-radius:var(--aj-radius-square);
+  background:var(--aj-transparent);
+  font-size:var(--aj-type-request);
+}
+.jp .jp-app :is(input,textarea):not(.jp-menu-inline)::placeholder { color:var(--aj-muted); opacity:1; }
+.jp .jp-app :is(.jp-field,.jp-select-label,.jp-directory-filters label) { color:var(--aj-muted); font-weight:var(--aj-weight-medium); }
+.jp .jp-app input[type="checkbox"] { accent-color:var(--aj-ink); }
+.jp .jp-app :is(button,input,select,textarea,summary,a[href]):focus-visible {
+  outline:var(--aj-focus-outline);
+  outline-offset:var(--aj-focus-offset);
+}
+.jp .jp-app .jp-badge {
+  padding:0 var(--aj-badge-padding);
+  border-radius:var(--aj-radius-badge);
+  background:var(--aj-yolk-tint);
+  color:var(--aj-ink);
+  font-family:var(--aj-font-ui);
+  font-size:var(--aj-type-small);
+  font-weight:var(--aj-weight-bold);
+  line-height:var(--aj-line-body);
+}
+.jp .jp-app .jp-badge.jp-warning { background:var(--aj-chili-tint); color:var(--aj-chili-text); }
+.jp .jp-app [data-basket-count] {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:0 var(--aj-count-padding);
+  border-radius:var(--aj-radius-badge);
+  background:var(--aj-ink);
+  color:var(--aj-surface);
+  font-size:var(--aj-type-small);
+  font-weight:var(--aj-weight-bold);
+  font-variant-numeric:tabular-nums;
+}
+.jp .jp-app .jp-unread {
+  min-width:var(--aj-alert-size);
+  height:var(--aj-alert-size);
+  padding:0;
+  border:var(--aj-border-strong);
+  border-radius:var(--aj-radius-circle);
+  background:var(--aj-chili);
+  color:var(--aj-alert-ink);
+  font-size:var(--aj-type-alert);
+  font-weight:var(--aj-weight-bold);
+  line-height:1;
+  font-variant-numeric:tabular-nums;
+}
+.jp .jp-app svg.lucide { stroke-width:var(--aj-icon-stroke); }
+.jp .jp-app :is(.jp-action:not(.jp-sheet-edit),.jp-notification-bell,.jp-close) :is(i,svg) {
+  width:var(--aj-icon-size);
+  height:var(--aj-icon-size);
+  flex-shrink:0;
+  color:inherit;
+}
+/* Step 3: retain the existing branding geometry and page-toolbar positions. */
+.jp .jp-app .jp-top {
+  background:var(--aj-yolk);
+  color:var(--aj-ink);
+  border-bottom:var(--aj-border-strong);
+}
+.jp .jp-app .jp-restaurant-name {
+  font-size:var(--aj-restaurant-name-size);
+  font-weight:var(--aj-weight-regular);
+  line-height:var(--aj-line-display);
+  letter-spacing:var(--aj-restaurant-tracking);
+}
+.jp .jp-app .jp-restaurant .jp-muted {
+  color:var(--aj-ink-soft);
+  font-size:var(--aj-type-subtitle);
+  font-weight:var(--aj-weight-medium);
+}
+.jp .jp-app .jp-brand {
+  padding:0 var(--aj-brand-plate-padding);
+  border-radius:var(--aj-radius-badge);
+  background:var(--aj-surface);
+}
+.jp .jp-app .jp-brand-divider { background:var(--aj-header-divider); }
+.jp .jp-app .jp-toolbar > .jp-action { min-height:var(--aj-header-control-height); }
+.jp .jp-app .jp-notification-bell {
+  width:var(--aj-header-control-height);
+  height:var(--aj-header-control-height);
+  min-height:var(--aj-header-control-height);
+}
+.jp .jp-app .jp-notification-bell .jp-unread {
+  top:var(--aj-header-alert-offset);
+  right:var(--aj-header-alert-offset);
+}
+/* Step 4: the fixed-width rail keeps its existing order and responsive layout. */
+.jp .jp-app .jp-sidebar {
+  padding:var(--aj-nav-padding-block) var(--aj-nav-padding-inline);
+  background:var(--aj-surface);
+  border-right:var(--aj-border-strong);
+}
+.jp .jp-app .jp-nav button {
+  min-width:0;
+  max-width:100%;
+  min-height:var(--aj-nav-height);
+  padding:0 var(--aj-nav-item-padding);
+  gap:var(--aj-nav-icon-gap);
+  border-radius:var(--aj-radius-control);
+  background:var(--aj-transparent);
+  color:var(--aj-ink);
+  font-family:var(--aj-font-ui);
+  font-size:var(--aj-type-nav);
+  font-weight:var(--aj-weight-bold);
+  line-height:var(--aj-line-body);
+  overflow-wrap:anywhere;
+}
+.jp .jp-app .jp-nav button[aria-current="page"] { background:var(--aj-yolk-tint); color:var(--aj-ink); }
+.jp .jp-app .jp-nav :is(i,svg) { width:var(--aj-icon-size); height:var(--aj-icon-size); }
+.jp .jp-app .jp-sidebar-foot { font-size:var(--aj-type-nav-note); color:var(--aj-muted); }
+/* Step 5: page typography changes within the existing padded content area. */
+.jp .jp-app .jp-body { background:var(--aj-page); }
+.jp .jp-app .jp-header h1 {
+  color:var(--aj-ink);
+  font-family:var(--aj-font-display);
+  font-size:var(--aj-page-title-size);
+  font-weight:var(--aj-weight-regular);
+  line-height:var(--aj-line-page-title);
+  letter-spacing:var(--aj-page-title-tracking);
+  overflow-wrap:anywhere;
+}
+.jp .jp-app .jp-header h1 + p {
+  margin-top:var(--aj-page-description-gap);
+  color:var(--aj-muted);
+  font-family:var(--aj-font-ui);
+  font-size:var(--aj-type-page-description);
+  font-weight:var(--aj-weight-medium);
+  line-height:var(--aj-line-body);
+}
+/* Step 6: preserve the supplier views, photo-first grid and existing expansions. */
+.jp .jp-app .jp-discovery-search {
+  border:var(--aj-border-strong);
+  border-radius:var(--aj-radius-card);
+  background:var(--aj-yolk-tint);
+}
+.jp .jp-app .jp-discovery-search > label {
+  color:var(--aj-ink);
+  font-weight:var(--aj-weight-bold);
+}
+.jp .jp-app .jp-directory-search { min-height:var(--aj-search-height); }
+.jp .jp-app .jp-directory-search > .jp-action {
+  min-height:var(--aj-search-height);
+  padding:0 var(--aj-search-button-padding);
+  border-radius:var(--aj-radius-card);
+}
+.jp .jp-app .jp-directory-search > .jp-action :is(i,svg) {
+  width:var(--aj-search-icon-size);
+  height:var(--aj-search-icon-size);
+}
+.jp .jp-app input.jp-search:not(.jp-menu-inline) { min-height:var(--aj-search-height); }
+.jp .jp-app .jp-search {
+  font-size:var(--aj-type-request);
+  box-shadow:var(--aj-shadow-control);
+}
+.jp .jp-app .jp-directory-filter-panel {
+  border:var(--aj-border-strong);
+  border-radius:var(--aj-radius-card);
+  background:var(--aj-surface);
+}
+.jp .jp-app .jp-directory-controls > .jp-action[aria-expanded="true"] {
+  border-color:var(--aj-ink);
+  background:var(--aj-yolk-tint);
+}
+.jp .jp-app .jp-directory-count { font-size:var(--aj-type-result); color:var(--aj-muted); }
+.jp .jp-app :is(.jp-search-note,.jp-directory-sort-note,.jp-match-reason,.jp-directory-filter-foot p) {
+  color:var(--aj-muted);
+  font-size:var(--aj-type-small);
+  font-weight:var(--aj-weight-medium);
+}
+.jp .jp-app .jp-directory-list {
+  border:var(--aj-border-strong);
+  border-radius:var(--aj-radius-table);
+  background:var(--aj-surface);
+  overflow:hidden;
+}
+.jp .jp-app .jp-directory-group {
+  min-height:var(--aj-supplier-group-height);
+  padding:var(--aj-supplier-group-padding) var(--aj-supplier-row-padding-inline);
+  border-top:var(--aj-border-light);
+  background:var(--aj-yolk-tint);
+  color:var(--aj-ink);
+  font-size:var(--aj-type-spec);
+  font-weight:var(--aj-weight-bold);
+}
+.jp .jp-app .jp-supplier-row {
+  min-height:var(--aj-supplier-row-height);
+  padding:var(--aj-supplier-row-padding-block) var(--aj-supplier-row-padding-inline);
+  border-top:var(--aj-border-light);
+  background:var(--aj-surface);
+}
+.jp .jp-app :is(.jp-supplier-row,.jp-directory-group):first-child { border-top:var(--aj-border-none); }
+.jp .jp-app .jp-supplier-row.jp-supplier-pending {
+  background:var(--aj-pending-row);
+  box-shadow:var(--aj-shadow-pending);
+}
+.jp .jp-app .jp-supplier-summary h3 {
+  color:var(--aj-ink);
+  font-size:var(--aj-type-supplier);
+  font-weight:var(--aj-weight-bold);
+}
+.jp .jp-app .jp-supplier-summary p {
+  color:var(--aj-muted);
+  font-size:var(--aj-type-spec);
+  font-weight:var(--aj-weight-medium);
+}
+.jp .jp-app .jp-supplier-product { color:var(--aj-ink); font-weight:var(--aj-weight-bold); }
+.jp .jp-app .jp-supplier-product small {
+  color:var(--aj-muted);
+  font-size:var(--aj-type-spec);
+  font-weight:var(--aj-weight-medium);
+}
+/* Price and quantity bases share an existing text node; keep it intact. */
+.jp .jp-app :is(.jp-supplier-price,.jp-offer-price) {
+  color:var(--aj-ink);
+  font-family:var(--aj-font-ui);
+  font-size:var(--aj-type-price);
+  font-weight:var(--aj-weight-bold);
+  font-variant-numeric:tabular-nums;
+}
+.jp .jp-app .jp-supplier-price { text-align:right; }
+.jp .jp-app :is(.jp-supplier-price small,.jp-offer-price + small) {
+  color:var(--aj-muted);
+  font-size:var(--aj-type-small);
+  font-weight:var(--aj-weight-medium);
+}
+.jp .jp-app :is(.jp-supplier-price,.jp-offer-price).jp-price-request {
+  color:var(--aj-chili-text);
+  font-size:var(--aj-type-request);
+  white-space:nowrap;
+}
+.jp .jp-app .jp-supplier-expanded {
+  padding:var(--aj-supplier-detail-padding);
+  border-top:var(--aj-border-detail);
+  background:var(--aj-detail-bg);
+}
+.jp .jp-app .jp-offer,
+.jp .jp-app .jp-supplier-expanded .jp-offer {
+  padding:var(--jp-pad);
+  border:var(--aj-border-strong);
+  border-radius:var(--aj-radius-card);
+  background:var(--aj-surface);
+  box-shadow:var(--aj-shadow-none);
+}
+.jp .jp-app .jp-offer h3 { color:var(--aj-ink); font-weight:var(--aj-weight-bold); }
+.jp .jp-app .jp-offer .jp-supplier-country { font-size:var(--aj-type-result); }
+.jp .jp-app .jp-offer-meta {
+  color:var(--aj-ink);
+  font-size:var(--aj-type-result);
+  font-weight:var(--aj-weight-medium);
+}
+.jp .jp-app .jp-offer-actions { border-top:var(--aj-border-light); }
+.jp .jp-app .jp-detail { border-top:var(--aj-border-detail); }
+.jp .jp-app .jp-detail dl { font-size:var(--aj-type-result); font-variant-numeric:tabular-nums; }
+.jp .jp-app .jp-detail dt { color:var(--aj-muted); font-weight:var(--aj-weight-medium); }
+.jp .jp-app .jp-detail dd { color:var(--aj-ink); overflow-wrap:anywhere; }
+.jp .jp-app .jp-quote {
+  border:var(--aj-border-strong);
+  border-radius:var(--aj-radius-card);
+  background:var(--aj-yolk-tint);
+  color:var(--aj-ink);
+}
+.jp .jp-app .jp-directory-empty {
+  border:var(--aj-border-strong);
+  border-radius:var(--aj-radius-card);
+  background:var(--aj-surface);
+  color:var(--aj-ink);
+}
+.jp .jp-app .jp-directory-list > .jp-directory-empty { border:var(--aj-border-none); border-radius:var(--aj-radius-square); }
+.jp .jp-app .jp-directory-empty p { color:var(--aj-muted); }
+/* Step 7: retain photographic assets, crops and sizes; match card corners only. */
+.jp .jp-app .jp-supplier-thumb,
+.jp .jp-app .jp-offer-photo img { border-radius:var(--aj-radius-card); }
+/* Step 8: print typography within the current menu document and editor. */
+.jp .jp-app .jp-profile-tabs {
+  gap:var(--aj-profile-tab-gap);
+  border-bottom:var(--aj-border-none);
+}
+.jp .jp-app .jp-menu-document {
+  --jp-menu-paper:var(--aj-surface);
+  --jp-menu-ink:var(--aj-menu-ink);
+  --jp-menu-faint:var(--aj-menu-muted);
+  --jp-menu-rule:var(--aj-menu-ink);
+  padding:var(--aj-menu-paper-padding);
+  border:var(--aj-border-menu);
+  border-radius:var(--aj-radius-square);
+  background:var(--aj-surface);
+  color:var(--aj-menu-ink);
+  box-shadow:var(--aj-shadow-menu-frame);
+}
+.jp .jp-app .jp-menu-masthead { border-bottom:var(--aj-border-menu); }
+.jp .jp-app .jp-menu-document .jp-menu-restaurant {
+  color:var(--aj-menu-ink);
+  font-family:var(--aj-font-menu);
+  font-size:var(--aj-menu-restaurant-size);
+  font-weight:var(--aj-weight-menu-heavy);
+  line-height:var(--aj-line-menu-heading);
+  letter-spacing:var(--aj-menu-name-tracking);
+  overflow-wrap:anywhere;
+}
+.jp .jp-app .jp-menu-masthead p {
+  color:var(--aj-menu-tagline);
+  font-family:var(--aj-font-menu);
+  font-size:var(--aj-type-menu-tagline);
+  font-style:italic;
+  font-weight:var(--aj-weight-regular);
+}
+.jp .jp-app .jp-menu-label {
+  color:var(--aj-menu-ink);
+  font-family:var(--aj-font-menu-copy);
+  font-size:var(--aj-type-menu-note);
+  font-weight:var(--aj-weight-menu-semibold);
+}
+.jp .jp-app .jp-menu-document .jp-menu-chapter-title {
+  display:flex;
+  align-items:center;
+  gap:var(--aj-menu-section-gap);
+  color:var(--aj-menu-ink);
+  font-family:var(--aj-font-menu);
+  font-size:var(--aj-type-menu-section);
+  font-style:italic;
+  font-weight:var(--aj-weight-menu-semibold);
+  line-height:var(--aj-line-menu-heading);
+  letter-spacing:normal;
+  text-align:center;
+  text-transform:none;
+}
+.jp .jp-app .jp-menu-chapter-title::before,
+.jp .jp-app .jp-menu-chapter-title::after {
+  content:"";
+  flex:1;
+  border-top:var(--aj-border-menu);
+}
+.jp .jp-app .jp-menu-document .jp-menu-dish-line h3,
+.jp .jp-app .jp-menu-dish-price {
+  color:var(--aj-menu-ink);
+  font-family:var(--aj-font-menu);
+  font-size:var(--aj-menu-dish-size);
+  font-weight:var(--aj-weight-bold);
+  line-height:var(--aj-line-menu-dish);
+  font-variant-numeric:lining-nums tabular-nums;
+}
+.jp .jp-app .jp-menu-dish-price { text-align:right; }
+.jp .jp-app .jp-menu-leader {
+  border-bottom:var(--aj-border-menu-leader);
+  transform:translateY(var(--aj-menu-leader-offset));
+}
+.jp .jp-app .jp-menu-dish p {
+  max-width:var(--aj-menu-description-width);
+  color:var(--aj-menu-muted);
+  font-family:var(--aj-font-menu-copy);
+  font-size:var(--aj-type-menu-description);
+  font-weight:var(--aj-weight-regular);
+  line-height:var(--aj-line-body);
+}
+.jp .jp-app .jp-menu-paper-foot {
+  border-top:var(--aj-border-menu);
+  color:var(--aj-menu-muted);
+  font-family:var(--aj-font-menu-copy);
+  font-size:var(--aj-type-menu-note);
+  font-weight:var(--aj-weight-regular);
+}
+.jp .jp-app .jp-menu-document > .jp-sheet-edit {
+  width:var(--aj-menu-pencil-size);
+  height:var(--aj-menu-pencil-size);
+  min-height:var(--aj-menu-pencil-size);
+  padding:var(--aj-menu-pencil-padding);
+  border:var(--aj-border-menu);
+  border-radius:var(--aj-radius-square);
+  background:var(--aj-surface);
+  color:var(--aj-menu-ink);
+  box-shadow:var(--aj-shadow-none);
+}
+.jp .jp-app .jp-sheet-edit :is(i,svg) { width:var(--aj-icon-size); height:var(--aj-icon-size); }
+.jp .jp-app .jp-menu-editbar .jp-action {
+  min-height:var(--aj-menu-control-height);
+  border:var(--aj-border-menu-control);
+  border-radius:var(--aj-radius-square);
+  background:var(--aj-surface);
+  color:var(--aj-menu-ink);
+  box-shadow:var(--aj-shadow-none);
+  font-family:var(--aj-font-menu-copy);
+  font-size:var(--aj-type-menu-control);
+  font-weight:var(--aj-weight-menu-semibold);
+}
+.jp .jp-app .jp-menu-editbar .jp-action.jp-primary { background:var(--aj-menu-ink); color:var(--aj-surface); }
+.jp .jp-app .jp-menu-editbar .jp-form-actions .jp-action:not(:disabled):active {
+  transform:none;
+  box-shadow:var(--aj-shadow-none);
+}
+.jp .jp-app .jp-menu-document .jp-menu-inline {
+  border:var(--aj-border-none);
+  border-radius:var(--aj-radius-square);
+  background:var(--aj-transparent);
+  color:inherit;
+  box-shadow:var(--aj-shadow-none);
+  font:inherit;
+  font-variant-numeric:inherit;
+  outline:var(--aj-outline-menu-field);
+  outline-offset:var(--aj-menu-field-offset);
+}
+.jp .jp-app .jp-menu-document .jp-menu-inline:hover,
+.jp .jp-app .jp-menu-document .jp-menu-inline:focus {
+  background:var(--aj-surface);
+}
+.jp .jp-app .jp-menu-document .jp-menu-inline:focus,
+.jp .jp-app .jp-menu-document .jp-menu-inline:focus-visible {
+  outline:var(--aj-outline-menu-focus);
+  outline-offset:var(--aj-menu-field-offset);
+}
+.jp .jp-app .jp-menu-document .jp-menu-inline::placeholder { color:var(--aj-menu-muted); opacity:1; }
+.jp .jp-app .jp-menu-planning {
+  border:var(--aj-border-strong);
+  border-radius:var(--aj-radius-card);
+  background:var(--aj-surface);
+  color:var(--aj-ink);
+}
+.jp .jp-app .jp-menu-planning > summary { font-size:var(--aj-type-base); font-weight:var(--aj-weight-bold); }
+.jp .jp-app .jp-menu-planning-row { border-top:var(--aj-border-light); }
+.jp .jp-app .jp-menu-planning-row > summary { font-size:var(--aj-type-result); font-weight:var(--aj-weight-bold); }
+.jp .jp-app .jp-menu-planning-row [data-menu-summary] { color:var(--aj-muted); font-weight:var(--aj-weight-medium); }
+/* Step 9: retain the existing advisor dimensions, position and interaction model. */
+.jp .jp-app .jp-advisor-launcher {
+  border:var(--aj-border-advisor-bubble);
+  border-radius:var(--aj-radius-circle);
+  background:var(--aj-yolk);
+  color:var(--aj-ink);
+  box-shadow:var(--aj-shadow-bubble);
+  transition:transform var(--aj-press-duration),box-shadow var(--aj-press-duration);
+}
+.jp .jp-app .jp-advisor-launcher svg {
+  width:var(--aj-advisor-icon-size);
+  height:var(--aj-advisor-icon-size);
+  stroke-width:var(--aj-advisor-icon-stroke);
+}
+.jp .jp-app .jp-advisor-launcher:active {
+  transform:translateY(var(--aj-press-distance));
+  box-shadow:var(--aj-shadow-pressed);
+}
+.jp .jp-app .jp-advisor-popup {
+  padding:0;
+  border:var(--aj-border-strong);
+  border-radius:var(--aj-radius-popup);
+  background:var(--aj-surface);
+  color:var(--aj-ink);
+  box-shadow:var(--aj-shadow-popup);
+}
+.jp .jp-app .jp-popup-head {
+  margin-bottom:0;
+  padding:var(--aj-advisor-body-padding);
+  border-bottom:var(--aj-border-strong);
+  background:var(--aj-yolk);
+  color:var(--aj-ink);
+}
+.jp .jp-app .jp-popup-head h2 {
+  font-size:var(--aj-type-advisor-title);
+  line-height:var(--aj-line-display);
+  letter-spacing:normal;
+}
+.jp .jp-app .jp-popup-head .jp-close {
+  width:var(--aj-advisor-close-size);
+  height:var(--aj-advisor-close-size);
+  min-height:var(--aj-advisor-close-size);
+  flex-shrink:0;
+  border-radius:var(--aj-radius-advisor-close);
+  box-shadow:var(--aj-shadow-none);
+}
+.jp .jp-app .jp-advisor-popup .jp-advisor {
+  padding:var(--aj-advisor-body-padding);
+  border:var(--aj-border-none);
+  border-radius:var(--aj-radius-square);
+  background:var(--aj-surface);
+  font-size:var(--aj-type-advisor-copy);
+  line-height:var(--aj-line-advisor);
+}
+.jp .jp-app .jp-advisor-popup .jp-advisor > small {
+  color:var(--aj-muted);
+  font-size:var(--aj-type-advisor-context);
+  font-weight:var(--aj-weight-medium);
+}
+.jp .jp-app .jp-advisor-popup .jp-recommendation {
+  padding:var(--aj-advisor-card-padding);
+  border:var(--aj-border-none);
+  border-radius:var(--aj-radius-card);
+  background:var(--aj-yolk-tint);
+}
+.jp .jp-app .jp-advisor-popup .jp-recommendation .jp-kicker {
+  color:var(--aj-ink);
+  font-size:var(--aj-type-result);
+  font-weight:var(--aj-weight-bold);
+}
+.jp .jp-app .jp-advisor-popup .jp-recommendation h3 { font-size:var(--aj-type-base); font-weight:var(--aj-weight-bold); }
+.jp .jp-app .jp-advisor-popup .jp-advisor p {
+  color:var(--aj-muted);
+  font-size:var(--aj-type-advisor-copy);
+  line-height:var(--aj-line-advisor);
+}
+.jp .jp-app .jp-advisor-popup .jp-recommendation > p:first-of-type {
+  color:var(--aj-ink);
+  font-size:var(--aj-type-advisor-main);
+  font-weight:var(--aj-weight-bold);
+}
+.jp .jp-app .jp-advisor-popup .jp-recommendation .jp-price {
+  color:var(--aj-ink);
+  font-family:var(--aj-font-ui);
+  font-size:var(--aj-type-advisor-price);
+  font-weight:var(--aj-weight-bold);
+  font-variant-numeric:tabular-nums;
+  letter-spacing:normal;
+}
+.jp .jp-app .jp-advisor-popup .jp-recommendation > small { font-size:var(--aj-type-small); color:var(--aj-muted); }
+.jp .jp-app .jp-advisor-popup .jp-proof { font-size:var(--aj-type-advisor-context); color:var(--aj-muted); }
+.jp .jp-app .jp-advisor-popup :is(.jp-action,.jp-priority button) {
+  min-height:var(--aj-advisor-control-height);
+  padding:0 var(--aj-advisor-control-padding);
+  font-size:var(--aj-type-result);
+}
+/* Step 10: remaining screens retain their current structure and shared controls. */
+.jp .jp-app :is(.jp-panel,.jp-promotion) {
+  border:var(--aj-border-strong);
+  border-radius:var(--aj-radius-card);
+  background:var(--aj-surface);
+  color:var(--aj-ink);
+  box-shadow:var(--aj-shadow-none);
+}
+.jp .jp-app :is(.jp-panel,.jp-promotion-body) h2,
+.jp .jp-app .jp-notifications h3 {
+  color:var(--aj-ink);
+  font-family:var(--aj-font-ui);
+  font-size:var(--aj-type-section-title);
+  font-weight:var(--aj-weight-bold);
+  line-height:var(--aj-line-section-title);
+  letter-spacing:normal;
+}
+.jp .jp-app .jp-panel h3 {
+  color:var(--aj-ink);
+  font-family:var(--aj-font-ui);
+  font-size:var(--aj-type-base);
+  font-weight:var(--aj-weight-bold);
+}
+.jp .jp-app :is(.jp-section-note,.jp-select-label,.jp-field) { color:var(--aj-muted); font-weight:var(--aj-weight-medium); }
+.jp .jp-app .jp-promotion-image .jp-badge {
+  background:var(--aj-yolk-tint);
+  color:var(--aj-ink);
+  border-radius:var(--aj-radius-badge);
+  padding:0 var(--aj-badge-padding);
+  font-weight:var(--aj-weight-bold);
+}
+.jp .jp-app .jp-promotion-body p {
+  color:var(--aj-muted);
+  font-size:var(--aj-type-result);
+  line-height:var(--aj-line-body);
+}
+.jp .jp-app .jp-promotion-prices { font-family:var(--aj-font-ui); font-variant-numeric:tabular-nums; }
+.jp .jp-app .jp-promotion-prices strong {
+  color:var(--aj-ink);
+  font-size:var(--aj-type-promotion-price);
+  font-weight:var(--aj-weight-bold);
+}
+.jp .jp-app .jp-promotion-prices > span {
+  color:var(--aj-muted);
+  font-size:var(--aj-type-spec);
+  font-weight:var(--aj-weight-medium);
+}
+.jp .jp-app .jp-promotion-prices s { color:var(--aj-muted); font-size:var(--aj-type-result); }
+.jp .jp-app .jp-promotion-terms { border-top:var(--aj-border-light); font-size:var(--aj-type-result); }
+.jp .jp-app .jp-promotion-terms p { color:var(--aj-ink); }
+.jp .jp-app .jp-promotions-icon { border-radius:var(--aj-radius-card); background:var(--aj-yolk-tint); color:var(--aj-ink); }
+.jp .jp-app .jp-promotions-empty p { color:var(--aj-muted); font-size:var(--aj-type-base); }
+.jp .jp-app .jp-row { border-top:var(--aj-border-light); }
+.jp .jp-app .jp-row:first-of-type { border-top:var(--aj-border-none); }
+.jp .jp-app .jp-row p { color:var(--aj-muted); font-size:var(--aj-type-result); }
+.jp .jp-app .jp-panel .jp-row > .jp-number {
+  color:var(--aj-ink);
+  font-family:var(--aj-font-ui);
+  font-size:var(--aj-type-price);
+  font-weight:var(--aj-weight-bold);
+  font-variant-numeric:tabular-nums;
+}
+.jp .jp-app .jp-budget {
+  border-top:var(--aj-border-strong);
+  color:var(--aj-ink);
+  font-size:var(--aj-type-base);
+  font-weight:var(--aj-weight-medium);
+}
+.jp .jp-app .jp-budget strong {
+  font-family:var(--aj-font-ui);
+  font-size:var(--aj-type-basket-total);
+  font-weight:var(--aj-weight-bold);
+  font-variant-numeric:tabular-nums;
+  letter-spacing:normal;
+}
+.jp .jp-app .jp-panel .jp-alert {
+  border-radius:var(--aj-radius-card);
+  background:var(--aj-yolk-tint);
+  color:var(--aj-ink);
+  font-weight:var(--aj-weight-medium);
+}
+.jp .jp-app .jp-description { color:var(--aj-ink); font-size:var(--aj-type-base); line-height:var(--aj-line-body); }
+.jp .jp-app .jp-facts dt { color:var(--aj-muted); font-size:var(--aj-type-small); font-weight:var(--aj-weight-medium); }
+.jp .jp-app .jp-facts dd { color:var(--aj-ink); font-size:var(--aj-type-result); }
+.jp .jp-app .jp-source { border-top:var(--aj-border-light); }
+.jp .jp-app .jp-source:first-child { border-top:var(--aj-border-none); }
+.jp .jp-app .jp-source summary { font-size:var(--aj-type-result); font-weight:var(--aj-weight-bold); }
+.jp .jp-app .jp-owner-notes {
+  border-left:var(--aj-border-strong);
+  color:var(--aj-ink);
+  font-size:var(--aj-type-result);
+  line-height:var(--aj-line-body);
+}
+.jp .jp-app .jp-checkbox { border-bottom:var(--aj-border-light); font-size:var(--aj-type-result); }
+.jp .jp-app [id$="-profile-content"] .jp-row > .jp-badge { background:var(--aj-ink); color:var(--aj-surface); }
+.jp .jp-app [id$="-profile-content"] .jp-pill-row .jp-badge { background:var(--aj-yolk-tint); color:var(--aj-ink); }
+.jp .jp-app .jp-link-row { border-bottom:var(--aj-border-light); }
+.jp .jp-app .jp-link-row > :is(i,svg) { width:var(--aj-icon-size); height:var(--aj-icon-size); color:var(--aj-muted); }
+.jp .jp-app .jp-link-row p { color:var(--aj-muted); font-size:var(--aj-type-result); }
+.jp .jp-app .jp-notifications {
+  border:var(--aj-border-strong);
+  border-radius:var(--aj-radius-popup);
+  background:var(--aj-surface);
+  color:var(--aj-ink);
+  box-shadow:var(--aj-shadow-popup);
+}
+.jp .jp-app .jp-notifications p { color:var(--aj-muted); font-size:var(--aj-type-result); line-height:var(--aj-line-body); }
+.jp .jp-app .jp-notifications .jp-badge.jp-warning { background:var(--aj-yolk-tint); color:var(--aj-ink); }
+.jp .jp-app .jp-error { color:var(--aj-chili-text); font-size:var(--aj-type-small); font-weight:var(--aj-weight-bold); }
+.jp .jp-app .jp-toast {
+  border-left:var(--aj-border-notice);
+  border-radius:var(--aj-radius-control);
+  background:var(--aj-yolk-tint);
+  color:var(--aj-ink);
+  font-size:var(--aj-type-result);
+  line-height:var(--aj-line-body);
+}
+.jp .jp-app .jp-footer { color:var(--aj-muted); font-size:var(--aj-type-small); }
+@media(prefers-reduced-motion:reduce) { .jp .jp-app { --aj-press-duration:var(--aj-reduced-duration); } }
+@media(pointer:coarse) {
+  .jp .jp-app :is(.jp-action:not(.jp-sheet-edit),.jp-subnav button,.jp-priority button,.jp-profile-tabs button,.jp-notification-bell,.jp-close,.jp-nav button) { min-height:var(--aj-touch-size); }
+  .jp .jp-app :is(.jp-notification-bell,.jp-close) { width:var(--aj-touch-size); }
+  .jp.jp .jp-app :is(input,select,textarea),
+  .jp .jp-app .jp-directory-search textarea,
+  .jp .jp-app .jp-search { font-size:var(--aj-type-touch); }
+  .jp .jp-app .jp-menu-document > .jp-sheet-edit { width:var(--aj-touch-size); height:var(--aj-touch-size); min-height:var(--aj-touch-size); }
+  .jp .jp-app .jp-menu-document .jp-menu-inline { font-size:max(var(--aj-type-touch),1em); }
+  .jp .jp-app .jp-popup-head .jp-close { width:var(--aj-touch-size); height:var(--aj-touch-size); min-height:var(--aj-touch-size); }
+  .jp .jp-app .jp-advisor-popup :is(.jp-action,.jp-priority button) { min-height:var(--aj-touch-size); }
+}
+@media(max-width:900px) {
+  .jp .jp-app .jp-sidebar { padding:20px 8px; }
+  .jp .jp-app .jp-nav button { padding:0 var(--aj-nav-compact-padding); gap:var(--aj-nav-compact-gap); font-size:var(--aj-type-small); }
+}
+@media(max-width:700px) {
+  .jp .jp-app { --aj-page-title-size:var(--aj-type-page-title-compact); }
+  .jp .jp-app .jp-notifications { box-shadow:var(--aj-shadow-none); }
+  .jp .jp-app .jp-supplier-price { text-align:left; }
+  .jp .jp-app .jp-sidebar { padding:10px; border-right:var(--aj-border-none); border-bottom:var(--aj-border-strong); }
+}
+@media(max-width:480px) {
+  .jp .jp-app {
+    --aj-menu-paper-padding:var(--aj-menu-paper-padding-compact);
+    --aj-menu-restaurant-size:var(--aj-type-menu-restaurant-compact);
+    --aj-menu-dish-size:var(--aj-type-menu-dish-compact);
+  }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
+/* Ajitama treatment for app-only elements (not present in the mockup), using the same tokens. */
+.jp .jp-app .jp-top-controls .jp-segment {
+  gap:2px;
+  padding:3px;
+  border:var(--aj-border-strong);
+  border-radius:var(--aj-radius-control);
+  background:var(--aj-surface);
+  box-shadow:var(--aj-shadow-dropdown);
 }
+.jp .jp-app .jp-segment button {
+  min-height:30px;
+  padding:0 10px;
+  border-radius:7px;
+  color:var(--aj-ink);
+  font-family:var(--aj-font-ui);
+  font-size:var(--aj-type-small);
+  font-weight:var(--aj-weight-bold);
+}
+.jp .jp-app .jp-segment button[aria-pressed="true"] { background:var(--aj-ink); color:var(--aj-surface); }
+.jp .jp-app .jp-segment-label { color:var(--aj-muted); font-weight:var(--aj-weight-medium); }
+.jp .jp-app .jp-nav a {
+  min-width:0;
+  max-width:100%;
+  min-height:var(--aj-nav-height);
+  padding:0 var(--aj-nav-item-padding);
+  gap:var(--aj-nav-icon-gap);
+  border-radius:var(--aj-radius-control);
+  background:var(--aj-transparent);
+  color:var(--aj-ink);
+  font-family:var(--aj-font-ui);
+  font-size:var(--aj-type-nav);
+  font-weight:var(--aj-weight-bold);
+  line-height:var(--aj-line-body);
+  overflow-wrap:anywhere;
+}
+.jp .jp-app .jp-nav a[aria-current="page"] { background:var(--aj-yolk-tint); color:var(--aj-ink); }
+.jp .jp-app .jp-nav a svg { width:var(--aj-icon-size); height:var(--aj-icon-size); }
+.jp .jp-app .jp-nav-count {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  margin-left:0;
+  padding:0 var(--aj-count-padding);
+  border-radius:var(--aj-radius-badge);
+  background:var(--aj-ink);
+  color:var(--aj-surface);
+  font-size:var(--aj-type-small);
+  font-weight:var(--aj-weight-bold);
+  line-height:var(--aj-line-body);
+  font-variant-numeric:tabular-nums;
+}
+.jp .jp-app .jp-price { font-weight:var(--aj-weight-bold); letter-spacing:normal; }
+.jp .jp-app .jp-alert { border-radius:var(--aj-radius-card); color:var(--aj-ink); }
+.jp .jp-app .jp-alert p { color:var(--aj-ink); }
+.jp .jp-app .jp-badge.jp-danger { background:var(--aj-chili-tint); color:var(--aj-chili-text); }
+.jp .jp-app .jp-badge.jp-neutral { background:var(--aj-line); color:var(--aj-muted); }
+.jp .jp-app .jp-notification-item + .jp-notification-item { border-top:var(--aj-border-light); }
+.jp .jp-app .jp-day { border-radius:var(--aj-radius-badge); color:var(--aj-muted); font-weight:var(--aj-weight-medium); }
+.jp .jp-app .jp-day strong { color:var(--aj-ink); font-weight:var(--aj-weight-bold); }
+.jp .jp-app .jp-day.jp-day-short { background:var(--aj-chili-tint); color:var(--aj-chili-text); }
+.jp .jp-app .jp-day.jp-day-short strong { color:var(--aj-chili-text); }
+.jp .jp-app .jp-day.jp-day-arrival { box-shadow:inset 0 0 0 2px var(--aj-ink); }
+.jp .jp-app .jp-kv dt { color:var(--aj-muted); font-weight:var(--aj-weight-medium); }
+.jp .jp-app .jp-kv dd { color:var(--aj-ink); }
+.jp .jp-app .jp-check.jp-bad svg { color:var(--aj-chili-text); }
+.jp .jp-app .jp-message {
+  border:var(--aj-border-light);
+  border-radius:var(--aj-radius-control);
+  background:var(--aj-detail-bg);
+  color:var(--aj-ink);
+}
+.jp .jp-app .jp-message-label { color:var(--aj-muted); font-weight:var(--aj-weight-bold); }
+.jp .jp-app .jp-proposal {
+  border:var(--aj-border-strong);
+  border-radius:var(--aj-radius-card);
+  background:var(--aj-yolk-tint);
+}
+.jp .jp-app .jp-proposal .jp-message { background:var(--aj-surface); }
+.jp .jp-app .jp-basket-option {
+  border:var(--aj-border-strong);
+  border-radius:var(--aj-radius-card);
+  background:var(--aj-surface);
+  color:var(--aj-ink);
+  box-shadow:var(--aj-shadow-control);
+  font-family:var(--aj-font-ui);
+  transition:transform var(--aj-press-duration),box-shadow var(--aj-press-duration);
+}
+.jp .jp-app .jp-basket-option:active { transform:translateY(var(--aj-press-distance)); box-shadow:var(--aj-shadow-pressed); }
+.jp .jp-app .jp-basket-option[aria-pressed="true"] { border-color:var(--aj-ink); background:var(--aj-yolk-tint); box-shadow:var(--aj-shadow-control); }
+.jp .jp-app .jp-basket-option strong {
+  color:var(--aj-ink);
+  font-size:var(--aj-type-basket-total);
+  font-weight:var(--aj-weight-bold);
+  letter-spacing:normal;
+}
+.jp .jp-app .jp-basket-option small { color:var(--aj-muted); font-size:var(--aj-type-small); font-weight:var(--aj-weight-medium); }
+.jp .jp-app .jp-po { border:var(--aj-border-strong); border-radius:var(--aj-radius-card); background:var(--aj-surface); }
+.jp .jp-app .jp-advisor-popup .jp-recommendation.jp-advisor-ask { padding:0; border-radius:var(--aj-radius-square); background:var(--aj-transparent); }
+.jp .jp-app .jp-advisor-popup .jp-recommendation.jp-advisor-ask > p { color:var(--aj-muted); font-size:var(--aj-type-small); font-weight:var(--aj-weight-regular); }
+.jp .jp-app .jp-suggestions button {
+  border:var(--aj-border-strong);
+  border-radius:var(--aj-radius-control);
+  background:var(--aj-surface);
+  color:var(--aj-ink);
+  box-shadow:var(--aj-shadow-dropdown);
+  font-family:var(--aj-font-ui);
+  font-weight:var(--aj-weight-medium);
+}
+.jp .jp-app .jp-suggestions button:hover { background:var(--aj-yolk-tint); border-color:var(--aj-ink); }
+.jp .jp-app .jp-progress span,.jp .jp-app .jp-budget-track span { background:var(--aj-ink); }
+.jp .jp-app .jp-thumb-icon { color:var(--aj-ink); background:var(--aj-yolk-tint); border-radius:var(--aj-radius-card); }
+.jp .jp-app .jp-md :is(h1,h2,h3,h4) { font-family:var(--aj-font-ui); color:var(--aj-ink); }
+.jp .jp-app .jp-md :is(th,td) { border:var(--aj-border-light); }
+.jp .jp-app .jp-md th { background:var(--aj-yolk-tint); font-weight:var(--aj-weight-bold); }
+@media(max-width:900px) {
+  .jp .jp-app .jp-nav a { padding:0 var(--aj-nav-compact-padding); gap:var(--aj-nav-compact-gap); font-size:var(--aj-type-small); }
+}
+@media(max-width:700px) {
+  .jp .jp-app .jp-nav a { padding:0 10px; }
+}
+@media(pointer:coarse) {
+  .jp .jp-app .jp-nav a { min-height:var(--aj-touch-size); }
+}
+.jp .jp-app .jp-columns .jp-advisor { border:var(--aj-border-strong); border-radius:var(--aj-radius-card); background:var(--aj-yolk-tint); }
 
-.prose-answer table {
-  @apply my-3 w-full border-collapse text-sm;
+/* Smartphone layout (360–480px) for app-only parts. */
+.jp .jp-app .jp-day { display:block; width:100%; min-width:0; white-space:nowrap; font-family:var(--aj-font-ui); font-variant-numeric:tabular-nums; cursor:pointer; }
+.jp .jp-app .jp-day .jp-day-value { display:block; }
+.jp .jp-app .jp-day .jp-day-icon { display:none; width:15px; height:15px; margin:3px auto 0; }
+.jp .jp-app .jp-day[aria-pressed="true"] { background:var(--aj-ink); color:var(--aj-surface); box-shadow:var(--aj-shadow-dropdown); }
+.jp .jp-app .jp-day[aria-pressed="true"] strong { color:var(--aj-surface); }
+.jp .jp-app .jp-day-detail {
+  margin-top:8px;
+  padding:10px 14px 12px;
+  border:var(--aj-border-strong);
+  border-radius:var(--aj-radius-card);
+  background:var(--aj-surface);
 }
-.prose-answer th,
-.prose-answer td {
-  @apply border border-stone-200 px-2 py-1 text-left align-top;
+.jp .jp-app .jp-day-detail h4 { margin:0; font-size:var(--aj-type-base); font-weight:var(--aj-weight-bold); text-transform:capitalize; }
+.jp .jp-app .jp-day-detail .jp-close { width:30px; min-height:30px; height:30px; box-shadow:var(--aj-shadow-none); }
+.jp .jp-app .jp-day-detail .jp-kv { font-size:var(--aj-type-result); }
+.jp .jp-app .jp-day-detail .jp-kv dd { white-space:nowrap; }
+.jp .jp-app .jp-day-detail .jp-kv .jp-day-detail-sub { grid-column:1 / -1; padding-left:12px; color:var(--aj-ink); font-weight:var(--aj-weight-medium); }
+.jp .jp-app .jp-day-detail .jp-kv dt.jp-day-detail-sub + dd { grid-column:1 / -1; margin-top:-4px; padding-left:12px; text-align:left; white-space:normal; }
+.jp .jp-app .jp-day-detail-short { color:var(--aj-chili-text); font-weight:var(--aj-weight-bold); }
+@media(max-width:700px) {
+  .jp .jp-shell { align-content:start; }
 }
-.prose-answer th {
-  @apply bg-stone-100 font-semibold;
+@media(max-width:480px) {
+  .jp .jp-top-controls { width:100%; }
+  .jp .jp-row:has(.jp-days) { grid-template-columns:minmax(0,1fr); }
+  .jp .jp-row:has(.jp-days) > .jp-row-right { display:flex; align-items:center; flex-wrap:wrap; gap:4px 10px; text-align:left; }
+  .jp .jp-row:has(.jp-days) > .jp-row-right .jp-badge { margin-top:0; }
+  /* Compact 7-day strip: weekday + status icon; the tapped day's figures open below (DayStrip). */
+  .jp .jp-days { gap:3px; }
+  .jp .jp-app .jp-day { padding:6px 0 5px; }
+  .jp .jp-app .jp-day .jp-day-value { display:none; }
+  .jp .jp-app .jp-day .jp-day-icon { display:block; }
+  .jp .jp-kv dd { overflow-wrap:anywhere; }
 }
-.prose-answer h3 {
-  @apply mb-1 mt-4 font-semibold;
-}
-.prose-answer h4 {
-  @apply mb-1 mt-3 font-semibold;
-}
-.prose-answer ul {
-  @apply my-2 list-disc pl-5;
-}
-.prose-answer ol {
-  @apply my-2 list-decimal pl-5;
-}
-.prose-answer p {
-  @apply my-2;
-}
-.prose-answer hr {
-  @apply my-3 border-stone-200;
-}
+/* Buying preferences (audit O4): Required badges in ink; accepted delivery days stay yolk-tint. */
+.jp .jp-app #jp-profile-content .jp-row .jp-badge:not(.jp-neutral) { background:var(--aj-ink); color:var(--aj-surface); }

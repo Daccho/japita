@@ -19,6 +19,7 @@ from . import calc, repo
 from .agent import run_agent
 from .evolus import EvolusAgent, run_agent_evolus
 from .extract import double_read, read_reply, translate
+from .forms import coerce as _coerce, display_ja, form as _form, spec_fields as _spec_fields
 from .llm import LLM
 from .store import Store
 
@@ -263,33 +264,9 @@ def delete_offer(offer_id: str):
 
 # --- specification upload: Gemma double read --------------------------------------------------------
 
-def _spec_fields(data: dict, ingredient: str) -> dict[str, tuple[str, Any]]:
-    """Fields the restaurant's rules depend on for this ingredient: name -> (description, example value)."""
-    fields: dict[str, tuple[str, Any]] = {}
-    for p in data["profiles"].values():
-        prefs = p["ingredients"].get(ingredient, {})
-        for r in prefs.get("mandatory", []) + prefs.get("negotiable", []):
-            sample = r["value"][0] if isinstance(r["value"], list) else r["value"]
-            fields.setdefault(r["field"], (r["label"], sample))
-    return fields
-
-
 def _describe(label: str, sample: Any) -> str:
     kind = "true/false" if isinstance(sample, bool) else "number" if isinstance(sample, (int, float)) else f'string such as "{sample}"'
     return f"{label} ({kind})"
-
-
-def _coerce(value: Any, sample: Any) -> Any:
-    if value is None:
-        return None
-    if isinstance(sample, bool):
-        return value if isinstance(value, bool) else str(value).strip().lower() in ("true", "yes", "1")
-    if isinstance(sample, (int, float)):
-        try:
-            return float(str(value).strip().rstrip("%"))
-        except ValueError:
-            return None
-    return value
 
 
 @app.post("/offers/{offer_id}/spec")
@@ -427,20 +404,6 @@ def reply_clarification(clarification_id: str, body: Reply):
 
 SUPPLIER_NOTICE_JA = "これはデモ用のテスト仕入先画面です。実際の取引・発注は行われません。"
 
-# How each requested field appears on the supplier's mobile form.
-FIELD_FORM_JA = {
-    "hydration_pct": {"label_ja": "加水率", "input": "number", "unit": "%", "min": 0, "max": 100},
-    "contains_kansui": {"label_ja": "かんすい使用の有無", "input": "boolean"},
-    "fresh": {"label_ja": "生麺（冷凍ではない）", "input": "boolean"},
-    "origin_country": {"label_ja": "製造国（例：JP）", "input": "text"},
-    "brewing_method": {"label_ja": "製法（例：本醸造 = honjozo）", "input": "text"},
-    "additive_free": {"label_ja": "無添加", "input": "boolean"},
-}
-
-
-def _form(field: str) -> dict:
-    return {"field": field, **FIELD_FORM_JA.get(field, {"label_ja": field, "input": "text"})}
-
 
 def _supplier_view(store: Store, c: dict) -> dict:
     """Only what the supplier needs: the question about their own product. No prices of other suppliers."""
@@ -495,7 +458,7 @@ def supplier_reply(token: str, body: SupplierReply):
         value = _coerce(body.value, sample)
         if value is None:
             raise HTTPException(422, "入力値の形式が正しくありません")
-        source = f"[仕入先フォーム入力] {_form(field)['label_ja']}: {body.value}{_form(field).get('unit', '')}"
+        source = f"[仕入先フォーム入力] {_form(field)['label_ja']}: {display_ja(body.value)}{_form(field).get('unit', '')}"
         extraction = {"status": "ok", "value": value, "read_1": value, "read_2": value, "source_text": source,
                       "method": "supplier_form"}
         translations = translate(llm, body.note_ja) if body.note_ja else {}
@@ -543,3 +506,7 @@ app.include_router(evolus_router)
 from .orders_api import router as orders_router  # noqa: E402
 
 app.include_router(orders_router)
+
+from .portal_api import router as portal_router  # noqa: E402
+
+app.include_router(portal_router)

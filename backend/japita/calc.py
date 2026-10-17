@@ -200,8 +200,8 @@ def eligible_offers(store: Store) -> tuple[dict[str, list[dict]], list[dict]]:
     eligible: dict[str, list[dict]] = {ing: [] for ing in store.profile["ingredients"]}
     excluded = []
     for offer in store.offers:
-        if offer["ingredient"] not in eligible:
-            continue
+        if offer["ingredient"] not in eligible or offer.get("pending_new"):
+            continue  # a supplier's new product is used only after the restaurant applies it
         ev = check_evidence(store, offer["id"])
         od = orderability(store, offer["id"])
         reasons = []
@@ -243,7 +243,10 @@ def calculate_baskets(store: Store) -> dict:
     eligible, excluded = eligible_offers(store)
     budget = store.profile["weekly_budget_eur"]
 
-    missing = [ing for ing, offers in eligible.items() if not offers]
+    # Ingredients already covered (nothing to buy) stay out of the combinations: a 0-pack line must not
+    # count against a supplier's minimum order.
+    to_buy = [ing for ing in eligible if needs.get(ing, {}).get("required", 0) > 0]
+    missing = [ing for ing in to_buy if not eligible[ing]]
     if missing:
         return {"baskets": [], "excluded": excluded, "infeasible_combinations": 0,
                 "open_questions": open_questions(store),
@@ -251,7 +254,7 @@ def calculate_baskets(store: Store) -> dict:
 
     tl = stock_mod.timeline(store)
     stockouts = {ing: t["first_stockout"] for ing, t in tl.get("ingredients", {}).items() if t["first_stockout"]}
-    ingredients = list(eligible)
+    ingredients = to_buy
     priced = []
     infeasible = []
     for combo in itertools.product(*(eligible[i] for i in ingredients)):
@@ -308,7 +311,7 @@ def calculate_baskets(store: Store) -> dict:
 def compare_prices(store: Store, ingredient: str) -> dict:
     groups: dict[str, list[dict]] = {}
     for o in store.offers:
-        if o["ingredient"] != ingredient:
+        if o["ingredient"] != ingredient or o.get("pending_new"):
             continue
         per = 1000  # price per litre or per kilogram
         groups.setdefault(o["comparison_group"], []).append({
