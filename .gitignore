@@ -1,0 +1,11 @@
+# Local scratch output (e.g. rendered PDF pages)
+tmp/
+
+# Agent worktrees and local settings
+.claude/worktrees/
+.claude/settings.local.json
+
+# Secrets
+.env
+.env.*
+!.env.example

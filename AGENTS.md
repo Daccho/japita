@@ -1,61 +1,34 @@
 # AGENTS.md — japita
 
 Shared instructions for AI coding agents (Codex, Claude Code, etc.) working in this repo.
-`CLAUDE.md` imports this file, so **edit this file only** — it is the single source of truth.
+`CLAUDE.md` imports this file, so **edit this file only** — it is the single source of truth for agent instructions.
+Keep it short: rules and pointers live here, details live in `docs/`. Each fact should live in exactly one file.
 
 ---
 
-## 1. Context: AMD Developer Hackathon — ACT III
+## 1. Project
 
-- Event page: https://lablab.ai/ai-hackathons/amd-developer-hackathon-act-iii
-- Format: hybrid. Online build **Oct 12–18, 2026** (lablab.ai + Discord); on-site **Oct 17–18, 2026** (Rome / Milan / Imperia, approval only).
-- **Submission deadline: Oct 18, 2026.** We are in the final stretch — optimize for a working, demoable product over completeness.
-- Team size: 1–6. Submissions must be original and MIT-licensed.
+**Japita** is a restaurant supplier and purchasing app that centralizes existing suppliers, helps discover new ones, and advises on weekly baskets based on quality, delivered price, and owner preferences. The first demo serves a Japanese ramen business in Milan during a normal purchasing week. A person approves before any order is placed.
 
-### Hard requirement (prize eligibility)
-A **meaningful part of the workload must run on AMD infrastructure** (AMD Developer Cloud, Instinct GPUs, ROCm, Ryzen AI, Radeon, …) and that AMD component **must be part of the working product shown to judges**. Never replace the AMD-hosted inference path with a non-AMD API "just to make it work" without flagging it to the user.
+- **Event:** AMD Developer Hackathon ACT III. Online build ends **18 October 2026** (exact cutoff and time zone unverified). Optimize for a working, demoable product over completeness.
+- **Track (proposed):** Reinvent Commerce + Evolus Business Agents on AMD.
+- **AMD usage (planned, not yet proven):** `google/gemma-4-26B-A4B-it` in BF16, served with vLLM on one AMD Instinct GPU on AMD Developer Cloud, as the Evolus main agent's model. It reads Japanese specifications (including images), analyzes all offers in parallel, and double-reads specifications to catch extraction errors. Fallback: `google/gemma-4-E4B-it`.
+- **Stack (provisional):** FastAPI, Next.js, SQLite via SQLAlchemy, Docker.
+- **Status:** no application code yet. Milestone 1 is the infrastructure proof in `docs/architecture.md`.
 
-### Tracks (pick one)
-1. **Intelligent Industry** — failure prediction, defect detection, maintenance support.
-2. **Health & Wellbeing** — patient-journey tools. Must NOT present autonomous diagnosis/treatment; must include human review.
-3. **Reinvent Commerce** — customer/business decisions. Forecasts must NOT rely solely on an LLM.
-4. **Create a New Kind of Experience** — generative media/entertainment that adapts to audiences.
-5. **Evolus Business Agents on AMD** — agent running a real business process on Evolus, using an open model served via **vLLM on AMD Developer Cloud** + at least **two Evolus building blocks**.
+### Docs map (read only what the task needs)
 
-**Our track:** _TBD — fill in once decided._
-
-### Optional partner tech / extra prizes
-- **Google Gemma** on AMD Developer Cloud with ROCm → eligible for the Google prize ($5,000).
-- **Evolus** (track 5): REST `https://api.evolus.ai/api/v1`, OpenAI-compatible `https://api.evolus.ai/v1`, MCP `https://api.evolus.ai/mcp`. Docs: https://evolus.ai/developers
-- Vibe Generation special prize: rewards quantified value, AI tool orchestration, shipping, taste/originality.
-
-### Judging criteria
-Application of Technology · Presentation · Business Value · Originality.
-When making trade-offs, favor things that are **visible in the demo** and that make the **AMD usage obvious**.
-
-### Submission checklist
-- [ ] Project title, short + long description, track, tech/category tags
-- [ ] Working prototype + public application URL
-- [ ] Public GitHub repo with a README that actually runs
-- [ ] Cover image, demo video, slide/pitch deck
-- [ ] Clear problem statement and target user
-- [ ] (Evolus track) Containerized app (Dockerfile), no committed API keys
-
-### Resources
-- Event platform (no billing needed): https://notebooks.amd.com/tokenfactory
-- AMD AI Developer Program: https://developer.amd.com/ai-developer-program
-- ROCm docs: https://rocm.docs.amd.com · https://github.com/ROCm/ROCm
-- Gemma docs: https://ai.google.dev/gemma/docs
-- Community: https://discord.gg/lablabai
-
----
-
-## 2. Project: japita
-
-- **What it is:** A restaurant supplier and purchasing app that centralizes existing suppliers, helps discover new ones, and advises on weekly baskets based on quality, delivered price, and owner preferences. The first demo serves a Japanese ramen business in Italy during a normal purchasing week. See `plan.md` for the working scope.
-- **AMD usage:** _TBD — which part runs on AMD (e.g. model X served with vLLM on MI-series GPU via AMD Developer Cloud)._
-- **Stack:** _TBD_
-- **Architecture:** _TBD — keep a short diagram/bullet list here as it emerges._
+| File | Contents |
+| --- | --- |
+| `plan.md` | Index and one-line summary |
+| `docs/product.md` | Product, team context, positioning, roadmap |
+| `docs/mvp.md` | MVP behavior: screens, inputs, outputs, calculations, approval, out of scope |
+| `docs/architecture.md` | Components, model selection, milestone 1, AMD strengths |
+| `docs/technical-requirements.md` | Numbered build requirements (T1–T37) |
+| `docs/compliance.md` | Evidence rules and claims we must not make |
+| `docs/demo.md` | Demo scenario, dataset, verification |
+| `docs/hackathon.md` | Awards, build sequence, division of work, submission checklist, resources |
+| `docs/open-questions.md` | Unresolved questions |
 
 ### Commands
 ```bash
@@ -67,11 +40,21 @@ When making trade-offs, favor things that are **visible in the demo** and that m
 
 ---
 
+## 2. Hackathon hard requirements
+
+- A **meaningful part of the workload must run on AMD infrastructure**, and that AMD component **must be part of the working product shown to judges**. Never replace the AMD-hosted inference path with a non-AMD API "just to make it work" without flagging it to the user.
+- Evolus track: event workspace, main agent on our own vLLM endpoint on AMD Developer Cloud, at least two Evolus building blocks, driven through the Evolus API.
+- Submissions must be original and MIT-licensed. Judging: Application of Technology · Presentation · Business Value · Originality. Favor what is **visible in the demo** and makes the **AMD usage obvious**.
+
+Full awards table and checklist: `docs/hackathon.md`.
+
+---
+
 ## 3. Working rules for agents
 
 ### Priorities
 1. **Demo works end-to-end** > feature breadth > code polish.
-2. Prefer simple, boring solutions. No premature abstraction, no large refactors near the deadline.
+2. Prefer simple, boring solutions. One main agent with explicit tools; no multi-agent setups, premature abstraction, or large refactors near the deadline.
 3. Every change should keep the app runnable. If something breaks, fix it before moving on.
 
 ### Secrets & config
@@ -79,17 +62,23 @@ When making trade-offs, favor things that are **visible in the demo** and that m
 - Model endpoint / model name must be configurable via env vars (e.g. `LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY`) so the AMD-hosted endpoint can be swapped in without code changes.
 
 ### Model serving
-- Primary inference target: an OpenAI-compatible endpoint served on AMD (vLLM on ROCm / AMD Developer Cloud / TokenFactory).
-- Use the OpenAI-compatible client pattern so the same code works across vLLM, TokenFactory, and Evolus.
-- Log (or show in the UI) which backend/model served each request — it helps prove AMD usage in the demo.
+- Primary inference target: an OpenAI-compatible endpoint served on AMD (vLLM on ROCm / AMD Developer Cloud).
+- Use the OpenAI-compatible client pattern so the same code works across vLLM and Evolus.
+- Log (or show in the UI) which backend/model served each request — it proves AMD usage in the demo.
 
-### Domain guardrails
-- Health track: always keep a human-in-the-loop review step; never output definitive diagnoses or treatment.
-- Commerce track: forecasts must combine an LLM with non-LLM methods (statistical/ML model, rules, real data).
+### Domain guardrails (details: `docs/mvp.md`, `docs/compliance.md`)
+- The LLM interprets text and preferences and drafts messages. Application code does quantities, costs, basket selection, price comparisons, rule outcomes, and approval state.
+- No LLM-only forecasting: bowl counts, stock, and arrivals come from the owner.
+- Mandatory requirements always hold; only negotiable preferences trade off. No combined score that hides trade-offs, no invented supplier ratings, quality claims, or market prices.
+- A candidate supplier with missing terms, availability, or account approval is not orderable.
+- Never present output as legal or customs clearance. No blanket ingredient bans, no authoritative HS codes or origin declarations.
+- Real supplier messages, orders, and payments need explicit human approval. The MVP uses test messages and a simulated supplier endpoint.
+- Do not claim all data stays on our GPUs: Evolus processes data too. Use fictional or owned test data, labeled as such.
 
 ### Repo hygiene
 - License: MIT (add `LICENSE` if missing).
 - Keep `README.md` up to date with: pitch, AMD usage, setup steps, env vars, how to run, demo link.
+- Scratch output (rendered PDFs, screenshots) goes in `tmp/`, which is git-ignored.
 - Small, focused commits with clear messages. Don't push or force-push without being asked.
 
 ### Language
@@ -103,5 +92,8 @@ When making trade-offs, favor things that are **visible in the demo** and that m
 Record important decisions here (date — decision — reason) so every agent shares the same context.
 
 - 2026-10-17 — Created AGENTS.md as shared memory for Claude Code and Codex.
-- 2026-10-17 — Selected Japanese ramen businesses opening in Italy as the first demo audience, as confirmed by the user. See `plan.md` for the working MVP proposal and unresolved infrastructure questions.
+- 2026-10-17 — Selected Japanese ramen businesses opening in Italy as the first demo audience, as confirmed by the user.
 - 2026-10-17 — Refined the demo to a normal purchasing week, including both existing suppliers and discovery of new options. The user confirmed that centralized management and advice based on quality, price, and restaurant preferences are the product's focus; pre-opening import planning is no longer the central workflow.
+- 2026-10-17 — Target `gemma-4-26B-A4B-it` instead of E4B, and read Japanese specifications with Gemma on AMD rather than the Evolus extractor — a small model leaves the AMD GPU looking interchangeable, and the extractor appears to run on Evolus-side models.
+- 2026-10-17 — Removed rendered proposal PNGs under `tmp/` from the repo and ignored `tmp/` — scratch output, not project source.
+- 2026-10-17 — Split `plan.md` into topic docs under `docs/` and kept `plan.md` as the index — agents load only the context a task needs.
