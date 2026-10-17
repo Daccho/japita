@@ -103,3 +103,4 @@ When making trade-offs, favor things that are **visible in the demo** and that m
 Record important decisions here (date — decision — reason) so every agent shares the same context.
 
 - 2026-10-17 — Created AGENTS.md as shared memory for Claude Code and Codex.
+- 2026-10-17 — Selected Japanese ramen businesses opening in Italy as the first demo audience, as confirmed by the user. See `plan.md` for the working MVP proposal and unresolved infrastructure questions.
