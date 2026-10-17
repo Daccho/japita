@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { api, type SupplierRequest } from "@/lib/api";
+import { api, errorCodeOf, type SupplierRequest } from "@/lib/api";
 
 // Test supplier page (Japan side). Japanese only. Opened by the secret link the owner's approval creates.
 export default function SupplierPage() {
@@ -16,8 +16,7 @@ export default function SupplierPage() {
     try {
       setReq(await api.supplierRequest(token));
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      setError(msg.startsWith("404") ? "依頼が見つかりません。リンクをご確認ください。" : "サーバーに接続できません。しばらくしてから再度お試しください。");
+      setError(errorCodeOf(e) === "link_not_found" ? "依頼が見つかりません。リンクをご確認ください。" : "サーバーに接続できません。しばらくしてから再度お試しください。");
     }
   }, [token]);
 
@@ -31,8 +30,7 @@ export default function SupplierPage() {
     try {
       setReq(await api.supplierReply(token, text.trim()));
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      if (msg.startsWith("409")) {
+      if (errorCodeOf(e) === "reply_already_sent") {
         setError("この依頼にはすでにご回答いただいています。");
         load();
       } else {

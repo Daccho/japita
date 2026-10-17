@@ -12,7 +12,7 @@ Status: prepared, not yet deployed.
 ## Limits to plan for
 
 - A free Render service sleeps after about 15 minutes without traffic. The first request then takes about 30–60 seconds. Open `https://<api>/docs` a minute before a demo or judging session.
-- The browser calls the API through the Vercel rewrite `/api/*` → Render, so the session cookie is first-party. Agent requests take up to about a minute and pass through that proxy; Vercel's proxy timeout for external rewrites has not been checked against them yet.
+- The browser calls the API through the Vercel rewrite `/api/*` → Render, so the session cookie is first-party. Agent requests take one to three minutes, so `POST /agent/ask` and `POST /evolus/weekly-intake` return `202 {job_id}` at once and the browser polls `GET /jobs/{job_id}`; no request waits on the proxy timeout. Jobs live in the API process's memory: a restart or sleep loses running jobs and the UI asks the user to ask again (`job_not_found`). Every error response has the shape `{"error": {"code", "message"}}`; the frontends translate the code.
 - Every API route except sign-in, supplier link-token pages, `/health/*` and `/docs` requires a restaurant session, checked on the server. Accounts are created with the CLI below; there is no public sign-up. Resetting data needs `ADMIN_KEY`. Rotate keys and demo passwords after the event.
 
 ## Human steps

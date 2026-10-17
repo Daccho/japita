@@ -11,6 +11,7 @@ import secrets
 from datetime import date
 
 from . import calc, stock
+from .errors import DomainError
 from .store import Store, _now
 
 
@@ -31,7 +32,7 @@ def approve_basket(store: Store, kind: str, approved_by: str = "owner") -> dict:
     """Human action. Creates one approved purchase order per supplier in the basket."""
     basket = _current(store, kind)
     if basket is None:
-        raise ValueError(f"no current basket of kind {kind!r}")
+        raise DomainError("no_current_basket", f"no current basket of kind {kind!r}")
     for a in store.data["approvals"]:
         if a["state"] == "approved" and a["profile_id"] == store.profile_id:
             a["state"] = "superseded"
@@ -76,19 +77,19 @@ def approval_status(store: Store) -> dict | None:
 def submit_order(store: Store, po_id: str, idempotency_key: str) -> dict:
     """Send an approved order to the supplier portal. The supplier then accepts it with a delivery date."""
     if not idempotency_key:
-        raise ValueError("idempotency key required")
+        raise DomainError("invalid_input", "idempotency key required", 422)
     for po in store.data["purchase_orders"]:
         if po.get("idempotency_key") == idempotency_key:
             if po["id"] != po_id:
-                raise ValueError("idempotency key already used for another order")
+                raise DomainError("idempotency_key_reused", "idempotency key already used for another order")
             return po  # retry: same result, no duplicate
     po = _po(store, po_id)
     if po["state"] != "approved":
-        raise ValueError(f"purchase order is {po['state']}")
+        raise DomainError("order_not_approved", f"purchase order is {po['state']}")
     status = approval_status(Store(store.data, next(a["profile_id"] for a in store.data["approvals"]
                                                      if a["id"] == po["approval_id"])))
     if status is None or status["id"] != po["approval_id"] or status["stale"]:
-        raise ValueError("the basket changed since approval; approve it again before submitting")
+        raise DomainError("basket_changed_reapprove", "the basket changed since approval; approve it again before submitting")
     po["idempotency_key"] = idempotency_key
     po["submitted_at"] = _now()
     po["state"] = "submitted"
@@ -103,10 +104,13 @@ def _po(store: Store, po_id: str) -> dict:
 
 
 def _check_date(store: Store, delivery_date: str) -> str:
-    d = date.fromisoformat(delivery_date)  # raises ValueError on bad input
+    try:
+        d = date.fromisoformat(delivery_date)
+    except ValueError:
+        raise DomainError("invalid_date", "delivery date is not a valid date", 422)
     as_of = date.fromisoformat(store.week.get("as_of") or store.week["dates"][0])
     if d < as_of:
-        raise ValueError("delivery date is before the planning date")
+        raise DomainError("delivery_date_before_planning", "delivery date is before the planning date")
     return d.isoformat()
 
 
@@ -122,7 +126,7 @@ def supplier_accept(store: Store, supplier_id: str, po_id: str, delivery_date: s
     if po["state"] == "acknowledged":
         return po  # pressing accept twice changes nothing
     if po["state"] != "submitted":
-        raise ValueError(f"purchase order is {po['state']}")
+        raise DomainError("order_not_submitted", f"purchase order is {po['state']}")
     po["delivery_date"] = _check_date(store, delivery_date or po["delivery_date"])
     po["acknowledgment"] = {"ack_id": f"ACK-{secrets.token_hex(4).upper()}", "received_at": _now(),
                             "by": "supplier", "simulated": True, "note_ja": note_ja,
@@ -145,7 +149,7 @@ def supplier_change_delivery(store: Store, supplier_id: str, po_id: str, deliver
     if po["supplier_id"] != supplier_id:
         raise KeyError(po_id)
     if po["state"] != "acknowledged":
-        raise ValueError("only accepted orders have a delivery date to change")
+        raise DomainError("order_not_accepted", "only accepted orders have a delivery date to change")
     new = _check_date(store, delivery_date)
     po.setdefault("delivery_changes", []).append({"from": po["delivery_date"], "to": new, "at": _now(),
                                                   "note_ja": note_ja, "note_translations": note_translations or {}})

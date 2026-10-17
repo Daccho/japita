@@ -4,6 +4,7 @@ from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel
 
 from . import orders, repo, stock
+from .errors import from_value_error
 from .store import Store
 
 router = APIRouter(tags=["week and orders"])
@@ -35,7 +36,7 @@ def approve_basket(body: ApproveBasket):
     try:
         approval = orders.approve_basket(store, body.kind)
     except ValueError as e:
-        raise HTTPException(409, str(e))
+        raise from_value_error(e, 409)
     repo.save_state(store.data)
     return {"approval": approval,
             "purchase_orders": [p for p in store.data["purchase_orders"] if p["approval_id"] == approval["id"]]}
@@ -62,7 +63,7 @@ def submit_purchase_order(po_id: str, idempotency_key: str = Header(..., alias="
     except KeyError:
         raise HTTPException(404, "purchase order not found")
     except ValueError as e:
-        raise HTTPException(409, str(e))
+        raise from_value_error(e, 409)
     repo.save_state(data)
     return po
 

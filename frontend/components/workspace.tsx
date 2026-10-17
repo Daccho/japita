@@ -3,7 +3,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import {
   api,
-  errorDetail,
   type AgentAnswer,
   type Approval,
   type BasketResult,
@@ -38,7 +37,8 @@ function cached(pid: string): Data | null {
   }
 }
 
-type Job<T> = { running: boolean; startedAt: number | null; result: T | null; error: string | null; question?: string };
+// `error` is the thrown ApiError (shown with errorText); null when there is none.
+type Job<T> = { running: boolean; startedAt: number | null; result: T | null; error: unknown; question?: string };
 
 type Ctx = {
   profileId: string;
@@ -113,6 +113,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // First load: retry until the (possibly sleeping) server answers. Never show an error for this.
+  // (request() already retries quietly for about a minute; this keeps trying after that.)
   useEffect(() => {
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout>;
@@ -153,7 +154,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         setAdvisor({ running: false, startedAt: null, result, error: null, question });
         load().catch(() => {});
       })
-      .catch((e) => setAdvisor({ running: false, startedAt: null, result: null, error: errorDetail(e), question }));
+      .catch((e) => setAdvisor({ running: false, startedAt: null, result: null, error: e ?? new Error("failed"), question }));
   };
 
   const runWeekly = () => {
@@ -162,7 +163,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     api
       .weeklyCheck(profileRef.current)
       .then((result) => setWeekly({ running: false, startedAt: null, result, error: null }))
-      .catch((e) => setWeekly({ running: false, startedAt: null, result: null, error: errorDetail(e) }));
+      .catch((e) => setWeekly({ running: false, startedAt: null, result: null, error: e ?? new Error("failed") }));
   };
 
   return (

@@ -11,12 +11,13 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any, Literal
 
-from fastapi import FastAPI, File, Header, HTTPException, UploadFile
+from fastapi import FastAPI, File, Header, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field
 
-from . import auth, calc, repo
+from . import auth, calc, jobs, repo
 from .agent import run_agent
+from .errors import AppError, from_value_error, install as install_error_handlers
 from .evolus import EvolusAgent, run_agent_evolus
 from .extract import double_read, read_reply, translate
 from .forms import coerce as _coerce, display_ja, form as _form, spec_fields as _spec_fields
@@ -27,6 +28,8 @@ app = FastAPI(title="Japita API")
 app.add_middleware(CORSMiddleware, allow_origins=auth.app_origins(), allow_methods=["*"], allow_headers=["*"])
 app.middleware("http")(auth.require_session)  # outermost: every non-public route needs a restaurant session
 app.include_router(auth.router)
+app.include_router(jobs.router)
+install_error_handlers(app)
 
 Day = Literal["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
 
@@ -157,7 +160,7 @@ def _store(profile_id: str | None = None) -> Store:
     data = repo.load_state()
     pid = profile_id or next(iter(data["profiles"]), None)
     if pid not in data["profiles"]:
-        raise HTTPException(404, f"profile {pid!r} not found; create one with PUT /profiles/{{id}}")
+        raise AppError(404, "not_found", f"profile {pid!r} not found; create one with PUT /profiles/{{id}}")
     return Store(data, pid)
 
 
@@ -183,7 +186,7 @@ def seed_state(fixture: str = "kumo", x_admin_key: str | None = Header(default=N
     """
     admin_key = os.environ.get("ADMIN_KEY")
     if admin_key and not (x_admin_key and secrets.compare_digest(x_admin_key, admin_key)):
-        raise HTTPException(403, "admin key required")
+        raise AppError(403, "forbidden", "admin key required")
     p = FIXTURES / f"{fixture}.json"
     if not fixture.isidentifier() or not p.is_file():
         raise HTTPException(404, f"fixture {fixture!r} not found")
@@ -232,7 +235,7 @@ def put_supplier(supplier_id: str, body: Supplier):
 def delete_supplier(supplier_id: str):
     data = repo.load_state()
     if any(o["supplier_id"] == supplier_id for o in data["offers"]):
-        raise HTTPException(409, "supplier still has offers; delete them first")
+        raise AppError(409, "supplier_has_offers", "supplier still has offers; delete them first")
     data["suppliers"].pop(supplier_id, None)
     repo.save_state(data)
     return {"deleted": supplier_id}
@@ -247,7 +250,7 @@ def list_offers(ingredient: str | None = None):
 def put_offer(offer_id: str, body: Offer):
     data = repo.load_state()
     if body.supplier_id not in data["suppliers"]:
-        raise HTTPException(422, f"unknown supplier {body.supplier_id}")
+        raise AppError(422, "unknown_supplier", f"unknown supplier {body.supplier_id}")
     offer = {**_dump(body), "id": offer_id}
     data["offers"] = [o for o in data["offers"] if o["id"] != offer_id] + [offer]
     data["review_flags"].pop(offer_id, None)  # edited by a person: previous double-read flags no longer apply
@@ -279,7 +282,7 @@ async def upload_spec(offer_id: str, file: UploadFile = File(...)):
     offer = store.offer(offer_id)
     fields = _spec_fields(data, offer["ingredient"])
     if not fields:
-        raise HTTPException(422, "no rules reference this ingredient, so there is nothing to extract")
+        raise AppError(422, "nothing_to_extract", "no rules reference this ingredient, so there is nothing to extract")
 
     raw = await file.read()
     llm = LLM()
@@ -333,8 +336,8 @@ def get_evidence(offer_id: str, profile_id: str | None = None):
     return {**calc.check_evidence(store, offer_id), "orderability": calc.orderability(store, offer_id)}
 
 
-@app.post("/agent/ask")
-def ask_agent(body: Question):
+def answer_question(body: Question) -> dict:
+    """The agent run itself (synchronous). Saves clarification drafts and logs model calls."""
     store = _store(body.profile_id)
     if body.via == "evolus":
         agent = EvolusAgent()
@@ -347,6 +350,13 @@ def ask_agent(body: Question):
     repo.save_state(store.data)  # the agent may have saved clarification drafts
     repo.log_calls(calls, f"agent:{body.via}")
     return {"via": body.via, "answer": result.answer, "steps": result.steps, "clarifications": store.clarifications}
+
+
+@app.post("/agent/ask", status_code=202)
+def ask_agent(body: Question, request: Request):
+    """Start the agent in the background; poll GET /jobs/{job_id} for the answer (60-170 s is normal)."""
+    _store(body.profile_id)  # a wrong profile fails now, not inside the job
+    return jobs.start("agent", lambda: answer_question(body), getattr(request.state, "user_id", None))
 
 
 @app.get("/clarifications")
@@ -367,7 +377,7 @@ def approve_clarification(clarification_id: str):
     except StopIteration:
         raise HTTPException(404, "clarification not found")
     except ValueError as e:
-        raise HTTPException(409, str(e))
+        raise from_value_error(e, 409)
     repo.save_state(data)
     return c
 
@@ -382,7 +392,7 @@ def apply_clarification(clarification_id: str, body: ApplyReply, profile_id: str
     except StopIteration:
         raise HTTPException(404, "clarification not found")
     except ValueError as e:
-        raise HTTPException(409, str(e))
+        raise from_value_error(e, 409)
     repo.save_state(data)
     return {"clarification": c, "baskets": calc.calculate_baskets(_store(profile_id))}
 
@@ -397,7 +407,7 @@ def reply_clarification(clarification_id: str, body: Reply):
     except StopIteration:
         raise HTTPException(404, "clarification not found")
     except ValueError as e:
-        raise HTTPException(409, str(e))
+        raise from_value_error(e, 409)
     repo.save_state(data)
     return c
 
@@ -431,7 +441,7 @@ def _by_token(token: str) -> tuple[dict, Store, dict]:
     try:
         return data, store, store.clarification_by_token(token)
     except StopIteration:
-        raise HTTPException(404, "依頼が見つかりません（リンクをご確認ください）")
+        raise AppError(404, "link_not_found", "依頼が見つかりません（リンクをご確認ください）")
 
 
 @app.get("/supplier/requests/{token}")
@@ -448,9 +458,9 @@ def supplier_reply(token: str, body: SupplierReply):
     """
     data, store, c = _by_token(token)
     if c["state"] != "sent":
-        raise HTTPException(409, "この依頼にはすでにご回答いただいています")
+        raise AppError(409, "reply_already_sent", "この依頼にはすでにご回答いただいています")
     if body.value is None and not (body.text_ja or "").strip():
-        raise HTTPException(422, "回答を入力してください")
+        raise AppError(422, "empty_reply", "回答を入力してください")
     field = c["field"]
     label, sample = _spec_fields(data, store.offer(c["offer_id"])["ingredient"]).get(field, (field, ""))
     llm = LLM()
@@ -459,7 +469,7 @@ def supplier_reply(token: str, body: SupplierReply):
         # Entered in a typed form field by the supplier: no reading needed, only the note is translated.
         value = _coerce(body.value, sample)
         if value is None:
-            raise HTTPException(422, "入力値の形式が正しくありません")
+            raise AppError(422, "invalid_value", "入力値の形式が正しくありません")
         source = f"[仕入先フォーム入力] {_form(field)['label_ja']}: {display_ja(body.value)}{_form(field).get('unit', '')}"
         extraction = {"status": "ok", "value": value, "read_1": value, "read_2": value, "source_text": source,
                       "method": "supplier_form"}
@@ -488,10 +498,7 @@ def supplier_reply(token: str, body: SupplierReply):
 def health_model():
     """Live model identity and latency from a real call (T24), not a static badge."""
     llm = LLM()
-    try:
-        llm.chat([{"role": "user", "content": "Reply with OK."}], max_tokens=5)
-    except Exception as e:
-        raise HTTPException(502, f"model endpoint error: {type(e).__name__}")
+    llm.chat([{"role": "user", "content": "Reply with OK."}], max_tokens=5)  # failures map to model_* errors
     repo.log_calls(llm.calls, "health")
     return llm.calls[-1].__dict__
 

@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from . import orders, portal, repo
 from .extract import translate
 from .llm import LLM
+from .errors import AppError, from_value_error
 from .store import Store
 
 router = APIRouter(tags=["supplier portal"])
@@ -48,7 +49,7 @@ def _load(token: str) -> tuple[dict, Store, dict]:
     try:
         return data, store, portal.supplier_by_token(store, token)
     except KeyError:
-        raise HTTPException(404, "ページが見つかりません（リンクをご確認ください）")
+        raise AppError(404, "link_not_found", "ページが見つかりません（リンクをご確認ください）")
 
 
 def _translations(note_ja: str | None) -> tuple[dict, list]:
@@ -87,9 +88,9 @@ def portal_accept(token: str, po_id: str, body: Accept):
     try:
         orders.supplier_accept(store, sup["id"], po_id, body.delivery_date, body.note_ja, tr)
     except KeyError:
-        raise HTTPException(404, "注文が見つかりません")
+        raise AppError(404, "order_not_found", "注文が見つかりません")
     except ValueError as e:
-        raise HTTPException(409, str(e))
+        raise from_value_error(e, 409)
     repo.save_state(data)
     repo.log_calls(calls, f"portal_note:{po_id}")
     return portal.view(store, sup)
@@ -102,9 +103,9 @@ def portal_change_delivery(token: str, po_id: str, body: ChangeDelivery):
     try:
         orders.supplier_change_delivery(store, sup["id"], po_id, body.delivery_date, body.note_ja, tr)
     except KeyError:
-        raise HTTPException(404, "注文が見つかりません")
+        raise AppError(404, "order_not_found", "注文が見つかりません")
     except ValueError as e:
-        raise HTTPException(409, str(e))
+        raise from_value_error(e, 409)
     repo.save_state(data)
     repo.log_calls(calls, f"portal_note:{po_id}")
     return portal.view(store, sup)
@@ -117,9 +118,9 @@ def portal_update_product(token: str, offer_id: str, body: ProductUpdate):
     try:
         portal.propose_update(store, sup["id"], offer_id, {**body.model_dump(), "note_translations": tr})
     except KeyError:
-        raise HTTPException(404, "商品が見つかりません")
+        raise AppError(404, "product_not_found", "商品が見つかりません")
     except ValueError as e:
-        raise HTTPException(422, str(e))
+        raise from_value_error(e, 422)
     repo.save_state(data)
     repo.log_calls(calls, f"portal_note:{offer_id}")
     return portal.view(store, sup)
@@ -132,7 +133,7 @@ def portal_new_product(token: str, body: NewProduct):
     try:
         portal.propose_new(store, sup["id"], {**body.model_dump(), "note_translations": tr})
     except ValueError as e:
-        raise HTTPException(422, str(e))
+        raise from_value_error(e, 422)
     repo.save_state(data)
     repo.log_calls(calls, "portal_note:new_product")
     return portal.view(store, sup)
@@ -148,7 +149,7 @@ def apply_supplier_update(offer_id: str):
     except KeyError:
         raise HTTPException(404, "offer not found")
     except ValueError as e:
-        raise HTTPException(409, str(e))
+        raise from_value_error(e, 409)
     repo.save_state(data)
     return offer
 
@@ -162,6 +163,6 @@ def reject_supplier_update(offer_id: str):
     except KeyError:
         raise HTTPException(404, "offer not found")
     except ValueError as e:
-        raise HTTPException(409, str(e))
+        raise from_value_error(e, 409)
     repo.save_state(data)
     return offer

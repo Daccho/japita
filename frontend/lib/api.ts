@@ -3,23 +3,81 @@
 // Same-origin proxy to the backend (next.config.ts), so the session cookie travels with every request.
 export const API_BASE = "/api";
 
+import type { Key, T } from "@/lib/i18n";
+
+/** A failed API call. `code` is the backend's stable error code, or "network" when the server was unreachable. */
 export class ApiError extends Error {
-  constructor(public status: number, public path: string, public body: string) {
-    super(`${status} ${path}`);
+  constructor(public status: number, public code: string, public path: string) {
+    super(`${status} ${code} ${path}`);
   }
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, { cache: "no-store", ...init });
-  // The session expired or was revoked: the server refuses, so go back to sign-in.
-  if (res.status === 401 && typeof window !== "undefined") window.location.assign(loginUrl());
-  if (!res.ok) throw new ApiError(res.status, path, (await res.text()).slice(0, 500));
-  return res.json() as Promise<T>;
+// The free API instance sleeps when idle; while it wakes the proxy answers 502/503/504 without our error body.
+// Retry quietly for about a minute before showing anything.
+const RETRY_DELAYS_MS = [1000, 2000, 4000, 8000, 15000, 15000, 15000];
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const SESSION_HINT = "japita.session";
+
+async function errorCode(res: Response): Promise<string> {
+  try {
+    const code = (await res.json())?.error?.code;
+    if (typeof code === "string") return code;
+  } catch {}
+  return [502, 503, 504].includes(res.status) ? "network" : res.status === 401 ? "auth_required" : "internal";
+}
+
+async function request<R>(path: string, init?: RequestInit): Promise<R> {
+  const method = (init?.method ?? "GET").toUpperCase();
+  for (let attempt = 0; ; attempt++) {
+    let res: Response | null = null;
+    try {
+      res = await fetch(`${API_BASE}${path}`, { cache: "no-store", ...init });
+    } catch {}
+    if (res?.ok) return res.json() as Promise<R>;
+    const code = res ? await errorCode(res) : "network";
+    // A write is retried only when it surely did not reach the API (no response, or the proxy could not connect).
+    const safe = method === "GET" || !res || res.status !== 504;
+    if (code === "network" && safe && attempt < RETRY_DELAYS_MS.length) {
+      await sleep(RETRY_DELAYS_MS[attempt]);
+      continue;
+    }
+    // The session expired or was revoked: the server refuses, so go back to sign-in (keeping this page as `next`).
+    if (res?.status === 401 && typeof window !== "undefined") {
+      forgetSession();
+      window.location.assign(loginUrl());
+    }
+    throw new ApiError(res?.status ?? 0, code, path);
+  }
 }
 
 export function loginUrl() {
   const next = window.location.pathname + window.location.search;
   return next === "/" ? "/login" : `/login?next=${encodeURIComponent(next)}`;
+}
+
+// Remembered after /auth/me confirms a restaurant session, so the next visit can paint the cached workspace while
+// the session check runs. The API still refuses every request without a valid session.
+export function rememberSession(user: unknown) {
+  try {
+    localStorage.setItem(SESSION_HINT, JSON.stringify({ user, at: Date.now() }));
+  } catch {}
+}
+
+export function rememberedSession<U>(maxAgeMs: number): U | null {
+  try {
+    const raw = localStorage.getItem(SESSION_HINT);
+    const hint = raw ? (JSON.parse(raw) as { user: U; at: number }) : null;
+    return hint && Date.now() - hint.at < maxAgeMs ? hint.user : null;
+  } catch {
+    return null;
+  }
+}
+
+// On sign-out or an expired session: forget the hint and the cached restaurant data in this browser.
+export function forgetSession() {
+  try {
+    for (const k of Object.keys(localStorage)) if (k === SESSION_HINT || k.startsWith("japita.cache.")) localStorage.removeItem(k);
+  } catch {}
 }
 
 const json = (method: string, body: unknown, headers: Record<string, string> = {}): RequestInit => ({
@@ -28,16 +86,56 @@ const json = (method: string, body: unknown, headers: Record<string, string> = {
   body: JSON.stringify(body),
 });
 
-// Human-readable detail from a FastAPI error body, if any.
-export function errorDetail(e: unknown): string {
-  if (e instanceof ApiError) {
-    try {
-      const d = JSON.parse(e.body).detail;
-      if (typeof d === "string") return d;
-    } catch {}
-    return e.body || e.message;
+// Long model calls run as background jobs on the API: start, then poll until done or error.
+type JobStatus<R> = { job_id: string; status: "running" | "done" | "error"; result?: R; error?: { code: string } };
+const JOB_POLL_MS = 2500;
+
+async function runJob<R>(start: Promise<{ job_id: string }>): Promise<R> {
+  const { job_id } = await start;
+  for (;;) {
+    await sleep(JOB_POLL_MS);
+    const job = await request<JobStatus<R>>(`/jobs/${encodeURIComponent(job_id)}`);
+    if (job.status === "done") return job.result as R;
+    if (job.status === "error") throw new ApiError(200, job.error?.code ?? "internal", `/jobs/${job_id}`);
   }
-  return e instanceof Error ? e.message : String(e);
+}
+
+// Error code -> translated message with a suggested action. Users never see raw HTTP bodies or status codes.
+const ERROR_KEYS: Record<string, Key> = {
+  network: "err.network",
+  auth_required: "err.auth_required",
+  forbidden: "err.forbidden",
+  invalid_input: "err.invalid_input",
+  not_found: "err.not_found",
+  conflict: "err.conflict",
+  model_unavailable: "err.model_unavailable",
+  model_timeout: "err.model_timeout",
+  evolus_rate_limited: "err.evolus_rate_limited",
+  evolus_credits_exhausted: "err.evolus_credits_exhausted",
+  evolus_unavailable: "err.evolus_unavailable",
+  job_not_found: "err.job_not_found",
+  internal: "err.internal",
+  basket_changed_reapprove: "err.basket_changed_reapprove",
+  no_current_basket: "err.no_current_basket",
+  order_not_approved: "err.order_not_approved",
+  idempotency_key_reused: "err.conflict",
+  clarification_already_sent: "err.clarification_already_sent",
+  no_supplier_reply: "err.no_supplier_reply",
+  choose_value: "err.choose_value",
+  clarification_not_sent: "err.clarification_not_sent",
+  no_pending_update: "err.no_pending_update",
+  owner_only_field: "err.owner_only_field",
+};
+
+export function errorCodeOf(e: unknown): string {
+  return e instanceof ApiError ? e.code : "internal";
+}
+
+export function errorText(e: unknown, t: T): string {
+  if (!(e instanceof ApiError)) return t("err.internal");
+  const key = ERROR_KEYS[e.code] ??
+    (e.status === 409 ? "err.conflict" : e.status === 404 ? "err.not_found" : e.status === 422 || e.status === 400 ? "err.invalid_input" : "err.internal");
+  return t(key);
 }
 
 export type Translations = { it?: string; en?: string };
@@ -294,7 +392,7 @@ export const api = {
   evidence: (offerId: string, profileId: string) => request<Evidence>(`/offers/${offerId}/evidence?${q(profileId)}`),
   putProfile: (p: Profile) => request<Profile>(`/profiles/${p.id}`, json("PUT", p)),
   ask: (question: string, profileId: string) =>
-    request<AgentAnswer>("/agent/ask", json("POST", { question, profile_id: profileId })),
+    runJob<AgentAnswer>(request("/agent/ask", json("POST", { question, profile_id: profileId }))),
   approveClarification: (id: string) => request<Clarification>(`/clarifications/${id}/approve`, { method: "POST" }),
   applyClarification: (id: string, profileId: string, value?: unknown) =>
     request<{ clarification: Clarification; baskets: BasketResult }>(
@@ -311,7 +409,8 @@ export const api = {
   portalLink: (supplierId: string) => request<{ token: string; path: string }>(`/suppliers/${supplierId}/portal-link`),
   applySupplierUpdate: (offerId: string) => request<Offer>(`/offers/${offerId}/supplier-update/apply`, { method: "POST" }),
   rejectSupplierUpdate: (offerId: string) => request<Offer>(`/offers/${offerId}/supplier-update/reject`, { method: "POST" }),
-  weeklyCheck: (profileId: string) => request<WeeklyCheck>(`/evolus/weekly-intake?${q(profileId)}`, { method: "POST" }),
+  weeklyCheck: (profileId: string) =>
+    runJob<WeeklyCheck>(request(`/evolus/weekly-intake?${q(profileId)}`, { method: "POST" })),
   // Legacy single-request supplier page (app/supplier/[token]).
   supplierRequest: (token: string) => request<SupplierRequest>(`/supplier/requests/${encodeURIComponent(token)}`),
   supplierReply: (token: string, textJa: string) =>

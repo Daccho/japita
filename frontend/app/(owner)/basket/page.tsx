@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Check, Sparkles, Store, TriangleAlert } from "lucide-react";
-import { api, errorDetail, money, qty, type Basket } from "@/lib/api";
+import { api, errorText, money, qty, type Basket } from "@/lib/api";
 import { useDates, useI18n, useLabel } from "@/lib/i18n";
 import { useWorkspace } from "@/components/workspace";
 import { findBasket, KIND_ORDER, suggestedBasket } from "@/components/helpers";
@@ -71,7 +71,7 @@ export default function BasketPage() {
       await api.approveBasket(selected.kind, profileId);
       await refresh();
     } catch (e) {
-      setError(errorDetail(e));
+      setError(errorText(e, t));
     } finally {
       setBusy(false);
     }
@@ -182,7 +182,7 @@ export default function BasketPage() {
                   : t("bk.over", { r: money(selected.delivered_total_eur - budget), b: money(budget) })}
                 {selected.kind !== "baseline" && selected.vs_baseline_eur !== undefined && ` ${t("bk.vsBaseline", { d: signed(selected.vs_baseline_eur) })}.`}
               </p>
-              {error && <p className="jp-error">{t("err.generic", { e: error })}</p>}
+              {error && <p className="jp-error">{error}</p>}
               {approval?.stale && approvedBasket === selected && <p className="jp-error">{t("bk.stale")}</p>}
               {approval && !approval.stale && !isApproved && (
                 <p className="jp-muted" style={{ fontSize: 12, marginBottom: 10 }}>
@@ -195,7 +195,7 @@ export default function BasketPage() {
                   {t("bk.approvedThis")} · {d.time(approval!.approved_at)}
                 </span>
               ) : (
-                <button type="button" className="jp-action jp-primary" disabled={busy} onClick={approve}>
+                <button id="approve" type="button" className="jp-action jp-primary" disabled={busy} onClick={approve}>
                   <Check aria-hidden />
                   {busy ? t("bk.approving") : t("bk.approve")}
                 </button>

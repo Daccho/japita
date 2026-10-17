@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { Loader2 } from "lucide-react";
-import { loginUrl } from "@/lib/api";
+import { forgetSession, loginUrl, rememberedSession, rememberSession } from "@/lib/api";
 import { me, supplierPortal, type Me } from "@/lib/auth";
 
 // Restaurant workspace only. A convenience for routing: the API refuses the workspace's data without a
@@ -15,18 +15,46 @@ export function useAccount() {
   return v;
 }
 
+const HINT_MAX_AGE_MS = 7 * 24 * 3600 * 1000; // the server session lifetime
+const RETRY_DELAYS_MS = [1000, 2000, 4000, 8000, 15000, 15000, 15000]; // about a minute while the API wakes up
+
 export default function AuthGate({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<Me | null>(null);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    me()
-      .then(async (u) => {
-        if (!u) window.location.replace(loginUrl());
-        else if (u.role === "supplier") window.location.replace((await supplierPortal()).path);
-        else setUser(u);
-      })
-      .catch(() => setFailed(true));
+    // middleware.ts already sent visitors without a session cookie to /login. If this browser confirmed a
+    // restaurant session before, paint the cached workspace now; the check below still runs and redirects on 401.
+    const hinted = rememberedSession<Me>(HINT_MAX_AGE_MS);
+    if (hinted?.role === "restaurant") setUser(hinted);
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const check = async (attempt: number) => {
+      try {
+        const u = await me();
+        if (cancelled) return;
+        if (!u) {
+          forgetSession();
+          window.location.replace(loginUrl());
+        } else if (u.role === "supplier") {
+          forgetSession();
+          window.location.replace((await supplierPortal()).path);
+        } else {
+          rememberSession(u);
+          setUser(u);
+        }
+      } catch {
+        // Unreachable or waking up: retry quietly, then offer a manual retry.
+        if (cancelled) return;
+        if (attempt < RETRY_DELAYS_MS.length) timer = setTimeout(() => check(attempt + 1), RETRY_DELAYS_MS[attempt]);
+        else setFailed(true);
+      }
+    };
+    check(0);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, []);
 
   if (!user)

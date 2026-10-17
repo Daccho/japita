@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ClipboardCheck, Loader2, TriangleAlert } from "lucide-react";
-import { money, qty } from "@/lib/api";
+import { errorText, money, qty } from "@/lib/api";
 import { useDates, useI18n, useLabel } from "@/lib/i18n";
 import { useElapsed, useWorkspace } from "@/components/workspace";
 import { suggestedBasket } from "@/components/helpers";
@@ -16,14 +16,14 @@ function WeeklyCheck() {
   const { weekly, runWeekly } = useWorkspace();
   const elapsed = useElapsed(weekly.startedAt);
   const output = weekly.result?.output_text;
-  const failed = weekly.error || (weekly.result && (weekly.result.status !== "completed" || !output));
+  const failed = !weekly.error && weekly.result && (weekly.result.status !== "completed" || !output);
   return (
     <section className="jp-panel">
       <div className="jp-line-head">
         <h2>{t("chk.title")}</h2>
         <button type="button" className="jp-action" disabled={weekly.running} onClick={runWeekly}>
           {weekly.running ? <Loader2 className="jp-spinner" aria-hidden /> : <ClipboardCheck aria-hidden />}
-          {weekly.result || weekly.error ? t("chk.again") : t("chk.run")}
+          {weekly.error ? t("err.retry") : weekly.result ? t("chk.again") : t("chk.run")}
         </button>
       </div>
       <p className="jp-section-note">{t("chk.intro")}</p>
@@ -37,6 +37,7 @@ function WeeklyCheck() {
           </div>
         </div>
       )}
+      {!weekly.running && !!weekly.error && <p className="jp-error">{errorText(weekly.error, t)}</p>}
       {!weekly.running && failed && <p className="jp-error">{t("chk.failed")}</p>}
       {!weekly.running && output && <Markdown text={output} />}
     </section>

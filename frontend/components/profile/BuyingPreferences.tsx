@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowDown, ArrowUp } from "lucide-react";
-import { api, errorDetail, money, type BasketResult, type Day, type Profile, type Rule } from "@/lib/api";
+import { api, errorText, money, type BasketResult, type Day, type Profile, type Rule } from "@/lib/api";
 import { useDates, useI18n, useLabel, type Key } from "@/lib/i18n";
 import { useWorkspace } from "@/components/workspace";
 import { findBasket } from "@/components/helpers";
@@ -49,7 +49,7 @@ export default function BuyingPreferences() {
       setDraft(null);
       setMsg(t("by.impact", { a: money(before, "—"), b: money(after, "—") }));
     } catch (e) {
-      setMsg(t("err.generic", { e: errorDetail(e) }));
+      setMsg(errorText(e, t));
     } finally {
       setBusy(false);
     }

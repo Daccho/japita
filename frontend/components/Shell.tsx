@@ -10,6 +10,7 @@ import { PROFILES, useWorkspace } from "@/components/workspace";
 import { suggestedBasket } from "@/components/helpers";
 import AdvisorDock from "@/components/Advisor";
 import { useAccount } from "@/components/AuthGate";
+import { forgetSession } from "@/lib/api";
 import { logout } from "@/lib/auth";
 
 const NAV: { href: string; key: Key; icon: typeof Store }[] = [
@@ -56,7 +57,11 @@ export default function Shell({ children }: { children: ReactNode }) {
   const { data, profileId, setProfileId } = useWorkspace();
   const lines = suggestedBasket(data?.baskets)?.lines.length;
   const { user } = useAccount();
-  const signOut = () => logout().finally(() => window.location.replace("/login"));
+  const signOut = () =>
+    logout().finally(() => {
+      forgetSession();
+      window.location.replace("/login");
+    });
   return (
     <div className="jp">
       <div className="jp-app">

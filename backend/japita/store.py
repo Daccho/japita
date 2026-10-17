@@ -9,6 +9,8 @@ import secrets
 from datetime import datetime, timezone
 from pathlib import Path
 
+from .errors import DomainError
+
 # Decided inside the restaurant (e.g. the chef tastes a sample), so never asked of a supplier.
 OWNER_DECIDED_FIELDS = {"chef_approved"}
 
@@ -79,7 +81,7 @@ class Store:
                           translations: dict[str, str] | None = None,
                           reason_translations: dict[str, str] | None = None) -> dict:
         if field in OWNER_DECIDED_FIELDS:
-            raise ValueError(f"{field} is decided by the restaurant (e.g. a chef tasting), not asked of the supplier")
+            raise DomainError("owner_only_field", f"{field} is decided by the restaurant (e.g. a chef tasting), not asked of the supplier")
         self.offer(offer_id)
         c = {
             "id": f"C{max((int(c['id'][1:]) for c in self.clarifications), default=0) + 1}",
@@ -98,7 +100,7 @@ class Store:
         """Human action. Approval delivers the question to the test supplier page via a secret link token."""
         c = self.clarification(clarification_id)
         if c["state"] != "draft":
-            raise ValueError(f"clarification is {c['state']}")
+            raise DomainError("clarification_already_sent", f"clarification is {c['state']}")
         c["state"] = "sent"
         c["token"] = secrets.token_urlsafe(16)
         c["sent_at"] = _now()
@@ -109,7 +111,7 @@ class Store:
         """Test supplier action. Stores the reply and Gemma's reading; the offer is not changed yet."""
         c = self.clarification_by_token(token)
         if c["state"] != "sent":
-            raise ValueError(f"clarification is {c['state']}; it no longer accepts replies")
+            raise DomainError("reply_already_sent", f"clarification is {c['state']}; it no longer accepts replies")
         c["reply"] = {"text_ja": text_ja, "translations": translations or {}, "extraction": extraction,
                       "received_at": _now()}
         c["state"] = "supplier_replied"
@@ -119,11 +121,11 @@ class Store:
         """Human action: the owner accepts the extracted value (or picks one when the two reads disagreed)."""
         c = self.clarification(clarification_id)
         if c["state"] != "supplier_replied":
-            raise ValueError(f"clarification is {c['state']}; there is no supplier reply to apply")
+            raise DomainError("no_supplier_reply", f"clarification is {c['state']}; there is no supplier reply to apply")
         ex = c["reply"]["extraction"]
         if value is None:
             if ex["status"] != "ok":
-                raise ValueError(f"extraction is {ex['status']}; choose the value explicitly")
+                raise DomainError("choose_value", f"extraction is {ex['status']}; choose the value explicitly")
             value = ex["value"]
         c["state"] = "sent"  # record_reply expects an open request
         return self.record_reply(clarification_id, value, ex.get("source_text") or c["reply"]["text_ja"])
@@ -132,7 +134,7 @@ class Store:
         """Human action: enter a (test) supplier reply that resolves the missing field."""
         c = self.clarification(clarification_id)
         if c["state"] not in ("approved", "sent"):
-            raise ValueError("clarification must be approved before a reply is recorded")
+            raise DomainError("clarification_not_sent", "clarification must be approved before a reply is recorded")
         offer = self.offer(c["offer_id"])
         offer["attributes"][c["field"]] = value
         offer["evidence"][c["field"]] = f"[TEST SUPPLIER REPLY] {source_text}"

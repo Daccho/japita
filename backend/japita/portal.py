@@ -5,6 +5,7 @@ Suppliers never change restaurant data directly: product updates and new product
 
 import secrets
 
+from .errors import DomainError
 from .forms import FIELD_FORM_JA, INGREDIENT_EN, INGREDIENT_JA, coerce, display_ja, form, spec_fields
 from .store import Store, _now
 
@@ -34,11 +35,13 @@ def _typed_attributes(store: Store, ingredient: str, attributes: dict) -> tuple[
     samples = {f: sample for f, (_, sample) in spec_fields(store.data, ingredient).items()}
     values, evidence = {}, {}
     for field, raw in (attributes or {}).items():
-        if field in OWNER_ONLY_FIELDS or field not in samples:
-            raise ValueError(f"field {field!r} cannot be entered by a supplier")
+        if field in OWNER_ONLY_FIELDS:
+            raise DomainError("owner_only_field", f"field {field!r} is decided by the restaurant")
+        if field not in samples:
+            raise DomainError("unknown_field", f"field {field!r} cannot be entered by a supplier")
         value = coerce(raw, samples[field])
         if value is None:
-            raise ValueError(f"invalid value for {field}")
+            raise DomainError("invalid_value", f"invalid value for {field}")
         values[field] = value
         label = FIELD_FORM_JA.get(field, {}).get("label_ja", field)
         evidence[field] = f"[サプライヤー入力] {label}: {display_ja(raw)}{FIELD_FORM_JA.get(field, {}).get('unit', '')}"
@@ -54,7 +57,7 @@ def propose_update(store: Store, supplier_id: str, offer_id: str, changes: dict)
     if values:
         proposal["attributes"], proposal["evidence"] = values, evidence
     if not proposal:
-        raise ValueError("nothing to update")
+        raise DomainError("nothing_to_update", "nothing to update")
     proposal.update(note_ja=changes.get("note_ja"), note_translations=changes.get("note_translations") or {},
                     submitted_at=_now())
     offer["pending_update"] = proposal
@@ -63,7 +66,7 @@ def propose_update(store: Store, supplier_id: str, offer_id: str, changes: dict)
 
 def propose_new(store: Store, supplier_id: str, data: dict) -> dict:
     if data["ingredient"] not in store.profile["ingredients"]:
-        raise ValueError(f"unknown ingredient {data['ingredient']!r}")
+        raise DomainError("unknown_ingredient", f"unknown ingredient {data['ingredient']!r}")
     values, evidence = _typed_attributes(store, data["ingredient"], data.get("attributes") or {})
     n = 1 + sum(1 for o in store.offers if o["id"].startswith("O-new-"))
     offer = {
@@ -85,7 +88,7 @@ def apply_update(store: Store, offer_id: str) -> dict:
     offer = store.offer(offer_id)
     proposal = offer.pop("pending_update", None)
     if proposal is None:
-        raise ValueError("no pending supplier update")
+        raise DomainError("no_pending_update", "no pending supplier update")
     for k in ("product", "price_eur", "pack_size"):
         if k in proposal:
             offer[k] = proposal[k]
@@ -101,7 +104,7 @@ def apply_update(store: Store, offer_id: str) -> dict:
 def reject_update(store: Store, offer_id: str) -> dict:
     offer = store.offer(offer_id)
     if offer.pop("pending_update", None) is None:
-        raise ValueError("no pending supplier update")
+        raise DomainError("no_pending_update", "no pending supplier update")
     if offer.get("pending_new"):
         store.data["offers"] = [o for o in store.offers if o["id"] != offer_id]
     return offer

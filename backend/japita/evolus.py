@@ -15,12 +15,61 @@ import httpx
 from dotenv import load_dotenv
 
 from .agent import SYSTEM_PROMPT, AgentResult, missing_drafts_nudge
+from .errors import AppError
 from .llm import CallRecord
 from .store import Store
 from .tools import TOOLS, call_tool
 
 load_dotenv()
 log = logging.getLogger("japita.evolus")
+
+# Per request: the agent chat waits for the model; workflow calls only start or poll an execution.
+CHAT_TIMEOUT = httpx.Timeout(float(os.environ.get("EVOLUS_TIMEOUT_SECONDS") or 120), connect=10)
+API_TIMEOUT = httpx.Timeout(30, connect=10)
+RETRY_BACKOFF_SECONDS = 2.0
+TRANSIENT = {429, 500, 502, 503, 504}
+
+
+def request(client: httpx.Client, method: str, url: str, **kwargs) -> httpx.Response:
+    """One HTTP call to Evolus with one retry on transient failures, mapped to stable errors.
+
+    The upstream body is logged, never returned to the caller.
+    """
+    for attempt in (1, 2):
+        try:
+            resp = client.request(method, url, **kwargs)
+        except (httpx.ReadTimeout, httpx.WriteTimeout, httpx.PoolTimeout):
+            # Not retried: the request may still be running upstream, and a second wait would double the delay.
+            log.warning("evolus %s %s timed out", method, url)
+            raise AppError(504, "model_timeout", "Evolus did not answer in time")
+        except httpx.TransportError as e:
+            log.warning("evolus %s %s failed (attempt %d): %s", method, url, attempt, type(e).__name__)
+            if attempt == 2:
+                raise AppError(503, "evolus_unavailable", "Evolus could not be reached")
+        else:
+            if resp.status_code < 400:
+                return resp
+            log.warning("evolus %s %s -> HTTP %d (attempt %d): %s", method, url, resp.status_code, attempt,
+                        resp.text[:300])
+            if resp.status_code not in TRANSIENT or attempt == 2:
+                raise evolus_error(resp.status_code)
+        time.sleep(RETRY_BACKOFF_SECONDS)
+    raise AssertionError("unreachable")
+
+
+def evolus_error(status: int) -> AppError:
+    if status == 402:
+        return AppError(402, "evolus_credits_exhausted", "Evolus credits are exhausted")
+    if status == 429:
+        return AppError(429, "evolus_rate_limited", "Evolus rate limit reached")
+    if status == 409:
+        return AppError(503, "evolus_unavailable", "the Evolus workflow is turned off")
+    return AppError(503, "evolus_unavailable", f"Evolus returned HTTP {status}")
+
+
+def _missing_config(names: str) -> AppError:
+    log.error("%s must be set", names)
+    return AppError(503, "evolus_unavailable", "Evolus is not configured on the server")
 
 PROTOCOL = """You are running inside the Japita app. You can use these tools; the app executes them and sends back the result.
 {tools}
@@ -37,9 +86,9 @@ class EvolusAgent:
         self.key = os.environ.get("EVOLUS_API_KEY", "")
         app, agent = os.environ.get("EVOLUS_APPLICATION_ID", ""), os.environ.get("EVOLUS_AGENT_ID", "")
         if not (self.key and app and agent):
-            raise RuntimeError("EVOLUS_API_KEY, EVOLUS_APPLICATION_ID and EVOLUS_AGENT_ID must be set")
+            raise _missing_config("EVOLUS_API_KEY, EVOLUS_APPLICATION_ID and EVOLUS_AGENT_ID")
         self.model = f"{app}:{agent}"
-        self.client = client or httpx.Client(timeout=180)
+        self.client = client or httpx.Client(timeout=CHAT_TIMEOUT)
         self.conversation_id: str | None = None
         self.calls: list[CallRecord] = []
 
@@ -49,9 +98,8 @@ class EvolusAgent:
         if self.conversation_id:
             headers["X-Conversation-Id"] = self.conversation_id
         start = time.perf_counter()
-        resp = self.client.post(f"{self.base}/chat/completions", headers=headers,
-                                json={"model": self.model, "messages": [{"role": "user", "content": content}]})
-        resp.raise_for_status()
+        resp = request(self.client, "POST", f"{self.base}/chat/completions", headers=headers,
+                       json={"model": self.model, "messages": [{"role": "user", "content": content}]})
         self.conversation_id = resp.headers.get("X-Conversation-Id", self.conversation_id)
         body = resp.json()
         usage = body.get("usage") or {}
@@ -142,27 +190,32 @@ class EvolusWorkflow:
         self.workflow_id = workflow_id or os.environ.get("EVOLUS_WORKFLOW_ID", "")
         key, app = os.environ.get("EVOLUS_API_KEY", ""), os.environ.get("EVOLUS_APPLICATION_ID", "")
         if not (key and app and self.workflow_id):
-            raise RuntimeError("EVOLUS_API_KEY, EVOLUS_APPLICATION_ID and EVOLUS_WORKFLOW_ID must be set")
+            raise _missing_config("EVOLUS_API_KEY, EVOLUS_APPLICATION_ID and EVOLUS_WORKFLOW_ID")
         self.headers = {"X-ApiKey": key, "X-Application-Id": app}
-        self.client = client or httpx.Client(timeout=60)
+        self.client = client or httpx.Client(timeout=API_TIMEOUT)
 
     def execute(self, input_text: str, file: tuple[str, bytes, str] | None = None) -> str:
-        resp = self.client.post(f"{self.base}/workflows/{self.workflow_id}/execute", headers=self.headers,
-                                data={"input": input_text}, files={"file": file} if file else None)
-        if resp.status_code == 409:
-            raise RuntimeError("Evolus workflow is turned off; switch it on in the Evolus workspace")
-        resp.raise_for_status()
+        # Not retried: a retry after a lost response could start the workflow (and spend credits) twice.
+        try:
+            resp = self.client.post(f"{self.base}/workflows/{self.workflow_id}/execute", headers=self.headers,
+                                    data={"input": input_text}, files={"file": file} if file else None)
+        except httpx.TimeoutException:
+            raise AppError(504, "model_timeout", "Evolus did not answer in time")
+        except httpx.TransportError:
+            raise AppError(503, "evolus_unavailable", "Evolus could not be reached")
+        if resp.status_code >= 400:
+            log.warning("evolus workflow execute -> HTTP %d: %s", resp.status_code, resp.text[:300])
+            raise evolus_error(resp.status_code)
         body = resp.json()
         return body.get("executionId") or body.get("id")
 
     def status(self, execution_id: str) -> dict:
-        resp = self.client.get(f"{self.base}/workflows/{self.workflow_id}/executions/{execution_id}",
-                               headers=self.headers)
-        resp.raise_for_status()
+        resp = request(self.client, "GET", f"{self.base}/workflows/{self.workflow_id}/executions/{execution_id}",
+                       headers=self.headers)
         return resp.json()
 
     def run(self, input_text: str, file: tuple[str, bytes, str] | None = None,
-            poll_seconds: float = 4, timeout_seconds: float = 600) -> dict:
+            poll_seconds: float = 4, timeout_seconds: float = 270) -> dict:
         start = time.perf_counter()
         execution_id = self.execute(input_text, file)
         log.info("evolus workflow %s execution %s started", self.workflow_id, execution_id)

@@ -29,12 +29,12 @@ from typing import Literal
 from argon2 import PasswordHasher
 from argon2.exceptions import InvalidHashError, VerificationError
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import Column, DateTime, ForeignKey, String, delete, select
 from sqlalchemy.orm import Session
 
-from . import portal, repo
+from . import errors, portal, repo
+from .errors import AppError
 from .store import Store
 
 SESSION_TTL = timedelta(days=7)
@@ -177,15 +177,15 @@ async def require_session(request: Request, call_next):
     if request.method == "OPTIONS":
         return await call_next(request)
     if request.method in UNSAFE_METHODS and not _origin_allowed(request):
-        return JSONResponse({"detail": "cross-origin request rejected"}, status_code=403)
+        return errors.response(403, "forbidden", "cross-origin request rejected")
     if not _is_public(request.url.path):
         with Session(repo.engine()) as s:
             user = session_user(s, request)
             if user is None:
-                return JSONResponse({"detail": "not signed in"}, status_code=401)
+                return errors.response(401, "auth_required", "not signed in")
             # /auth/* routes check their own role; every other protected route is the restaurant workspace.
             if user.role != "restaurant" and not request.url.path.startswith("/auth/"):
-                return JSONResponse({"detail": "restaurant account required"}, status_code=403)
+                return errors.response(403, "forbidden", "restaurant account required")
             request.state.user_id = user.id
     return await call_next(request)
 
@@ -223,13 +223,13 @@ def _me(s: Session, user: User) -> dict:
 def login(body: Login, response: Response):
     username = body.username.strip().lower()
     if _throttled(username):
-        raise HTTPException(429, "too many failed attempts; wait a few minutes")
+        raise AppError(429, "too_many_attempts", "too many failed attempts; wait a few minutes")
     with Session(repo.engine()) as s:
         user = s.scalar(select(User).where(User.username == username))
         # A wrong side gets the same answer as a wrong password, so the form does not reveal which IDs exist.
         if not check_password(user, body.password) or user.role != body.role:
             _failures[username].append(time.monotonic())
-            raise HTTPException(401, "invalid login ID or password")
+            raise AppError(401, "invalid_credentials", "invalid login ID or password")
         _failures.pop(username, None)
         if _ph.check_needs_rehash(user.password_hash):
             user.password_hash = hash_password(body.password)
