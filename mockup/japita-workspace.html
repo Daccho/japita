@@ -182,39 +182,15 @@
     #japita-lookbook .jp-field-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 16px; }
     #japita-lookbook .jp-form-actions { display:flex; align-items:center; flex-wrap:wrap; gap:9px; margin-top:5px; }
     #japita-lookbook .jp-section-note { margin:0 0 18px!important; font-size:12px; color:var(--jp-muted); }
-    #japita-lookbook .jp-menu-sheet { padding:0; overflow:hidden; }
-    #japita-lookbook .jp-sheet-head { padding:18px 20px; display:flex; align-items:center; justify-content:space-between; gap:14px; }
-    #japita-lookbook .jp-sheet-head p { font-size:12px; color:var(--jp-muted); margin-top:4px; }
-    #japita-lookbook .jp-sheet-actions { display:flex; align-items:center; gap:7px; flex-shrink:0; }
     #japita-lookbook .jp-sheet-edit { width:36px; height:36px; padding:9px; }
-    #japita-lookbook .jp-sheet-scroll { overflow-x:auto; }
-    #japita-lookbook .jp-menu-table { width:100%; min-width:600px; border-collapse:collapse; table-layout:fixed; font-size:13px; }
-    #japita-lookbook .jp-menu-table .jp-menu-name-col { width:28%; }
-    #japita-lookbook .jp-menu-table .jp-menu-description-col { width:40%; }
-    #japita-lookbook .jp-menu-table .jp-menu-price-col { width:14%; }
-    #japita-lookbook .jp-menu-table .jp-menu-plan-col { width:18%; }
-    #japita-lookbook .jp-menu-table th,#japita-lookbook .jp-menu-table td { padding:13px 14px; text-align:left; vertical-align:top; border-top:1px solid var(--jp-line); border-right:1px solid var(--jp-line); overflow-wrap:anywhere; }
-    #japita-lookbook .jp-menu-table th:last-child,#japita-lookbook .jp-menu-table td:last-child { border-right:0; }
-    #japita-lookbook .jp-menu-table thead th { background:var(--jp-soft); font-size:11px; font-weight:500; color:var(--jp-muted); }
-    #japita-lookbook .jp-menu-table th[scope="row"] { font-weight:500; }
-    #japita-lookbook .jp-menu-table .jp-menu-number { text-align:right; font-variant-numeric:tabular-nums; }
-    #japita-lookbook .jp-menu-table .jp-menu-description { color:var(--jp-muted); }
-    #japita-lookbook .jp-menu-name { display:flex; align-items:flex-start; gap:7px; }
-    #japita-lookbook .jp-menu-expand { display:inline-flex; align-items:flex-start; gap:7px; padding:0; text-align:left; font-weight:500; }
-    #japita-lookbook .jp-menu-expand svg { width:14px; height:14px; margin-top:3px; color:var(--jp-muted); flex-shrink:0; }
-    #japita-lookbook .jp-menu-expand[aria-expanded="true"] svg { transform:rotate(90deg); }
-    #japita-lookbook .jp-menu-table small { display:block; color:var(--jp-muted); font-size:11px; margin-top:3px; }
-    #japita-lookbook .jp-menu-table input,#japita-lookbook .jp-menu-table textarea { display:block; width:100%; min-width:0; border:1px solid var(--jp-line); border-radius:5px; padding:7px 8px; background:var(--jp-paper); }
-    #japita-lookbook .jp-menu-table textarea { resize:vertical; }
-    #japita-lookbook .jp-menu-table input[type="number"] { text-align:right; font-variant-numeric:tabular-nums; }
-    #japita-lookbook .jp-menu-table.jp-menu-editing>tbody>tr:not(.jp-menu-detail-row)>td,#japita-lookbook .jp-menu-table.jp-menu-editing>tbody>tr>th { background:var(--jp-bg); padding:9px; }
-    #japita-lookbook .jp-menu-detail-row>td { background:var(--jp-bg); }
     #japita-lookbook .jp-menu-detail { padding:4px 10px; font-size:13px; }
     #japita-lookbook .jp-menu-detail p+p { margin-top:9px; }
     #japita-lookbook .jp-menu-detail .jp-field { margin:8px 0; }
-    #japita-lookbook .jp-sheet-foot { border-top:1px solid var(--jp-line); padding:12px 20px; font-size:12px; color:var(--jp-muted); }
-    #japita-lookbook .jp-sheet-foot p+p { margin-top:4px; }
-    #japita-lookbook .jp-sheet-foot .jp-error { margin-bottom:0!important; }
+    #japita-lookbook .jp-menu-editor { margin:0; }
+    #japita-lookbook .jp-menu-editbar { max-width:740px; margin:0 auto 16px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+    #japita-lookbook .jp-menu-editbar p { margin-top:3px; font-size:12px; color:var(--jp-muted); }
+    #japita-lookbook .jp-menu-editbar .jp-form-actions { margin:0; }
+    #japita-lookbook .jp-menu-editbar>.jp-error { flex-basis:100%; margin:0!important; }
     #japita-lookbook .jp-menu-document { --jp-menu-paper:light-dark(#fffdf7,#ece5d7); --jp-menu-ink:light-dark(#293d30,#26392d); --jp-menu-faint:light-dark(#697266,#5b665a); --jp-menu-rule:light-dark(#d8d9c8,#c8c6b5); position:relative; max-width:740px; margin:0 auto; padding:36px 46px 30px; background:var(--jp-menu-paper); color:var(--jp-menu-ink); border:1px solid var(--jp-menu-rule); border-radius:3px; box-shadow:0 9px 28px light-dark(#23312b12,#00000030); }
     #japita-lookbook .jp-menu-document>.jp-sheet-edit { position:absolute; right:18px; top:18px; color:var(--jp-menu-ink); background:var(--jp-menu-paper); border-color:var(--jp-menu-rule); }
     #japita-lookbook .jp-menu-masthead { text-align:center; border-bottom:1px solid var(--jp-menu-rule); padding-bottom:24px; margin-bottom:26px; }
@@ -226,16 +202,27 @@
     #japita-lookbook .jp-menu-document .jp-menu-chapter-title { font-size:11px; font-weight:500; letter-spacing:2.5px; text-transform:uppercase; margin-bottom:18px; }
     #japita-lookbook .jp-menu-dish+.jp-menu-dish { margin-top:21px; }
     #japita-lookbook .jp-menu-dish-line { display:flex; align-items:baseline; gap:10px; }
-    #japita-lookbook .jp-menu-document .jp-menu-dish-line h3 { font-family:Georgia,'Times New Roman',serif; font-size:19px; font-weight:400; }
+    #japita-lookbook .jp-menu-document .jp-menu-dish-line h3 { min-width:0; overflow-wrap:anywhere; font-family:Georgia,'Times New Roman',serif; font-size:19px; font-weight:400; }
     #japita-lookbook .jp-menu-leader { flex:1; min-width:12px; border-bottom:1px dotted var(--jp-menu-rule); }
     #japita-lookbook .jp-menu-dish-price { flex-shrink:0; font-size:16px; font-variant-numeric:tabular-nums; }
     #japita-lookbook .jp-menu-dish p { margin-top:6px!important; max-width:490px; font-size:12px; color:var(--jp-menu-faint); }
+    #japita-lookbook .jp-menu-document.jp-menu-editing .jp-menu-dish-line h3 { flex:0 1 70%; }
+    #japita-lookbook .jp-menu-document.jp-menu-editing .jp-menu-dish-line { align-items:flex-start; }
+    #japita-lookbook .jp-menu-document.jp-menu-editing .jp-menu-leader { margin-top:22px; }
+    #japita-lookbook .jp-menu-inline { display:block; box-sizing:border-box; width:100%; min-width:0; padding:0; border:0; border-radius:2px; background:transparent; color:inherit; font:inherit; line-height:inherit; box-shadow:0 1px 0 var(--jp-menu-rule); }
+    #japita-lookbook textarea.jp-menu-inline { resize:none; overflow:hidden; min-height:1.5em; }
+    #japita-lookbook .jp-menu-inline:hover,#japita-lookbook .jp-menu-inline:focus { background:light-dark(#294a3409,#294a3412); }
+    #japita-lookbook .jp-menu-dish-price:has(input) { display:flex; align-items:baseline; gap:2px; }
+    #japita-lookbook .jp-menu-dish-price input { width:78px; text-align:right; font-variant-numeric:tabular-nums; appearance:textfield; }
+    #japita-lookbook .jp-menu-dish-price input::-webkit-inner-spin-button,#japita-lookbook .jp-menu-dish-price input::-webkit-outer-spin-button { appearance:none; margin:0; }
+    #japita-lookbook .jp-menu-inline::placeholder { color:var(--jp-menu-faint); opacity:1; }
     #japita-lookbook .jp-menu-paper-foot { margin-top:28px; padding-top:18px; border-top:1px solid var(--jp-menu-rule); text-align:center; font-size:11px; color:var(--jp-menu-faint); }
     #japita-lookbook .jp-menu-planning { max-width:740px; margin:18px auto 0; padding:17px 20px; border:1px solid var(--jp-line); border-radius:var(--jp-radius); background:var(--jp-paper); }
     #japita-lookbook .jp-menu-planning>summary { font-size:13px; }
     #japita-lookbook .jp-menu-planning-row { padding:12px 0; border-top:1px solid var(--jp-line); }
     #japita-lookbook .jp-menu-planning-row>summary { font-size:12px; }
     #japita-lookbook .jp-menu-planning-row .jp-menu-detail { margin-top:12px; padding:0; }
+    #japita-lookbook .jp-menu-planning textarea[data-menu-autosize] { resize:none; overflow:hidden; }
     #japita-lookbook .jp-ingredients { display:flex; flex-wrap:wrap; gap:6px; margin:12px 0; }
     #japita-lookbook .jp-link-group+.jp-link-group { margin-top:26px; }
     #japita-lookbook .jp-link-row { display:grid; grid-template-columns:24px minmax(0,1fr) auto; gap:12px; align-items:center; padding:17px 0; border-bottom:1px solid var(--jp-line); }
@@ -289,9 +276,6 @@
       #japita-lookbook .jp-profile-tabs button { font-size:12px; }
       #japita-lookbook .jp-link-row { grid-template-columns:20px minmax(0,1fr); gap:10px; }
       #japita-lookbook .jp-link-row>.jp-action { grid-column:2; justify-self:start; }
-      #japita-lookbook .jp-sheet-head { padding:15px; flex-wrap:wrap; }
-      #japita-lookbook .jp-sheet-actions { margin-left:auto; }
-      #japita-lookbook .jp-sheet-foot { padding:12px 15px; }
       #japita-lookbook .jp-supplier-summary { grid-template-columns:52px minmax(0,1fr) auto; gap:12px; }
       #japita-lookbook .jp-supplier-thumb { width:52px; height:52px; }
       #japita-lookbook .jp-supplier-product { grid-column:2; }
@@ -482,7 +466,6 @@
         s.profile=readProfile(prior.profile);
         s.menu=readMenu(prior.menu);
         s.menuDraft=null;
-        s.menuExpanded=null;
         s.menuError='';
         s.links=readLinks(prior.links);
         s.budget=Number.isFinite(prior.budget)&&prior.budget>0&&prior.budget<=100000?prior.budget:900;
@@ -602,35 +585,42 @@
           const fact=function(label,value){return '<div><dt>'+label+'</dt><dd>'+escapeHtml(value||'Not entered')+'</dd></div>';};
           return '<div class="jp-stack"><section class="jp-panel"><div class="jp-line-head"><h2>About the restaurant</h2>'+button(icon('pencil')+'Edit profile','editProfile',false)+'</div><div class="jp-profile-title"><span class="jp-profile-mark"><img src="'+imageAssets['kumo-demo-logo']+'" alt="Kumo Ramen demo logo" width="50" height="50"></span><div><h2>Kumo Ramen Milano</h2><p class="jp-muted" style="margin-top:4px">'+escapeHtml(p.location)+' · '+escapeHtml(p.seats)+' seats</p></div></div><p class="jp-description">'+escapeHtml(p.description)+'</p><dl class="jp-facts">'+fact('Concept',p.concept)+fact('Target guests',p.positioning)+fact('Menu prices',p.menuPrice)+fact('Prepared in-house',p.make)+fact('Purchased components',p.buy)+'</dl></section><section class="jp-panel" aria-label="Profile source information"><details class="jp-source"><summary class="cursor-interaction">Owner notes</summary><div class="jp-source-body"><p class="jp-section-note">Example notes for the fictional restaurant.</p><blockquote class="jp-owner-notes">'+escapeHtml(p.ownerNotes)+'</blockquote></div></details><details class="jp-source"><summary class="cursor-interaction">Onboarding questionnaire</summary><div class="jp-source-body"><p class="jp-section-note">Demo answers drawn from the restaurant scenario. Edit them using Edit profile.</p><dl class="jp-facts">'+fact('What kind of restaurant do you run?',p.concept)+fact('Who do you want to serve?',p.positioning)+fact('Where is the restaurant?',p.location)+fact('How many seats do you have?',p.seats)+fact('What is your menu price range?',p.menuPrice)+fact('What do you make in-house?',p.make)+fact('What do you purchase?',p.buy)+'</dl></div></details></section></div>';
         }
-        function menuDocument(items) {
+        function menuField(item,key,type,inline) {
+          const value=key==='ingredients'?item.ingredients.join(', '):item[key];
+          const labels={name:'Menu item',description:'Description',price:'Price in EUR, leave blank for Various',servings:'Weekly quantity',ingredients:'Ingredients, separated by commas',purchase:'Purchasing details'};
+          const attrs=' data-menu-id="'+item.id+'" data-menu-field="'+key+'" aria-label="'+escapeHtml(item.name+' · '+labels[key])+'"'+(inline?' class="jp-menu-inline"':'');
+          if(type==='textarea')return '<textarea rows="1" data-menu-autosize maxlength="'+menuLimits[key]+'"'+attrs+(key==='name'?' required':'')+'>'+escapeHtml(value||'')+'</textarea>';
+          return '<input type="number" value="'+escapeHtml(value===null||value===undefined?'':value)+'"'+attrs+' min="0" max="'+(key==='price'?10000:100000)+'" step="'+(key==='price'?'0.01':'1')+'"'+(key==='servings'&&menuDefaults.find(function(original){return original.id===item.id;}).servings!==undefined?' required':'')+' placeholder="'+(key==='price'?'Various':'Not entered')+'">';
+        }
+        function resizeMenuField(field) {
+          if(!field.matches('[data-menu-autosize]'))return;
+          field.style.height='auto';
+          if(field.scrollHeight)field.style.height=field.scrollHeight+'px';
+        }
+        function openMenuField(field) {
+          if(!field)return;
+          let details=field.closest('details');
+          while(details){details.open=true;details=details.parentElement.closest('details');}
+          content.querySelectorAll('[data-menu-autosize]').forEach(resizeMenuField);
+          field.focus();
+        }
+        function menuDocument(items,editing) {
           const groups=[{title:'Ramen',ids:['tonkotsu','tonkotsu_set','kuro_mayu_tonkotsu','veggie_miso']},{title:'Extras',ids:['kaedama','toppings']},{title:'Sides & drinks',ids:['sides']}];
-          const chapters=groups.map(function(group){return '<section class="jp-menu-chapter"><h3 class="jp-menu-chapter-title">'+group.title+'</h3>'+items.filter(function(item){return group.ids.includes(item.id);}).map(function(item){return '<article class="jp-menu-dish"><div class="jp-menu-dish-line"><h3>'+escapeHtml(item.name)+'</h3><span class="jp-menu-leader" aria-hidden="true"></span><span class="jp-menu-dish-price">'+(item.price===null?'Various':money(item.price))+'</span></div><p>'+escapeHtml(item.description)+'</p></article>';}).join('')+'</section>';}).join('');
+          const chapters=groups.map(function(group){return '<section class="jp-menu-chapter"><h3 class="jp-menu-chapter-title">'+group.title+'</h3>'+items.filter(function(item){return group.ids.includes(item.id);}).map(function(item){return '<article class="jp-menu-dish"><div class="jp-menu-dish-line"><h3>'+(editing?menuField(item,'name','textarea',true):escapeHtml(item.name))+'</h3><span class="jp-menu-leader" aria-hidden="true"></span><span class="jp-menu-dish-price">'+(editing?'<span aria-hidden="true">€</span>'+menuField(item,'price','number',true):item.price===null?'Various':money(item.price))+'</span></div><p>'+(editing?menuField(item,'description','textarea',true):escapeHtml(item.description))+'</p></article>';}).join('')+'</section>';}).join('');
           const sets=items.find(function(item){return item.id==='tonkotsu_set';}).servings||0;
           const refills=items.find(function(item){return item.id==='kaedama';}).servings||0;
-          const planning=items.map(function(item){return '<details class="jp-menu-planning-row"><summary class="cursor-interaction">'+escapeHtml(item.name)+' · '+(item.servings===undefined?'Plan not entered':item.servings.toLocaleString('en-IE')+' planned '+(item.id==='kaedama'?'refills':'servings'))+'</summary><div class="jp-menu-detail"><div class="jp-ingredients">'+item.ingredients.map(function(ingredient){return '<span class="jp-badge">'+escapeHtml(ingredient)+'</span>';}).join('')+'</div><p class="jp-muted">'+escapeHtml(item.purchase||'Purchasing details not entered.')+'</p>'+(item.note?'<p>'+escapeHtml(item.note)+'</p>':'')+(item.id==='kaedama'?'<p class="jp-muted">'+sets.toLocaleString('en-IE')+' included with sets · '+Math.max(0,refills-sets).toLocaleString('en-IE')+' additional refills.</p>':'')+'</div></details>';}).join('');
-          return '<section class="jp-menu-document" aria-label="Restaurant menu sheet"><button type="button" class="jp-action jp-sheet-edit cursor-interaction" data-act="editMenu" aria-label="Edit menu" data-tooltip="Edit menu">'+icon('pencil')+'</button><header class="jp-menu-masthead"><img src="'+imageAssets['kumo-demo-logo']+'" alt="Kumo Ramen logo" width="58" height="58"><h2 class="jp-menu-restaurant">Kumo Ramen Milano</h2><p>'+escapeHtml(s.profile.concept)+' · '+escapeHtml(s.profile.location)+'</p><span class="jp-menu-label">Menu</span></header>'+chapters+'<footer class="jp-menu-paper-foot">Prices in EUR · Fictional restaurant menu</footer></section><details class="jp-menu-planning"><summary class="cursor-interaction">Ingredients & purchasing plan</summary><p class="jp-section-note" style="margin-top:15px">'+plannedBowls(items).toLocaleString('en-IE')+' planned bowls · '+refills.toLocaleString('en-IE')+' refills, including set refills. Edit these with the menu pencil.</p>'+planning+'</details>';
+          const planning=items.map(function(item){
+            const fields=editing?'<label class="jp-field">Weekly '+(item.id==='kaedama'?'refills · including sets':'servings')+menuField(item,'servings','number',false)+'</label><div class="jp-field-grid"><label class="jp-field">Ingredients · separated by commas'+menuField(item,'ingredients','textarea',false)+'</label><label class="jp-field">Purchasing details'+menuField(item,'purchase','textarea',false)+'</label></div>':'<div class="jp-ingredients">'+item.ingredients.map(function(ingredient){return '<span class="jp-badge">'+escapeHtml(ingredient)+'</span>';}).join('')+'</div><p class="jp-muted">'+escapeHtml(item.purchase||'Purchasing details not entered.')+'</p>';
+            return '<details class="jp-menu-planning-row" data-menu-details="'+item.id+'"><summary class="cursor-interaction">'+escapeHtml(item.name)+' · <span data-menu-summary="'+item.id+'">'+(item.servings===undefined||item.servings===null?'Plan not entered':item.servings.toLocaleString('en-IE')+' planned '+(item.id==='kaedama'?'refills':'servings'))+'</span></summary><div class="jp-menu-detail">'+fields+(item.note?'<p>'+escapeHtml(item.note)+'</p>':'')+(item.id==='kaedama'?'<p class="jp-muted" data-menu-refills>'+sets.toLocaleString('en-IE')+' included with sets · '+Math.max(0,refills-sets).toLocaleString('en-IE')+' additional refills.</p>':'')+'</div></details>';
+          }).join('');
+          const toolbar=editing?'<div class="jp-menu-editbar"><div><h2>Editing menu</h2><p>Click the text to edit. Layout adjusts automatically.</p></div><div class="jp-form-actions">'+button('Cancel','cancelMenu',false)+'<button type="submit" class="jp-action jp-primary cursor-interaction">'+icon('check')+'Save menu</button></div>'+(s.menuError?'<p class="jp-error" role="alert">'+escapeHtml(s.menuError)+'</p>':'')+'</div>':'';
+          return toolbar+'<section class="jp-menu-document '+(editing?'jp-menu-editing':'')+'" aria-label="Restaurant menu sheet">'+(editing?'':'<button type="button" class="jp-action jp-sheet-edit cursor-interaction" data-act="editMenu" aria-label="Edit menu" data-tooltip="Edit menu">'+icon('pencil')+'</button>')+'<header class="jp-menu-masthead"><img src="'+imageAssets['kumo-demo-logo']+'" alt="Kumo Ramen logo" width="58" height="58"><h2 class="jp-menu-restaurant">Kumo Ramen Milano</h2><p>'+escapeHtml(s.profile.concept)+' · '+escapeHtml(s.profile.location)+'</p><span class="jp-menu-label">Menu</span></header>'+chapters+'<footer class="jp-menu-paper-foot">Prices in EUR · Fictional restaurant menu</footer></section><details class="jp-menu-planning" data-menu-details="planning"><summary class="cursor-interaction">Ingredients & purchasing plan</summary><p class="jp-section-note" style="margin-top:15px" data-menu-totals>'+plannedBowls(items).toLocaleString('en-IE')+' planned bowls · '+refills.toLocaleString('en-IE')+' refills, including set refills.'+(editing?'':' Edit these with the menu pencil.')+'</p>'+planning+'</details>';
         }
         function menuPage() {
           const editing=!!s.menuDraft;
           const items=s.menuDraft||s.menu;
-          if(!editing)return menuDocument(items);
-          const refills=items.find(function(item){return item.id==='kaedama';}).servings||0;
-          const sets=items.find(function(item){return item.id==='tonkotsu_set';}).servings||0;
-          function field(item,key,type,placeholder) {
-            const value=key==='ingredients'?item.ingredients.join(', '):item[key];
-            const attrs=' data-menu-id="'+item.id+'" data-menu-field="'+key+'" aria-label="'+escapeHtml(item.name+' · '+({name:'Menu item',description:'Description',price:'Price in EUR',servings:'Weekly quantity',ingredients:'Ingredients, separated by commas',purchase:'Purchasing details'}[key]))+'"';
-            if(type==='textarea')return '<textarea rows="2" maxlength="'+menuLimits[key]+'"'+attrs+'>'+escapeHtml(value||'')+'</textarea>';
-            return '<input type="'+type+'" value="'+escapeHtml(value===null||value===undefined?'':value)+'"'+attrs+(type==='number'?' min="0" max="'+(key==='price'?10000:100000)+'" step="'+(key==='price'?'0.01':'1')+'"': ' maxlength="'+menuLimits[key]+'"')+(key==='name'||key==='servings'&&menuDefaults.find(function(original){return original.id===item.id;}).servings!==undefined?' required':'')+(placeholder?' placeholder="'+placeholder+'"':'')+'>';
-          }
-          const rows=items.map(function(item){
-            const expanded=s.menuExpanded===item.id;
-            const detailId=id+'-menu-'+item.id;
-            const expand='<button type="button" class="jp-menu-expand cursor-interaction" data-act="menuDetail:'+item.id+'" aria-label="'+escapeHtml('Ingredient and purchasing details for '+item.name)+'" aria-expanded="'+expanded+'" aria-controls="'+detailId+'">'+icon('chevron-right')+(editing?'':escapeHtml(item.name))+'</button>';
-            const detail=editing?'<div class="jp-field-grid"><label class="jp-field">Ingredients · separated by commas'+field(item,'ingredients','textarea')+'</label><label class="jp-field">Purchasing details'+field(item,'purchase','textarea')+'</label></div>':'<h3>Ingredients and purchasing</h3><div class="jp-ingredients">'+item.ingredients.map(function(ingredient){return '<span class="jp-badge">'+escapeHtml(ingredient)+'</span>';}).join('')+'</div><p class="jp-muted">'+escapeHtml(item.purchase||'Purchasing details not entered.')+'</p>';
-            return '<tr><th scope="row"><div class="jp-menu-name">'+expand+(editing?field(item,'name','text'):'')+'</div></th><td class="jp-menu-description">'+(editing?field(item,'description','textarea'):escapeHtml(item.description))+'</td><td class="jp-menu-number">'+(editing?field(item,'price','number','Various'):item.price===null?'<span class="jp-muted">Various</span>':money(item.price))+'</td><td class="jp-menu-number">'+(editing?field(item,'servings','number','Not entered'):item.servings===undefined?'<span class="jp-muted">Not entered</span>':item.servings.toLocaleString('en-IE'))+(item.id==='kaedama'?'<small>refills, incl. sets</small>':'')+'</td></tr><tr class="jp-menu-detail-row" id="'+detailId+'" '+(expanded?'':'hidden')+'><td colspan="4"><div class="jp-menu-detail">'+detail+(item.note?'<p>'+escapeHtml(item.note)+'</p>':'')+(item.id==='kaedama'?'<p class="jp-muted">'+sets.toLocaleString('en-IE')+' included with sets · '+Math.max(0,refills-sets).toLocaleString('en-IE')+' additional refills.</p>':'')+'</div></td></tr>';
-          }).join('');
-          const actions=editing?button('Cancel','cancelMenu',false)+'<button type="submit" class="jp-action jp-primary cursor-interaction">'+icon('check')+'Save menu</button>':'<button type="button" class="jp-action jp-sheet-edit cursor-interaction" data-act="editMenu" aria-label="Edit menu" data-tooltip="Edit menu">'+icon('pencil')+'</button>';
-          return '<section class="jp-panel jp-menu-sheet" aria-label="Restaurant menu sheet"><form data-menu-form><div class="jp-sheet-head"><div><h2>Restaurant menu</h2><p>Hakata-style tonkotsu · '+(editing?'Editing menu':'7 menu entries')+'</p></div><div class="jp-sheet-actions">'+actions+'</div></div><div class="jp-sheet-scroll"><table class="jp-menu-table '+(editing?'jp-menu-editing':'')+'" aria-label="Restaurant menu"><colgroup><col class="jp-menu-name-col"><col class="jp-menu-description-col"><col class="jp-menu-price-col"><col class="jp-menu-plan-col"></colgroup><thead><tr><th scope="col">Menu item</th><th scope="col">Description</th><th scope="col" class="jp-menu-number">Price · EUR</th><th scope="col" class="jp-menu-number">Plan / week</th></tr></thead><tbody>'+rows+'</tbody></table></div><div class="jp-sheet-foot"><p>'+plannedBowls(s.menu).toLocaleString('en-IE')+' planned ramen bowls · '+(s.menu.find(function(item){return item.id==='kaedama';}).servings||0).toLocaleString('en-IE')+' noodle refills, including set refills.</p><p>Fictional demo · Quantities entered by the restaurant.</p>'+(s.menuError?'<p class="jp-error" role="alert">'+escapeHtml(s.menuError)+'</p>':'')+'</div></form></section>';
+          const document=menuDocument(items,editing);
+          return editing?'<form class="jp-menu-editor" data-menu-form>'+document+'</form>':document;
         }
         function buyingPreferences() {
           const countryOptions=['Any','Italy','Japan','Netherlands'].map(function(c){return '<option value="'+c+'" '+(s.preferredCountry===c?'selected':'')+'>'+(c==='Any'?'Any country':c)+'</option>';}).join('');
@@ -644,6 +634,7 @@
           return '<div class="jp-header"><div><span class="jp-kicker">Kumo Ramen Milano</span><h1 style="margin-top:8px">Restaurant profile</h1><p class="jp-muted">Your restaurant, menu and purchasing preferences.</p></div></div><nav class="jp-profile-tabs" aria-label="Restaurant profile sections">'+tabs.map(function(tab){return '<button type="button" class="cursor-interaction" data-act="profileTab:'+tab[0]+'" aria-pressed="'+(s.profileTab===tab[0])+'" aria-controls="'+id+'-profile-content">'+tab[1]+'</button>';}).join('')+'</nav><div id="'+id+'-profile-content" aria-label="'+tabs.find(function(tab){return tab[0]===s.profileTab;})[1]+'">'+(s.profileTab==='overview'?overview():s.profileTab==='menu'?menuPage():s.profileTab==='buying'?buyingPreferences():linksPage())+'</div>';
         }
         function render() {
+          const openMenuDetails=Array.from(content.querySelectorAll('[data-menu-details][open]')).map(function(details){return details.dataset.menuDetails;});
           const previousProfile=content.querySelector('[data-profile-form]');
           const profileDraft=s.profileEditing&&previousProfile?new FormData(previousProfile):null;
           const previousLink=content.querySelector('[data-link-form]');
@@ -658,6 +649,8 @@
           const currentLink=content.querySelector('[data-link-form]');
           if(linkDraft&&currentLink&&linkDraft.key===currentLink.dataset.linkForm)linkDraft.values.forEach(function(value,key){const field=currentLink.elements.namedItem(key);if(field)field.value=value;});
           const input=content.querySelector('[data-search]'); if(input)input.value=s.query;
+          content.querySelectorAll('[data-menu-details]').forEach(function(details){details.open=openMenuDetails.includes(details.dataset.menuDetails);});
+          content.querySelectorAll('[data-menu-autosize]').forEach(resizeMenuField);
           if(globalThis.lucide)globalThis.lucide.createIcons({attrs:{width:16,height:16}});
         }
         app.addEventListener('click',function(e){
@@ -682,7 +675,6 @@
           else if(action==='cancelProfile')s.profileEditing=false;
           else if(action==='editMenu'){s.menuDraft=readMenu(s.menu);s.menuError='';}
           else if(action==='cancelMenu'){s.menuDraft=null;s.menuError='';}
-          else if(action.startsWith('menuDetail:')){const key=action.split(':')[1];s.menuExpanded=s.menuExpanded===key?null:key;}
           else if(action.startsWith('editLink:')){s.linkEditing=action.split(':')[1];s.linkError='';}
           else if(action==='cancelLink'){s.linkEditing=null;s.linkError='';}
           else if(action.startsWith('removeLink:')){delete s.links[action.split(':')[1]];s.linkEditing=null;s.toast='Link removed from the demo workspace.';}
@@ -700,7 +692,6 @@
           if(action==='editProfile'){const field=content.querySelector('[name="description"]');if(field)field.focus();}
           if(action==='editMenu'){const field=content.querySelector('[data-menu-field="name"]');if(field)field.focus();}
           if(action==='cancelMenu'){const edit=content.querySelector('[data-act="editMenu"]');if(edit)edit.focus();}
-          if(action.startsWith('menuDetail:')){const expand=content.querySelector('[data-act="'+action+'"]');if(expand)expand.focus();}
           if(action.startsWith('editLink:')){const field=content.querySelector('[data-link-form] input');if(field)field.focus();}
           if(action.startsWith('supplier:')||action.startsWith('directoryFilter:')){const focus=content.querySelector('[data-act="'+action+'"]');if(focus)focus.focus();}
           if(action.startsWith('promotion:')){const focus=content.querySelector('[data-act="'+action+'"]');if(focus)focus.focus();}
@@ -711,10 +702,11 @@
           }else if(e.target.matches('[data-menu-form]')){
             e.preventDefault();
             if(!s.menuDraft||!e.target.reportValidity())return;
-            if(s.menuDraft.some(function(item){return !item.name.trim();})){s.menuError='Enter a name for every menu item.';render();return;}
+            const unnamed=s.menuDraft.find(function(item){return !item.name.trim();});
+            if(unnamed){s.menuError='Enter a name for every menu item.';render();openMenuField(content.querySelector('[data-menu-id="'+unnamed.id+'"][data-menu-field="name"]'));return;}
             const refills=s.menuDraft.find(function(item){return item.id==='kaedama';});
             const sets=s.menuDraft.find(function(item){return item.id==='tonkotsu_set';});
-            if(refills.servings<sets.servings){s.menuError='Kaedama includes one refill per Tonkotsu set. Enter at least '+sets.servings+' refills.';render();return;}
+            if(refills.servings<sets.servings){s.menuError='Kaedama includes one refill per Tonkotsu set. Enter at least '+sets.servings+' refills.';render();openMenuField(content.querySelector('[data-menu-id="kaedama"][data-menu-field="servings"]'));return;}
             s.menu=readMenu(s.menuDraft);s.menuDraft=null;s.menuError='';s.toast='Menu saved in this demo workspace.';render();persist();
             const edit=content.querySelector('[data-act="editMenu"]');if(edit)edit.focus();
           }else if(e.target.matches('[data-profile-form]')){
@@ -732,6 +724,12 @@
             s.links[key]=accepted[key];s.linkEditing=null;s.linkError='';s.toast='Restaurant link saved in this demo workspace.';render();persist();
           }
         });
+        app.addEventListener('invalid',function(e){
+          if(e.target.matches('[data-menu-field]'))openMenuField(e.target);
+        },true);
+        app.addEventListener('toggle',function(e){
+          if(e.target.matches('[data-menu-details]')&&e.target.open)e.target.querySelectorAll('[data-menu-autosize]').forEach(resizeMenuField);
+        },true);
         app.addEventListener('change',function(e){
           if(!e.target.matches('[data-directory-filter]'))return;
           const key=e.target.dataset.directoryFilter;
@@ -745,11 +743,25 @@
             const item=s.menuDraft.find(function(row){return row.id===e.target.dataset.menuId;});
             const key=e.target.dataset.menuField;
             if(item)item[key]=key==='ingredients'?e.target.value.split(',').map(function(ingredient){return ingredient.trim();}).filter(Boolean):['price','servings'].includes(key)?(e.target.value===''?null:Number(e.target.value)):e.target.value;
+            resizeMenuField(e.target);
+            if(item&&key==='servings'){
+              const sets=s.menuDraft.find(function(row){return row.id==='tonkotsu_set';}).servings||0;
+              const refills=s.menuDraft.find(function(row){return row.id==='kaedama';}).servings||0;
+              const summary=content.querySelector('[data-menu-summary="'+item.id+'"]');
+              if(summary)summary.textContent=item.servings===null?'Plan not entered':item.servings.toLocaleString('en-IE')+' planned '+(item.id==='kaedama'?'refills':'servings');
+              const totals=content.querySelector('[data-menu-totals]');
+              if(totals)totals.textContent=plannedBowls(s.menuDraft).toLocaleString('en-IE')+' planned bowls · '+refills.toLocaleString('en-IE')+' refills, including set refills.';
+              const breakdown=content.querySelector('[data-menu-refills]');
+              if(breakdown)breakdown.textContent=sets.toLocaleString('en-IE')+' included with sets · '+Math.max(0,refills-sets).toLocaleString('en-IE')+' additional refills.';
+            }
             return;
           }
           if(!e.target.matches('[data-search]'))return;s.query=e.target.value;const list=content.querySelector('[data-offer-list]');const shown=offers.filter(function(o){return(s.filter!=='discover'||o.id!=='fresh')&&((o.name+' '+o.product+' '+o.format+' '+o.supplierCountry+' '+o.productOrigin+' '+o.dispatchCountry).toLowerCase().includes(s.query.toLowerCase()));});list.innerHTML=shown.length?shown.map(offerCard).join(''):'<div class="jp-panel">No matching offers in this sample catalog.</div>';if(globalThis.lucide)globalThis.lucide.createIcons({attrs:{width:16,height:16}});
         });
         app.addEventListener('keydown',function(e){
+          if(s.menuDraft&&(e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){
+            e.preventDefault();content.querySelector('[data-menu-form]').requestSubmit();return;
+          }
           if(e.key!=='Escape')return;
           if(s.notificationsOpen){s.notificationsOpen=false;render();const bell=content.querySelector('.jp-notification-bell');if(bell)bell.focus();}
           else if(s.advisorOpen){s.advisorOpen=false;renderAdvisor();if(globalThis.lucide)globalThis.lucide.createIcons({attrs:{width:16,height:16}});const launcher=advisorDock.querySelector('.jp-advisor-launcher');if(launcher)launcher.focus();}
@@ -781,6 +793,8 @@
         app.addEventListener('pointerup',finishAdvisorDrag);
         app.addEventListener('pointercancel',finishAdvisorDrag);
         window.addEventListener('resize',positionAdvisor);
+        window.addEventListener('resize',function(){content.querySelectorAll('[data-menu-autosize]').forEach(resizeMenuField);});
+        if(document.fonts)document.fonts.ready.then(function(){content.querySelectorAll('[data-menu-autosize]').forEach(resizeMenuField);});
         const controller={id:id,snapshot:function(){return {
           workspaceVersion:2,profileVersion:1,page:s.page,profileTab:s.profileTab,profile:s.profile,menu:s.menu,links:s.links,budget:s.budget,priority:s.priority,selected:s.selected,filter:s.filter,detail:s.detail,quoteReceived:s.quoteReceived,frozenAllowed:s.frozenAllowed,orderReviewed:s.orderReviewed,preferredCountry:s.preferredCountry,notificationsRead:s.notificationsRead,
           directoryQuery:s.directoryQuery,directoryFilters:s.directoryFilters,directoryRelationship:s.directoryRelationship,advisorPosition:s.advisorPosition

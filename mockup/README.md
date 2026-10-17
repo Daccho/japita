@@ -26,6 +26,6 @@ Suppliers uses compact image rows with visible prices, one search box and suppli
 
 The purchasing advisor opens from a floating bubble at the bottom right. Drag the bubble to move it; its position is stored locally. The popup contains the existing noodle-backup recommendation and basket actions.
 
-In Restaurant profile → Menu, the default view resembles a printed restaurant menu. Use the top-right pencil to open its editable table, then Save menu or Cancel. Ingredient and purchasing plans expand beneath the menu; they remain editable in the table. Saved changes remain local to the preview.
+In Restaurant profile → Menu, the default view resembles a printed restaurant menu. Use the top-right pencil to edit dish names, descriptions, and prices directly on the paper. Text fields grow automatically; layout, typography, and dish order stay controlled. Use Save menu (or Ctrl/Cmd+S) or Cancel. Ingredient and purchasing plans expand beneath the menu and become editable in the same mode. Saved changes remain local to the preview.
 
 Current decisions, limitations, and the copyable continuation prompt are in [the mockup handoff](../docs/mockup-handoff.md).
