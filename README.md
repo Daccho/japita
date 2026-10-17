@@ -15,6 +15,8 @@ The full Japita website will also need:
 
 These public pages and account flows are future design and implementation work. Current visual refinement focuses on the registered restaurant's workspace. The mockup has local demo interactions and remains separate from the Python backend; it does not establish a functioning registration, authentication, or purchasing service.
 
+The workflow for bringing this design into the working application, checking capability gaps, and asking implementation questions is in [the design integration plan](docs/design-integration.md).
+
 ## Open the interface mockup
 
 Open [`mockup/index.html`](mockup/index.html) in a browser, or ask Codex to open it in the right-hand browser panel beside the chat. No application server or package installation is needed. Approved CDN assets need an internet connection on initial load.

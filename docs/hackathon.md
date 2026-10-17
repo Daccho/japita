@@ -23,8 +23,9 @@ Evolus references: [event workspace instructions](https://evolus.ai/en/hackathon
 | 2 | Demo data and schemas | Documents, extracted records, offers, and expected calculations agree. |
 | 3 | One complete ingredient | Existing and candidate offers, extraction, comparison, clarification, and a revised recommendation work. |
 | 4 | Three-ingredient weekly basket | Quantities, costs, and constraints are calculated in code; changing an explicit preference produces an explained result. |
-| 5 | Approval and demo execution | Approved purchase orders receive simulated acknowledgments and update committed spending. |
-| 6 | Submission package | Hosted app, public repo, runnable README, Docker setup, cover, video, and pitch are ready. |
+| 5 | Website design/backend integration | Review the chosen UI against actual capabilities, resolve gaps with the team, and verify connected screens using the [design integration workflow](design-integration.md). Repeat these checks as both streams develop. |
+| 6 | Approval and demo execution | Approved purchase orders receive simulated acknowledgments and update committed spending. |
+| 7 | Submission package | Hosted app, public repo, runnable README, Docker setup, cover, video, and pitch are ready. |
 
 Assign estimates after confirming each teammate's remaining hours. Reserve time for deployment, rehearsal, and submission before adding optional features.
 

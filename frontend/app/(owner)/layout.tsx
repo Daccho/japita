@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import ModelBadge from "@/components/ModelBadge";
 import { I18nProvider, LangToggle, useI18n, type Key } from "@/lib/i18n";
@@ -19,8 +20,15 @@ function Shell({ children }: { children: React.ReactNode }) {
     <>
       <header className="border-b border-stone-200 bg-white">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
-          <Link href="/" className="flex items-baseline gap-2">
-            <span className="text-xl font-bold tracking-tight text-red-700">Japita</span>
+          <Link href="/" className="flex items-center gap-2">
+            <Image
+              src="/japita-logo.png"
+              alt="Japita"
+              width={112}
+              height={56}
+              className="h-14 w-28 shrink-0 rounded object-cover object-[50%_44%]"
+              priority
+            />
             <span className="text-xs text-stone-500">{t("tagline")}</span>
           </Link>
           <nav className="flex flex-wrap gap-1 text-sm">

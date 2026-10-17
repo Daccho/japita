@@ -16,6 +16,7 @@ Keep it short: rules and pointers live here, details live in `docs/`. Each fact 
 - **Stack (provisional):** FastAPI, Next.js, SQLite via SQLAlchemy, Docker.
 - **Status:** the backend has an agent, deterministic calculations, an input API, and Postgres persistence. The interactive mockup in `mockup/` is separate from the backend; see `docs/mockup-handoff.md`.
 - **Visual work scope:** follow [README.md — Current design scope](README.md#current-design-scope) when refining the mockup or describing the full website.
+- **Design/backend integration:** follow `docs/design-integration.md` when connecting the mockup to the working website; verify each UI capability and raise scope gaps before implementing dependent behavior.
 
 ### Docs map (read only what the task needs)
 
@@ -35,6 +36,7 @@ Keep it short: rules and pointers live here, details live in `docs/`. Each fact 
 | `docs/deploy-amd.md` | Alternative, not pursued: everything on one AMD Developer Cloud MI300X droplet |
 | `docs/open-questions.md` | Unresolved questions |
 | `docs/mockup-handoff.md` | Current visual mockup, approved UI decisions, exclusions, and continuation prompt |
+| `docs/design-integration.md` | Workflow for joining visual/product design with backend capabilities, integration questions, and verification |
 
 ### Commands
 ```bash
@@ -120,3 +122,6 @@ Record important decisions here (date — decision — reason) so every agent sh
 - 2026-10-17 — Daily stock: weeks carry daily servings, dated deliveries (confirmed, delayed, cancelled), and usable-until dates; baskets flag deliveries that arrive after a stockout and offer an `on_time` basket. Basket approval creates simulated supplier purchase orders with idempotent submit. Inference stays on AMD TokenFactory; no Developer Cloud GPU credits will be requested, so the droplet deployment in `docs/deploy-amd.md` is not pursued for now.
 - 2026-10-17 — Suppliers answer clarification requests in a mobile web form (typed value for the requested field plus an optional Japanese note) instead of uploading documents; free-text replies are still double-read by Gemma.
 - 2026-10-17 — Hosting on free tiers, as the user chose: Vercel for the Next.js frontend, Render for the FastAPI Docker backend (`render.yaml`), Neon for Postgres. Inference stays on AMD TokenFactory. Staying on Next.js: SvelteKit would not change hosting cost, and a rewrite before the deadline would discard the working frontend.
+- 2026-10-17 — Adopted the user's new Japita logo for the mockup and website; current artwork and provenance are documented in `mockup/assets/README.md`.
+- 2026-10-17 — Made website design/backend reconciliation explicit in the build plan at the user's request; confirmed collaboration decisions and the natural-language search assessment are in `docs/design-integration.md`.
+- 2026-10-17 — Refined saved-supplier management and discovery from the user's filter feedback; approved view, search, country, and price-ordering behavior is in `docs/mockup-handoff.md`.

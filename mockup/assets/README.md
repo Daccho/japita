@@ -2,9 +2,10 @@
 
 These assets belong to the local, fictional demo. The restaurant logo and food photographs were created with the built-in image generation tool; they are not supplier evidence.
 
-- `japita-logo-original.png`: the user's supplied Japita logo, copied without changes.
-- `japita-logo-simplified.png`: the user's requested logo edit, generated from the original. It retains the chef hat, fork and knife, cart, wordmark, and tagline; removes groceries and the checklist; and aligns a wheel as the i's dot.
-- `japita-logo.webp`: the web copy of the simplified logo currently displayed in the header.
+- [`frontend/public/japita-logo.png`](../../frontend/public/japita-logo.png): the new logo supplied and selected by the user on 17 October 2026, copied byte-for-byte from the attachment. Navy shopping cart and Japita wordmark, orange chef-hat outline with a navy dollar symbol, and orange dot over the i. This is the current source image for the website and mockup.
+- `japita-logo.webp`: a lossless WebP copy of the current source image, with identical dimensions and decoded pixels. The headers use a 2:1 image viewport with `object-fit: cover` and `object-position: 50% 44%` to frame the artwork within its generous white margins. The source artwork is unchanged.
+- `japita-logo-original.png`: the earlier user-supplied logo, retained as a historical asset.
+- `japita-logo-simplified.png`: the earlier generated logo edit, retained as a historical asset. It has the chef hat, fork and knife, cart, wordmark, and tagline; removed groceries and the checklist; and aligned a wheel as the i's dot.
 - `kumo-demo-logo.webp`: temporary logo for the fictional Kumo Ramen Milano restaurant. Used beside Japita in the header and in Restaurant profile.
 - `fresh-noodles.webp`: illustrative fresh ramen noodles, used by the fresh offer and the unconfirmed candidate.
 - `frozen-noodles.webp`: illustrative frozen noodles in unbranded bags, used by the frozen offer.
@@ -15,7 +16,7 @@ These assets belong to the local, fictional demo. The restaurant logo and food p
 
 ## Generation prompts
 
-### Japita logo edit
+### Earlier Japita logo edit (superseded)
 
 Built-in image generation edit, using `japita-logo-original.png` as the target, with an opaque white background:
 
