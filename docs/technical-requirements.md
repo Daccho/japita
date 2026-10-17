@@ -53,7 +53,7 @@ One main agent. Tools are its only access to data. Human-only actions are not to
 | Tool | Returns | Writes? |
 | --- | --- | --- |
 | `get_restaurant_profile` | Concept, budget, priorities (quality, cost, convenience), mandatory requirements and negotiable preferences per ingredient, delivery and storage limits | No |
-| `get_week_needs` | Requirement per ingredient: bowls × usage − usable stock − confirmed arrivals | No |
+| `get_week_needs` | Requirement per ingredient from recipe usage or owner-entered needs, plus dated stock balances, confirmed arrivals, usable-until limits, and service shortfalls | No |
 | `search_catalog` | Offers from existing and candidate suppliers in the bounded catalog, filtered by ingredient or attribute | No |
 | `get_offer_detail` | One offer: price, unit, pack size, minimum order, shipping, delivery days, quality attributes, offer date, account status, extracted spec fields with source text | No |
 | `check_evidence` | Rule outcomes for one offer (`ok`, `needs_review`, `missing_evidence`) and the inputs used | No |
@@ -81,6 +81,7 @@ Human only, in the UI: editing goals and preferences, approving or sending a mes
   - `POST /sim-supplier/orders` (simulated supplier, returns an acknowledgment)
   - `GET /health/model` (live model, backend, latency from a real call)
 - **T16.** Calculations are plain Python with unit tests: requirement → pack rounding → minimum order → supplier shipping → delivered total. Mandatory requirements filter first. Enumerate all combinations for 3 ingredients × 3–5 suppliers. Unknown costs stay `null` and are shown, never summed as zero. No combined score.
+  - For the noodle-delay scenario, check availability at each service using owner-entered daily needs, stock usable-until dates, and confirmed arrival times. A positive weekly aggregate balance does not establish that each service is covered. Do not apply the same confirmed incoming order twice.
 - **T17.** A preference change creates a new basket version, recalculates in code, and shows the cost difference against the previous version and the baseline.
 - **T18.** The ruleset is a data file (YAML or JSON): rule ID, condition on extracted fields, outcome, explanation, official source URL. No rule outputs "import approved".
 - **T19.** Double read: each Japanese specification is extracted twice in parallel; fields that differ become `needs_review` with both values shown.
@@ -94,8 +95,9 @@ SQLite for the demo through SQLAlchemy, with `DATABASE_URL` so Postgres can be s
 | RestaurantProfile | concept, menu price range, budget, priorities, delivery days, storage limits; a second profile for the demo |
 | IngredientPreference | ingredient, mandatory requirements, negotiable preferences, acceptable substitutions |
 | RecipeLine | ingredient, quantity per bowl, unit |
-| PurchasingWeek | dates, bowls, budget |
-| StockEntry | ingredient, usable stock, confirmed arrivals (week-scoped) |
+| PurchasingWeek | dates, bowls, budget; owner-entered daily ingredient needs for the disruption scenario |
+| StockEntry | ingredient, quantity, unit, available from, usable until |
+| IncomingDelivery | ingredient, quantity, unit, original arrival, revised arrival, confirmation status, order reference |
 | Supplier | name, relationship (`existing` or `candidate`), account status, delivery terms, minimum order, shipping |
 | Offer | supplier, product, unit, pack size, price, currency, offer date, quality attributes, origin route, document reference |
 | Document | type (offer, spec, reply), file hash, fictional flag |
@@ -152,6 +154,7 @@ DATABASE_URL=sqlite:///./japita.db
 ## 10. Testing
 
 - **T32.** Unit tests against hand-calculated values from the demo dataset: requirements after stock and arrivals, pack rounding, minimum orders, shipping, budget totals, normalized unit prices, any median.
+  - Include a delivery arriving after a service despite a sufficient weekly total, stock reaching its usable-until limit, and a replacement order that must not double-count the delayed original order.
 - **T33.** Tests that mandatory requirements always hold when a negotiable preference changes, that missing evidence blocks a recommendation, that a candidate without account approval is not orderable, that basket changes invalidate approval, and that a retried submit creates no duplicate order.
 - **T34.** An extraction check comparing both reads of the three specifications with the expected records, including unknowns.
 

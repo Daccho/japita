@@ -97,3 +97,4 @@ Record important decisions here (date — decision — reason) so every agent sh
 - 2026-10-17 — Target `gemma-4-26B-A4B-it` instead of E4B, and read Japanese specifications with Gemma on AMD rather than the Evolus extractor — a small model leaves the AMD GPU looking interchangeable, and the extractor appears to run on Evolus-side models.
 - 2026-10-17 — Removed rendered proposal PNGs under `tmp/` from the repo and ignored `tmp/` — scratch output, not project source.
 - 2026-10-17 — Split `plan.md` into topic docs under `docs/` and kept `plan.md` as the index — agents load only the context a task needs.
+- 2026-10-17 — Added the user-supplied Kumo Ramen Milano scenario as a fictional demo fixture in `docs/demo.md`. Proposed lead decision: a delayed noodle delivery, supported by soy-sauce and mayu comparisons; make-or-buy costing remains outside the MVP. Dated demand and arrivals are required before claiming a stockout.

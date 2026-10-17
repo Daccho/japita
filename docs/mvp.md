@@ -4,13 +4,13 @@ What the hackathon build does. If a feature is not here, it is out of scope.
 
 ## Scope
 
-Build one complete process for one restaurant, one recipe, and three ingredients:
+Build one complete purchasing week for the fictional restaurant in [demo.md](demo.md#fictional-customer-fixture), with three active purchase items:
 
-1. **Soy sauce:** demonstrate an origin or production requirement.
-2. **Soup base:** demonstrate ambiguous ingredients and supplier clarification.
-3. **Fresh noodles:** demonstrate specifications, delivery, and local alternatives.
+1. **Fresh noodles:** the primary decision; demonstrate delivery disruption, existing and new suppliers, product requirements, and clarification.
+2. **Soy sauce:** demonstrate a production/origin preference and chef approval of alternatives.
+3. **Mayu:** demonstrate specification and delivered-price comparison, without implementing in-house production costing.
 
-Use a small curated catalog with three to five fictional suppliers, including both existing relationships and new candidates. Discovery searches this bounded catalog for the MVP; do not imply exhaustive supplier coverage. Add kombu and katsuobushi only after the initial process works end to end.
+Use a small curated catalog with four existing fictional suppliers plus one candidate. Discovery searches this bounded catalog for the MVP; do not imply exhaustive supplier coverage. Other purchased ingredients provide context without expanding the active comparison flow.
 
 ## Main interface
 
@@ -27,6 +27,7 @@ Place advice alongside the relevant product comparison or basket. Chat can help 
 - Expected bowls per week, supplied by the owner rather than forecast by the LLM.
 - Recipe quantities per bowl and purchasing period.
 - Manually entered usable stock and confirmed incoming quantities for that period; no full inventory integration is required.
+- Dated demand, usable-until information, and revised arrival times for the noodle disruption; weekly totals alone cannot establish a stockout.
 - Purchasing budget and the owner's relative priorities for quality, cost, and convenience.
 - Chef-defined requirements such as Japanese-brewed soy sauce, noodle specifications, or acceptable substitutions.
 - Storage limits, required delivery dates, and preference for fewer suppliers or deliveries.
@@ -56,6 +57,7 @@ Show the current-supplier basket as a baseline when comparable offers exist. A n
 Gemma interprets preferences and evidence; application code calculates quantities and evaluates feasible baskets.
 
 - Convert recipe usage and owner-entered bowl counts into requirements, subtracting usable stock and confirmed arrivals within the purchasing period.
+- Check stock at each dated service: remove stock past its usable-until date, add confirmed arrivals before demand, and flag shortfalls. Arrivals after service do not cover that service. Use owner-entered demand; do not forecast it with the LLM.
 - Round to saleable pack sizes and apply minimum-order quantities.
 - Include supplier-level shipping charges and delivery constraints.
 - Apply hard chef requirements before ranking options.
@@ -94,4 +96,5 @@ Real supplier communications, purchases, payments, and official submissions requ
 - Multi-country rule coverage.
 - LLM-only demand forecasting.
 - A full inventory, accounting, or restaurant management platform.
+- Make-or-buy costing, labor/energy modeling, and full menu recipe coverage.
 - Fine-tuning and unnecessary multi-agent complexity.
