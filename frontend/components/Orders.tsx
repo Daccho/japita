@@ -60,7 +60,7 @@ export default function Orders({ orders, canSubmit }: { orders: PurchaseOrder[];
                 <CalendarDays aria-hidden />
                 <span>{t("po.delivery", { date: d.day(po.delivery_date) })}</span>
               </span>
-              <strong className="jp-number" style={{ fontWeight: 500 }}>
+              <strong className="jp-number" style={{ fontWeight: 700 }}>
                 {money(po.total_eur)}
               </strong>
             </div>

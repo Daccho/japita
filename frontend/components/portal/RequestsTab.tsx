@@ -87,11 +87,11 @@ function RequestCard({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           {product && (
-            <p className="text-xs font-bold text-[#657068]">
+            <p className="text-xs font-bold text-aj-muted">
               {ingredientName(product.ingredient, lang, { ja: product.ingredient_ja, en: product.ingredient_en })}
             </p>
           )}
-          <h3 className="mt-0.5 font-bold leading-snug text-[#23312b]">{product?.product ?? t.product}</h3>
+          <h3 className="mt-0.5 font-bold leading-snug text-aj-ink">{product?.product ?? t.product}</h3>
         </div>
         {replied ? (
           <Chip tone="ok" icon={<CheckCircle2 className="h-3.5 w-3.5" aria-hidden />}>
@@ -102,18 +102,18 @@ function RequestCard({
         )}
       </div>
 
-      <div className="mt-3 rounded-lg bg-[#f7f6f1] p-3">
-        <p className="flex items-center gap-1.5 text-xs text-[#657068]">
+      <div className="mt-3 rounded-[10px] bg-aj-page p-3">
+        <p className="flex items-center gap-1.5 text-xs text-aj-muted">
           <MessageSquareText className="h-3.5 w-3.5" aria-hidden />
           {t.questionFrom(formatDateTime(req.sent_at, lang))}
         </p>
-        <p className="mt-1 whitespace-pre-wrap leading-relaxed text-[#23312b]">{question}</p>
+        <p className="mt-1 whitespace-pre-wrap leading-relaxed text-aj-ink">{question}</p>
       </div>
 
       {replied ? (
-        <div className="mt-3 border-l-4 border-[#335b45] pl-3">
-          <p className="text-xs font-bold text-[#335b45]">{t.yourReply}</p>
-          <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-[#23312b]">{req.reply_ja ? prettyReply(req.reply_ja, t.yes, t.no) : t.sent}</p>
+        <div className="mt-3 border-l-4 border-aj-ink pl-3">
+          <p className="text-xs font-bold text-aj-ink">{t.yourReply}</p>
+          <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-aj-ink">{req.reply_ja ? prettyReply(req.reply_ja, t.yes, t.no) : t.sent}</p>
         </div>
       ) : (
         <div className="mt-4 space-y-4">

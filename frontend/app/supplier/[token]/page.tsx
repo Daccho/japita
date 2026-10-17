@@ -44,40 +44,40 @@ export default function SupplierPage() {
   };
 
   return (
-    <div lang="ja" className="min-h-screen bg-stone-100">
-      <div className="bg-amber-400 px-4 py-3 text-center text-sm font-bold text-stone-900">
+    <div lang="ja" className="min-h-screen bg-aj-page">
+      <div className="border-b-2 border-aj-ink bg-aj-yolk px-4 py-3 text-center text-sm font-bold text-aj-ink">
         {req?.notice_ja ?? "これはデモ用のテスト仕入先画面です。実際の取引・発注は行われません。"}
       </div>
 
       <div className="mx-auto max-w-2xl px-4 py-8">
-        <p className="text-xs tracking-widest text-stone-500">JAPITA ・ 仕入先様向け お問い合わせ（テスト）</p>
+        <p className="text-xs tracking-widest text-aj-muted">JAPITA ・ 仕入先様向け お問い合わせ（テスト）</p>
 
-        {error && <p className="mt-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</p>}
-        {!req && !error && <p className="mt-6 text-stone-500">読み込み中…</p>}
+        {error && <p className="mt-4 rounded-[10px] bg-aj-chili-tint p-3 text-sm font-bold text-aj-chili-text">{error}</p>}
+        {!req && !error && <p className="mt-6 text-aj-muted">読み込み中…</p>}
 
         {req && (
           <div className="mt-4 space-y-5">
-            <div className="rounded-lg bg-white p-5 shadow-sm">
+            <div className="rounded-[12px] border-2 border-aj-ink bg-white p-5">
               <dl className="grid grid-cols-[6rem_1fr] gap-y-1 text-sm">
-                <dt className="text-stone-500">宛先</dt>
+                <dt className="text-aj-muted">宛先</dt>
                 <dd className="font-medium">{req.supplier} 御中</dd>
-                <dt className="text-stone-500">差出人</dt>
+                <dt className="text-aj-muted">差出人</dt>
                 <dd>{req.restaurant}（イタリア・ミラノ）</dd>
-                <dt className="text-stone-500">対象商品</dt>
+                <dt className="text-aj-muted">対象商品</dt>
                 <dd>{req.product}</dd>
                 {req.sent_at && (
                   <>
-                    <dt className="text-stone-500">受信日時</dt>
+                    <dt className="text-aj-muted">受信日時</dt>
                     <dd>{formatJa(req.sent_at)}</dd>
                   </>
                 )}
               </dl>
-              <hr className="my-4 border-stone-200" />
+              <hr className="my-4 border-aj-line" />
               <p className="whitespace-pre-wrap leading-relaxed">{req.question_ja}</p>
             </div>
 
             {req.state === "awaiting_reply" ? (
-              <div className="rounded-lg bg-white p-5 shadow-sm">
+              <div className="rounded-[12px] border-2 border-aj-ink bg-white p-5">
                 <label htmlFor="reply" className="mb-2 block font-semibold">ご回答</label>
                 <textarea
                   id="reply"
@@ -86,27 +86,27 @@ export default function SupplierPage() {
                   rows={5}
                   maxLength={4000}
                   placeholder="例：お問い合わせの件、加水率は28%でございます。"
-                  className="w-full rounded border border-stone-300 p-3 leading-relaxed"
+                  className="w-full rounded-[10px] border-2 border-aj-ink p-3 leading-relaxed"
                 />
                 <div className="mt-3 flex items-center gap-3">
                   <button
                     onClick={send}
                     disabled={sending || !text.trim()}
-                    className="rounded bg-stone-900 px-5 py-2 font-semibold text-white hover:bg-stone-700 disabled:bg-stone-300"
+                    className="rounded-[10px] border-2 border-aj-ink bg-aj-ink px-5 py-2 font-bold text-white shadow-aj-control active:translate-y-0.5 active:shadow-aj-pressed disabled:opacity-50 disabled:shadow-none"
                   >
                     {sending ? "送信中…" : "回答を送信する"}
                   </button>
-                  {sending && <span className="text-sm text-stone-500">内容を確認しています（約10秒）…</span>}
+                  {sending && <span className="text-sm text-aj-muted">内容を確認しています（約10秒）…</span>}
                 </div>
-                <p className="mt-3 text-xs text-stone-500">
+                <p className="mt-3 text-xs text-aj-muted">
                   送信いただいた回答は、AI（AMD 上の Gemma）が読み取り、店舗担当者が確認したうえで反映されます。
                 </p>
               </div>
             ) : (
-              <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-5">
-                <p className="font-semibold text-emerald-900">ご回答ありがとうございました。</p>
+              <div className="rounded-[12px] border-2 border-aj-ink bg-aj-yolk-tint p-5">
+                <p className="font-semibold text-aj-ink">ご回答ありがとうございました。</p>
                 {req.reply_ja && <p className="mt-2 whitespace-pre-wrap text-sm">{req.reply_ja}</p>}
-                {req.replied_at && <p className="mt-2 text-xs text-stone-500">送信日時：{formatJa(req.replied_at)}</p>}
+                {req.replied_at && <p className="mt-2 text-xs text-aj-muted">送信日時：{formatJa(req.replied_at)}</p>}
               </div>
             )}
           </div>

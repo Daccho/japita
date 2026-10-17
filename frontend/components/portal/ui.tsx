@@ -1,6 +1,6 @@
 "use client";
 
-// Small UI kit for the supplier portal. Colors follow the partner mockup (mockup/japita-workspace.html).
+// Small UI kit for the supplier portal, styled with the Ajitama tokens (docs/design.md) shared with the restaurant workspace.
 
 import { AlertCircle, Loader2 } from "lucide-react";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
@@ -11,7 +11,7 @@ import { useLang, type Lang } from "./i18n";
 export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
     <section
-      className={`rounded-[14px] border border-[#e0e5dc] bg-white p-4 shadow-[0_9px_28px_#23312b12] ${className}`}
+      className={`rounded-[12px] border-2 border-aj-ink bg-white p-4 ${className}`}
     >
       {children}
     </section>
@@ -20,16 +20,16 @@ export function Card({ children, className = "" }: { children: ReactNode; classN
 
 type Tone = "accent" | "warn" | "muted" | "ok";
 const TONES: Record<Tone, string> = {
-  accent: "bg-[#335b45] text-white",
-  ok: "bg-[#eef2e9] text-[#335b45]",
-  warn: "bg-[#fbf2e4] text-[#946023]",
-  muted: "bg-[#e7ece2] text-[#657068]",
+  accent: "bg-aj-ink text-white",
+  ok: "bg-aj-yolk-tint text-aj-ink",
+  warn: "bg-aj-chili-tint text-aj-chili-text",
+  muted: "bg-aj-line text-aj-muted",
 };
 
 export function Chip({ tone = "muted", icon, children }: { tone?: Tone; icon?: ReactNode; children: ReactNode }) {
   return (
     <span
-      className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold ${TONES[tone]}`}
+      className={`inline-flex shrink-0 items-center gap-1 rounded-[6px] px-2 py-0.5 text-xs font-bold ${TONES[tone]}`}
     >
       {icon}
       {children}
@@ -56,15 +56,15 @@ export function Button({
 }: ButtonProps) {
   const { t } = useLang();
   const styles = {
-    primary: "bg-[#335b45] text-white hover:bg-[#2a4c39] disabled:bg-[#9fb3a6]",
-    secondary: "border border-[#cfd8cb] bg-white text-[#23312b] hover:bg-[#f2f5ef] disabled:text-[#9aa39b]",
-    ghost: "text-[#335b45] hover:bg-[#eef2e9] disabled:text-[#9aa39b]",
+    primary: "border-2 border-aj-ink bg-aj-ink text-white shadow-aj-control active:translate-y-0.5 active:shadow-aj-pressed disabled:opacity-50",
+    secondary: "border-2 border-aj-ink bg-white text-aj-ink shadow-aj-control hover:bg-aj-yolk-tint active:translate-y-0.5 active:shadow-aj-pressed disabled:text-aj-detail-line",
+    ghost: "text-aj-ink underline underline-offset-[3px] hover:bg-aj-yolk-tint disabled:text-aj-detail-line",
   }[variant];
   return (
     <button
       {...rest}
       disabled={disabled || busy}
-      className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 text-sm font-bold transition-colors disabled:cursor-not-allowed ${styles} ${className}`}
+      className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-[10px] px-4 text-sm font-bold transition-[transform,box-shadow,background-color] duration-75 disabled:cursor-not-allowed disabled:translate-y-0 disabled:shadow-none motion-reduce:transition-none ${styles} ${className}`}
     >
       {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : icon}
       {busy ? (busyLabel ?? t.sending) : children}
@@ -77,7 +77,7 @@ export function ErrorBox({ message }: { message: string | null }) {
   return (
     <p
       role="alert"
-      className="mt-3 flex items-start gap-2 rounded-lg bg-[#fbeceb] px-3 py-2 text-sm text-[#9b2f22]"
+      className="mt-3 flex items-start gap-2 rounded-[10px] bg-aj-chili-tint px-3 py-2 text-sm font-bold text-aj-chili-text"
     >
       <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
       <span>{message}</span>
@@ -86,13 +86,13 @@ export function ErrorBox({ message }: { message: string | null }) {
 }
 
 export const inputClass =
-  "w-full min-h-11 rounded-lg border border-[#cfd8cb] bg-white px-3 text-base text-[#23312b] outline-none placeholder:text-[#9aa39b] focus:border-[#335b45] focus:ring-2 focus:ring-[#335b45]/20";
+  "w-full min-h-11 rounded-[10px] border-2 border-aj-ink bg-white px-3 text-base font-medium text-aj-ink outline-none placeholder:text-aj-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-aj-chili";
 
 export function Label({ children, hint }: { children: ReactNode; hint?: string }) {
   return (
-    <span className="mb-1 block text-sm font-bold text-[#23312b]">
+    <span className="mb-1 block text-sm font-bold text-aj-ink">
       {children}
-      {hint && <span className="ml-1 text-xs font-normal text-[#657068]">{hint}</span>}
+      {hint && <span className="ml-1 text-xs font-normal text-aj-muted">{hint}</span>}
     </span>
   );
 }
@@ -143,8 +143,8 @@ export function FieldInput({
               role="radio"
               aria-checked={on}
               onClick={() => onChange(allowClear && on ? null : v)}
-              className={`min-h-11 rounded-lg border text-base font-bold transition-colors ${
-                on ? "border-[#335b45] bg-[#335b45] text-white" : "border-[#cfd8cb] bg-white text-[#23312b] hover:bg-[#f2f5ef]"
+              className={`min-h-11 rounded-[10px] border-2 text-base font-bold shadow-aj-dropdown transition-colors ${
+                on ? "border-aj-ink bg-aj-ink text-white" : "border-aj-ink bg-white text-aj-ink hover:bg-aj-yolk-tint"
               }`}
             >
               {label}
@@ -170,7 +170,7 @@ export function FieldInput({
           placeholder={t.enterNumber}
         />
         {field.unit && (
-          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-[#657068]">
+          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-aj-muted">
             {field.unit}
           </span>
         )}
@@ -208,10 +208,10 @@ export function fieldPayload(field: FormField, value: string | boolean | null): 
 
 export function EmptyState({ icon, title, body }: { icon: ReactNode; title: string; body: string }) {
   return (
-    <div className="flex flex-col items-center rounded-[14px] border border-dashed border-[#d3dbcf] bg-white/60 px-6 py-10 text-center">
-      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#eef2e9] text-[#335b45]">{icon}</div>
-      <p className="font-bold text-[#23312b]">{title}</p>
-      <p className="mt-1 text-sm text-[#657068]">{body}</p>
+    <div className="flex flex-col items-center rounded-[12px] border-2 border-aj-ink bg-white px-6 py-10 text-center">
+      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-aj-yolk-tint text-aj-ink">{icon}</div>
+      <p className="font-bold text-aj-ink">{title}</p>
+      <p className="mt-1 text-sm text-aj-muted">{body}</p>
     </div>
   );
 }

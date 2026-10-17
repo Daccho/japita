@@ -66,16 +66,16 @@ function Portal({ token }: { token: string }) {
     return (
       <Shell>
         <div className="flex min-h-[70vh] flex-col items-center justify-center px-6 text-center">
-          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#eef2e9] text-[#335b45]">
+          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full border-2 border-aj-ink bg-aj-yolk text-aj-ink">
             {notFound ? <LinkIcon className="h-7 w-7" aria-hidden /> : <WifiOff className="h-7 w-7" aria-hidden />}
           </div>
-          <h1 className="text-lg font-bold text-[#23312b]">{notFound ? t.notFoundTitle : t.offlineTitle}</h1>
-          <p className="mt-2 max-w-xs text-sm leading-relaxed text-[#657068]">{notFound ? t.notFoundBody : t.offlineBody}</p>
+          <h1 className="font-aj-display text-lg font-normal text-aj-ink">{notFound ? t.notFoundTitle : t.offlineTitle}</h1>
+          <p className="mt-2 max-w-xs text-sm leading-relaxed text-aj-muted">{notFound ? t.notFoundBody : t.offlineBody}</p>
           {!notFound && (
             <button
               type="button"
               onClick={reload}
-              className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-lg bg-[#335b45] px-5 text-sm font-bold text-white"
+              className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-[10px] border-2 border-aj-ink bg-aj-ink px-5 text-sm font-bold text-white shadow-aj-control active:translate-y-0.5 active:shadow-aj-pressed"
             >
               <RefreshCw className="h-4 w-4" aria-hidden />
               {t.retry}
@@ -90,10 +90,10 @@ function Portal({ token }: { token: string }) {
     return (
       <Shell>
         <div className="space-y-4 px-4 pt-6" aria-busy="true" aria-label={t.loading}>
-          <div className="h-16 animate-pulse rounded-[14px] bg-[#e7ece2]" />
-          <div className="h-11 animate-pulse rounded-full bg-[#e7ece2]" />
-          <div className="h-48 animate-pulse rounded-[14px] bg-white" />
-          <div className="h-48 animate-pulse rounded-[14px] bg-white" />
+          <div className="h-16 animate-pulse rounded-[12px] bg-aj-yolk-tint" />
+          <div className="h-11 animate-pulse rounded-[10px] bg-aj-yolk-tint" />
+          <div className="h-48 animate-pulse rounded-[12px] border-2 border-aj-line bg-white" />
+          <div className="h-48 animate-pulse rounded-[12px] border-2 border-aj-line bg-white" />
         </div>
       </Shell>
     );
@@ -114,26 +114,26 @@ function Portal({ token }: { token: string }) {
 
   return (
     <Shell>
-      <header className="px-4 pb-3 pt-5">
+      <header className="border-b-2 border-aj-ink bg-aj-yolk px-4 pb-3 pt-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-xs font-bold tracking-wider text-[#335b45]">{t.supplierPortal}</p>
-            <h1 className="mt-0.5 text-xl font-bold leading-tight text-[#23312b]">{view.supplier.name}</h1>
-            <p className="mt-1 flex items-start gap-1.5 text-sm text-[#657068]">
+            <p className="text-xs font-bold tracking-wider text-aj-ink-soft">{t.supplierPortal}</p>
+            <h1 className="mt-1 font-aj-display text-[22px] font-normal leading-tight text-aj-ink">{view.supplier.name}</h1>
+            <p className="mt-1 flex items-start gap-1.5 text-sm font-medium text-aj-ink-soft">
               <Store className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
               <span>{t.forRestaurant(view.restaurant)}</span>
             </p>
           </div>
           <LangToggle />
         </div>
-        <p className="mt-3 flex items-start gap-2 rounded-lg bg-[#fbf2e4] px-3 py-2 text-xs leading-relaxed text-[#946023]">
+        <p className="mt-3 flex items-start gap-2 rounded-[10px] bg-white px-3 py-2 text-xs font-medium leading-relaxed text-aj-ink">
           <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
           {notice}
         </p>
       </header>
 
-      <nav className="sticky top-0 z-10 border-b border-[#e0e5dc] bg-[#f7f6f1]/95 px-4 py-2 backdrop-blur">
-        <div className="grid grid-cols-3 gap-1 rounded-full bg-[#e7ece2] p-1" role="tablist">
+      <nav className="sticky top-0 z-10 border-b-2 border-aj-ink bg-white px-4 py-2.5">
+        <div className="grid grid-cols-3 gap-2" role="tablist">
           {tabs.map(({ id, label, icon: Icon }) => {
             const on = tab === id;
             return (
@@ -143,14 +143,14 @@ function Portal({ token }: { token: string }) {
                 role="tab"
                 aria-selected={on}
                 onClick={() => setTab(id)}
-                className={`relative flex min-h-10 items-center justify-center gap-1.5 rounded-full text-sm font-bold transition-colors ${
-                  on ? "bg-white text-[#23312b] shadow-sm" : "text-[#657068] hover:text-[#23312b]"
+                className={`relative flex min-h-11 items-center justify-center gap-1.5 rounded-[10px] border-2 border-aj-ink text-sm font-bold shadow-aj-control transition-[transform,box-shadow] duration-75 active:translate-y-0.5 active:shadow-aj-pressed motion-reduce:transition-none ${
+                  on ? "bg-aj-ink text-white" : "bg-white text-aj-ink hover:bg-aj-yolk-tint"
                 }`}
               >
                 <Icon className="h-4 w-4" aria-hidden />
                 {label}
                 {counts[id] > 0 && (
-                  <span className="ml-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#c2410c] px-1.5 text-[11px] font-bold leading-none text-white">
+                  <span className="ml-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-aj-ink bg-aj-chili px-1 text-[11px] font-bold leading-none text-aj-alert-ink">
                     {counts[id]}
                   </span>
                 )}
@@ -168,8 +168,8 @@ function Portal({ token }: { token: string }) {
 
       {toast && (
         <div className="pointer-events-none fixed inset-x-0 bottom-5 z-20 flex justify-center px-4" role="status">
-          <p className="flex max-w-md items-center gap-2 rounded-full bg-[#23312b] px-4 py-2.5 text-sm text-white shadow-[0_16px_40px_#23312b40]">
-            <CheckCircle2 className="h-4 w-4 shrink-0 text-[#a2cfad]" aria-hidden />
+          <p className="flex max-w-md items-center gap-2 rounded-[10px] border-2 border-aj-ink border-l-4 bg-aj-yolk-tint px-4 py-2.5 text-sm font-medium text-aj-ink shadow-aj-control">
+            <CheckCircle2 className="h-4 w-4 shrink-0 text-aj-ink" aria-hidden />
             {toast}
           </p>
         </div>
@@ -185,15 +185,15 @@ function LangToggle() {
     ["en", "English"],
   ];
   return (
-    <div className="flex shrink-0 rounded-full border border-[#cfd8cb] bg-white p-0.5 text-xs font-bold" role="group" aria-label="Language">
+    <div className="flex shrink-0 gap-0.5 rounded-[10px] border-2 border-aj-ink bg-white p-0.5 text-xs font-bold shadow-aj-dropdown" role="group" aria-label="Language">
       {opts.map(([l, label]) => (
         <button
           key={l}
           type="button"
           aria-pressed={lang === l}
           onClick={() => setLang(l)}
-          className={`min-h-8 rounded-full px-2.5 transition-colors ${
-            lang === l ? "bg-[#335b45] text-white" : "text-[#657068] hover:text-[#23312b]"
+          className={`min-h-8 rounded-[7px] px-2.5 transition-colors ${
+            lang === l ? "bg-aj-ink text-white" : "text-aj-ink hover:bg-aj-yolk-tint"
           }`}
         >
           {label}
@@ -205,8 +205,8 @@ function LangToggle() {
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-[#f7f6f1] font-[family-name:var(--font-noto),var(--font-inter),sans-serif] text-[#23312b]">
-      <div className="mx-auto min-h-screen max-w-xl bg-[#f7f6f1] sm:border-x sm:border-[#e0e5dc]">{children}</div>
+    <div className="min-h-screen bg-aj-page font-[family-name:var(--font-zen-kaku),var(--font-noto),sans-serif] text-aj-ink">
+      <div className="mx-auto min-h-screen max-w-xl bg-aj-page sm:border-x-2 sm:border-aj-ink">{children}</div>
     </div>
   );
 }

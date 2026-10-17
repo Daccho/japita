@@ -49,8 +49,8 @@ function parseAmount(raw: string, allowZero: boolean): number | null {
 }
 
 const segment = (on: boolean) =>
-  `min-h-11 rounded-lg border px-2 text-sm font-bold leading-tight transition-colors ${
-    on ? "border-[#335b45] bg-[#335b45] text-white" : "border-[#cfd8cb] bg-white text-[#23312b] hover:bg-[#f2f5ef]"
+  `min-h-11 rounded-[10px] border-2 px-2 text-sm font-bold leading-tight shadow-aj-dropdown transition-colors ${
+    on ? "border-aj-ink bg-aj-ink text-white" : "border-aj-ink bg-white text-aj-ink hover:bg-aj-yolk-tint"
   }`;
 
 export function ProductsTab(props: TabProps) {
@@ -84,7 +84,7 @@ export function ProductsTab(props: TabProps) {
 
       {groups.map((g) => (
         <div key={g.ing} className="space-y-3">
-          <h3 className="px-1 text-xs font-bold tracking-wider text-[#657068]">
+          <h3 className="px-1 text-xs font-bold tracking-wider text-aj-muted">
             {g.ing === "other"
               ? t.other
               : ingredientName(g.ing, lang, { ja: view.ingredient_ja[g.ing], en: view.ingredient_en?.[g.ing] })}
@@ -114,8 +114,8 @@ function PendingBox({ product }: { product: PortalProduct }) {
     }
   }
   return (
-    <div className="mt-3 rounded-lg bg-[#fbf2e4] p-3 text-sm text-[#5c3d15]">
-      <p className="flex flex-wrap items-center gap-x-1.5 font-bold text-[#946023]">
+    <div className="mt-3 rounded-[10px] bg-aj-chili-tint p-3 text-sm text-aj-ink">
+      <p className="flex flex-wrap items-center gap-x-1.5 font-bold text-aj-chili-text">
         <Clock className="h-4 w-4" aria-hidden />
         {t.pendingReview}
         <span className="ml-auto text-xs font-normal">{t.sentAt(formatDateTime(u.submitted_at, lang))}</span>
@@ -147,31 +147,31 @@ function ProductCard({ product: p, token, onView, notify }: TabProps & { product
   return (
     <Card>
       <div className="flex items-start justify-between gap-3">
-        <h4 className="min-w-0 font-bold leading-snug text-[#23312b]">{p.product}</h4>
+        <h4 className="min-w-0 font-bold leading-snug text-aj-ink">{p.product}</h4>
         {p.pending_new ? (
           <Chip tone="warn">{t.newProduct}</Chip>
         ) : (
           <Chip icon={<Globe2 className="h-3 w-3" aria-hidden />}>{originLabel(p.origin_route, t)}</Chip>
         )}
       </div>
-      <p className="mt-1 text-sm text-[#23312b]">
+      <p className="mt-1 text-sm text-aj-ink">
         <span className="text-lg font-bold tabular-nums">{formatEur(p.price_eur)}</span>
-        <span className="text-[#657068]"> / {formatQty(p.pack_size, p.unit)}</span>
+        <span className="text-aj-muted"> / {formatQty(p.pack_size, p.unit)}</span>
       </p>
 
       {p.form.length > 0 && (
         <dl className="mt-3 grid grid-cols-2 gap-2">
           {p.form.map((f) => (
-            <div key={f.field} className="rounded-lg bg-[#f7f6f1] px-3 py-2">
-              <dt className="text-xs text-[#657068]">{shortLabel(f, lang)}</dt>
-              <dd className={`text-sm font-bold ${p.attributes[f.field] == null ? "text-[#946023]" : "text-[#23312b]"}`}>
+            <div key={f.field} className="rounded-[10px] bg-aj-page px-3 py-2">
+              <dt className="text-xs text-aj-muted">{shortLabel(f, lang)}</dt>
+              <dd className={`text-sm font-bold ${p.attributes[f.field] == null ? "text-aj-chili-text" : "text-aj-ink"}`}>
                 {formatValue(p.attributes[f.field], f, t)}
               </dd>
             </div>
           ))}
         </dl>
       )}
-      <p className="mt-2 text-xs text-[#657068]">{t.updatedOn(formatDate(p.offer_date, lang))}</p>
+      <p className="mt-2 text-xs text-aj-muted">{t.updatedOn(formatDate(p.offer_date, lang))}</p>
 
       <PendingBox product={p} />
 
@@ -245,7 +245,7 @@ function EditForm({
   };
 
   return (
-    <div className="mt-4 space-y-4 border-t border-[#e0e5dc] pt-4">
+    <div className="mt-4 space-y-4 border-t border-aj-line pt-4">
       <label className="block">
         <Label>{t.productName}</Label>
         <input value={name} onChange={(e) => setName(e.target.value)} className={inputClass} />
@@ -267,7 +267,7 @@ function EditForm({
         </div>
       ))}
       <NoteInput value={note} onChange={setNote} placeholder={t.notePlaceholderPrice} />
-      <p className="text-xs text-[#657068]">{t.reviewedFirst}</p>
+      <p className="text-xs text-aj-muted">{t.reviewedFirst}</p>
       <ErrorBox message={error} />
       <div className="flex gap-2">
         <Button variant="secondary" onClick={onClose} disabled={busy}>
@@ -293,7 +293,7 @@ function UnitInput({ value, onChange, unit }: { value: string; onChange: (v: str
         onChange={(e) => onChange(e.target.value)}
         className={`${inputClass} pr-10`}
       />
-      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-[#657068]">{unit}</span>
+      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-aj-muted">{unit}</span>
     </div>
   );
 }
@@ -357,22 +357,22 @@ function NewProductForm({ view, token, onView, notify, onClose }: TabProps & { o
   };
 
   return (
-    <Card className="border-[#335b45]">
+    <Card className="border-aj-ink">
       <div className="flex items-center justify-between">
-        <h3 className="flex items-center gap-2 font-bold text-[#23312b]">
-          <PackagePlus className="h-5 w-5 text-[#335b45]" aria-hidden />
+        <h3 className="flex items-center gap-2 font-bold text-aj-ink">
+          <PackagePlus className="h-5 w-5 text-aj-ink" aria-hidden />
           {t.addProduct}
         </h3>
         <button
           type="button"
           onClick={onClose}
           aria-label={t.close}
-          className="rounded-full p-2 text-[#657068] hover:bg-[#eef2e9]"
+          className="rounded-full p-2 text-aj-muted hover:bg-aj-yolk-tint"
         >
           <X className="h-5 w-5" aria-hidden />
         </button>
       </div>
-      <p className="mt-1 text-xs text-[#657068]">{t.newProductIntro(view.restaurant)}</p>
+      <p className="mt-1 text-xs text-aj-muted">{t.newProductIntro(view.restaurant)}</p>
 
       <div className="mt-4 space-y-4">
         <div>

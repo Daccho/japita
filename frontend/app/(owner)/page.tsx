@@ -8,6 +8,7 @@ import { useElapsed, useWorkspace } from "@/components/workspace";
 import { suggestedBasket } from "@/components/helpers";
 import PageHeader from "@/components/PageHeader";
 import Orders from "@/components/Orders";
+import DayStrip from "@/components/DayStrip";
 import { Markdown } from "@/components/Advisor";
 
 function WeeklyCheck() {
@@ -103,24 +104,11 @@ export default function WeekPage() {
                   <div>
                     <h3>{label("ing", n.ingredient)}</h3>
                     <p>{t("wk.need", { q: qty(n.gross, n.unit), c: qty(n.usable_stock + n.confirmed_arrivals, n.unit) })}</p>
-                    {line && (
-                      <div className="jp-days">
-                        {line.days.map((day) => (
-                          <div
-                            key={day.date}
-                            className={`jp-day ${day.shortfall > 0 ? "jp-day-short" : ""} ${day.arrived > 0 ? "jp-day-arrival" : ""}`}
-                            title={`${d.day(day.date)} · ${qty(day.end_stock, line.unit)}`}
-                          >
-                            <strong>{d.day(day.date).split(" ")[0]}</strong>
-                            {day.shortfall > 0 ? `−${qty(day.shortfall, line.unit)}` : qty(day.end_stock, line.unit)}
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    {line && <DayStrip ingredient={n.ingredient} unit={line.unit} days={line.days} />}
                   </div>
                   <div className="jp-row-right">
                     <small className="jp-muted">{t("wk.toBuy")}</small>
-                    <div className="jp-number" style={{ fontSize: 16, fontWeight: 500 }}>
+                    <div className="jp-number" style={{ fontSize: 16, fontWeight: 700 }}>
                       {qty(n.required, n.unit)}
                     </div>
                     {line?.first_stockout ? (
@@ -170,7 +158,7 @@ export default function WeekPage() {
             <section className="jp-advisor">
               <span className="jp-kicker">{t("wk.suggested")}</span>
               <h3 style={{ marginTop: 8 }}>{label("kind", suggested.kind)}</h3>
-              <div className="jp-price jp-number" style={{ fontSize: 25, letterSpacing: -1, margin: "10px 0 2px" }}>
+              <div className="jp-price jp-number" style={{ fontSize: 25, margin: "10px 0 2px" }}>
                 {money(suggested.delivered_total_eur)}
               </div>
               <small className="jp-muted">
