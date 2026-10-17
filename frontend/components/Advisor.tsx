@@ -79,7 +79,7 @@ function AdvisorBody() {
             <Store aria-hidden />
             <span>{b.suppliers.map((s) => s.name).join(" · ")}</span>
           </div>
-          <Link href="/basket" className="jp-action jp-primary" style={{ width: "100%", marginTop: 13 }} onClick={() => setAdvisorOpen(false)}>
+          <Link href="/restaurants/basket" className="jp-action jp-primary" style={{ width: "100%", marginTop: 13 }} onClick={() => setAdvisorOpen(false)}>
             {t("adv.openBasket")}
           </Link>
         </div>
@@ -167,7 +167,7 @@ function AdvisorBody() {
                     {c.translations?.[lang] ? ` — ${c.translations[lang]}` : ""}
                   </p>
                 ))}
-                <Link href="/basket#questions" className="jp-action" onClick={() => setAdvisorOpen(false)}>
+                <Link href="/restaurants/basket#questions" className="jp-action" onClick={() => setAdvisorOpen(false)}>
                   {t("adv.review")}
                 </Link>
               </div>

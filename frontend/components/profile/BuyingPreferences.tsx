@@ -147,7 +147,7 @@ export default function BuyingPreferences() {
             {t("by.discard")}
           </button>
         )}
-        <Link href="/suppliers" className="jp-action">
+        <Link href="/restaurants/suppliers" className="jp-action">
           {t("by.browse")}
         </Link>
       </div>

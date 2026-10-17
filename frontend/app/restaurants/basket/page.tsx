@@ -84,7 +84,7 @@ export default function BasketPage() {
         title={t("bk.title")}
         sub={t("bk.sub")}
         action={
-          <Link href="/suppliers" className="jp-action">
+          <Link href="/restaurants/suppliers" className="jp-action">
             <Store aria-hidden />
             {t("nav.suppliers")}
           </Link>

@@ -11,7 +11,6 @@ import {
   type Timeline,
   type WeeklyCheck,
 } from "@/lib/api";
-import snapshot from "@/lib/snapshot.json";
 
 const PROFILE_KEY = "japita.profile";
 const CACHE_KEY = "japita.cache.";
@@ -24,9 +23,6 @@ type Data = {
   approval: Approval | null;
   spending: Spending;
 };
-
-// Seeded demo data computed at build time (backend/japita/snapshot.py): the first paint never waits for the API.
-const SNAPSHOT = snapshot as unknown as Record<string, Data>;
 
 function cached(pid: string): Data | null {
   try {
@@ -66,7 +62,7 @@ const idle = { running: false, startedAt: null, result: null, error: null };
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [profileId, setProfileState] = useState<string>("kumo-authentic");
-  const [data, setData] = useState<Data | null>(SNAPSHOT["kumo-authentic"] ?? null);
+  const [data, setData] = useState<Data | null>(null);
   const [live, setLive] = useState(false);
   const [advisorOpen, setAdvisorOpen] = useState(false);
   const [advisor, setAdvisor] = useState<Job<AgentAnswer>>(idle);
@@ -81,10 +77,11 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     } catch {}
   }, []);
 
-  // Show the last data this browser saw (or the build-time snapshot) at once; live data replaces it.
+  // Show the last data this signed-in browser saw at once; live data replaces it. Nothing restaurant-specific
+  // is bundled into the public JavaScript, and the cache is cleared on sign-out and on 401.
   useEffect(() => {
     setLive(false);
-    setData(cached(profileId) ?? SNAPSHOT[profileId] ?? null);
+    setData(cached(profileId));
   }, [profileId]);
 
   const setProfileId = (id: string) => {

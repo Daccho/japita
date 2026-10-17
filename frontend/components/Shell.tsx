@@ -14,10 +14,10 @@ import { forgetSession } from "@/lib/api";
 import { logout } from "@/lib/auth";
 
 const NAV: { href: string; key: Key; icon: typeof Store }[] = [
-  { href: "/", key: "nav.week", icon: CalendarDays },
-  { href: "/suppliers", key: "nav.suppliers", icon: Store },
-  { href: "/basket", key: "nav.basket", icon: ShoppingBasket },
-  { href: "/profile", key: "nav.profile", icon: SlidersHorizontal },
+  { href: "/restaurants", key: "nav.week", icon: CalendarDays },
+  { href: "/restaurants/suppliers", key: "nav.suppliers", icon: Store },
+  { href: "/restaurants/basket", key: "nav.basket", icon: ShoppingBasket },
+  { href: "/restaurants/profile", key: "nav.profile", icon: SlidersHorizontal },
 ];
 
 const BOWLS = ["tonkotsu", "set_full", "set_kaedama", "veggie_miso"];
@@ -35,6 +35,19 @@ export function Footer() {
         <span>{t("foot.week", { dates: d.range(week.dates[0], week.dates[1]), bowls: bowls.toLocaleString("en-IE") })}</span>
       )}
     </footer>
+  );
+}
+
+// First visit in this browser: the header and navigation are already usable; only the page body waits.
+function FirstLoad() {
+  const { t } = useI18n();
+  return (
+    <section className="jp-panel" role="status" style={{ maxWidth: 520 }}>
+      <p className="jp-muted" style={{ display: "flex", alignItems: "center", gap: 8, margin: 0, fontSize: 13 }}>
+        <Loader2 className="jp-spinner" aria-hidden style={{ width: 16, height: 16 }} />
+        {t("load.sync")}
+      </p>
+    </section>
   );
 }
 
@@ -60,7 +73,7 @@ export default function Shell({ children }: { children: ReactNode }) {
   const signOut = () =>
     logout().finally(() => {
       forgetSession();
-      window.location.replace("/login");
+      window.location.replace("/");
     });
   return (
     <div className="jp">
@@ -76,7 +89,7 @@ export default function Shell({ children }: { children: ReactNode }) {
               </div>
             </div>
             <span className="jp-brand-divider" aria-hidden />
-            <Link href="/" className="jp-brand">
+            <Link href="/restaurants" className="jp-brand">
               <Image className="jp-brand-logo" src="/japita-logo.png" alt="Japita" width={112} height={56} priority />
             </Link>
           </div>
@@ -104,10 +117,10 @@ export default function Shell({ children }: { children: ReactNode }) {
           <aside className="jp-sidebar">
             <nav className="jp-nav" aria-label="Main navigation">
               {NAV.map(({ href, key, icon: Icon }) => (
-                <Link key={href} href={href} aria-current={(href === "/" ? path === "/" : path.startsWith(href)) ? "page" : undefined}>
+                <Link key={href} href={href} aria-current={(href === "/restaurants" ? path === "/restaurants" : path.startsWith(href)) ? "page" : undefined}>
                   <Icon aria-hidden />
                   {t(key)}
-                  {href === "/basket" && !!lines && <span className="jp-nav-count">{lines}</span>}
+                  {href === "/restaurants/basket" && !!lines && <span className="jp-nav-count">{lines}</span>}
                 </Link>
               ))}
             </nav>
@@ -121,7 +134,7 @@ export default function Shell({ children }: { children: ReactNode }) {
             </div>
           </aside>
           <main className="jp-body">
-            {children}
+            {data ? children : <FirstLoad />}
             <Footer />
           </main>
         </div>

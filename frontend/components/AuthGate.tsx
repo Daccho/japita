@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { Loader2 } from "lucide-react";
 import { forgetSession, loginUrl, rememberedSession, rememberSession } from "@/lib/api";
-import { me, supplierPortal, type Me } from "@/lib/auth";
+import { me, type Me } from "@/lib/auth";
 
 // Restaurant workspace only. A convenience for routing: the API refuses the workspace's data without a
 // restaurant session regardless of what this component renders.
@@ -38,7 +38,7 @@ export default function AuthGate({ children }: { children: ReactNode }) {
           window.location.replace(loginUrl());
         } else if (u.role === "supplier") {
           forgetSession();
-          window.location.replace((await supplierPortal()).path);
+          window.location.replace("/suppliers");
         } else {
           rememberSession(u);
           setUser(u);

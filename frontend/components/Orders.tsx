@@ -44,7 +44,7 @@ export default function Orders({ orders, canSubmit }: { orders: PurchaseOrder[];
           {error.reapprove && (
             <>
               {" "}
-              <Link href="/basket#approve" onClick={() => document.getElementById("approve")?.scrollIntoView({ behavior: "smooth", block: "center" })}>
+              <Link href="/restaurants/basket#approve" onClick={() => document.getElementById("approve")?.scrollIntoView({ behavior: "smooth", block: "center" })}>
                 {t("err.reapprove")}
               </Link>
             </>

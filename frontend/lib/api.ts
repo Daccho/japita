@@ -52,7 +52,7 @@ async function request<R>(path: string, init?: RequestInit): Promise<R> {
 
 export function loginUrl() {
   const next = window.location.pathname + window.location.search;
-  return next === "/" ? "/login" : `/login?next=${encodeURIComponent(next)}`;
+  return `/login?role=restaurant&next=${encodeURIComponent(next)}`;
 }
 
 // Remembered after /auth/me confirms a restaurant session, so the next visit can paint the cached workspace while

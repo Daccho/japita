@@ -27,12 +27,14 @@ Status: prepared, not yet deployed.
    ```bash
    curl -X POST https://<api>/state/seed -H "X-Admin-Key: <ADMIN_KEY>"
    ```
-   Then create the demo accounts against the Neon database from your machine (each prompts for a password, at least 12 characters):
-   ```bash
-   cd backend
-   DATABASE_URL='<neon string>' uv run python -m japita.auth add-user kumo-milano --name "Kumo Ramen Milano"
-   DATABASE_URL='<neon string>' uv run python -m japita.auth add-user tokyo-shokuhin --name "Tokyo Shokuhin" --role supplier --supplier S1
-   ```
+   The demo accounts are created on startup because `render.yaml` sets `DEMO_ACCOUNTS=1` (fictional data only; the password equals the login ID):
+
+   | Login ID | Side | Opens |
+   | --- | --- | --- |
+   | `restaurant1`, `restaurant2`, `restaurant3` | Restaurant (Kumo Ramen Milano) | `/restaurants` |
+   | `supplier1` / `supplier2` / `supplier3` | Supplier S1 Tokyo Shokuhin / S2 Pasta Fresca / S3 EuroAsia | `/suppliers` |
+
+   Real accounts are created with `DATABASE_URL='<neon>' uv run python -m japita.auth add-user <id> --name "<name>" [--role supplier --supplier S1]` (password at least 12 characters).
 4. **Vercel:**
    1. Choose Add New → Project and import `Daccho/japita`.
    2. Set the root directory to `frontend`. The framework is detected as Next.js.

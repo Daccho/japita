@@ -284,6 +284,36 @@ def _read_password() -> str:
     return pw
 
 
+# Public demo accounts for the fictional dataset: the login ID is also the password (shared with judges).
+# Created or reset on startup only when DEMO_ACCOUNTS=1, so real deployments never get them by accident.
+DEMO_ACCOUNTS = [("restaurant1", "restaurant", None), ("restaurant2", "restaurant", None),
+                 ("restaurant3", "restaurant", None), ("supplier1", "supplier", "S1"),
+                 ("supplier2", "supplier", "S2"), ("supplier3", "supplier", "S3")]
+
+
+def ensure_demo_accounts() -> list[str]:
+    if os.environ.get("DEMO_ACCOUNTS") != "1":
+        return []
+    suppliers = repo.load_state()["suppliers"]
+    restaurant = next(iter(repo.load_state()["profiles"].values()), {}).get("name", "Restaurant")
+    done = []
+    with Session(repo.engine()) as s:
+        for username, role, supplier_id in DEMO_ACCOUNTS:
+            if supplier_id and supplier_id not in suppliers:
+                continue  # demo data not seeded yet; created on the next start
+            name = suppliers[supplier_id]["name"] if supplier_id else restaurant
+            user = s.scalar(select(User).where(User.username == username))
+            if user is None:
+                user = User(username=username)
+                s.add(user)
+            if not (user.password_hash and check_password(user, username)):
+                user.password_hash = hash_password(username)
+            user.display_name, user.role, user.supplier_id = name, role, supplier_id
+            done.append(username)
+        s.commit()
+    return done
+
+
 def main(argv: list[str] | None = None) -> None:
     p = argparse.ArgumentParser(prog="python -m japita.auth")
     sub = p.add_subparsers(dest="cmd", required=True)

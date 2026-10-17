@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { ArrowLeft, Loader2, Store, Truck } from "lucide-react";
 import { I18nProvider, LangToggle, useI18n, type Key } from "@/lib/i18n";
-import { AuthError, login, me, safeNext, supplierPortal, type Me, type Role } from "@/lib/auth";
+import { AuthError, login, me, safeNext, type Me, type Role } from "@/lib/auth";
 
 // The supplier side is Japanese, like the supplier portal it leads to.
 const JA: Partial<Record<Key, string>> = {
@@ -34,13 +34,17 @@ function LoginForm() {
   // The server decides where an account may go: restaurant -> workspace, supplier -> its own portal.
   async function enter(user: Me) {
     if (user.role === "supplier") {
-      router.replace((await supplierPortal()).path);
+      router.replace("/suppliers");
     } else {
-      router.replace(safeNext(new URLSearchParams(window.location.search).get("next")));
+      const next = safeNext(new URLSearchParams(window.location.search).get("next"));
+      router.replace(next.startsWith("/suppliers") || next.startsWith("/supplier/") ? "/restaurants" : next);
     }
   }
 
   useEffect(() => {
+    // "/" is the role choice; "/login?role=..." opens that side's sign-in form directly.
+    const r = new URLSearchParams(window.location.search).get("role");
+    if (r === "restaurant" || r === "supplier") setRole(r);
     me().then((u) => u && enter(u)).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -135,7 +139,9 @@ export default function LoginPage() {
   return (
     <I18nProvider>
       <div className="jp">
-        <LoginForm />
+        <div className="jp-app">
+          <LoginForm />
+        </div>
       </div>
     </I18nProvider>
   );

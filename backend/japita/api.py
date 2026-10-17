@@ -4,6 +4,7 @@ and the test supplier page's API (Japanese clarification requests opened by a se
 Run: uv run uvicorn japita.api:app --reload
 """
 
+import logging
 import os
 import secrets
 import time
@@ -28,6 +29,13 @@ app = FastAPI(title="Japita API")
 app.add_middleware(CORSMiddleware, allow_origins=auth.app_origins(), allow_methods=["*"], allow_headers=["*"])
 app.middleware("http")(auth.require_session)  # outermost: every non-public route needs a restaurant session
 app.include_router(auth.router)
+
+
+@app.on_event("startup")
+def _demo_accounts() -> None:
+    created = auth.ensure_demo_accounts()  # no-op unless DEMO_ACCOUNTS=1
+    if created:
+        logging.getLogger("japita.auth").info("demo accounts ready: %s", ", ".join(created))
 app.include_router(jobs.router)
 install_error_handlers(app)
 

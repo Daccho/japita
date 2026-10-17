@@ -41,7 +41,7 @@ function useItems(): Item[] {
           ingredient: label("ing", dl.ingredient),
           stockout: d.day(tl.first_stockout),
         }),
-        href: "/basket",
+        href: "/restaurants/basket",
         action: t("nt.compare"),
       });
     }
@@ -53,7 +53,7 @@ function useItems(): Item[] {
         warn: true,
         title: t("nt.stockoutTitle", { ingredient: label("ing", tl.ingredient), date: d.day(tl.first_stockout) }),
         body: t("nt.stockoutBody", { qty: qty(tl.total_shortfall, tl.unit) }),
-        href: "/basket",
+        href: "/restaurants/basket",
         action: t("nt.compare"),
       });
     }
@@ -66,7 +66,7 @@ function useItems(): Item[] {
         warn: false,
         title: offer?.product ?? c.offer_id,
         body: t("nt.replyBody", { supplier: offer ? sup(offer.supplier_id) : "", product: offer?.product ?? "" }),
-        href: "/basket",
+        href: "/restaurants/basket",
         action: t("nt.open"),
       });
     }
@@ -78,7 +78,7 @@ function useItems(): Item[] {
         warn: false,
         title: o.product,
         body: t(o.pending_new ? "nt.newProduct" : "nt.proposalBody", { supplier: sup(o.supplier_id), product: o.product }),
-        href: `/suppliers?supplier=${o.supplier_id}`,
+        href: `/restaurants/suppliers?supplier=${o.supplier_id}`,
         action: t("nt.open"),
       });
     }
@@ -90,7 +90,7 @@ function useItems(): Item[] {
           warn: true,
           title: po.supplier_name,
           body: t("nt.changeBody", { supplier: po.supplier_name, from: d.day(ch.from), to: d.day(ch.to) }),
-          href: "/",
+          href: "/restaurants",
           action: t("nt.open"),
         }),
       );
@@ -101,7 +101,7 @@ function useItems(): Item[] {
           warn: false,
           title: po.supplier_name,
           body: t("nt.ackBody", { supplier: po.supplier_name, date: d.day(po.delivery_date) }),
-          href: "/",
+          href: "/restaurants",
           action: t("nt.open"),
         });
     }

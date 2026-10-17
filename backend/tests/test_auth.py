@@ -102,3 +102,17 @@ def test_passkey_routes_are_gone(client):
 
 def test_supplier_token_pages_stay_public(client):
     assert client.get("/portal/not-a-token").status_code == 404  # reached the route, not 401
+
+
+def test_demo_accounts_only_with_flag(client, monkeypatch):
+    monkeypatch.delenv("DEMO_ACCOUNTS", raising=False)
+    assert auth.ensure_demo_accounts() == []
+    monkeypatch.setenv("DEMO_ACCOUNTS", "1")
+    assert auth.ensure_demo_accounts() == [u for u, _, _ in auth.DEMO_ACCOUNTS]
+    assert auth.ensure_demo_accounts()  # idempotent
+    assert login(client, "restaurant2", "restaurant2").status_code == 200
+    client.post("/auth/logout", headers={"origin": APP})
+    r = login(client, "supplier3", "supplier3", role="supplier")
+    assert r.status_code == 200
+    assert client.get("/state").status_code == 403  # suppliers never see restaurant data
+    assert client.get("/auth/supplier/portal").json()["supplier_id"] == "S3"

@@ -47,6 +47,6 @@ export const supplierPortal = () => call<{ supplier_id: string; path: string }>(
 
 // Only same-site paths are accepted as a post-login destination (no open redirect).
 export function safeNext(next: string | null): string {
-  return next && /^\/(?![\/\\])/.test(next) && !next.includes("\\") && !next.startsWith("/login") ? next : "/";
+  return next && /^\/(?![\/\\])/.test(next) && !next.includes("\\") && !next.startsWith("/login") ? next : "/restaurants";
 }
 

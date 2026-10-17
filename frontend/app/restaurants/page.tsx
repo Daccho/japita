@@ -85,7 +85,7 @@ export default function WeekPage() {
                       stockout: d.day(out.first_stockout),
                     })}
                   </p>
-                  <Link href="/basket" className="jp-action">
+                  <Link href="/restaurants/basket" className="jp-action">
                     {t("nt.compare")}
                   </Link>
                 </div>
@@ -165,7 +165,7 @@ export default function WeekPage() {
               <small className="jp-muted">
                 {suggested.late_lines.length ? t("adv.someLate") : t("adv.inTime")}
               </small>
-              <Link href="/basket" className="jp-action jp-primary jp-full">
+              <Link href="/restaurants/basket" className="jp-action jp-primary jp-full">
                 {t("adv.openBasket")}
               </Link>
             </section>
