@@ -366,7 +366,7 @@
   "suppliers": {
     "S1": {
       "id": "S1",
-      "name": "Tokyo Shokuhin Milano (fictional)",
+      "name": "Tokyo Shokuhin (fictional)",
       "relationship": "existing",
       "account_status": "approved",
       "min_order_eur": 60,
