@@ -74,7 +74,8 @@ class Store:
         return next(c for c in self.clarifications if c.get("token") and secrets.compare_digest(c["token"], token))
 
     def add_clarification(self, offer_id: str, field: str, text_ja: str, reason: str,
-                          translations: dict[str, str] | None = None) -> dict:
+                          translations: dict[str, str] | None = None,
+                          reason_translations: dict[str, str] | None = None) -> dict:
         if field in OWNER_DECIDED_FIELDS:
             raise ValueError(f"{field} is decided by the restaurant (e.g. a chef tasting), not asked of the supplier")
         self.offer(offer_id)
@@ -85,6 +86,7 @@ class Store:
             "text_ja": text_ja,
             "translations": translations or {},
             "reason": reason,
+            "reason_translations": reason_translations or {"en": reason},
             "state": "draft",
         }
         self.clarifications.append(c)
