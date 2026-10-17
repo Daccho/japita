@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { Archivo, Bodoni_Moda, Dela_Gothic_One, Inter, Noto_Sans_JP, Zen_Kaku_Gothic_New } from "next/font/google";
 import "./globals.css";
+import { InitialLangProvider } from "@/lib/initial-lang";
+import { LANG_COOKIE, PORTAL_LANG_COOKIE } from "@/lib/lang-cookies";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const noto = Noto_Sans_JP({ subsets: ["latin"], weight: ["400", "700"], variable: "--font-noto" });
@@ -16,11 +19,13 @@ export const metadata: Metadata = {
   description: "Restaurant supplier and purchasing workspace: existing suppliers, new options and weekly basket advice.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const jar = await cookies();
+  const lang = { restaurant: jar.get(LANG_COOKIE)?.value, portal: jar.get(PORTAL_LANG_COOKIE)?.value };
   return (
-    <html lang="it" className={`${inter.variable} ${noto.variable} ${zenKaku.variable} ${dela.variable} ${bodoni.variable} ${archivo.variable}`}>
+    <html lang={lang.restaurant === "en" ? "en" : "it"} className={`${inter.variable} ${noto.variable} ${zenKaku.variable} ${dela.variable} ${bodoni.variable} ${archivo.variable}`}>
       <body className="font-[family-name:var(--font-zen-kaku),var(--font-noto)] antialiased">
-        {children}
+        <InitialLangProvider value={lang}>{children}</InitialLangProvider>
       </body>
     </html>
   );

@@ -80,15 +80,6 @@ export default function Shell({ children }: { children: ReactNode }) {
       <div className="jp-app">
         <header className="jp-top">
           <div className="jp-workspace-brands">
-            <div className="jp-restaurant">
-              <Image className="jp-restaurant-logo" src="/kumo-demo-logo.webp" alt="Kumo Ramen demo logo" width={120} height={80} priority />
-              <div>
-                <span className="jp-restaurant-name">Kumo Ramen Milano</span>
-                <br />
-                <span className="jp-muted">{t("workspace")}</span>
-              </div>
-            </div>
-            <span className="jp-brand-divider" aria-hidden />
             <Link href="/restaurants" className="jp-brand">
               <Image className="jp-brand-logo" src="/japita-logo.png" alt="Japita" width={112} height={56} priority />
             </Link>

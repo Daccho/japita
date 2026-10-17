@@ -1,6 +1,8 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { useInitialLang } from "@/lib/initial-lang";
+import { LANG_COOKIE, saveLangCookie } from "@/lib/lang-cookies";
 
 // Restaurant workspace strings. Italian is the default (the restaurant is in Milan); English is for judges.
 // The supplier portal is Japanese only and does not use this.
@@ -811,14 +813,20 @@ const Ctx = createContext<{ lang: Lang; setLang: (l: Lang) => void; t: T }>({
 const KEY = "japita.lang";
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Lang>("it");
+  const initial = useInitialLang().restaurant;
+  const [lang, setLangState] = useState<Lang>(initial === "en" ? "en" : "it");
 
+  // Older visits saved the choice only in localStorage: adopt it once and move it into the cookie.
   useEffect(() => {
+    if (initial) return;
     try {
       const saved = localStorage.getItem(KEY);
-      if (saved === "it" || saved === "en") setLangState(saved);
+      if (saved === "it" || saved === "en") {
+        setLangState(saved);
+        saveLangCookie(LANG_COOKIE, saved);
+      }
     } catch {}
-  }, []);
+  }, [initial]);
 
   useEffect(() => {
     document.documentElement.lang = lang;
@@ -826,6 +834,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
   const setLang = (l: Lang) => {
     setLangState(l);
+    saveLangCookie(LANG_COOKIE, l);
     try {
       localStorage.setItem(KEY, l);
     } catch {}
