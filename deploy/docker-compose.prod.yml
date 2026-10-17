@@ -1,0 +1,58 @@
+# Public demo on one CPU droplet (DigitalOcean Premium AMD, AMD EPYC): web, API, Postgres, HTTPS proxy.
+# Inference stays on AMD: the API calls Gemma on AMD Radeon Cloud TokenFactory (LLM_* in .env), via Evolus when configured.
+# Usage on the droplet:  cd japita/deploy && cp prod.env.example .env && docker compose -f docker-compose.prod.yml up -d --build
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: japita
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: japita
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U japita"]
+      interval: 2s
+      retries: 15
+    restart: unless-stopped
+
+  api:
+    build: ../backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://japita:${POSTGRES_PASSWORD}@db:5432/japita
+      LLM_BASE_URL: ${LLM_BASE_URL}
+      LLM_MODEL: ${LLM_MODEL}
+      LLM_API_KEY: ${LLM_API_KEY}
+      LLM_BACKEND_LABEL: ${LLM_BACKEND_LABEL}
+      EVOLUS_API_KEY: ${EVOLUS_API_KEY:-}
+      EVOLUS_APPLICATION_ID: ${EVOLUS_APPLICATION_ID:-}
+      EVOLUS_AGENT_ID: ${EVOLUS_AGENT_ID:-}
+      EVOLUS_WORKFLOW_ID: ${EVOLUS_WORKFLOW_ID:-}
+      ADMIN_KEY: ${ADMIN_KEY}
+      APP_HOST: ${SITE_HOST}
+    depends_on:
+      db: {condition: service_healthy}
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ../frontend
+      args:
+        NEXT_PUBLIC_API_BASE: https://${SITE_HOST}/api
+    depends_on: [api]
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2
+    ports: ["80:80", "443:443"]
+    environment:
+      SITE_HOST: ${SITE_HOST}
+    volumes:
+      - ./Caddyfile.prod:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+    depends_on: [api, web]
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  caddy-data:

@@ -31,7 +31,8 @@ Keep it short: rules and pointers live here, details live in `docs/`. Each fact 
 | `docs/compliance.md` | Evidence rules and claims we must not make |
 | `docs/demo.md` | Demo scenario, dataset, verification |
 | `docs/hackathon.md` | Awards, build sequence, division of work, submission checklist, resources |
-| `docs/deploy-amd.md` | Deploying everything on one AMD Developer Cloud MI300X droplet |
+| `docs/deploy.md` | Public demo on a DigitalOcean Premium AMD droplet (web, API, Postgres, HTTPS) |
+| `docs/deploy-amd.md` | Alternative, not pursued: everything on one AMD Developer Cloud MI300X droplet |
 | `docs/open-questions.md` | Unresolved questions |
 | `docs/mockup-handoff.md` | Current visual mockup, approved UI decisions, exclusions, and continuation prompt |
 

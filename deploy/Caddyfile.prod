@@ -1,0 +1,10 @@
+# Automatic HTTPS. Without a domain, use <droplet-ip with dashes>.sslip.io, e.g. 129-212-1-2.sslip.io
+{$SITE_HOST} {
+	encode gzip
+	handle_path /api/* {
+		reverse_proxy api:8000
+	}
+	handle {
+		reverse_proxy web:3000
+	}
+}

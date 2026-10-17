@@ -5,12 +5,13 @@ Run: uv run uvicorn japita.api:app --reload
 """
 
 import os
+import secrets
 import time
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any, Literal
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -168,14 +169,23 @@ def get_state():
     return repo.load_state()
 
 
+FIXTURES = Path(__file__).resolve().parent.parent / "tests" / "fixtures"
+
+
 @app.post("/state/seed")
-def seed_state(path: str = "tests/fixtures/kumo.json"):
-    """Replace all data with a fixture file (existing Kumo Ramen Milano data by default)."""
-    p = Path(path)
-    if not p.is_file():
-        raise HTTPException(404, f"{path} not found")
+def seed_state(fixture: str = "kumo", x_admin_key: str | None = Header(default=None)):
+    """Replace all data with a fixture (existing Kumo Ramen Milano data by default).
+
+    Requires X-Admin-Key when ADMIN_KEY is set (always on the public deployment).
+    """
+    admin_key = os.environ.get("ADMIN_KEY")
+    if admin_key and not (x_admin_key and secrets.compare_digest(x_admin_key, admin_key)):
+        raise HTTPException(403, "admin key required")
+    p = FIXTURES / f"{fixture}.json"
+    if not fixture.isidentifier() or not p.is_file():
+        raise HTTPException(404, f"fixture {fixture!r} not found")
     repo.seed(p)
-    return {"seeded": path}
+    return {"seeded": fixture}
 
 
 @app.put("/profiles/{profile_id}")
