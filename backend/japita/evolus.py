@@ -165,4 +165,17 @@ class EvolusWorkflow:
                 break
             time.sleep(poll_seconds)  # stay under 60 requests per minute
         return {"workflow_id": self.workflow_id, "execution_id": execution_id, "status": state,
-                "elapsed_ms": int((time.perf_counter() - start) * 1000), "execution": body}
+                "elapsed_ms": int((time.perf_counter() - start) * 1000), "output_text": output_text(body),
+                "trace_id": body.get("traceId"), "credits": (body.get("consumption") or {}).get("credits"),
+                "execution": body}
+
+
+def output_text(execution: dict) -> str | None:
+    """Final text of an execution: `output`, or else the last step's output (agent steps report there)."""
+    if execution.get("output"):
+        return execution["output"]
+    steps = execution.get("stepOutputs") or {}
+    if not steps:
+        return None
+    last = steps[max(steps, key=lambda k: int(k) if str(k).isdigit() else 0)]
+    return last if isinstance(last, str) else json.dumps(last, ensure_ascii=False)

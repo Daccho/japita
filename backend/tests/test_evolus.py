@@ -1,6 +1,6 @@
 """Option B action parsing (no network)."""
 
-from japita.evolus import parse_action
+from japita.evolus import output_text, parse_action
 
 
 def test_parse_answer_and_calls():
@@ -14,3 +14,9 @@ def test_parse_answer_and_calls():
 def test_parse_rejects_unknown_tool_and_prose():
     assert parse_action('{"action": "call", "calls": [{"tool": "place_order"}]}') is None
     assert parse_action("I will check the inventory now.") is None
+
+
+def test_workflow_output_text_falls_back_to_last_step():
+    assert output_text({"output": "", "stepOutputs": {"1": "a", "2": "b"}}) == "b"
+    assert output_text({"output": "final", "stepOutputs": {"1": "a"}}) == "final"
+    assert output_text({"output": None, "stepOutputs": None}) is None
