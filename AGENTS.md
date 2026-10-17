@@ -43,6 +43,7 @@ Keep it short: rules and pointers live here, details live in `docs/`. Each fact 
 # agent:    cd backend && uv run python -m japita.agent "質問"       # needs LLM_* and DATABASE_URL in .env
 # test:     cd backend && uv run pytest                               # offline
 # live:     cd backend && uv run pytest -m live -s                    # real model endpoint
+# web:      cd frontend && pnpm install && pnpm dev                   # http://localhost:3000, API from NEXT_PUBLIC_API_BASE
 ```
 
 ---
