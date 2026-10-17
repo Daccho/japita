@@ -2,41 +2,373 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #faf8f5;
-  --foreground: #1c1917;
+/* Restaurant workspace styles, ported from mockup/japita-workspace.html (the design source of truth).
+   Scoped under .jp so the supplier portal keeps its own look. */
+.jp { --jp-bg:light-dark(#f7f6f1,#191c19); --jp-paper:light-dark(#ffffff,#222722); --jp-text:light-dark(#23312b,#e8ece6); --jp-muted:light-dark(#657068,#acb6ac); --jp-line:light-dark(#e0e5dc,#3b443b); --jp-soft:light-dark(#eef2e9,#2c352b); --jp-accent:light-dark(#335b45,#a2cfad); --jp-on-accent:light-dark(#ffffff,#19271b); --jp-warn:light-dark(#946023,#e9bc82); --jp-warn-bg:light-dark(#fbf2e4,#3a3023); --jp-nav:light-dark(#e7ece2,#323e31); color:var(--jp-text); font:400 14px/1.5 Inter, ui-sans-serif, system-ui, sans-serif; }
+.jp * { box-sizing:border-box; }
+.jp [hidden] { display:none!important; }
+.jp .jp-app { --jp-radius:14px; --jp-pad:20px; background:var(--jp-bg); border:1px solid var(--jp-line); border-radius:16px; min-height:780px; overflow:clip; color:var(--jp-text); }
+.jp .jp-app.jp-compact { --jp-pad:14px; }
+.jp button,.jp input,.jp select,.jp textarea { font:inherit; color:inherit; }
+.jp button { border:0; background:transparent; }
+.jp button:focus-visible,.jp input:focus-visible,.jp select:focus-visible { outline:2px solid var(--jp-accent); outline-offset:3px; }
+.jp .jp-app h1,.jp .jp-app h2,.jp .jp-app h3,.jp .jp-app p { margin:0; }
+.jp .jp-app h1 { font-size:27px; line-height:1.22; font-weight:500; letter-spacing:-.8px; }
+.jp .jp-app h2 { font-size:18px; font-weight:500; letter-spacing:-.35px; }
+.jp .jp-app h3 { font-size:14px; font-weight:500; }
+.jp .jp-app small { font-size:12px; }
+.jp .jp-muted { color:var(--jp-muted); }
+.jp .jp-kicker { font-size:11px; letter-spacing:1.5px; text-transform:uppercase; font-weight:500; color:var(--jp-muted); }
+.jp .jp-number { font-variant-numeric:tabular-nums; }
+.jp .jp-workspace-brands { display:flex; align-items:center; flex-wrap:wrap; gap:18px; min-width:0; }
+.jp .jp-brand { display:flex; align-items:center; flex-shrink:0; }
+.jp .jp-brand-logo { display:block; width:112px; height:56px; object-fit:cover; object-position:50% 44%; border-radius:5px; }
+.jp .jp-brand-divider { width:1px; height:38px; background:var(--jp-line); }
+.jp .jp-top { background:var(--jp-paper); padding:12px 24px; border-bottom:1px solid var(--jp-line); display:flex; align-items:center; gap:15px; }
+.jp .jp-restaurant { display:flex; align-items:center; gap:11px; font-size:12px; min-width:0; }
+.jp .jp-restaurant-logo { display:block; width:120px; height:80px; object-fit:contain; flex-shrink:0; }
+.jp .jp-restaurant-name { font-size:16px; font-weight:500; overflow-wrap:anywhere; }
+.jp .jp-shell { display:grid; grid-template-columns:180px minmax(0,1fr); min-height:698px; }
+.jp .jp-sidebar { padding:23px 12px; border-right:1px solid var(--jp-line); display:flex; flex-direction:column; gap:22px; }
+.jp .jp-nav { display:flex; flex-direction:column; gap:5px; }
+.jp .jp-nav button { padding:11px 10px; text-align:left; display:flex; gap:8px; align-items:center; border-radius:8px; font-size:13px; white-space:normal; }
+.jp .jp-nav button[aria-current="page"] { background:var(--jp-nav); color:var(--jp-accent); font-weight:500; }
+.jp .jp-nav i,.jp .jp-nav svg { width:16px; height:16px; flex-shrink:0; }
+.jp .jp-sidebar-foot { margin-top:auto; padding:12px 7px; font-size:11px; color:var(--jp-muted); }
+.jp .jp-body { min-width:0; padding:26px; }
+.jp .jp-header { display:flex; justify-content:space-between; align-items:flex-start; gap:15px; margin-bottom:22px; }
+.jp .jp-header p { margin-top:7px; }
+.jp .jp-toolbar { position:relative; display:flex; align-items:center; justify-content:flex-end; gap:8px; flex-wrap:wrap; max-width:100%; }
+.jp .jp-notification-bell { position:relative; width:38px; height:38px; padding:9px; border:1px solid var(--jp-line); border-radius:8px; display:grid; place-items:center; background:var(--jp-paper); }
+.jp .jp-notification-bell i,.jp .jp-notification-bell svg { width:18px; height:18px; }
+.jp .jp-unread { position:absolute; top:-5px; right:-5px; min-width:17px; height:17px; display:grid; place-items:center; border-radius:9px; background:var(--jp-accent); color:var(--jp-on-accent); font-size:11px; }
+.jp .jp-notifications { position:absolute; top:calc(100% + 10px); right:0; width:330px; max-width:calc(100vw - 64px); z-index:20; padding:17px; background:var(--jp-paper); border:1px solid var(--jp-line); border-radius:var(--jp-radius); box-shadow:0 12px 30px light-dark(#23312b20,#00000050); text-align:left; }
+.jp .jp-notifications .jp-line-head { margin-bottom:12px; }
+.jp .jp-notifications p { margin:7px 0 13px; font-size:12px; color:var(--jp-muted); }
+.jp .jp-notifications .jp-close { display:grid; place-items:center; padding:5px; border-radius:5px; }
+.jp .jp-close i,.jp .jp-close svg { width:16px; height:16px; }
+.jp .jp-action { display:inline-flex; gap:7px; justify-content:center; align-items:center; border:1px solid var(--jp-line); border-radius:8px; background:var(--jp-paper); padding:9px 12px; font-size:12px; white-space:nowrap; font-weight:500; }
+.jp .jp-action i,.jp .jp-action svg { width:15px; height:15px; }
+.jp .jp-action.jp-primary { background:var(--jp-accent); color:var(--jp-on-accent); border-color:var(--jp-accent); }
+.jp .jp-action:disabled { opacity:.5; }
+.jp .jp-columns { display:grid; grid-template-columns:minmax(0,1fr) 230px; gap:18px; align-items:start; }
+.jp .jp-stack { display:grid; gap:18px; }
+.jp .jp-panel { background:var(--jp-paper); border:1px solid var(--jp-line); border-radius:var(--jp-radius); padding:var(--jp-pad); min-width:0; }
+.jp .jp-alert { background:var(--jp-warn-bg); border-radius:var(--jp-radius); padding:16px; display:flex; align-items:flex-start; gap:12px; }
+.jp .jp-alert>i,.jp .jp-alert>svg { color:var(--jp-warn); width:19px; height:19px; flex-shrink:0; margin-top:2px; }
+.jp .jp-alert p { font-size:12px; margin:5px 0 12px; color:var(--jp-muted); }
+.jp .jp-line-head { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:15px; }
+.jp .jp-badge { font-size:11px; font-weight:500; display:inline-flex; align-items:center; gap:5px; background:var(--jp-soft); color:var(--jp-accent); padding:4px 8px; border-radius:5px; }
+.jp .jp-badge.jp-warning { background:var(--jp-warn-bg); color:var(--jp-warn); }
+.jp .jp-row { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:12px; padding:15px 0; border-top:1px solid var(--jp-line); }
+.jp .jp-row:first-of-type { border-top:0; }
+.jp .jp-row p { font-size:12px; color:var(--jp-muted); margin-top:3px; }
+.jp .jp-row-right { text-align:right; }
+.jp .jp-row-right .jp-badge { margin-top:5px; }
+.jp .jp-budget { display:flex; justify-content:space-between; gap:12px; align-items:center; padding-top:16px; margin-top:4px; border-top:1px solid var(--jp-line); font-size:12px; }
+.jp .jp-budget strong { font-size:20px; font-weight:500; letter-spacing:-.7px; }
+.jp .jp-budget-track { height:5px; border-radius:3px; background:var(--jp-soft); margin-top:10px; overflow:hidden; }
+.jp .jp-budget-track span { display:block; height:100%; background:var(--jp-accent); }
+.jp .jp-advisor { background:var(--jp-soft); border:1px solid var(--jp-line); border-radius:var(--jp-radius); padding:18px; }
+.jp .jp-advisor-head { display:flex; gap:8px; align-items:center; margin-bottom:14px; }
+.jp .jp-advisor-head i,.jp .jp-advisor-head svg { width:16px; height:16px; color:var(--jp-accent); }
+.jp .jp-advisor p { margin:9px 0 14px; font-size:12px; color:var(--jp-muted); }
+.jp .jp-priority { display:flex; flex-wrap:wrap; gap:5px; margin:10px 0 16px; }
+.jp .jp-priority button { padding:6px 8px; border:1px solid var(--jp-line); border-radius:6px; background:var(--jp-paper); font-size:11px; }
+.jp .jp-priority button[aria-pressed="true"] { background:var(--jp-accent); color:var(--jp-on-accent); border-color:var(--jp-accent); }
+.jp .jp-recommendation { border-top:1px solid var(--jp-line); padding-top:14px; }
+.jp .jp-recommendation .jp-price { font-size:25px; letter-spacing:-1px; margin:10px 0 2px; }
+.jp .jp-proof { display:flex; gap:7px; align-items:flex-start; font-size:11px; color:var(--jp-muted); margin:7px 0; }
+.jp .jp-proof i,.jp .jp-proof svg { width:13px; height:13px; flex-shrink:0; margin-top:2px; }
+.jp .jp-full { width:100%; margin-top:12px; }
+.jp .jp-subnav { display:flex; align-items:center; gap:4px; padding:4px; background:var(--jp-soft); border-radius:8px; width:fit-content; margin:16px 0; }
+.jp .jp-subnav button { padding:7px 11px; font-size:12px; border-radius:5px; }
+.jp .jp-subnav button[aria-pressed="true"] { background:var(--jp-paper); color:var(--jp-accent); }
+.jp .jp-search { border:1px solid var(--jp-line); border-radius:8px; padding:10px 12px; background:var(--jp-paper); width:100%; font-size:13px; }
+.jp .jp-offer { padding:var(--jp-pad); border:1px solid var(--jp-line); background:var(--jp-paper); border-radius:var(--jp-radius); }
+.jp .jp-offer-identity { display:grid; grid-template-columns:144px minmax(0,1fr); align-items:center; gap:18px; margin:17px 0 4px; }
+.jp .jp-offer-photo { margin:0; }
+.jp .jp-offer-photo img { display:block; width:100%; height:108px; object-fit:cover; border-radius:8px; background:var(--jp-soft); }
+.jp .jp-offer-photo figcaption { margin-top:5px; color:var(--jp-muted); font-size:11px; }
+.jp .jp-offer-identity h3 { margin-top:0; }
+.jp .jp-offer h3 { font-size:16px; margin:9px 0 4px; }
+.jp .jp-offer p { font-size:12px; color:var(--jp-muted); margin-top:5px; }
+.jp .jp-offer .jp-supplier-country { display:flex; align-items:center; flex-wrap:wrap; gap:6px; color:var(--jp-text); margin:8px 0; font-size:13px; }
+.jp .jp-supplier-country i,.jp .jp-supplier-country svg { width:14px; height:14px; color:var(--jp-muted); }
+.jp .jp-supplier-country strong { font-weight:500; }
+.jp .jp-offer-meta { display:flex; flex-wrap:wrap; gap:7px 16px; margin:14px 0; font-size:12px; }
+.jp .jp-offer-actions { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; padding-top:12px; border-top:1px solid var(--jp-line); }
+.jp .jp-offer-price { font-size:20px; font-weight:500; }
+.jp .jp-discovery-search { margin:0 0 22px; padding:22px; border:1px solid var(--jp-accent); border-radius:var(--jp-radius); background:var(--jp-soft); }
+.jp .jp-discovery-search>label { display:block; margin:0 0 7px; font-size:21px; font-weight:500; letter-spacing:-.4px; }
+.jp .jp-discovery-search>p { font-size:13px; color:var(--jp-muted); margin-bottom:16px; }
+.jp .jp-directory-search { display:flex; align-items:flex-end; gap:12px; padding:13px; border:1px solid var(--jp-line); border-radius:10px; background:var(--jp-paper); }
+.jp .jp-directory-search>svg { width:19px; height:19px; color:var(--jp-accent); flex-shrink:0; }
+.jp .jp-directory-search textarea { min-width:0; flex:1; width:100%; min-height:76px; padding:4px 0; border:0; resize:vertical; background:transparent; font-size:15px; }
+.jp .jp-search-note { margin:8px 0 18px!important; color:var(--jp-muted); font-size:12px; }
+.jp .jp-directory-controls { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin:0 0 20px; }
+.jp .jp-directory-controls .jp-subnav { margin:0; }
+.jp .jp-directory-controls>.jp-action[aria-expanded="true"] { border-color:var(--jp-accent); background:var(--jp-soft); }
+.jp .jp-directory-filter-panel { margin:0 0 20px; padding:18px; background:var(--jp-paper); border:1px solid var(--jp-line); border-radius:var(--jp-radius); }
+.jp .jp-directory-filters { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+.jp .jp-directory-filters label { display:grid; gap:6px; min-width:0; font-size:12px; color:var(--jp-muted); }
+.jp .jp-directory-filters select,.jp .jp-directory-filters input { width:100%; min-width:0; color:var(--jp-text); }
+.jp .jp-directory-filters input,.jp .jp-directory-filters select { padding:10px 11px; border:1px solid var(--jp-line); border-radius:8px; background:var(--jp-paper); }
+.jp .jp-discovery-search .jp-search-note { margin:10px 0 0!important; }
+.jp .jp-directory-filter-foot { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-top:16px; }
+.jp .jp-directory-filter-foot p { font-size:12px; color:var(--jp-muted); }
+.jp .jp-directory-sort-note { font-size:12px; color:var(--jp-muted); margin:0 0 12px!important; }
+.jp .jp-directory-group { padding:12px 16px; font-size:12px; background:var(--jp-soft); border-top:1px solid var(--jp-line); }
+.jp .jp-directory-group:first-child { border-top:0; }
+.jp .jp-directory-count { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:0 0 10px; color:var(--jp-muted); font-size:12px; }
+.jp .jp-directory-list { background:var(--jp-paper); border:1px solid var(--jp-line); border-radius:var(--jp-radius); overflow:hidden; }
+.jp .jp-supplier-row { padding:16px; border-top:1px solid var(--jp-line); }
+.jp .jp-supplier-row:first-child { border-top:0; }
+.jp .jp-supplier-summary { display:grid; grid-template-columns:60px minmax(0,1fr) minmax(0,1.1fr) minmax(105px,auto) auto; gap:14px; align-items:center; }
+.jp .jp-supplier-thumb { display:block; width:60px; height:60px; border-radius:8px; object-fit:cover; background:var(--jp-soft); }
+.jp .jp-supplier-summary h3 { overflow-wrap:anywhere; }
+.jp .jp-supplier-summary p { margin-top:4px; font-size:12px; color:var(--jp-muted); }
+.jp .jp-supplier-product { min-width:0; font-size:13px; }
+.jp .jp-supplier-product small { display:block; margin-top:4px; color:var(--jp-muted); }
+.jp .jp-supplier-price { text-align:right; font-size:14px; font-weight:500; font-variant-numeric:tabular-nums; }
+.jp .jp-supplier-price small { display:block; max-width:145px; margin-top:4px; font-size:11px; font-weight:400; color:var(--jp-muted); }
+.jp .jp-match-reason { margin:10px 0 0 75px!important; font-size:12px; color:var(--jp-accent); }
+.jp .jp-supplier-expanded { padding-top:15px; margin-top:15px; border-top:1px solid var(--jp-line); }
+.jp .jp-supplier-expanded .jp-offer { border:0; padding:0; }
+.jp .jp-directory-empty { padding:24px; }
+.jp .jp-directory-empty p { margin-top:6px; color:var(--jp-muted); }
+.jp .jp-advisor-dock { position:fixed; right:20px; bottom:20px; width:56px; height:56px; z-index:40; }
+.jp .jp-advisor-launcher { display:grid; place-items:center; width:56px; height:56px; border:1px solid var(--jp-accent); border-radius:50%; background:var(--jp-accent); color:var(--jp-on-accent); box-shadow:0 6px 20px light-dark(#23312b30,#00000060); touch-action:none; cursor:grab; }
+.jp .jp-advisor-launcher:active { cursor:grabbing; }
+.jp .jp-advisor-launcher svg { width:23px; height:23px; }
+.jp .jp-advisor-popup { position:absolute; left:var(--jp-popup-left,auto); bottom:68px; width:350px; max-width:calc(100vw - 32px); max-height:var(--jp-popup-height,calc(100dvh - 110px)); overflow-y:auto; padding:18px; border:1px solid var(--jp-line); border-radius:16px; background:var(--jp-paper); box-shadow:0 16px 40px light-dark(#23312b25,#00000060); }
+.jp .jp-advisor-dock.jp-popup-below .jp-advisor-popup { top:68px; bottom:auto; }
+.jp .jp-popup-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:15px; }
+.jp .jp-advisor-popup .jp-advisor { padding:0; border:0; background:var(--jp-paper); }
+.jp .jp-detail { margin-top:14px; padding-top:12px; border-top:1px solid var(--jp-line); }
+.jp .jp-detail dl { display:grid; grid-template-columns:1fr 1fr; gap:7px; font-size:12px; margin:0; }
+.jp .jp-detail dt { color:var(--jp-muted); }
+.jp .jp-detail dd { margin:0; text-align:right; }
+.jp .jp-quote { margin-top:12px; background:var(--jp-soft); padding:13px; border-radius:8px; font-size:12px; }
+.jp .jp-quote p { margin-bottom:12px; }
+.jp .jp-pill-row { display:flex; flex-wrap:wrap; gap:7px; margin-top:12px; }
+.jp .jp-checkbox { display:flex; gap:10px; align-items:flex-start; padding:15px 0; border-bottom:1px solid var(--jp-line); font-size:13px; }
+.jp .jp-checkbox input { accent-color:var(--jp-accent); margin-top:4px; }
+.jp .jp-select-label { display:grid; gap:7px; font-size:12px; margin:18px 0; }
+.jp select { background:var(--jp-paper); border:1px solid var(--jp-line); border-radius:7px; padding:9px; max-width:100%; }
+.jp .jp-profile-tabs { display:flex; flex-wrap:wrap; gap:4px 18px; border-bottom:1px solid var(--jp-line); margin-bottom:24px; }
+.jp .jp-profile-tabs button { padding:11px 0; font-size:13px; border-bottom:2px solid transparent; }
+.jp .jp-profile-tabs button[aria-pressed="true"] { border-bottom-color:var(--jp-accent); color:var(--jp-accent); font-weight:500; }
+.jp .jp-profile-title { display:flex; align-items:flex-start; gap:14px; margin-bottom:20px; }
+.jp .jp-profile-mark { width:50px; height:50px; display:grid; place-items:center; flex-shrink:0; }
+.jp .jp-profile-mark img { display:block; width:50px; height:50px; object-fit:contain; }
+.jp .jp-description { max-width:720px; line-height:1.75; white-space:pre-line; }
+.jp .jp-facts { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px 30px; margin:22px 0 0; }
+.jp .jp-facts dt { color:var(--jp-muted); font-size:12px; margin-bottom:3px; }
+.jp .jp-facts dd { margin:0; font-size:13px; overflow-wrap:anywhere; }
+.jp .jp-source { border-top:1px solid var(--jp-line); padding:16px 0; }
+.jp .jp-source:first-child { border-top:0; padding-top:0; }
+.jp .jp-source:last-child { padding-bottom:0; }
+.jp summary { font-weight:500; }
+.jp .jp-source summary { font-size:13px; }
+.jp .jp-source-body { margin-top:13px; }
+.jp .jp-owner-notes { margin:0; padding-left:14px; border-left:2px solid var(--jp-line); font-size:13px; white-space:pre-line; }
+.jp .jp-field { display:grid; gap:7px; font-size:12px; min-width:0; margin-bottom:16px; }
+.jp .jp-field input,.jp .jp-field textarea { width:100%; min-width:0; background:var(--jp-bg); border:1px solid var(--jp-line); border-radius:7px; padding:10px; }
+.jp .jp-field textarea { resize:vertical; min-height:105px; }
+.jp .jp-field-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 16px; }
+.jp .jp-form-actions { display:flex; align-items:center; flex-wrap:wrap; gap:9px; margin-top:5px; }
+.jp .jp-section-note { margin:0 0 18px!important; font-size:12px; color:var(--jp-muted); }
+.jp .jp-sheet-edit { width:36px; height:36px; padding:9px; }
+.jp .jp-menu-detail { padding:4px 10px; font-size:13px; }
+.jp .jp-menu-detail p+p { margin-top:9px; }
+.jp .jp-menu-detail .jp-field { margin:8px 0; }
+.jp .jp-menu-editor { margin:0; }
+.jp .jp-menu-editbar { max-width:740px; margin:0 auto 16px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+.jp .jp-menu-editbar p { margin-top:3px; font-size:12px; color:var(--jp-muted); }
+.jp .jp-menu-editbar .jp-form-actions { margin:0; }
+.jp .jp-menu-editbar>.jp-error { flex-basis:100%; margin:0!important; }
+.jp .jp-menu-document { --jp-menu-paper:light-dark(#fffdf7,#ece5d7); --jp-menu-ink:light-dark(#293d30,#26392d); --jp-menu-faint:light-dark(#697266,#5b665a); --jp-menu-rule:light-dark(#d8d9c8,#c8c6b5); position:relative; max-width:740px; margin:0 auto; padding:36px 46px 30px; background:var(--jp-menu-paper); color:var(--jp-menu-ink); border:1px solid var(--jp-menu-rule); border-radius:3px; box-shadow:0 9px 28px light-dark(#23312b12,#00000030); }
+.jp .jp-menu-document>.jp-sheet-edit { position:absolute; right:18px; top:18px; color:var(--jp-menu-ink); background:var(--jp-menu-paper); border-color:var(--jp-menu-rule); }
+.jp .jp-menu-masthead { text-align:center; border-bottom:1px solid var(--jp-menu-rule); padding-bottom:24px; margin-bottom:26px; }
+.jp .jp-menu-masthead img { display:block; width:58px; height:58px; margin:0 auto 13px; object-fit:contain; }
+.jp .jp-menu-document .jp-menu-restaurant { font-family:Georgia,'Times New Roman',serif; font-size:28px; font-weight:400; letter-spacing:-.5px; }
+.jp .jp-menu-masthead p { margin-top:8px!important; font-size:12px; color:var(--jp-menu-faint); }
+.jp .jp-menu-label { display:block; margin-top:17px; font-size:11px; text-transform:uppercase; letter-spacing:4px; }
+.jp .jp-menu-chapter+.jp-menu-chapter { margin-top:28px; }
+.jp .jp-menu-document .jp-menu-chapter-title { font-size:11px; font-weight:500; letter-spacing:2.5px; text-transform:uppercase; margin-bottom:18px; }
+.jp .jp-menu-dish+.jp-menu-dish { margin-top:21px; }
+.jp .jp-menu-dish-line { display:flex; align-items:baseline; gap:10px; }
+.jp .jp-menu-document .jp-menu-dish-line h3 { min-width:0; overflow-wrap:anywhere; font-family:Georgia,'Times New Roman',serif; font-size:19px; font-weight:400; }
+.jp .jp-menu-leader { flex:1; min-width:12px; border-bottom:1px dotted var(--jp-menu-rule); }
+.jp .jp-menu-dish-price { flex-shrink:0; font-size:16px; font-variant-numeric:tabular-nums; }
+.jp .jp-menu-dish p { margin-top:6px!important; max-width:490px; font-size:12px; color:var(--jp-menu-faint); }
+.jp .jp-menu-document.jp-menu-editing .jp-menu-dish-line h3 { flex:0 1 70%; }
+.jp .jp-menu-document.jp-menu-editing .jp-menu-dish-line { align-items:flex-start; }
+.jp .jp-menu-document.jp-menu-editing .jp-menu-leader { margin-top:22px; }
+.jp .jp-menu-inline { display:block; box-sizing:border-box; width:100%; min-width:0; padding:0; border:0; border-radius:2px; background:transparent; color:inherit; font:inherit; line-height:inherit; box-shadow:0 1px 0 var(--jp-menu-rule); }
+.jp textarea.jp-menu-inline { resize:none; overflow:hidden; min-height:1.5em; }
+.jp .jp-menu-inline:hover,.jp .jp-menu-inline:focus { background:light-dark(#294a3409,#294a3412); }
+.jp .jp-menu-dish-price:has(input) { display:flex; align-items:baseline; gap:2px; }
+.jp .jp-menu-dish-price input { width:78px; text-align:right; font-variant-numeric:tabular-nums; appearance:textfield; }
+.jp .jp-menu-dish-price input::-webkit-inner-spin-button,.jp .jp-menu-dish-price input::-webkit-outer-spin-button { appearance:none; margin:0; }
+.jp .jp-menu-inline::placeholder { color:var(--jp-menu-faint); opacity:1; }
+.jp .jp-menu-paper-foot { margin-top:28px; padding-top:18px; border-top:1px solid var(--jp-menu-rule); text-align:center; font-size:11px; color:var(--jp-menu-faint); }
+.jp .jp-menu-planning { max-width:740px; margin:18px auto 0; padding:17px 20px; border:1px solid var(--jp-line); border-radius:var(--jp-radius); background:var(--jp-paper); }
+.jp .jp-menu-planning>summary { font-size:13px; }
+.jp .jp-menu-planning-row { padding:12px 0; border-top:1px solid var(--jp-line); }
+.jp .jp-menu-planning-row>summary { font-size:12px; }
+.jp .jp-menu-planning-row .jp-menu-detail { margin-top:12px; padding:0; }
+.jp .jp-menu-planning textarea[data-menu-autosize] { resize:none; overflow:hidden; }
+.jp .jp-ingredients { display:flex; flex-wrap:wrap; gap:6px; margin:12px 0; }
+.jp .jp-link-group+.jp-link-group { margin-top:26px; }
+.jp .jp-link-row { display:grid; grid-template-columns:24px minmax(0,1fr) auto; gap:12px; align-items:center; padding:17px 0; border-bottom:1px solid var(--jp-line); }
+.jp .jp-link-row>svg { width:18px; height:18px; color:var(--jp-muted); }
+.jp .jp-link-row p { margin-top:3px; font-size:12px; color:var(--jp-muted); overflow-wrap:anywhere; }
+.jp .jp-link-row.jp-link-edit { align-items:start; }
+.jp .jp-link-row .jp-field { margin:8px 0; }
+.jp .jp-link-row.jp-link-edit .jp-link-editor { grid-column:2/-1; }
+.jp .jp-error { font-size:12px; color:var(--jp-warn); margin-bottom:10px!important; }
+.jp .jp-toast { margin-top:14px; border-left:3px solid var(--jp-accent); padding:9px 12px; font-size:12px; background:var(--jp-soft); }
+.jp .jp-footer { margin-top:18px; display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; color:var(--jp-muted); font-size:11px; }
+@media(max-width:900px) {
+  .jp .jp-shell { grid-template-columns:130px minmax(0,1fr); }
+  .jp .jp-sidebar { padding:20px 8px; }
+  .jp .jp-nav button { font-size:12px; padding:10px 7px; }
+  .jp .jp-body { padding:23px 18px; }
+  .jp .jp-columns { grid-template-columns:minmax(0,1fr) 210px; gap:12px; }
 }
+@media(max-width:700px) {
+  .jp .jp-shell { grid-template-columns:1fr; }
+  .jp .jp-sidebar { border-right:0; border-bottom:1px solid var(--jp-line); padding:10px; }
+  .jp .jp-nav { flex-direction:row; gap:3px; flex-wrap:wrap; }
+  .jp .jp-nav button { font-size:12px; padding:10px; }
+  .jp .jp-sidebar-foot { display:none; }
+  .jp .jp-top { padding:12px 110px 12px 17px; }
+  .jp .jp-workspace-brands { gap:12px; }
+  .jp .jp-restaurant { font-size:11px; }
+  .jp .jp-advisor { order:-1; }
+  .jp .jp-header { flex-wrap:wrap; }
+  .jp .jp-toolbar { width:100%; }
+  .jp .jp-notifications { position:static; width:100%; max-width:100%; flex-basis:100%; box-shadow:none; }
+  .jp .jp-app h1 { font-size:25px; }
+  .jp .jp-facts,.jp .jp-field-grid { grid-template-columns:1fr; }
+  .jp .jp-profile-tabs { gap:4px 14px; }
+  .jp .jp-profile-tabs button { font-size:12px; }
+  .jp .jp-link-row { grid-template-columns:20px minmax(0,1fr); gap:10px; }
+  .jp .jp-link-row>.jp-action { grid-column:2; justify-self:start; }
+  .jp .jp-supplier-summary { grid-template-columns:52px minmax(0,1fr) auto; gap:12px; }
+  .jp .jp-supplier-thumb { width:52px; height:52px; }
+  .jp .jp-supplier-product { grid-column:2; }
+  .jp .jp-supplier-price { grid-column:2; text-align:left; }
+  .jp .jp-supplier-price small { max-width:none; }
+  .jp .jp-supplier-summary>.jp-action { grid-column:3; grid-row:1 / span 3; }
+  .jp .jp-match-reason { margin-left:64px!important; }
+}
+@media(max-width:480px) {
+  .jp .jp-discovery-search { padding:17px; }
+  .jp .jp-directory-search { flex-wrap:wrap; }
+  .jp .jp-directory-search textarea { flex-basis:100%; }
+  .jp .jp-directory-search>.jp-action { margin-left:auto; }
+  .jp .jp-brand-divider { display:none; }
+  .jp .jp-restaurant-logo { width:64px; height:64px; }
+  .jp .jp-restaurant-name { font-size:14px; }
+  .jp .jp-brand-logo { width:96px; height:48px; }
+  .jp .jp-offer-identity { grid-template-columns:88px minmax(0,1fr); gap:12px; align-items:start; }
+  .jp .jp-offer-photo img { height:88px; }
+  .jp .jp-directory-filters { grid-template-columns:1fr; gap:10px; }
+  .jp .jp-supplier-summary { grid-template-columns:48px minmax(0,1fr); }
+  .jp .jp-supplier-thumb { width:48px; height:48px; }
+  .jp .jp-supplier-summary>.jp-action { grid-column:2; grid-row:auto; justify-self:start; }
+  .jp .jp-match-reason { margin-left:60px!important; }
+  .jp .jp-menu-document { padding:30px 20px 23px; }
+  .jp .jp-menu-document .jp-menu-restaurant { font-size:24px; }
+  .jp .jp-menu-document .jp-menu-dish-line h3 { font-size:17px; }
+  .jp .jp-menu-masthead { padding-top:15px; }
+}
+@media(pointer:coarse) { .jp button,.jp summary { min-height:44px; } .jp input,.jp select,.jp textarea { font-size:16px; } }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-}
+/* --- Next.js app additions (not in the mockup) --- */
+.jp { color-scheme:light dark; }
+.jp .jp-app { min-height:100vh; border:0; border-radius:0; overflow:visible; }
+.jp .jp-top { padding:12px 24px; justify-content:space-between; flex-wrap:wrap; }
+.jp .jp-top-controls { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.jp .jp-shell { min-height:calc(100vh - 106px); }
+.jp .jp-sidebar { position:relative; }
+.jp .jp-nav a { padding:11px 10px; text-align:left; display:flex; gap:8px; align-items:center; border-radius:8px; font-size:13px; color:inherit; text-decoration:none; }
+.jp .jp-nav a[aria-current="page"] { background:var(--jp-nav); color:var(--jp-accent); font-weight:500; }
+.jp .jp-nav a svg { width:16px; height:16px; flex-shrink:0; }
+.jp .jp-nav-count { margin-left:auto; font-size:11px; color:var(--jp-muted); font-variant-numeric:tabular-nums; }
+.jp .jp-body { padding-bottom:90px; }
+.jp .jp-segment { display:flex; align-items:center; gap:2px; padding:3px; background:var(--jp-soft); border-radius:8px; }
+.jp .jp-segment button { padding:5px 9px; font-size:12px; border-radius:5px; }
+.jp .jp-segment button[aria-pressed="true"] { background:var(--jp-paper); color:var(--jp-accent); font-weight:500; }
+.jp .jp-segment-label { font-size:11px; color:var(--jp-muted); padding:0 4px 0 6px; }
+.jp a.jp-action { color:inherit; text-decoration:none; }
+.jp a.jp-action.jp-primary { color:var(--jp-on-accent); }
+.jp .jp-action:not(:disabled) { cursor:pointer; }
+.jp .jp-badge.jp-danger { background:var(--jp-warn-bg); color:var(--jp-warn); }
+.jp .jp-badge.jp-neutral { background:var(--jp-soft); color:var(--jp-muted); }
+.jp .jp-notification-item+.jp-notification-item { margin-top:14px; padding-top:14px; border-top:1px solid var(--jp-line); }
+.jp .jp-notifications { max-height:min(70vh,560px); overflow-y:auto; }
+.jp .jp-spinner { width:15px; height:15px; animation:jp-spin 1s linear infinite; }
+@keyframes jp-spin { to { transform:rotate(360deg); } }
+.jp .jp-loading { display:flex; align-items:center; gap:10px; padding:22px; color:var(--jp-muted); font-size:13px; }
+.jp .jp-progress { height:4px; border-radius:2px; background:var(--jp-soft); overflow:hidden; margin-top:10px; }
+.jp .jp-progress span { display:block; height:100%; width:35%; background:var(--jp-accent); animation:jp-slide 1.6s ease-in-out infinite; }
+@keyframes jp-slide { 0% { transform:translateX(-100%); } 100% { transform:translateX(300%); } }
+.jp .jp-days { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:4px; margin-top:10px; }
+.jp .jp-day { text-align:center; font-size:11px; padding:5px 2px; border-radius:6px; background:var(--jp-soft); color:var(--jp-muted); }
+.jp .jp-day strong { display:block; font-weight:500; color:var(--jp-text); font-size:11px; }
+.jp .jp-day.jp-day-short { background:var(--jp-warn-bg); color:var(--jp-warn); }
+.jp .jp-day.jp-day-short strong { color:var(--jp-warn); }
+.jp .jp-day.jp-day-arrival { box-shadow:inset 0 0 0 1px var(--jp-accent); }
+.jp .jp-kv { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:6px 14px; font-size:12px; margin:0; }
+.jp .jp-kv dt { color:var(--jp-muted); }
+.jp .jp-kv dd { margin:0; text-align:right; font-variant-numeric:tabular-nums; }
+.jp .jp-check { display:flex; gap:7px; align-items:flex-start; font-size:12px; margin:5px 0; }
+.jp .jp-check svg { width:14px; height:14px; flex-shrink:0; margin-top:2px; }
+.jp .jp-check.jp-ok svg { color:var(--jp-accent); }
+.jp .jp-check.jp-bad svg { color:var(--jp-warn); }
+.jp .jp-ja { font-family:var(--font-noto),Inter,sans-serif; }
+.jp .jp-message { background:var(--jp-soft); border-radius:8px; padding:11px 13px; font-size:13px; white-space:pre-line; }
+.jp .jp-message-label { display:block; font-size:11px; color:var(--jp-muted); margin-bottom:5px; letter-spacing:.3px; }
+.jp .jp-diff { display:grid; grid-template-columns:auto minmax(0,1fr); gap:5px 14px; font-size:12px; margin:10px 0; }
+.jp .jp-diff dt { color:var(--jp-muted); }
+.jp .jp-diff dd { margin:0; }
+.jp .jp-diff s { color:var(--jp-muted); }
+.jp .jp-proposal { margin-top:14px; padding:14px; border:1px solid var(--jp-warn); border-radius:10px; background:var(--jp-warn-bg); }
+.jp .jp-proposal .jp-message { background:var(--jp-paper); }
+.jp .jp-basket-options { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr)); gap:10px; }
+.jp .jp-basket-option { text-align:left; padding:14px; border:1px solid var(--jp-line); border-radius:10px; background:var(--jp-paper); cursor:pointer; }
+.jp .jp-basket-option[aria-pressed="true"] { border-color:var(--jp-accent); box-shadow:inset 0 0 0 1px var(--jp-accent); background:var(--jp-soft); }
+.jp .jp-basket-option strong { display:block; font-size:20px; font-weight:500; letter-spacing:-.6px; margin:6px 0 2px; font-variant-numeric:tabular-nums; }
+.jp .jp-basket-option small { display:block; color:var(--jp-muted); font-size:11px; }
+.jp .jp-po + .jp-po { margin-top:12px; }
+.jp .jp-po { border:1px solid var(--jp-line); border-radius:10px; padding:14px; }
+.jp .jp-advisor-ask textarea { width:100%; min-height:70px; border:1px solid var(--jp-line); border-radius:8px; padding:9px 10px; background:var(--jp-bg); resize:vertical; font-size:13px; }
+.jp .jp-suggestions { display:grid; gap:6px; margin:10px 0; }
+.jp .jp-suggestions button { text-align:left; font-size:12px; padding:8px 10px; border:1px solid var(--jp-line); border-radius:8px; background:var(--jp-paper); cursor:pointer; }
+.jp .jp-suggestions button:hover { border-color:var(--jp-accent); }
+.jp .jp-advisor-popup { width:400px; }
+.jp .jp-thumb-icon { display:grid; place-items:center; color:var(--jp-accent); }
+.jp .jp-thumb-icon svg { width:24px; height:24px; }
+.jp .jp-offer-photo .jp-thumb-icon { width:100%; height:108px; border-radius:8px; background:var(--jp-soft); }
 
-.prose-answer table {
-  @apply my-3 w-full border-collapse text-sm;
-}
-.prose-answer th,
-.prose-answer td {
-  @apply border border-stone-200 px-2 py-1 text-left align-top;
-}
-.prose-answer th {
-  @apply bg-stone-100 font-semibold;
-}
-.prose-answer h3 {
-  @apply mb-1 mt-4 font-semibold;
-}
-.prose-answer h4 {
-  @apply mb-1 mt-3 font-semibold;
-}
-.prose-answer ul {
-  @apply my-2 list-disc pl-5;
-}
-.prose-answer ol {
-  @apply my-2 list-decimal pl-5;
-}
-.prose-answer p {
-  @apply my-2;
-}
-.prose-answer hr {
-  @apply my-3 border-stone-200;
+/* Markdown answers (advisor, weekly check). */
+.jp .jp-md { font-size:13px; line-height:1.6; overflow-wrap:anywhere; }
+.jp .jp-md p { margin:8px 0!important; }
+.jp .jp-md h1,.jp .jp-md h2,.jp .jp-md h3,.jp .jp-md h4 { font-size:14px!important; font-weight:600!important; margin:14px 0 6px!important; letter-spacing:0!important; }
+.jp .jp-md ul { list-style:disc; padding-left:20px; margin:6px 0; }
+.jp .jp-md ol { list-style:decimal; padding-left:20px; margin:6px 0; }
+.jp .jp-md li { margin:3px 0; }
+.jp .jp-md table { width:100%; border-collapse:collapse; margin:10px 0; font-size:12px; display:block; overflow-x:auto; }
+.jp .jp-md th,.jp .jp-md td { border:1px solid var(--jp-line); padding:5px 7px; text-align:left; vertical-align:top; }
+.jp .jp-md th { background:var(--jp-soft); font-weight:500; }
+.jp .jp-md hr { border:0; border-top:1px solid var(--jp-line); margin:12px 0; }
+.jp .jp-md code { font-size:12px; background:var(--jp-soft); padding:1px 4px; border-radius:4px; }
+@media(max-width:700px) {
+  .jp .jp-columns { grid-template-columns:1fr; }
+  .jp .jp-nav a { font-size:12px; padding:10px; }
+  .jp .jp-top { padding:12px 17px; }
 }

@@ -1,167 +1,188 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { api, eur, qty, type BasketResult, type LLMCall, type Need, type State } from "@/lib/api";
-import { useI18n, useLabel } from "@/lib/i18n";
-import { Badge, Button, Card, ErrorNote } from "@/components/ui";
-import Clarifications from "@/components/Clarifications";
-import ProfilePicker from "@/components/ProfilePicker";
-import { useProfile } from "@/components/useProfile";
+import { ClipboardCheck, Loader2, TriangleAlert } from "lucide-react";
+import { money, qty } from "@/lib/api";
+import { useDates, useI18n, useLabel } from "@/lib/i18n";
+import { useElapsed, useWorkspace } from "@/components/workspace";
+import { suggestedBasket } from "@/components/helpers";
+import PageHeader from "@/components/PageHeader";
+import Orders from "@/components/Orders";
+import { Markdown } from "@/components/Advisor";
+
+function WeeklyCheck() {
+  const { t } = useI18n();
+  const { weekly, runWeekly } = useWorkspace();
+  const elapsed = useElapsed(weekly.startedAt);
+  const output = weekly.result?.output_text;
+  const failed = weekly.error || (weekly.result && (weekly.result.status !== "completed" || !output));
+  return (
+    <section className="jp-panel">
+      <div className="jp-line-head">
+        <h2>{t("chk.title")}</h2>
+        <button type="button" className="jp-action" disabled={weekly.running} onClick={runWeekly}>
+          {weekly.running ? <Loader2 className="jp-spinner" aria-hidden /> : <ClipboardCheck aria-hidden />}
+          {weekly.result || weekly.error ? t("chk.again") : t("chk.run")}
+        </button>
+      </div>
+      <p className="jp-section-note">{t("chk.intro")}</p>
+      {weekly.running && (
+        <div>
+          <p className="jp-muted" style={{ fontSize: 12 }}>
+            {t("chk.running")} · {t("adv.elapsed", { s: elapsed })}
+          </p>
+          <div className="jp-progress">
+            <span />
+          </div>
+        </div>
+      )}
+      {!weekly.running && failed && <p className="jp-error">{t("chk.failed")}</p>}
+      {!weekly.running && output && <Markdown text={output} />}
+    </section>
+  );
+}
 
 export default function WeekPage() {
   const { t } = useI18n();
   const label = useLabel();
-  const [profileId, setProfileId] = useProfile();
-  const [state, setState] = useState<State | null>(null);
-  const [needs, setNeeds] = useState<Record<string, Need> | null>(null);
-  const [baskets, setBaskets] = useState<BasketResult | null>(null);
-  const [calls, setCalls] = useState<LLMCall[]>([]);
-  const [error, setError] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    try {
-      setError(null);
-      const [s, n, b, c] = await Promise.all([api.state(), api.needs(profileId), api.baskets(profileId), api.llmCalls(8)]);
-      setState(s);
-      setNeeds(n);
-      setBaskets(b);
-      setCalls(c);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    }
-  }, [profileId]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  // While a question is out with the test supplier, poll so the reply appears without a manual refresh.
-  const waiting = state?.clarifications.some((c) => c.state === "sent");
-  useEffect(() => {
-    if (!waiting) return;
-    const id = setInterval(load, 4000);
-    return () => clearInterval(id);
-  }, [waiting, load]);
-
-  if (error) return <ErrorNote error={t("apiDown", { e: error })} />;
-  if (!state || !needs || !baskets) return <p className="text-stone-500">{t("loading")}</p>;
-
-  const profile = state.profiles[profileId];
-  const baseline = baskets.baskets.find((b) => b.kind === "baseline");
-  const best = baskets.baskets.filter((b) => b.kind !== "baseline").sort((a, b) => a.delivered_total_eur - b.delivered_total_eur)[0];
-  const open = state.clarifications.filter((c) => c.state !== "replied");
-  const servings = Object.entries(state.week.servings);
+  const d = useDates();
+  const { data } = useWorkspace();
+  if (!data) return null;
+  const { state, baskets, timeline, spending } = data;
+  const week = state.week;
+  const needs = baskets.needs ?? {};
+  const tl = timeline.ingredients ?? {};
+  const suggested = suggestedBasket(baskets);
+  const orders = (state.purchase_orders ?? []).filter((po) => po.state !== "cancelled");
+  const delayed = (week.deliveries ?? []).filter((dl) => dl.status === "delayed" && tl[dl.ingredient]?.first_stockout);
+  const used = Math.min(100, (spending.committed_eur / spending.budget_eur) * 100);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-end gap-4">
-        <div>
-          <p className="text-sm text-stone-500">{t("week.title", { id: state.week.id, dates: state.week.dates.join(" → ") })}</p>
-          <h1 className="text-2xl font-bold">{profile?.name ?? "—"}</h1>
-          <p className="text-sm text-stone-600">{profile?.concept}</p>
+    <>
+      <PageHeader
+        kicker={t("wk.kicker", { id: week.id })}
+        title={t("wk.title")}
+        sub={week.dates?.length === 2 ? t("wk.sub", { dates: d.range(week.dates[0], week.dates[1]) }) : undefined}
+      />
+      <div className="jp-columns">
+        <div className="jp-stack">
+          {delayed.map((dl) => {
+            const out = tl[dl.ingredient]!;
+            return (
+              <div key={dl.id} className="jp-alert" role="status">
+                <TriangleAlert aria-hidden />
+                <div>
+                  <h3>{t("nt.delayed", { weekday: d.weekday(dl.date), ingredient: label("ing", dl.ingredient) })}</h3>
+                  <p>
+                    {t("nt.delayedBody", {
+                      supplier: state.suppliers[dl.supplier_id]?.name ?? dl.supplier_id,
+                      date: d.day(dl.date),
+                      qty: qty(dl.qty, dl.unit),
+                      revised: d.day(dl.revised_date),
+                      ingredient: label("ing", dl.ingredient),
+                      stockout: d.day(out.first_stockout),
+                    })}
+                  </p>
+                  <Link href="/basket" className="jp-action">
+                    {t("nt.compare")}
+                  </Link>
+                </div>
+              </div>
+            );
+          })}
+
+          <section className="jp-panel">
+            <div className="jp-line-head" style={{ marginBottom: 4 }}>
+              <h2>{t("wk.needs")}</h2>
+            </div>
+            <p className="jp-section-note">{t("wk.needsNote")}</p>
+            {Object.values(needs).map((n) => {
+              const line = tl[n.ingredient];
+              return (
+                <div key={n.ingredient} className="jp-row">
+                  <div>
+                    <h3>{label("ing", n.ingredient)}</h3>
+                    <p>{t("wk.need", { q: qty(n.gross, n.unit), c: qty(n.usable_stock + n.confirmed_arrivals, n.unit) })}</p>
+                    {line && (
+                      <div className="jp-days">
+                        {line.days.map((day) => (
+                          <div
+                            key={day.date}
+                            className={`jp-day ${day.shortfall > 0 ? "jp-day-short" : ""} ${day.arrived > 0 ? "jp-day-arrival" : ""}`}
+                            title={`${d.day(day.date)} · ${qty(day.end_stock, line.unit)}`}
+                          >
+                            <strong>{d.day(day.date).split(" ")[0]}</strong>
+                            {day.shortfall > 0 ? `−${qty(day.shortfall, line.unit)}` : qty(day.end_stock, line.unit)}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="jp-row-right">
+                    <small className="jp-muted">{t("wk.toBuy")}</small>
+                    <div className="jp-number" style={{ fontSize: 16, fontWeight: 500 }}>
+                      {qty(n.required, n.unit)}
+                    </div>
+                    {line?.first_stockout ? (
+                      <span className="jp-badge jp-warning">{t("wk.runsOut", { date: d.day(line.first_stockout) })}</span>
+                    ) : (
+                      <span className="jp-badge">{t("wk.covered")}</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </section>
+
+          <section className="jp-panel">
+            <div className="jp-line-head">
+              <h2>{t("wk.orders")}</h2>
+            </div>
+            {orders.length ? <Orders orders={orders} canSubmit={!data.approval?.stale} /> : <p className="jp-muted" style={{ fontSize: 13 }}>{t("wk.noOrders")}</p>}
+          </section>
+
+          <WeeklyCheck />
         </div>
-        <div className="ml-auto">
-          <ProfilePicker profiles={state.profiles} value={profileId} onChange={setProfileId} />
+
+        <div className="jp-stack">
+          <section className="jp-panel">
+            <h2>{t("wk.spending")}</h2>
+            <div className="jp-budget" style={{ borderTop: 0, marginTop: 0 }}>
+              <span>{t("wk.committed")}</span>
+              <strong className="jp-number">{money(spending.committed_eur)}</strong>
+            </div>
+            <div className="jp-budget-track">
+              <span style={{ width: `${used}%` }} />
+            </div>
+            <p className="jp-muted" style={{ fontSize: 12, marginTop: 10 }}>
+              {t("wk.remaining", { r: money(spending.remaining_eur), b: money(spending.budget_eur) })}
+            </p>
+            {spending.planned_eur !== null && (
+              <p className="jp-muted" style={{ fontSize: 12, marginTop: 6 }}>
+                {t("wk.planned", { v: money(spending.planned_eur) })}
+              </p>
+            )}
+            <p className="jp-muted" style={{ fontSize: 11, marginTop: 10 }}>
+              {t("wk.spendNote")}
+            </p>
+          </section>
+          {suggested && (
+            <section className="jp-advisor">
+              <span className="jp-kicker">{t("wk.suggested")}</span>
+              <h3 style={{ marginTop: 8 }}>{label("kind", suggested.kind)}</h3>
+              <div className="jp-price jp-number" style={{ fontSize: 25, letterSpacing: -1, margin: "10px 0 2px" }}>
+                {money(suggested.delivered_total_eur)}
+              </div>
+              <small className="jp-muted">
+                {suggested.late_lines.length ? t("adv.someLate") : t("adv.inTime")}
+              </small>
+              <Link href="/basket" className="jp-action jp-primary jp-full">
+                {t("adv.openBasket")}
+              </Link>
+            </section>
+          )}
         </div>
       </div>
-
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Stat label={t("week.budget")} value={eur(profile?.weekly_budget_eur)} />
-        <Stat
-          label={t("week.baseline")}
-          value={eur(baseline?.delivered_total_eur)}
-          note={baseline ? t("week.nSuppliers", { n: baseline.supplier_count }) : t("week.noBaseline")}
-        />
-        <Stat
-          label={t("week.best")}
-          value={eur(best?.delivered_total_eur ?? baseline?.delivered_total_eur)}
-          note={
-            best?.vs_baseline_eur !== undefined
-              ? t("week.vsBaseline", { d: `${best.vs_baseline_eur <= 0 ? "" : "+"}${eur(best.vs_baseline_eur)}` })
-              : t("week.baselineBest")
-          }
-          accent
-        />
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-[2fr_3fr]">
-        <Card title={t("week.needs")} actions={<Link href="/basket" className="text-sm text-red-700 hover:underline">{t("week.compare")}</Link>}>
-          <p className="mb-3 text-xs text-stone-500">{t("week.needsNote", { s: servings.map(([k, v]) => `${k} ${v}`).join(", ") })}</p>
-          <table className="w-full text-sm">
-            <thead className="text-left text-xs text-stone-500">
-              <tr>
-                <th className="py-1">{t("week.ingredient")}</th>
-                <th>{t("week.gross")}</th>
-                <th>{t("week.stock")}</th>
-                <th>{t("week.toBuy")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Object.values(needs).map((n) => (
-                <tr key={n.ingredient} className="border-t border-stone-100 align-top">
-                  <td className="py-2">
-                    <div className="font-medium">{label("ing", n.ingredient)}</div>
-                    <div className="text-xs text-stone-500">{n.formula}</div>
-                  </td>
-                  <td className="py-2">{qty(n.gross, n.unit)}</td>
-                  <td className="py-2">{qty(n.usable_stock + n.confirmed_arrivals, n.unit)}</td>
-                  <td className="py-2 font-semibold">{qty(n.required, n.unit)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </Card>
-
-        <Card title={<>{t("week.questions")} {open.length > 0 && <Badge tone="amber">{t("week.open", { n: open.length })}</Badge>}</>}>
-          <Clarifications items={state.clarifications} offers={state.offers} profileId={profileId} baselineBefore={baskets} onChange={load} />
-        </Card>
-      </div>
-
-      <Card title={t("week.ai")} actions={<Button variant="secondary" onClick={load}>{t("refresh")}</Button>}>
-        {calls.length === 0 ? (
-          <p className="text-sm text-stone-500">{t("week.noCalls")}</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead className="text-left text-stone-500">
-                <tr>
-                  <th className="py-1">{t("col.time")}</th>
-                  <th>{t("col.purpose")}</th>
-                  <th>{t("col.model")}</th>
-                  <th>{t("col.backend")}</th>
-                  <th>{t("col.latency")}</th>
-                  <th>{t("col.tokens")}</th>
-                  <th>{t("col.request")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {calls.map((c) => (
-                  <tr key={c.request_id + c.created_at} className="border-t border-stone-100">
-                    <td className="py-1">{c.created_at ? new Date(c.created_at).toLocaleTimeString() : ""}</td>
-                    <td>{c.purpose}</td>
-                    <td className="font-medium">{c.model}</td>
-                    <td>{c.backend}</td>
-                    <td>{c.latency_ms} ms</td>
-                    <td>{c.prompt_tokens ?? "?"}/{c.completion_tokens ?? "?"}</td>
-                    <td className="font-mono">{c.request_id}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Card>
-    </div>
-  );
-}
-
-function Stat({ label, value, note, accent }: { label: string; value: string; note?: string; accent?: boolean }) {
-  return (
-    <div className={`rounded-lg border p-4 ${accent ? "border-red-200 bg-red-50" : "border-stone-200 bg-white"}`}>
-      <p className="text-xs text-stone-500">{label}</p>
-      <p className="text-2xl font-bold">{value}</p>
-      {note && <p className="text-xs text-stone-600">{note}</p>}
-    </div>
+    </>
   );
 }

@@ -7,7 +7,7 @@ const noto = Noto_Sans_JP({ subsets: ["latin"], weight: ["400", "700"], variable
 
 export const metadata: Metadata = {
   title: "Japita",
-  description: "Weekly purchasing advisor for Japanese restaurants in Italy, with Japanese suppliers read by Gemma on AMD",
+  description: "Restaurant supplier and purchasing workspace: existing suppliers, new options and weekly basket advice.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
