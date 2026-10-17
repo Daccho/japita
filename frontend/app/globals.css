@@ -1486,3 +1486,27 @@
 }
 /* Buying preferences (audit O4): Required badges in ink; accepted delivery days stay yolk-tint. */
 .jp .jp-app #jp-profile-content .jp-row .jp-badge:not(.jp-neutral) { background:var(--aj-ink); color:var(--aj-surface); }
+/* Sign-in (app/login) and account controls */
+.jp .jp-login { min-height:100vh; background:var(--jp-bg); display:grid; place-items:center; padding:56px 16px 32px; position:relative; }
+.jp .jp-login-top { position:absolute; top:16px; right:16px; }
+.jp .jp-login-card { width:100%; max-width:420px; padding:28px; display:grid; gap:18px; }
+.jp .jp-login-card h1 { font-size:22px; line-height:1.25; font-weight:500; letter-spacing:-.4px; margin:0; }
+.jp .jp-login-card form { display:grid; }
+.jp .jp-login-card .jp-field input { font-size:16px; }
+.jp .jp-login-roles { display:grid; gap:10px; }
+.jp .jp-login-role { display:flex; align-items:center; gap:14px; width:100%; text-align:left; padding:16px; border:1px solid var(--jp-line)!important; border-radius:12px; background:var(--jp-paper)!important; cursor:pointer; }
+.jp .jp-login-role:hover { border-color:var(--jp-accent)!important; background:var(--jp-soft)!important; }
+.jp .jp-login-role svg { width:22px; height:22px; color:var(--jp-accent); flex-shrink:0; }
+.jp .jp-login-role span { display:grid; gap:2px; }
+.jp .jp-login-role strong { font-weight:500; font-size:15px; }
+.jp .jp-login-head { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.jp .jp-login-submit { width:100%; padding:12px; font-size:14px; }
+.jp .jp-login-or { display:flex; align-items:center; gap:10px; color:var(--jp-muted); font-size:12px; }
+.jp .jp-login-or::before,.jp .jp-login-or::after { content:""; flex:1; height:1px; background:var(--jp-line); }
+.jp .jp-login-note { font-size:12px; margin:0; }
+.jp .jp-login-card .jp-error { margin:0 0 14px; }
+.jp .jp-account { display:flex; align-items:center; gap:8px; font-size:12px; }
+.jp .jp-passkey-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 0; border-top:1px solid var(--jp-line); }
+.jp .jp-passkey-row svg { width:16px; height:16px; }
+.jp .jp-passkey-add { display:flex; gap:8px; flex-wrap:wrap; align-items:end; margin-top:14px; }
+.jp .jp-passkey-add .jp-field { flex:1 1 220px; margin:0; }

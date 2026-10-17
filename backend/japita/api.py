@@ -15,7 +15,7 @@ from fastapi import FastAPI, File, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field
 
-from . import calc, repo
+from . import auth, calc, repo
 from .agent import run_agent
 from .evolus import EvolusAgent, run_agent_evolus
 from .extract import double_read, read_reply, translate
@@ -24,7 +24,9 @@ from .llm import LLM
 from .store import Store
 
 app = FastAPI(title="Japita API")
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(CORSMiddleware, allow_origins=auth.app_origins(), allow_methods=["*"], allow_headers=["*"])
+app.middleware("http")(auth.require_session)  # outermost: every non-public route needs a restaurant session
+app.include_router(auth.router)
 
 Day = Literal["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
 

@@ -49,12 +49,14 @@ cd frontend && pnpm install && pnpm dev                      # http://localhost:
 | `LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY`, `LLM_BACKEND_LABEL` | OpenAI-compatible model endpoint on AMD, and the label shown with each call. |
 | `EVOLUS_API_KEY`, `EVOLUS_APPLICATION_ID`, `EVOLUS_AGENT_ID`, `EVOLUS_WORKFLOW_ID` | Evolus agent and workflow. Without `EVOLUS_AGENT_ID` the app calls the model directly. |
 | `ADMIN_KEY` | Optional. When set, `POST /state/seed` requires `X-Admin-Key`. |
-| `NEXT_PUBLIC_API_BASE` | Frontend: API URL (default `http://localhost:8000`). |
+| `APP_ORIGIN` | Backend: the web app's origin (default `http://localhost:3000`). Passkeys, CORS and the CSRF origin check use it. |
+| `API_ORIGIN` | Frontend, build time: where `/api/*` is proxied (default `http://localhost:8000`). |
 
 ```bash
 cd backend
 uv run pytest                              # offline tests
 uv run python -m japita.smoke              # check the real model endpoint
+uv run python -m japita.auth add-user kumo-milano --name "Kumo Ramen Milano"   # restaurant sign-in (prompts for a password)
 curl -X POST localhost:8000/state/seed     # reset demo data
 ```
 
