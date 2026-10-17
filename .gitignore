@@ -9,3 +9,9 @@ tmp/
 .env
 .env.*
 !.env.example
+
+# Python
+.venv/
+__pycache__/
+.pytest_cache/
+*.db

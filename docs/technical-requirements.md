@@ -103,7 +103,7 @@ A preference change or a supplier reply starts a new run for the same week; earl
       {"text": "Keeps Japanese-brewed soy sauce, a mandatory requirement", "offer_ids": ["o-3"]}
     ],
     "differences_vs_baseline": [
-      {"ingredient": "fresh_noodles", "from_offer_id": "o-5", "to_offer_id": "o-8",
+      {"ingredient": "noodles", "from_offer_id": "o-5", "to_offer_id": "o-8",
        "reason": "Same specification, delivers on the required day", "cost_delta_eur": -6.4}
     ],
     "alternatives": [

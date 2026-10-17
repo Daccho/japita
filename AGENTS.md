@@ -34,9 +34,9 @@ Keep it short: rules and pointers live here, details live in `docs/`. Each fact 
 
 ### Commands
 ```bash
-# install:  TBD
-# dev:      TBD
-# test:     TBD
+# install:  cd backend && uv sync
+# agent:    cd backend && uv run python -m japita.agent "質問"   # needs LLM_* in .env
+# test:     cd backend && uv run pytest
 # build:    TBD
 ```
 
@@ -101,3 +101,5 @@ Record important decisions here (date — decision — reason) so every agent sh
 - 2026-10-17 — Split `plan.md` into topic docs under `docs/` and kept `plan.md` as the index — agents load only the context a task needs.
 - 2026-10-17 — Added the user-supplied Kumo Ramen Milano scenario as a fictional demo fixture in `docs/demo.md`. Proposed lead decision: a delayed noodle delivery, supported by soy-sauce and mayu comparisons; make-or-buy costing remains outside the MVP. Dated demand and arrivals are required before claiming a stockout.
 - 2026-10-17 — Documented a proposed supplier data strategy in `docs/supplier-data.md`: combine restaurant uploads, web discovery, and supplier-confirmed terms; public discovery alone does not establish an orderable offer. Live web discovery remains a stretch proposal pending scope agreement.
+- 2026-10-17 — Changed the Kumo Ramen Milano fixture to a fictional Hakata-style tonkotsu specialist with one vegetarian bowl, replacing the mixed shoyu/tonkotsu menu. Kaedama makes noodle demand exceed bowl count, which strengthens the noodle-delay demo; noodles, soy sauce, and mayu remain the three active items. Real chains are general reference only; no real brand names, menus, or signature items.
+- 2026-10-17 — Connected the agent to `Gemma-4-31B-IT` on AMD Radeon Cloud TokenFactory (`https://developer.amd.com.cn/radeon/api/v1`, OpenAI-compatible, hackathon API key). Smoke test passed: Japanese spec reading and native tool calling work. This is an AMD-hosted service, not our own vLLM; whether it satisfies the Evolus track's "own vLLM endpoint" rule is still unconfirmed.

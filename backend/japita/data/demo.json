@@ -1,0 +1,533 @@
+{
+  "_notice": "FICTIONAL DEMO DATA. Suppliers, products, prices, and specifications are invented for the Japita hackathon demo and do not describe real companies.",
+  "profiles": {
+    "kumo-authentic": {
+      "id": "kumo-authentic",
+      "name": "Kumo Ramen Milano (fictional)",
+      "concept": "Hakata-style tonkotsu specialist in Milan, authentic profile: Japanese-brewed tare soy sauce and low-hydration noodles are mandatory",
+      "menu_price_eur": [
+        14,
+        18
+      ],
+      "weekly_budget_eur": 900,
+      "priorities": {
+        "quality": "high",
+        "cost": "medium",
+        "convenience": "medium"
+      },
+      "accepted_delivery_days": [
+        "tue",
+        "wed",
+        "thu",
+        "fri"
+      ],
+      "ingredients": {
+        "noodles": {
+          "mandatory": [
+            {
+              "field": "contains_kansui",
+              "op": "eq",
+              "value": true,
+              "label": "Alkaline (kansui) noodles"
+            },
+            {
+              "field": "hydration_pct",
+              "op": "lte",
+              "value": 30,
+              "label": "Low hydration (30% or less), Hakata style"
+            }
+          ],
+          "negotiable": [
+            {
+              "field": "fresh",
+              "op": "eq",
+              "value": true,
+              "label": "Fresh preferred"
+            }
+          ]
+        },
+        "soy_sauce": {
+          "mandatory": [
+            {
+              "field": "origin_country",
+              "op": "eq",
+              "value": "JP",
+              "label": "Brewed in Japan"
+            },
+            {
+              "field": "brewing_method",
+              "op": "eq",
+              "value": "honjozo",
+              "label": "Naturally brewed (honjozo)"
+            }
+          ],
+          "negotiable": [
+            {
+              "field": "additive_free",
+              "op": "eq",
+              "value": true,
+              "label": "No additives"
+            }
+          ]
+        },
+        "mayu": {
+          "mandatory": [
+            {
+              "field": "chef_approved",
+              "op": "eq",
+              "value": true,
+              "label": "Chef-approved aroma and bitterness"
+            }
+          ],
+          "negotiable": [
+            {
+              "field": "additive_free",
+              "op": "eq",
+              "value": true,
+              "label": "No additives"
+            }
+          ]
+        }
+      }
+    },
+    "kumo-value": {
+      "id": "kumo-value",
+      "name": "Kumo Ramen Milano (fictional)",
+      "concept": "Same tonkotsu shop, value profile: Japanese origin, low hydration, and chef approval are preferences, delivered cost comes first",
+      "menu_price_eur": [
+        12,
+        15
+      ],
+      "weekly_budget_eur": 750,
+      "priorities": {
+        "quality": "medium",
+        "cost": "high",
+        "convenience": "high"
+      },
+      "accepted_delivery_days": [
+        "mon",
+        "tue",
+        "wed",
+        "thu",
+        "fri"
+      ],
+      "ingredients": {
+        "noodles": {
+          "mandatory": [
+            {
+              "field": "contains_kansui",
+              "op": "eq",
+              "value": true,
+              "label": "Alkaline (kansui) noodles"
+            }
+          ],
+          "negotiable": [
+            {
+              "field": "hydration_pct",
+              "op": "lte",
+              "value": 30,
+              "label": "Low hydration preferred"
+            },
+            {
+              "field": "fresh",
+              "op": "eq",
+              "value": true,
+              "label": "Fresh preferred"
+            }
+          ]
+        },
+        "soy_sauce": {
+          "mandatory": [
+            {
+              "field": "brewing_method",
+              "op": "eq",
+              "value": "honjozo",
+              "label": "Naturally brewed (honjozo)"
+            }
+          ],
+          "negotiable": [
+            {
+              "field": "origin_country",
+              "op": "eq",
+              "value": "JP",
+              "label": "Brewed in Japan preferred"
+            }
+          ]
+        },
+        "mayu": {
+          "mandatory": [],
+          "negotiable": [
+            {
+              "field": "chef_approved",
+              "op": "eq",
+              "value": true,
+              "label": "Chef-approved preferred"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "recipe": {
+    "name": "Kumo Ramen Milano, purchased ingredients per serving",
+    "lines": [
+      {
+        "ingredient": "noodles",
+        "qty_per_serving": 120,
+        "unit": "g",
+        "menu_items": [
+          "tonkotsu",
+          "tonkotsu_set",
+          "kuro_mayu_tonkotsu",
+          "veggie_miso",
+          "kaedama"
+        ]
+      },
+      {
+        "ingredient": "soy_sauce",
+        "qty_per_serving": 15,
+        "unit": "ml",
+        "menu_items": [
+          "tonkotsu",
+          "tonkotsu_set",
+          "kuro_mayu_tonkotsu"
+        ]
+      },
+      {
+        "ingredient": "mayu",
+        "qty_per_serving": 10,
+        "unit": "ml",
+        "menu_items": [
+          "kuro_mayu_tonkotsu"
+        ]
+      }
+    ]
+  },
+  "week": {
+    "id": "2026-W43",
+    "dates": [
+      "2026-10-19",
+      "2026-10-25"
+    ],
+    "_note": "Owner-entered servings. kaedama counts every refill, including the one in each set (200 + 180 extra).",
+    "servings": {
+      "tonkotsu": 550,
+      "tonkotsu_set": 200,
+      "kuro_mayu_tonkotsu": 120,
+      "veggie_miso": 130,
+      "kaedama": 380
+    },
+    "stock": {
+      "noodles": {
+        "usable": 20000,
+        "confirmed_arrivals": 0,
+        "unit": "g"
+      },
+      "soy_sauce": {
+        "usable": 3000,
+        "confirmed_arrivals": 0,
+        "unit": "ml"
+      },
+      "mayu": {
+        "usable": 400,
+        "confirmed_arrivals": 0,
+        "unit": "ml"
+      }
+    }
+  },
+  "suppliers": {
+    "S1": {
+      "id": "S1",
+      "name": "Tokyo Shokuhin Milano (fictional)",
+      "relationship": "existing",
+      "account_status": "approved",
+      "min_order_eur": 60,
+      "shipping_eur": 20,
+      "delivery_days": [
+        "tue",
+        "fri"
+      ]
+    },
+    "S2": {
+      "id": "S2",
+      "name": "Pasta Fresca Ramen Milano (fictional)",
+      "relationship": "existing",
+      "account_status": "approved",
+      "min_order_eur": 80,
+      "shipping_eur": 0,
+      "delivery_days": [
+        "tue",
+        "fri"
+      ]
+    },
+    "S3": {
+      "id": "S3",
+      "name": "EuroAsia Foods B.V. (fictional)",
+      "relationship": "candidate",
+      "account_status": "approved",
+      "min_order_eur": 200,
+      "shipping_eur": 35,
+      "delivery_days": [
+        "wed"
+      ]
+    },
+    "S4": {
+      "id": "S4",
+      "name": "Pastificio Lombardo Nord (fictional)",
+      "relationship": "candidate",
+      "account_status": "approved",
+      "min_order_eur": 100,
+      "shipping_eur": 12,
+      "delivery_days": [
+        "tue",
+        "thu"
+      ]
+    },
+    "S5": {
+      "id": "S5",
+      "name": "Kyushu Direct Export (fictional)",
+      "relationship": "candidate",
+      "account_status": "pending",
+      "min_order_eur": 300,
+      "shipping_eur": null,
+      "delivery_days": []
+    },
+    "S6": {
+      "id": "S6",
+      "name": "Nippon Ramen Supply Europe (fictional)",
+      "relationship": "existing",
+      "account_status": "approved",
+      "min_order_eur": 20,
+      "shipping_eur": 8,
+      "delivery_days": [
+        "thu"
+      ]
+    }
+  },
+  "offers": [
+    {
+      "id": "O-noo-1",
+      "supplier_id": "S2",
+      "ingredient": "noodles",
+      "product": "Fresh Hakata Ramen Noodles 1 kg",
+      "unit": "g",
+      "pack_size": 1000,
+      "price_eur": 4.9,
+      "offer_date": "2026-10-13",
+      "origin_route": "italy",
+      "comparison_group": "noodles:fresh_hakata",
+      "attributes": {
+        "fresh": true,
+        "contains_kansui": true,
+        "hydration_pct": 28
+      },
+      "evidence": {
+        "fresh": "Pasta fresca, conservare a 0-4 °C",
+        "contains_kansui": "Ingredienti: farina di grano tenero, acqua, sale, carbonato di sodio (kansui)",
+        "hydration_pct": "Idratazione 28%"
+      },
+      "document": "doc-noo-1.pdf"
+    },
+    {
+      "id": "O-noo-2",
+      "supplier_id": "S4",
+      "ingredient": "noodles",
+      "product": "Fresh Ramen Noodles 2 kg",
+      "unit": "g",
+      "pack_size": 2000,
+      "price_eur": 8.6,
+      "offer_date": "2026-10-15",
+      "origin_route": "italy",
+      "comparison_group": "noodles:fresh_hakata",
+      "attributes": {
+        "fresh": true,
+        "contains_kansui": true,
+        "hydration_pct": 34
+      },
+      "evidence": {
+        "fresh": "Prodotto fresco",
+        "contains_kansui": "Contiene carbonato di potassio (kansui)",
+        "hydration_pct": "Idratazione 34%"
+      },
+      "document": "doc-noo-2.pdf"
+    },
+    {
+      "id": "O-noo-3",
+      "supplier_id": "S3",
+      "ingredient": "noodles",
+      "product": "Frozen Hakata Hosomen 1 kg (made in Japan)",
+      "unit": "g",
+      "pack_size": 1000,
+      "price_eur": 3.8,
+      "offer_date": "2026-10-14",
+      "origin_route": "japan",
+      "comparison_group": "noodles:frozen_hakata",
+      "attributes": {
+        "fresh": false,
+        "contains_kansui": true,
+        "hydration_pct": null
+      },
+      "evidence": {
+        "fresh": "冷凍めん（-18℃以下で保存）",
+        "contains_kansui": "原材料：小麦粉、食塩、かんすい",
+        "hydration_pct": "規格書に加水率の記載なし"
+      },
+      "document": "doc-noo-3.jpg"
+    },
+    {
+      "id": "O-soy-1",
+      "supplier_id": "S1",
+      "ingredient": "soy_sauce",
+      "product": "Marudai Koikuchi Shoyu 1.8 L",
+      "unit": "ml",
+      "pack_size": 1800,
+      "price_eur": 13.9,
+      "offer_date": "2026-10-12",
+      "origin_route": "japan",
+      "comparison_group": "soy_sauce:koikuchi",
+      "attributes": {
+        "origin_country": "JP",
+        "brewing_method": "honjozo",
+        "additive_free": false
+      },
+      "evidence": {
+        "origin_country": "製造国：日本",
+        "brewing_method": "本醸造",
+        "additive_free": "原材料：脱脂加工大豆、小麦、食塩、アルコール"
+      },
+      "document": "doc-soy-1.pdf"
+    },
+    {
+      "id": "O-soy-2",
+      "supplier_id": "S3",
+      "ingredient": "soy_sauce",
+      "product": "EuroBrew Soy Sauce 1 L",
+      "unit": "ml",
+      "pack_size": 1000,
+      "price_eur": 4.6,
+      "offer_date": "2026-10-14",
+      "origin_route": "europe",
+      "comparison_group": "soy_sauce:koikuchi",
+      "attributes": {
+        "origin_country": "NL",
+        "brewing_method": "honjozo",
+        "additive_free": false
+      },
+      "evidence": {
+        "origin_country": "Brewed in the Netherlands",
+        "brewing_method": "Naturally brewed",
+        "additive_free": "Ingredients: water, soybeans, wheat, salt, E211"
+      },
+      "document": "doc-soy-2.pdf"
+    },
+    {
+      "id": "O-soy-3",
+      "supplier_id": "S5",
+      "ingredient": "soy_sauce",
+      "product": "Kyushu Kura Honjozo 18 L",
+      "unit": "ml",
+      "pack_size": 18000,
+      "price_eur": 96.0,
+      "offer_date": "2026-10-10",
+      "origin_route": "japan",
+      "comparison_group": "soy_sauce:koikuchi",
+      "attributes": {
+        "origin_country": "JP",
+        "brewing_method": "honjozo",
+        "additive_free": true
+      },
+      "evidence": {
+        "origin_country": "製造所：熊本県",
+        "brewing_method": "本醸造",
+        "additive_free": "原材料：大豆、小麦、食塩（無添加）"
+      },
+      "document": "doc-soy-3.jpg"
+    },
+    {
+      "id": "O-soy-4",
+      "supplier_id": "S3",
+      "ingredient": "soy_sauce",
+      "product": "Yamato Honjozo Koikuchi 1 L",
+      "unit": "ml",
+      "pack_size": 1000,
+      "price_eur": 7.2,
+      "offer_date": "2026-10-14",
+      "origin_route": "japan",
+      "comparison_group": "soy_sauce:koikuchi",
+      "attributes": {
+        "origin_country": "JP",
+        "brewing_method": "honjozo",
+        "additive_free": true
+      },
+      "evidence": {
+        "origin_country": "製造国：日本",
+        "brewing_method": "本醸造方式",
+        "additive_free": "原材料：大豆、小麦、食塩　保存料不使用"
+      },
+      "document": "doc-soy-4.pdf"
+    },
+    {
+      "id": "O-mayu-1",
+      "supplier_id": "S6",
+      "ingredient": "mayu",
+      "product": "Kuro Mayu Black Garlic Oil 1 L",
+      "unit": "ml",
+      "pack_size": 1000,
+      "price_eur": 24.0,
+      "offer_date": "2026-10-08",
+      "origin_route": "japan",
+      "comparison_group": "mayu:black_garlic_oil",
+      "attributes": {
+        "chef_approved": true,
+        "additive_free": true
+      },
+      "evidence": {
+        "chef_approved": "[TEST DATA] Chef sample note 2026-09-30: approved",
+        "additive_free": "原材料：ごま油、にんにく、ラード（添加物不使用）"
+      },
+      "document": "doc-mayu-1.pdf"
+    },
+    {
+      "id": "O-mayu-2",
+      "supplier_id": "S3",
+      "ingredient": "mayu",
+      "product": "Black Garlic Oil 500 ml",
+      "unit": "ml",
+      "pack_size": 500,
+      "price_eur": 9.5,
+      "offer_date": "2026-10-14",
+      "origin_route": "europe",
+      "comparison_group": "mayu:black_garlic_oil",
+      "attributes": {
+        "chef_approved": null,
+        "additive_free": false
+      },
+      "evidence": {
+        "chef_approved": "No chef sample recorded",
+        "additive_free": "Ingredients: sunflower oil, sesame oil, garlic, colour E150a"
+      },
+      "document": "doc-mayu-2.pdf"
+    },
+    {
+      "id": "O-mayu-3",
+      "supplier_id": "S5",
+      "ingredient": "mayu",
+      "product": "Kumamoto Mayu 1 L",
+      "unit": "ml",
+      "pack_size": 1000,
+      "price_eur": 18.0,
+      "offer_date": "2026-10-10",
+      "origin_route": "japan",
+      "comparison_group": "mayu:black_garlic_oil",
+      "attributes": {
+        "chef_approved": null,
+        "additive_free": true
+      },
+      "evidence": {
+        "chef_approved": "No chef sample recorded",
+        "additive_free": "原材料：ごま油、にんにく（無添加）"
+      },
+      "document": "doc-mayu-3.jpg"
+    }
+  ]
+}
