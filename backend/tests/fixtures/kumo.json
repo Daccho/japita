@@ -221,19 +221,120 @@
       "noodles": {
         "usable": 20000,
         "confirmed_arrivals": 0,
-        "unit": "g"
+        "unit": "g",
+        "usable_until": "2026-10-21"
       },
       "soy_sauce": {
         "usable": 3000,
         "confirmed_arrivals": 0,
-        "unit": "ml"
+        "unit": "ml",
+        "usable_until": "2027-03-31"
       },
       "mayu": {
-        "usable": 400,
+        "usable": 700,
         "confirmed_arrivals": 0,
-        "unit": "ml"
+        "unit": "ml",
+        "usable_until": "2026-12-31"
       }
-    }
+    },
+    "days": [
+      {
+        "date": "2026-10-19",
+        "servings": {
+          "tonkotsu": 55,
+          "tonkotsu_set": 20,
+          "kuro_mayu_tonkotsu": 12,
+          "veggie_miso": 13,
+          "kaedama": 38
+        }
+      },
+      {
+        "date": "2026-10-20",
+        "servings": {
+          "tonkotsu": 66,
+          "tonkotsu_set": 24,
+          "kuro_mayu_tonkotsu": 14,
+          "veggie_miso": 16,
+          "kaedama": 46
+        }
+      },
+      {
+        "date": "2026-10-21",
+        "servings": {
+          "tonkotsu": 72,
+          "tonkotsu_set": 26,
+          "kuro_mayu_tonkotsu": 16,
+          "veggie_miso": 17,
+          "kaedama": 49
+        }
+      },
+      {
+        "date": "2026-10-22",
+        "servings": {
+          "tonkotsu": 77,
+          "tonkotsu_set": 28,
+          "kuro_mayu_tonkotsu": 17,
+          "veggie_miso": 18,
+          "kaedama": 53
+        }
+      },
+      {
+        "date": "2026-10-23",
+        "servings": {
+          "tonkotsu": 94,
+          "tonkotsu_set": 34,
+          "kuro_mayu_tonkotsu": 20,
+          "veggie_miso": 22,
+          "kaedama": 65
+        }
+      },
+      {
+        "date": "2026-10-24",
+        "servings": {
+          "tonkotsu": 104,
+          "tonkotsu_set": 38,
+          "kuro_mayu_tonkotsu": 23,
+          "veggie_miso": 25,
+          "kaedama": 72
+        }
+      },
+      {
+        "date": "2026-10-25",
+        "servings": {
+          "tonkotsu": 82,
+          "tonkotsu_set": 30,
+          "kuro_mayu_tonkotsu": 18,
+          "veggie_miso": 19,
+          "kaedama": 57
+        }
+      }
+    ],
+    "_note_days": "Owner-entered daily servings (fictional). Weekly servings must equal the sum of the days.",
+    "as_of": "2026-10-19",
+    "deliveries": [
+      {
+        "id": "D1",
+        "supplier_id": "S2",
+        "ingredient": "noodles",
+        "qty": 70000,
+        "unit": "g",
+        "date": "2026-10-20",
+        "status": "confirmed",
+        "usable_until": "2026-10-24"
+      },
+      {
+        "id": "D2",
+        "supplier_id": "S2",
+        "ingredient": "noodles",
+        "qty": 76000,
+        "unit": "g",
+        "date": "2026-10-23",
+        "status": "delayed",
+        "revised_date": "2026-10-27",
+        "usable_until": "2026-10-28",
+        "note": "Fictional: on Monday the supplier warned of a production problem; the Friday delivery moves to next Tuesday."
+      }
+    ]
   },
   "suppliers": {
     "S1": {
@@ -246,7 +347,8 @@
       "delivery_days": [
         "tue",
         "fri"
-      ]
+      ],
+      "lead_time_days": 1
     },
     "S2": {
       "id": "S2",
@@ -258,7 +360,8 @@
       "delivery_days": [
         "tue",
         "fri"
-      ]
+      ],
+      "lead_time_days": 1
     },
     "S3": {
       "id": "S3",
@@ -268,8 +371,12 @@
       "min_order_eur": 200,
       "shipping_eur": 35,
       "delivery_days": [
-        "wed"
-      ]
+        "tue",
+        "thu",
+        "fri"
+      ],
+      "lead_time_days": 2,
+      "_note": "Fictional EU importer holding Japanese frozen stock in the Netherlands; refrigerated courier to Milan."
     },
     "S4": {
       "id": "S4",
@@ -281,7 +388,8 @@
       "delivery_days": [
         "tue",
         "thu"
-      ]
+      ],
+      "lead_time_days": 1
     },
     "S5": {
       "id": "S5",
@@ -290,7 +398,9 @@
       "account_status": "pending",
       "min_order_eur": 300,
       "shipping_eur": null,
-      "delivery_days": []
+      "delivery_days": [],
+      "lead_time_days": 35,
+      "_note": "Fictional direct exporter in Japan; reefer sea freight takes weeks, so it cannot cover a same-week shortage."
     },
     "S6": {
       "id": "S6",
@@ -301,7 +411,8 @@
       "shipping_eur": 8,
       "delivery_days": [
         "thu"
-      ]
+      ],
+      "lead_time_days": 1
     }
   },
   "offers": [

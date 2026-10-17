@@ -42,6 +42,6 @@ def test_agent_runs_tools_and_answers():
     result = run_agent(llm, store, "おすすめは？")
 
     assert [s["type"] for s in result.steps] == ["tool", "tool", "answer"]
-    assert "850.8" in fake.seen[1][-1]["content"]  # basket result reached the model
+    assert "507.8" in fake.seen[1][-1]["content"]  # basket result reached the model
     assert store.clarifications[0]["state"] == "draft"
     assert len(llm.calls) == 3 and llm.calls[0].model == "fake-gemma"

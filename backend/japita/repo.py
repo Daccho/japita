@@ -5,6 +5,7 @@ Run `uv run python -m japita.repo seed <file>` to load existing data (e.g. tests
 
 import json
 import os
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -16,7 +17,8 @@ from sqlalchemy.orm import DeclarativeBase, Session
 load_dotenv()
 
 # Kinds stored one document per id; "recipe" and "week" are singletons stored under id "current".
-COLLECTIONS = {"profile": "profiles", "supplier": "suppliers", "offer": "offers", "clarification": "clarifications"}
+COLLECTIONS = {"profile": "profiles", "supplier": "suppliers", "offer": "offers", "clarification": "clarifications",
+               "approval": "approvals", "purchase_order": "purchase_orders"}
 SINGLETONS = {"recipe": "recipe", "week": "week"}
 
 JsonType = JSON().with_variant(JSONB(), "postgresql")
@@ -69,6 +71,7 @@ def engine():
 
 def load_state() -> dict:
     data: dict = {"profiles": {}, "suppliers": {}, "offers": [], "clarifications": [], "review_flags": {},
+                  "approvals": [], "purchase_orders": [],
                   "recipe": {"lines": []}, "week": {"servings": {}, "stock": {}}}
     with Session(engine()) as s:
         for r in s.scalars(select(Record).order_by(Record.kind, Record.id)):
@@ -80,6 +83,8 @@ def load_state() -> dict:
                 data[COLLECTIONS[r.kind]][r.id] = r.data
             else:
                 data[COLLECTIONS[r.kind]].append(r.data)
+    for key in ("clarifications", "approvals", "purchase_orders"):  # ids like C2, C10: keep creation order
+        data[key].sort(key=lambda x: int(re.sub(r"\D", "", x["id"]) or 0))
     return data
 
 

@@ -8,15 +8,30 @@ import itertools
 import math
 import statistics
 
+from . import stock as stock_mod
 from .store import OWNER_DECIDED_FIELDS, Store
 
 
+def week_servings(store: Store) -> dict[str, float]:
+    """Weekly servings per menu item; when daily servings are entered, they are the source of truth."""
+    days = store.week.get("days")
+    if not days:
+        return store.week["servings"]
+    total: dict[str, float] = {}
+    for day in days:
+        for item, n in day["servings"].items():
+            total[item] = total.get(item, 0) + n
+    return total
+
+
 def week_needs(store: Store) -> dict[str, dict]:
-    servings = store.week["servings"]
+    servings = week_servings(store)
     needs = {}
     for line in store.recipe["lines"]:
         ing = line["ingredient"]
-        stock = store.week["stock"].get(ing, {"usable": 0, "confirmed_arrivals": 0})
+        stock = dict(store.week["stock"].get(ing, {"usable": 0, "confirmed_arrivals": 0}))
+        if "deliveries" in store.week:  # dated deliveries replace the weekly confirmed-arrivals total
+            stock["confirmed_arrivals"] = stock_mod.arrivals_in_week(store, ing)
         count = sum(servings.get(item, 0) for item in line["menu_items"])
         gross = count * line["qty_per_serving"]
         net = max(0, gross - stock["usable"] - stock["confirmed_arrivals"])
@@ -125,8 +140,18 @@ def line_for(store: Store, offer: dict, required: float) -> dict:
     }
 
 
-def _price_basket(store: Store, choice: dict[str, dict], needs: dict) -> dict:
+def _delivery_check(store: Store, line: dict, stockouts: dict) -> None:
+    line["earliest_delivery"] = stock_mod.earliest_delivery(store, line["supplier_id"])
+    due = stockouts.get(line["ingredient"])
+    line["needed_by"] = due
+    line["arrives_in_time"] = None if due is None else (
+        line["earliest_delivery"] is not None and line["earliest_delivery"] <= due)
+
+
+def _price_basket(store: Store, choice: dict[str, dict], needs: dict, stockouts: dict | None = None) -> dict:
     lines = [line_for(store, offer, needs[ing]["required"]) for ing, offer in choice.items()]
+    for ln in lines:
+        _delivery_check(store, ln, stockouts or {})
     by_supplier: dict[str, dict] = {}
     for ln in lines:
         s = by_supplier.setdefault(ln["supplier_id"], {"supplier_id": ln["supplier_id"], "subtotal_eur": 0.0})
@@ -159,6 +184,8 @@ def _price_basket(store: Store, choice: dict[str, dict], needs: dict) -> dict:
         ],
         "feasible": not problems and total is not None,
         "problems": problems,
+        "late_lines": [f"{ln['ingredient']}: earliest delivery {ln['earliest_delivery'] or 'unknown'}, "
+                       f"stock runs out {ln['needed_by']}" for ln in lines if ln["arrives_in_time"] is False],
     }
 
 
@@ -193,11 +220,13 @@ def calculate_baskets(store: Store) -> dict:
         return {"baskets": [], "excluded": excluded, "infeasible_combinations": 0,
                 "conflict": f"No eligible offer for: {', '.join(missing)}. Ask which constraint may change."}
 
+    tl = stock_mod.timeline(store)
+    stockouts = {ing: t["first_stockout"] for ing, t in tl.get("ingredients", {}).items() if t["first_stockout"]}
     ingredients = list(eligible)
     priced = []
     infeasible = []
     for combo in itertools.product(*(eligible[i] for i in ingredients)):
-        b = _price_basket(store, dict(zip(ingredients, combo)), needs)
+        b = _price_basket(store, dict(zip(ingredients, combo)), needs, stockouts)
         (priced if b["feasible"] else infeasible).append(b)
 
     def existing_only(b):
@@ -214,6 +243,10 @@ def calculate_baskets(store: Store) -> dict:
                       min(priced, key=lambda b: (-b["preferences_met"], b["delivered_total_eur"]))))
         picks.append(("fewest_suppliers", "Fewest suppliers/deliveries (then lowest cost)",
                       min(priced, key=lambda b: (b["supplier_count"], b["delivered_total_eur"]))))
+        on_time = [b for b in priced if not b["late_lines"]]
+        if stockouts and on_time:
+            picks.append(("on_time", "Lowest cost that arrives before every stockout",
+                          min(on_time, key=lambda b: b["delivered_total_eur"])))
 
     baskets = []
     seen: dict[tuple, dict] = {}
@@ -232,6 +265,8 @@ def calculate_baskets(store: Store) -> dict:
     return {
         "budget_eur": budget,
         "needs": needs,
+        "stockouts": stockouts,
+        "no_on_time_option": bool(stockouts) and not any(not b["late_lines"] for b in priced),
         "baskets": baskets,
         "excluded": excluded,
         "infeasible_combinations": [

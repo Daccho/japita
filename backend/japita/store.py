@@ -24,6 +24,8 @@ class Store:
         data.setdefault("clarifications", [])
         # Double-read disagreements: offer_id -> {field: {"read_1": ..., "read_2": ...}}
         data.setdefault("review_flags", {})
+        data.setdefault("approvals", [])
+        data.setdefault("purchase_orders", [])
 
     @classmethod
     def load(cls, path: Path, profile_id: str = "kumo-authentic") -> "Store":

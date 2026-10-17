@@ -119,3 +119,48 @@ def run_agent_evolus(agent: EvolusAgent, store: Store, user_message: str, max_st
             results.append(f"Result of {c['tool']}:\n{result}")
         message = "\n\n".join(results) + "\n\nContinue: call more tools or give the final answer, as one JSON object."
     return AgentResult(answer="Stopped: too many tool steps. Please narrow the question.", steps=steps)
+
+
+class EvolusWorkflow:
+    """Evolus workflow (second building block): execute, then poll until Completed or Failed (T7, T12)."""
+
+    def __init__(self, workflow_id: str | None = None, client: httpx.Client | None = None):
+        self.base = os.environ.get("EVOLUS_API_BASE", "https://api.evolus.ai/api/v1")
+        self.workflow_id = workflow_id or os.environ.get("EVOLUS_WORKFLOW_ID", "")
+        key, app = os.environ.get("EVOLUS_API_KEY", ""), os.environ.get("EVOLUS_APPLICATION_ID", "")
+        if not (key and app and self.workflow_id):
+            raise RuntimeError("EVOLUS_API_KEY, EVOLUS_APPLICATION_ID and EVOLUS_WORKFLOW_ID must be set")
+        self.headers = {"X-ApiKey": key, "X-Application-Id": app}
+        self.client = client or httpx.Client(timeout=60)
+
+    def execute(self, input_text: str, file: tuple[str, bytes, str] | None = None) -> str:
+        resp = self.client.post(f"{self.base}/workflows/{self.workflow_id}/execute", headers=self.headers,
+                                data={"input": input_text}, files={"file": file} if file else None)
+        if resp.status_code == 409:
+            raise RuntimeError("Evolus workflow is turned off; switch it on in the Evolus workspace")
+        resp.raise_for_status()
+        body = resp.json()
+        return body.get("executionId") or body.get("id")
+
+    def status(self, execution_id: str) -> dict:
+        resp = self.client.get(f"{self.base}/workflows/{self.workflow_id}/executions/{execution_id}",
+                               headers=self.headers)
+        resp.raise_for_status()
+        return resp.json()
+
+    def run(self, input_text: str, file: tuple[str, bytes, str] | None = None,
+            poll_seconds: float = 4, timeout_seconds: float = 600) -> dict:
+        start = time.perf_counter()
+        execution_id = self.execute(input_text, file)
+        log.info("evolus workflow %s execution %s started", self.workflow_id, execution_id)
+        while True:
+            body = self.status(execution_id)
+            state = str(body.get("status", "")).lower()
+            if state in ("completed", "failed", "cancelled", "canceled"):
+                break
+            if time.perf_counter() - start > timeout_seconds:
+                state = "timeout"
+                break
+            time.sleep(poll_seconds)  # stay under 60 requests per minute
+        return {"workflow_id": self.workflow_id, "execution_id": execution_id, "status": state,
+                "elapsed_ms": int((time.perf_counter() - start) * 1000), "execution": body}

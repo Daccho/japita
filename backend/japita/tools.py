@@ -6,12 +6,24 @@ Human-only actions (approving messages, baskets, orders) are deliberately not to
 import json
 from typing import Any, Callable
 
-from . import calc
+from . import calc, stock
 from .store import Store
 
 
 def _profile(store: Store) -> dict:
     return store.profile
+
+
+def _stock_timeline(store: Store) -> dict:
+    tl = stock.timeline(store)
+    if not tl.get("available"):
+        return tl
+    # Summaries keep the context small; the per-day rows are in the app's timeline view.
+    return {"as_of": tl["as_of"], "deliveries": store.week.get("deliveries", []),
+            "ingredients": {ing: {"first_stockout": v["first_stockout"], "total_shortfall": v["total_shortfall"],
+                                  "unit": v["unit"],
+                                  "shortfall_days": [(r["date"], r["shortfall"]) for r in v["days"] if r["shortfall"]]}
+                            for ing, v in tl["ingredients"].items()}}
 
 
 def _week_needs(store: Store) -> dict:
@@ -98,9 +110,14 @@ TOOLS: dict[str, tuple[Callable[..., Any], str, dict]] = {
         "Rule outcomes (ok, fail, needs_review, missing_evidence) for one offer against the restaurant's requirements, with the inputs used.",
         _p({"offer_id": {"type": "string"}}, ["offer_id"]),
     ),
+    "get_stock_timeline": (
+        _stock_timeline,
+        "Day-by-day stock from owner-entered daily servings, dated deliveries (confirmed, delayed, cancelled) and usable-until dates: first stockout date and shortfall per ingredient.",
+        _p({}),
+    ),
     "calculate_baskets": (
         _calculate_baskets,
-        "Compute baseline (current suppliers) and alternative baskets in code: lowest cost, best preference fit, fewest suppliers. Includes totals, exclusions and infeasible combinations.",
+        "Compute baseline (current suppliers) and alternative baskets in code: lowest cost, best preference fit, fewest suppliers, and on_time (lowest cost arriving before every stockout). Each line has earliest_delivery and arrives_in_time; late_lines lists deliveries that come after a stockout. Includes totals, exclusions and infeasible combinations.",
         _p({}),
     ),
     "compare_prices": (

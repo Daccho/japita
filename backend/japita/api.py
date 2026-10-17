@@ -68,14 +68,35 @@ class Recipe(In):
 
 class Stock(In):
     usable: float = Field(ge=0)
-    confirmed_arrivals: float = Field(ge=0)
+    confirmed_arrivals: float = Field(default=0, ge=0, description="Ignored when the week has dated deliveries")
     unit: Literal["g", "ml"]
+    usable_until: str | None = None
+
+
+class DayServings(In):
+    date: str
+    servings: dict[str, float]
+
+
+class Delivery(In):
+    id: str
+    supplier_id: str
+    ingredient: str
+    qty: float = Field(gt=0)
+    unit: Literal["g", "ml"]
+    date: str
+    status: Literal["confirmed", "delayed", "cancelled"] = "confirmed"
+    revised_date: str | None = None
+    usable_until: str | None = None
 
 
 class Week(In):
     id: str
     dates: list[str] = []
+    as_of: str | None = Field(default=None, description="Planning date: lead times count from here")
     servings: dict[str, float]
+    days: list[DayServings] = Field(default=[], description="Daily servings; enables the stock timeline")
+    deliveries: list[Delivery] = []
     stock: dict[str, Stock]
 
 
@@ -87,6 +108,7 @@ class Supplier(In):
     min_order_eur: float = Field(ge=0)
     shipping_eur: float | None = Field(default=None, description="null = unknown, never treated as zero")
     delivery_days: list[Day] = []
+    lead_time_days: int = Field(default=1, ge=0)
 
 
 class Offer(In):
@@ -467,3 +489,12 @@ def health_model():
 @app.get("/llm-calls")
 def llm_calls(limit: int = 50):
     return repo.recent_calls(limit)
+
+
+from .evolus_api import router as evolus_router  # noqa: E402
+
+app.include_router(evolus_router)
+
+from .orders_api import router as orders_router  # noqa: E402
+
+app.include_router(orders_router)
