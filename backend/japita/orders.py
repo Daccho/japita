@@ -1,13 +1,14 @@
 """Basket approval, supplier purchase orders, the simulated supplier, and spending. No LLM in this module.
 
-States: approval approved -> stale (basket changed since approval); purchase order draft -> approved -> submitted ->
-acknowledged. Submitting needs an idempotency key, so a retried submit never creates a duplicate order.
+States: approval approved -> stale (basket changed since approval); purchase order approved -> submitted (sent to
+the supplier portal) -> acknowledged (the supplier accepted it with a delivery date). Submitting needs an idempotency key, so a retried submit never creates a duplicate order.
 Planned and committed spending are not payments.
 """
 
 import hashlib
 import json
 import secrets
+from datetime import date
 
 from . import calc, stock
 from .store import Store, _now
@@ -72,13 +73,8 @@ def approval_status(store: Store) -> dict | None:
     return {**a, "stale": now != a["version"], "current_version": now}
 
 
-def simulated_supplier_ack(po: dict) -> dict:
-    """Stand-in for a supplier's order endpoint. Clearly labeled; no real order is placed."""
-    return {"ack_id": f"SIM-{secrets.token_hex(4).upper()}", "received_at": _now(), "simulated": True,
-            "message": "TEST SUPPLIER: order received (simulated, no real purchase)."}
-
-
 def submit_order(store: Store, po_id: str, idempotency_key: str) -> dict:
+    """Send an approved order to the supplier portal. The supplier then accepts it with a delivery date."""
     if not idempotency_key:
         raise ValueError("idempotency key required")
     for po in store.data["purchase_orders"]:
@@ -86,9 +82,7 @@ def submit_order(store: Store, po_id: str, idempotency_key: str) -> dict:
             if po["id"] != po_id:
                 raise ValueError("idempotency key already used for another order")
             return po  # retry: same result, no duplicate
-    po = next((p for p in store.data["purchase_orders"] if p["id"] == po_id), None)
-    if po is None:
-        raise KeyError(po_id)
+    po = _po(store, po_id)
     if po["state"] != "approved":
         raise ValueError(f"purchase order is {po['state']}")
     status = approval_status(Store(store.data, next(a["profile_id"] for a in store.data["approvals"]
@@ -98,15 +92,67 @@ def submit_order(store: Store, po_id: str, idempotency_key: str) -> dict:
     po["idempotency_key"] = idempotency_key
     po["submitted_at"] = _now()
     po["state"] = "submitted"
-    po["acknowledgment"] = simulated_supplier_ack(po)
+    return po
+
+
+def _po(store: Store, po_id: str) -> dict:
+    po = next((p for p in store.data["purchase_orders"] if p["id"] == po_id), None)
+    if po is None:
+        raise KeyError(po_id)
+    return po
+
+
+def _check_date(store: Store, delivery_date: str) -> str:
+    d = date.fromisoformat(delivery_date)  # raises ValueError on bad input
+    as_of = date.fromisoformat(store.week.get("as_of") or store.week["dates"][0])
+    if d < as_of:
+        raise ValueError("delivery date is before the planning date")
+    return d.isoformat()
+
+
+def supplier_accept(store: Store, supplier_id: str, po_id: str, delivery_date: str | None = None,
+                    note_ja: str | None = None, note_translations: dict | None = None) -> dict:
+    """Supplier action (test supplier portal): accept the order and commit to a delivery date.
+
+    The order then becomes a dated delivery, so the restaurant's stock timeline and needs update.
+    """
+    po = _po(store, po_id)
+    if po["supplier_id"] != supplier_id:
+        raise KeyError(po_id)
+    if po["state"] == "acknowledged":
+        return po  # pressing accept twice changes nothing
+    if po["state"] != "submitted":
+        raise ValueError(f"purchase order is {po['state']}")
+    po["delivery_date"] = _check_date(store, delivery_date or po["delivery_date"])
+    po["acknowledgment"] = {"ack_id": f"ACK-{secrets.token_hex(4).upper()}", "received_at": _now(),
+                            "by": "supplier", "simulated": True, "note_ja": note_ja,
+                            "note_translations": note_translations or {},
+                            "message": "Accepted on the test supplier portal (no real purchase)."}
     po["state"] = "acknowledged"
-    # The acknowledged order becomes a dated delivery, so the stock timeline and needs update.
     for ln in po["lines"]:
         if ln["purchase_qty"] > 0:
             store.week.setdefault("deliveries", []).append({
                 "id": f"{po['id']}-{ln['ingredient']}", "supplier_id": po["supplier_id"], "ingredient": ln["ingredient"],
                 "qty": ln["purchase_qty"], "unit": ln["unit"], "date": po["delivery_date"], "status": "confirmed",
                 "purchase_order_id": po["id"]})
+    return po
+
+
+def supplier_change_delivery(store: Store, supplier_id: str, po_id: str, delivery_date: str,
+                             note_ja: str | None = None, note_translations: dict | None = None) -> dict:
+    """Supplier action: move the delivery date of an accepted order. The restaurant sees it in the timeline."""
+    po = _po(store, po_id)
+    if po["supplier_id"] != supplier_id:
+        raise KeyError(po_id)
+    if po["state"] != "acknowledged":
+        raise ValueError("only accepted orders have a delivery date to change")
+    new = _check_date(store, delivery_date)
+    po.setdefault("delivery_changes", []).append({"from": po["delivery_date"], "to": new, "at": _now(),
+                                                  "note_ja": note_ja, "note_translations": note_translations or {}})
+    po["delivery_date"] = new
+    for d in store.week.get("deliveries", []):
+        if d.get("purchase_order_id") == po_id:
+            d["date"] = new
     return po
 
 

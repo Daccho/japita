@@ -200,8 +200,8 @@ def eligible_offers(store: Store) -> tuple[dict[str, list[dict]], list[dict]]:
     eligible: dict[str, list[dict]] = {ing: [] for ing in store.profile["ingredients"]}
     excluded = []
     for offer in store.offers:
-        if offer["ingredient"] not in eligible:
-            continue
+        if offer["ingredient"] not in eligible or offer.get("pending_new"):
+            continue  # a supplier's new product is used only after the restaurant applies it
         ev = check_evidence(store, offer["id"])
         od = orderability(store, offer["id"])
         reasons = []
@@ -308,7 +308,7 @@ def calculate_baskets(store: Store) -> dict:
 def compare_prices(store: Store, ingredient: str) -> dict:
     groups: dict[str, list[dict]] = {}
     for o in store.offers:
-        if o["ingredient"] != ingredient:
+        if o["ingredient"] != ingredient or o.get("pending_new"):
             continue
         per = 1000  # price per litre or per kilogram
         groups.setdefault(o["comparison_group"], []).append({

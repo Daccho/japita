@@ -62,18 +62,46 @@ def test_approve_creates_supplier_orders_and_submit_is_idempotent():
     s3 = next(p for p in pos if p["supplier_id"] == "S3")
     first = orders.submit_order(store, s3["id"], "key-1")
     again = orders.submit_order(store, s3["id"], "key-1")
-    assert first is again and first["state"] == "acknowledged" and first["acknowledgment"]["simulated"]
-    assert len([d for d in store.week["deliveries"] if d.get("purchase_order_id") == s3["id"]]) == 1
+    assert first is again and first["state"] == "submitted"  # waits for the supplier to accept
+    assert not [d for d in store.week["deliveries"] if d.get("purchase_order_id") == s3["id"]]
     assert orders.spending(store)["committed_eur"] == 327.60  # 292.60 + 35 shipping
 
 
-def test_acknowledged_backup_clears_friday_stockout():
-    store = _unlocked_store()
+def _submitted(store, supplier_id):
     approval = orders.approve_basket(store, "on_time")
-    s3 = next(p for p in store.data["purchase_orders"] if p["approval_id"] == approval["id"] and p["supplier_id"] == "S3")
-    orders.submit_order(store, s3["id"], "key-2")
-    noodles = stock.timeline(store)["ingredients"]["noodles"]
-    assert noodles["first_stockout"] is None  # 76 kg frozen arrives Thursday 22
+    po = next(p for p in store.data["purchase_orders"]
+              if p["approval_id"] == approval["id"] and p["supplier_id"] == supplier_id)
+    orders.submit_order(store, po["id"], f"key-{supplier_id}")
+    return po
+
+
+def test_supplier_accept_clears_friday_stockout_once():
+    store = _unlocked_store()
+    po = _submitted(store, "S3")
+    assert stock.timeline(store)["ingredients"]["noodles"]["first_stockout"] == "2026-10-23"
+    orders.supplier_accept(store, "S3", po["id"], note_ja="木曜午前に冷凍でお届けします。")
+    orders.supplier_accept(store, "S3", po["id"])  # pressed twice: no second delivery
+    assert po["state"] == "acknowledged" and po["acknowledgment"]["by"] == "supplier"
+    assert len([d for d in store.week["deliveries"] if d.get("purchase_order_id") == po["id"]]) == 1
+    assert stock.timeline(store)["ingredients"]["noodles"]["first_stockout"] is None  # 77 kg arrives Thu 22
+
+
+def test_supplier_cannot_accept_another_suppliers_order():
+    store = _unlocked_store()
+    po = _submitted(store, "S3")
+    with pytest.raises(KeyError):
+        orders.supplier_accept(store, "S1", po["id"])
+
+
+def test_moving_delivery_after_friday_brings_the_stockout_back():
+    store = _unlocked_store()
+    po = _submitted(store, "S3")
+    orders.supplier_accept(store, "S3", po["id"])
+    orders.supplier_change_delivery(store, "S3", po["id"], "2026-10-24", note_ja="土曜になります。")
+    assert po["delivery_changes"][0] == {**po["delivery_changes"][0], "from": "2026-10-22", "to": "2026-10-24"}
+    assert stock.timeline(store)["ingredients"]["noodles"]["first_stockout"] == "2026-10-23"
+    with pytest.raises(ValueError):
+        orders.supplier_change_delivery(store, "S3", po["id"], "2026-10-01")  # before the planning date
 
 
 def test_changed_basket_requires_new_approval():
@@ -86,12 +114,13 @@ def test_changed_basket_requires_new_approval():
         orders.submit_order(store, po["id"], "key-3")
 
 
-def test_submitting_one_order_does_not_block_the_others():
+def test_accepting_one_order_does_not_block_the_others():
     store = _unlocked_store()
     approval = orders.approve_basket(store, "on_time")
     pos = [p for p in store.data["purchase_orders"] if p["approval_id"] == approval["id"]]
     for i, po in enumerate(pos):
-        assert orders.submit_order(store, po["id"], f"key-all-{i}")["state"] == "acknowledged"
+        orders.submit_order(store, po["id"], f"key-all-{i}")
+        orders.supplier_accept(store, po["supplier_id"], po["id"])
+    assert all(p["state"] == "acknowledged" for p in pos)
     assert orders.spending(store)["committed_eur"] == 444.10
     assert not orders.approval_status(store)["stale"]
-
