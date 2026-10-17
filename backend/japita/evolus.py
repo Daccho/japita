@@ -14,7 +14,7 @@ import uuid
 import httpx
 from dotenv import load_dotenv
 
-from .agent import AgentResult
+from .agent import SYSTEM_PROMPT, AgentResult
 from .llm import CallRecord
 from .store import Store
 from .tools import TOOLS, call_tool
@@ -91,7 +91,9 @@ def parse_action(text: str) -> dict | None:
 
 def run_agent_evolus(agent: EvolusAgent, store: Store, user_message: str, max_steps: int = 10) -> AgentResult:
     steps: list[dict] = []
-    message = PROTOCOL.format(tools=_tool_catalog()) + f"\n\nOwner's request:\n{user_message}"
+    # Repeat the operating rules so behavior does not depend on the agent instructions saved in the Evolus UI.
+    message = (f"Operating rules:\n{SYSTEM_PROMPT}\n\n" + PROTOCOL.format(tools=_tool_catalog())
+               + f"\n\nOwner's request:\n{user_message}")
     retried = False
     for _ in range(max_steps):
         reply = agent.send(message)
