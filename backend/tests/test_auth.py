@@ -22,7 +22,7 @@ def client(tmp_path, monkeypatch):
     repo.seed(FIXTURE)
     with Session(repo.engine()) as s:
         s.add(auth.User(username="kumo-milano", display_name="Kumo Ramen Milano", password_hash=auth.hash_password(PW)))
-        s.add(auth.User(username="tokyo-shokuhin", display_name="Tokyo Shokuhin Milano", role="supplier",
+        s.add(auth.User(username="tokyo-shokuhin", display_name="Tokyo Shokuhin", role="supplier",
                         supplier_id="S1", password_hash=auth.hash_password(PW)))
         s.commit()
     from japita.api import app

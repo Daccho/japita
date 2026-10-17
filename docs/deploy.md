@@ -31,7 +31,7 @@ Status: prepared, not yet deployed.
    ```bash
    cd backend
    DATABASE_URL='<neon string>' uv run python -m japita.auth add-user kumo-milano --name "Kumo Ramen Milano"
-   DATABASE_URL='<neon string>' uv run python -m japita.auth add-user tokyo-shokuhin --name "Tokyo Shokuhin Milano" --role supplier --supplier S1
+   DATABASE_URL='<neon string>' uv run python -m japita.auth add-user tokyo-shokuhin --name "Tokyo Shokuhin" --role supplier --supplier S1
    ```
 4. **Vercel:**
    1. Choose Add New → Project and import `Daccho/japita`.

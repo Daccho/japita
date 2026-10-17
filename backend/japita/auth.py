@@ -8,8 +8,9 @@ the API through the frontend's /api proxy, so the cookie is first-party and Same
 
 There is no public sign-up: accounts are created by an operator.
     uv run python -m japita.auth add-user kumo-milano --name "Kumo Ramen Milano"   # prompts for the password
-    uv run python -m japita.auth add-user tokyo-shokuhin --name "Tokyo Shokuhin Milano" --role supplier --supplier S1
+    uv run python -m japita.auth add-user tokyo-shokuhin --name "Tokyo Shokuhin" --role supplier --supplier S1
     uv run python -m japita.auth set-password kumo-milano
+    uv run python -m japita.auth set-name tokyo-shokuhin "Tokyo Shokuhin"
 """
 
 import argparse
@@ -456,6 +457,9 @@ def main(argv: list[str] | None = None) -> None:
     a.add_argument("--supplier", help="supplier ID for a supplier account, e.g. S1")
     sp = sub.add_parser("set-password", help="set a new password and sign out all sessions")
     sp.add_argument("username")
+    sn = sub.add_parser("set-name", help="change an account's display name")
+    sn.add_argument("username")
+    sn.add_argument("name")
     args = p.parse_args(argv)
 
     username = args.username.strip().lower()
@@ -472,9 +476,11 @@ def main(argv: list[str] | None = None) -> None:
                 sys.exit(f"unknown supplier {args.supplier}")
             s.add(User(username=username, display_name=args.name, role=args.role, supplier_id=args.supplier,
                        password_hash=hash_password(_read_password())))
+        elif not user:
+            sys.exit(f"no user {username}")
+        elif args.cmd == "set-name":
+            user.display_name = args.name
         else:
-            if not user:
-                sys.exit(f"no user {username}")
             user.password_hash = hash_password(_read_password())
             s.execute(delete(AuthSession).where(AuthSession.user_id == user.id))
         s.commit()
