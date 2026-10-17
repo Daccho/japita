@@ -12,7 +12,7 @@ The demo restaurant is Kumo Ramen Milano, a Hakata-style tonkotsu shop in Milan.
 
 1. This week the Friday noodle delivery is late. The stock timeline shows a stockout on Friday (20.46 kg short). The usual basket (€493.80) arrives too late.
 2. A backup from an EU importer, frozen Japanese noodles, is missing its hydration spec. The agent drafts a question in business Japanese, with Italian and English translations. The owner approves it.
-3. The supplier answers on Japita's Japanese phone portal. Japita reads the answer twice and flags any disagreement for review. The owner applies it, and Japita builds an on-time basket for €444.10.
+3. The supplier types the answer into a field on Japita's Japanese phone portal; a free-text answer would instead be read twice by Gemma, with disagreements flagged for review. The owner applies it, and Japita builds an on-time basket for €444.10.
 4. The owner approves. Japita creates one purchase order per supplier. The supplier accepts with a delivery date, and the stockout clears.
 
 Python calculates all the numbers: needs, pack rounding, minimum orders, shipping, delivery timing, and daily stock with usable-until dates. Gemma interprets, translates, and explains. The restaurant workspace is in Italian and English (Next.js on Vercel). The API is FastAPI on Render, with Postgres on Neon.
