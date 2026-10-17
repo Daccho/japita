@@ -8,7 +8,7 @@ import itertools
 import math
 import statistics
 
-from .store import Store
+from .store import OWNER_DECIDED_FIELDS, Store
 
 
 def week_needs(store: Store) -> dict[str, dict]:
@@ -66,11 +66,13 @@ def check_evidence(store: Store, offer_id: str) -> dict:
 
     mandatory = [
         {"rule": r["label"], "field": r["field"], "outcome": outcome(r),
+         "resolved_by": "owner" if r["field"] in OWNER_DECIDED_FIELDS else "supplier",
          "value": offer["attributes"].get(r["field"]), "source_text": offer["evidence"].get(r["field"])}
         for r in prefs["mandatory"]
     ]
     negotiable = [
         {"preference": r["label"], "field": r["field"], "outcome": outcome(r),
+         "resolved_by": "owner" if r["field"] in OWNER_DECIDED_FIELDS else "supplier",
          "value": offer["attributes"].get(r["field"]), "source_text": offer["evidence"].get(r["field"])}
         for r in prefs["negotiable"]
     ]

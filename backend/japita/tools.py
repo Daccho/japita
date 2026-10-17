@@ -57,8 +57,10 @@ def _compare_prices(store: Store, ingredient: str) -> dict:
     return calc.compare_prices(store, ingredient)
 
 
-def _draft_clarification(store: Store, offer_id: str, field: str, text_ja: str, reason: str) -> dict:
-    c = store.add_clarification(offer_id, field, text_ja, reason)
+def _draft_clarification(store: Store, offer_id: str, field: str, text_ja: str, reason: str,
+                         text_it: str = "", text_en: str = "") -> dict:
+    translations = {k: v for k, v in (("it", text_it), ("en", text_en)) if v}
+    c = store.add_clarification(offer_id, field, text_ja, reason, translations)
     return {**c, "note": "Saved as a draft. A person must approve it before anything is sent."}
 
 
@@ -108,11 +110,14 @@ TOOLS: dict[str, tuple[Callable[..., Any], str, dict]] = {
     ),
     "draft_clarification": (
         _draft_clarification,
-        "Save a polite business-Japanese question to the supplier as a DRAFT, linked to the missing field. Does not send anything.",
+        "Save a polite business-Japanese question to the supplier as a DRAFT, linked to the missing field. Does not send "
+        "anything. Only for facts the supplier knows; fields marked resolved_by=owner (e.g. chef_approved) are rejected.",
         _p({"offer_id": {"type": "string"},
             "field": {"type": "string", "description": "Attribute that is missing or ambiguous"},
             "text_ja": {"type": "string", "description": "The question in Japanese"},
-            "reason": {"type": "string", "description": "Short English reason shown to the owner"}},
+            "reason": {"type": "string", "description": "Short English reason shown to the owner"},
+            "text_it": {"type": "string", "description": "Faithful Italian translation of text_ja for the owner"},
+            "text_en": {"type": "string", "description": "Faithful English translation of text_ja for the owner"}},
            ["offer_id", "field", "text_ja", "reason"]),
     ),
 }

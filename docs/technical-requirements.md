@@ -140,7 +140,8 @@ A preference change or a supplier reply starts a new run for the same week; earl
   - `POST /documents` (offer or spec, PDF or image)
   - `POST /weeks/{id}/analyze` → job ID; `GET /jobs/{id}/events` (SSE)
   - `GET /weeks/{id}/baskets` (baseline and alternatives with explanations)
-  - `POST /clarifications/{id}/approve`, `POST /clarifications/{id}/reply` (test reply, labeled)
+  - `POST /clarifications/{id}/approve` (issues the test supplier link token), `POST /clarifications/{id}/apply` (owner accepts the value read from the reply; returns recalculated baskets), `POST /clarifications/{id}/reply` (manual test reply, labeled)
+  - `GET /supplier/requests/{token}`, `POST /supplier/requests/{token}/reply` (test supplier page, Japanese; Gemma double-reads the reply and translates it to Italian and English)
   - `POST /baskets/{id}/approve` (one basket version)
   - `POST /purchase-orders/{id}/submit` (idempotency key required)
   - `POST /sim-supplier/orders` (simulated supplier, returns an acknowledgment)
@@ -168,7 +169,7 @@ SQLite for the demo through SQLAlchemy, with `DATABASE_URL` so Postgres can be s
 | Document | type (offer, spec, reply), file hash, fictional flag |
 | ExtractedField | offer, field, value or `unknown`, source text (Japanese), read 1 and read 2 values |
 | RuleOutcome | offer, rule ID, outcome, inputs |
-| Clarification | offer, field, Japanese text, state: `draft` → `approved` → `sent` → `replied` |
+| Clarification | offer, field, Japanese text, Italian/English translations, link token, supplier reply with double-read extraction, state: `draft` → `sent` (owner approved) → `supplier_replied` → `replied` (owner applied). Owner-decided fields such as `chef_approved` are never asked of suppliers. |
 | Basket | week, version, kind (baseline, lowest cost, best fit, fewest suppliers), lines, totals, status `draft` → `approved` |
 | PurchaseOrder | supplier, lines, idempotency key, state: `draft` → `approved` → `submitted` → `acknowledged` |
 | AuditEvent | time, actor, action, Evolus IDs, request ID, model, latency |

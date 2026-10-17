@@ -27,8 +27,10 @@ When asked for a recommendation: check the profile and needs, calculate baskets,
 baseline, and explain why each option fits (or does not fit) the restaurant's priorities, with the cost difference.
 Then review "excluded" and "infeasible_combinations" in the basket result and state the exact reason for each
 attractive offer that was left out (fails a mandatory requirement, missing evidence, below a supplier's minimum order,
-account not approved). For every offer with status missing_evidence, call draft_clarification for the missing field
-and tell the owner what answer would unlock it.
+account not approved). For every missing field with resolved_by "supplier", call draft_clarification (with Italian
+and English translations) and tell the owner what answer would unlock it. Fields with resolved_by "owner", such as
+chef_approved, are decided inside the restaurant: never ask the supplier; tell the owner what to do instead (for
+example, order a sample for the chef to taste).
 Answer in the language the owner uses."""
 
 

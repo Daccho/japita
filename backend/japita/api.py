@@ -1,4 +1,5 @@
-"""HTTP API: owner input (profile, menu/servings, stock, suppliers, offers, specs) plus agent and basket views.
+"""HTTP API: owner input (profile, menu/servings, stock, suppliers, offers, specs) plus agent and basket views,
+and the test supplier page's API (Japanese clarification requests opened by a secret link token).
 
 Run: uv run uvicorn japita.api:app --reload
 """
@@ -16,7 +17,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from . import calc, repo
 from .agent import run_agent
 from .evolus import EvolusAgent, run_agent_evolus
-from .extract import double_read
+from .extract import double_read, read_reply
 from .llm import LLM
 from .store import Store
 
@@ -107,6 +108,14 @@ class Offer(In):
 class Reply(BaseModel):
     value: Any
     source_text: str
+
+
+class SupplierReply(BaseModel):
+    text_ja: str = Field(min_length=1, max_length=4000)
+
+
+class ApplyReply(BaseModel):
+    value: Any = Field(default=None, description="Required only when the two reads disagreed or found nothing")
 
 
 class Question(BaseModel):
@@ -231,6 +240,11 @@ def _spec_fields(data: dict, ingredient: str) -> dict[str, tuple[str, Any]]:
     return fields
 
 
+def _describe(label: str, sample: Any) -> str:
+    kind = "true/false" if isinstance(sample, bool) else "number" if isinstance(sample, (int, float)) else f'string such as "{sample}"'
+    return f"{label} ({kind})"
+
+
 def _coerce(value: Any, sample: Any) -> Any:
     if value is None:
         return None
@@ -254,10 +268,6 @@ async def upload_spec(offer_id: str, file: UploadFile = File(...)):
     if not fields:
         raise HTTPException(422, "no rules reference this ingredient, so there is nothing to extract")
 
-    def describe(label, sample):
-        kind = "true/false" if isinstance(sample, bool) else "number" if isinstance(sample, (int, float)) else f'string such as "{sample}"'
-        return f"{label} ({kind})"
-
     raw = await file.read()
     llm = LLM()
     started = time.perf_counter()
@@ -266,9 +276,9 @@ async def upload_spec(offer_id: str, file: UploadFile = File(...)):
         with NamedTemporaryFile(suffix=suffix) as tmp:
             tmp.write(raw)
             tmp.flush()
-            result = double_read(llm, {k: describe(*v) for k, v in fields.items()}, image=Path(tmp.name))
+            result = double_read(llm, {k: _describe(*v) for k, v in fields.items()}, image=Path(tmp.name))
     else:
-        result = double_read(llm, {k: describe(*v) for k, v in fields.items()}, text=raw.decode("utf-8", "replace"))
+        result = double_read(llm, {k: _describe(*v) for k, v in fields.items()}, text=raw.decode("utf-8", "replace"))
     elapsed_ms = int((time.perf_counter() - started) * 1000)
 
     flags = {}
@@ -333,16 +343,35 @@ def list_clarifications():
 
 @app.post("/clarifications/{clarification_id}/approve")
 def approve_clarification(clarification_id: str):
-    """Human action. The MVP does not send real messages; approval only changes state."""
+    """Human action. Approval delivers the question to the test supplier page (no real message is sent).
+
+    The response carries `token`; the supplier page lives at /supplier/{token}.
+    """
     data = repo.load_state()
-    c = next((c for c in data["clarifications"] if c["id"] == clarification_id), None)
-    if c is None:
+    store = Store(data, next(iter(data["profiles"])))
+    try:
+        c = store.approve(clarification_id)
+    except StopIteration:
         raise HTTPException(404, "clarification not found")
-    if c["state"] != "draft":
-        raise HTTPException(409, f"clarification is {c['state']}")
-    c["state"] = "approved"
+    except ValueError as e:
+        raise HTTPException(409, str(e))
     repo.save_state(data)
     return c
+
+
+@app.post("/clarifications/{clarification_id}/apply")
+def apply_clarification(clarification_id: str, body: ApplyReply, profile_id: str | None = None):
+    """Human action: accept the value Gemma read from the supplier's reply, then recalculate baskets."""
+    data = repo.load_state()
+    store = Store(data, next(iter(data["profiles"])))
+    try:
+        c = store.apply_reply(clarification_id, body.value)
+    except StopIteration:
+        raise HTTPException(404, "clarification not found")
+    except ValueError as e:
+        raise HTTPException(409, str(e))
+    repo.save_state(data)
+    return {"clarification": c, "baskets": calc.calculate_baskets(_store(profile_id))}
 
 
 @app.post("/clarifications/{clarification_id}/reply")
@@ -358,6 +387,67 @@ def reply_clarification(clarification_id: str, body: Reply):
         raise HTTPException(409, str(e))
     repo.save_state(data)
     return c
+
+
+# --- test supplier page (Japanese) -------------------------------------------------------------------
+
+SUPPLIER_NOTICE_JA = "これはデモ用のテスト仕入先画面です。実際の取引・発注は行われません。"
+
+
+def _supplier_view(store: Store, c: dict) -> dict:
+    """Only what the supplier needs: the question about their own product. No prices of other suppliers."""
+    offer = store.offer(c["offer_id"])
+    reply = c.get("reply")
+    return {
+        "notice_ja": SUPPLIER_NOTICE_JA,
+        "restaurant": store.profile["name"],
+        "supplier": store.suppliers[offer["supplier_id"]]["name"],
+        "product": offer["product"],
+        "question_ja": c["text_ja"],
+        "sent_at": c.get("sent_at"),
+        "state": "awaiting_reply" if c["state"] == "sent" else "replied",
+        "reply_ja": reply["text_ja"] if reply else None,
+        "replied_at": reply["received_at"] if reply else None,
+    }
+
+
+def _by_token(token: str) -> tuple[dict, Store, dict]:
+    data = repo.load_state()
+    store = Store(data, next(iter(data["profiles"])))
+    try:
+        return data, store, store.clarification_by_token(token)
+    except StopIteration:
+        raise HTTPException(404, "依頼が見つかりません（リンクをご確認ください）")
+
+
+@app.get("/supplier/requests/{token}")
+def supplier_request(token: str):
+    _, store, c = _by_token(token)
+    return _supplier_view(store, c)
+
+
+@app.post("/supplier/requests/{token}/reply")
+def supplier_reply(token: str, body: SupplierReply):
+    """Test supplier answers in Japanese. Gemma double-reads the value and translates for the owner.
+
+    The offer is unchanged until the owner applies the reply (POST /clarifications/{id}/apply).
+    """
+    data, store, c = _by_token(token)
+    if c["state"] != "sent":
+        raise HTTPException(409, "この依頼にはすでにご回答いただいています")
+    field = c["field"]
+    label, sample = _spec_fields(data, store.offer(c["offer_id"])["ingredient"]).get(field, (field, ""))
+    llm = LLM()
+    started = time.perf_counter()
+    extraction, translations = read_reply(llm, field, _describe(label, sample), body.text_ja)
+    extraction["read_1"], extraction["read_2"] = _coerce(extraction["read_1"], sample), _coerce(extraction["read_2"], sample)
+    extraction["value"] = _coerce(extraction["value"], sample)
+    extraction["elapsed_ms"] = int((time.perf_counter() - started) * 1000)
+    extraction["calls"] = [call.__dict__ for call in llm.calls]
+    store.receive_supplier_reply(token, body.text_ja, extraction, translations)
+    repo.save_state(data)
+    repo.log_calls(llm.calls, f"supplier_reply:{c['id']}")
+    return _supplier_view(store, c)
 
 
 # --- AMD evidence ------------------------------------------------------------------------------------
