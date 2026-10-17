@@ -52,13 +52,40 @@ export type Offer = {
   evidence: Record<string, string | null>;
   document: string | null;
 };
+export type ModelCall = { model: string; backend: string; latency_ms: number; request_id: string };
+export type Extraction = {
+  status: "ok" | "needs_review" | "unknown";
+  value: unknown;
+  read_1: unknown;
+  read_2: unknown;
+  source_text: string | null;
+  elapsed_ms: number;
+  calls: ModelCall[];
+};
 export type Clarification = {
   id: string;
   offer_id: string;
   field: string;
   text_ja: string;
+  translations?: { it?: string; en?: string };
   reason: string;
-  state: "draft" | "approved" | "sent" | "replied";
+  // draft -> sent (owner approved, token issued) -> supplier_replied -> replied (owner applied)
+  state: "draft" | "sent" | "supplier_replied" | "replied";
+  token?: string;
+  sent_at?: string;
+  reply?: { text_ja: string; translations?: { it?: string; en?: string }; extraction: Extraction; received_at: string };
+  applied_value?: unknown;
+};
+export type SupplierRequest = {
+  notice_ja: string;
+  restaurant: string;
+  supplier: string;
+  product: string;
+  question_ja: string;
+  sent_at: string | null;
+  state: "awaiting_reply" | "replied";
+  reply_ja: string | null;
+  replied_at: string | null;
 };
 export type State = {
   profiles: Record<string, Profile>;
@@ -86,6 +113,7 @@ export type RuleOutcome = {
   outcome: "ok" | "fail" | "needs_review" | "missing_evidence";
   value: unknown;
   source_text: string | null;
+  resolved_by?: "owner" | "supplier";
 };
 export type Evidence = {
   offer_id: string;
@@ -159,8 +187,14 @@ export const api = {
     request<Evidence>(`/offers/${offerId}/evidence?profile_id=${profileId}`),
   putProfile: (p: Profile) => request<Profile>(`/profiles/${p.id}`, json("PUT", p)),
   approveClarification: (id: string) => request<Clarification>(`/clarifications/${id}/approve`, { method: "POST" }),
-  replyClarification: (id: string, value: unknown, sourceText: string) =>
-    request<Clarification>(`/clarifications/${id}/reply`, json("POST", { value, source_text: sourceText })),
+  applyClarification: (id: string, profileId: string, value?: unknown) =>
+    request<{ clarification: Clarification; baskets: BasketResult }>(
+      `/clarifications/${id}/apply?profile_id=${profileId}`,
+      json("POST", value === undefined ? {} : { value }),
+    ),
+  supplierRequest: (token: string) => request<SupplierRequest>(`/supplier/requests/${encodeURIComponent(token)}`),
+  supplierReply: (token: string, textJa: string) =>
+    request<SupplierRequest>(`/supplier/requests/${encodeURIComponent(token)}/reply`, json("POST", { text_ja: textJa })),
   ask: (question: string, profileId: string) =>
     request<{ answer: string; steps: AgentStep[]; clarifications: Clarification[] }>(
       "/agent/ask",
@@ -179,14 +213,11 @@ export const api = {
   reseed: () => request<{ seeded: string }>("/state/seed", { method: "POST" }),
 };
 
-export const eur = (n: number | null | undefined) =>
-  n === null || n === undefined ? "unknown" : `€${n.toFixed(2)}`;
+export const eur = (n: number | null | undefined, unknown = "?") =>
+  n === null || n === undefined ? unknown : `€${n.toFixed(2)}`;
+
+export const cheapest = (r: BasketResult) =>
+  r.baskets.reduce<number | null>((m, b) => (m === null || b.delivered_total_eur < m ? b.delivered_total_eur : m), null);
 
 export const qty = (n: number, unit: string) =>
   unit === "g" ? `${(n / 1000).toLocaleString("en", { maximumFractionDigits: 1 })} kg` : unit === "ml" ? `${(n / 1000).toLocaleString("en", { maximumFractionDigits: 1 })} L` : `${n} ${unit}`;
-
-export const INGREDIENT_LABEL: Record<string, string> = {
-  noodles: "Hakata noodles",
-  soy_sauce: "Soy sauce (tare)",
-  mayu: "Mayu (black garlic oil)",
-};

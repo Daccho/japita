@@ -53,16 +53,14 @@ export function ErrorNote({ error }: { error: string | null }) {
   return <p className="rounded border border-red-200 bg-red-50 p-2 text-sm text-red-800">{error}</p>;
 }
 
-export const ROUTE_LABEL: Record<string, { label: string; tone: keyof typeof TONES }> = {
-  japan: { label: "Ships from Japan", tone: "red" },
-  europe: { label: "EU stock", tone: "blue" },
-  italy: { label: "Made in Italy", tone: "green" },
-};
+export type Tone = keyof typeof TONES;
 
-export const STATUS_LABEL: Record<string, { label: string; tone: keyof typeof TONES }> = {
-  ok: { label: "Evidence OK", tone: "green" },
-  fails_mandatory: { label: "Fails a must-have", tone: "red" },
-  needs_review: { label: "Needs review", tone: "amber" },
-  missing_evidence: { label: "Missing evidence", tone: "amber" },
-  fail: { label: "Not met", tone: "red" },
+export const ROUTE_TONE: Record<string, Tone> = { japan: "red", europe: "blue", italy: "green" };
+
+export const STATUS_TONE: Record<string, Tone> = {
+  ok: "green",
+  fails_mandatory: "red",
+  needs_review: "amber",
+  missing_evidence: "amber",
+  fail: "red",
 };

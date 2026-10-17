@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { api, eur, INGREDIENT_LABEL, type BasketResult, type Profile, type Rule, type State } from "@/lib/api";
+import { api, cheapest, eur, type BasketResult, type Profile, type Rule, type State } from "@/lib/api";
+import { useI18n, useLabel } from "@/lib/i18n";
 import { Badge, Button, Card, ErrorNote } from "@/components/ui";
 import ProfilePicker from "@/components/ProfilePicker";
 import { useProfile } from "@/components/useProfile";
@@ -10,6 +11,8 @@ const DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 const LEVELS = ["low", "medium", "high"] as const;
 
 export default function GoalsPage() {
+  const { t } = useI18n();
+  const label = useLabel();
   const [profileId, setProfileId] = useProfile();
   const [state, setState] = useState<State | null>(null);
   const [draft, setDraft] = useState<Profile | null>(null);
@@ -32,8 +35,8 @@ export default function GoalsPage() {
     setImpact(null);
   }, [load]);
 
-  if (error) return <ErrorNote error={error} />;
-  if (!state || !draft) return <p className="text-stone-500">Loading…</p>;
+  if (error) return <ErrorNote error={t("apiDown", { e: error })} />;
+  if (!state || !draft) return <p className="text-stone-500">{t("loading")}</p>;
 
   const update = (fn: (p: Profile) => void) => {
     const next = structuredClone(draft);
@@ -68,22 +71,20 @@ export default function GoalsPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Restaurant goals</h1>
-          <p className="text-sm text-stone-600">
-            Must-haves always hold. Preferences can be traded for price. Move a rule between the two and see the basket change.
-          </p>
+          <h1 className="text-2xl font-bold">{t("g.title")}</h1>
+          <p className="text-sm text-stone-600">{t("g.intro")}</p>
         </div>
         <div className="ml-auto">
           <ProfilePicker profiles={state.profiles} value={profileId} onChange={setProfileId} />
         </div>
       </div>
 
-      <Card title="Restaurant">
+      <Card title={t("g.restaurant")}>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Name">
+          <Field label={t("g.name")}>
             <input value={draft.name} onChange={(e) => update((p) => { p.name = e.target.value; })} className="input" />
           </Field>
-          <Field label="Weekly purchasing budget (€)">
+          <Field label={t("g.budget")}>
             <input
               type="number"
               value={draft.weekly_budget_eur}
@@ -91,26 +92,26 @@ export default function GoalsPage() {
               className="input"
             />
           </Field>
-          <Field label="Concept" wide>
+          <Field label={t("g.concept")} wide>
             <textarea value={draft.concept} rows={2} onChange={(e) => update((p) => { p.concept = e.target.value; })} className="input" />
           </Field>
-          <Field label="Priorities">
+          <Field label={t("g.priorities")}>
             <div className="flex flex-wrap gap-3">
               {Object.keys(draft.priorities).map((k) => (
                 <label key={k} className="flex items-center gap-1 text-sm">
-                  {k}
+                  {label("prio", k)}
                   <select
                     value={draft.priorities[k]}
                     onChange={(e) => update((p) => { p.priorities[k] = e.target.value as (typeof LEVELS)[number]; })}
                     className="rounded border border-stone-300 px-1 py-0.5"
                   >
-                    {LEVELS.map((l) => <option key={l}>{l}</option>)}
+                    {LEVELS.map((l) => <option key={l} value={l}>{label("lvl", l)}</option>)}
                   </select>
                 </label>
               ))}
             </div>
           </Field>
-          <Field label="Accepted delivery days">
+          <Field label={t("g.days")}>
             <div className="flex flex-wrap gap-2 text-sm">
               {DAYS.map((d) => (
                 <label key={d} className="flex items-center gap-1">
@@ -135,18 +136,18 @@ export default function GoalsPage() {
 
       <div className="grid gap-4 md:grid-cols-3">
         {Object.entries(draft.ingredients).map(([ing, prefs]) => (
-          <Card key={ing} title={INGREDIENT_LABEL[ing] ?? ing}>
-            <RuleList title="Must-haves" tone="red" rules={prefs.mandatory} action="→ preference" onMove={(i) => move(ing, "mandatory", i)}
+          <Card key={ing} title={label("ing", ing)}>
+            <RuleList title={t("g.must")} tone="red" rules={prefs.mandatory} action={t("g.toPref")} onMove={(i) => move(ing, "mandatory", i)}
               onValue={(i, v) => update((p) => { p.ingredients[ing].mandatory[i].value = v; })} />
-            <RuleList title="Preferences" tone="gray" rules={prefs.negotiable} action="→ must-have" onMove={(i) => move(ing, "negotiable", i)}
+            <RuleList title={t("g.pref")} tone="gray" rules={prefs.negotiable} action={t("g.toMust")} onMove={(i) => move(ing, "negotiable", i)}
               onValue={(i, v) => update((p) => { p.ingredients[ing].negotiable[i].value = v; })} />
           </Card>
         ))}
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <Button onClick={save} disabled={busy}>{busy ? "Saving…" : "Save and recalculate"}</Button>
-        <Button variant="secondary" onClick={load} disabled={busy}>Discard changes</Button>
+        <Button onClick={save} disabled={busy}>{busy ? t("g.saving") : t("g.save")}</Button>
+        <Button variant="secondary" onClick={load} disabled={busy}>{t("g.discard")}</Button>
         {impact && <Impact before={impact.before} after={impact.after} />}
       </div>
 
@@ -180,10 +181,11 @@ function RuleList({ title, tone, rules, action, onMove, onValue }: {
   onMove: (i: number) => void;
   onValue: (i: number, v: unknown) => void;
 }) {
+  const { t } = useI18n();
   return (
     <div className="mb-3">
       <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-stone-500">{title}</p>
-      {rules.length === 0 && <p className="text-xs text-stone-400">none</p>}
+      {rules.length === 0 && <p className="text-xs text-stone-400">{t("g.none")}</p>}
       <ul className="space-y-1">
         {rules.map((r, i) => (
           <li key={r.field + i} className="flex flex-wrap items-center gap-2 rounded border border-stone-100 p-1.5 text-sm">
@@ -207,24 +209,21 @@ function RuleList({ title, tone, rules, action, onMove, onValue }: {
   );
 }
 
-function cheapest(r: BasketResult) {
-  return r.baskets.reduce<number | null>((m, b) => (m === null || b.delivered_total_eur < m ? b.delivered_total_eur : m), null);
-}
-
 function Impact({ before, after }: { before: BasketResult; after: BasketResult }) {
+  const { t } = useI18n();
   const b = cheapest(before);
   const a = cheapest(after);
-  if (a === null) return <span className="text-sm text-red-700">{after.conflict ?? "No feasible basket with these rules."}</span>;
+  if (a === null) return <span className="text-sm text-red-700">{after.conflict ?? t("g.noBasket")}</span>;
   const diff = b === null ? null : a - b;
   return (
     <span className="text-sm">
-      Lowest feasible basket: {eur(b)} → <strong>{eur(a)}</strong>
+      {t("g.impact", { a: eur(b), b: eur(a) })}
       {diff !== null && diff !== 0 && (
         <span className={`ml-2 font-semibold ${diff < 0 ? "text-emerald-700" : "text-red-700"}`}>
           ({diff < 0 ? "" : "+"}{eur(diff)})
         </span>
       )}
-      <a href="/basket" className="ml-3 text-red-700 hover:underline">See baskets →</a>
+      <a href="/basket" className="ml-3 text-red-700 hover:underline">{t("g.see")}</a>
     </span>
   );
 }

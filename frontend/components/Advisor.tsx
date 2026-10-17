@@ -5,16 +5,14 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { api, type AgentStep } from "@/lib/api";
 import { Button, Card } from "@/components/ui";
+import { useI18n, type Key } from "@/lib/i18n";
 
-const SUGGESTIONS = [
-  "今週のおすすめバスケットを、今の仕入先との差額と理由つきで教えてください。",
-  "Friday's noodle delivery is at risk. What are the backup options and the cost difference?",
-  "Why was the cheaper soy sauce left out?",
-];
+const SUGGESTIONS: Key[] = ["adv.q1", "adv.q2", "adv.q3"];
 
 // The main agent: Gemma on AMD calls application tools for every number, then explains the trade-offs.
 export default function Advisor({ profileId, onDone }: { profileId: string; onDone: () => void }) {
-  const [question, setQuestion] = useState(SUGGESTIONS[0]);
+  const { t } = useI18n();
+  const [question, setQuestion] = useState(t(SUGGESTIONS[0]));
   const [busy, setBusy] = useState(false);
   const [answer, setAnswer] = useState<string | null>(null);
   const [steps, setSteps] = useState<AgentStep[]>([]);
@@ -43,7 +41,7 @@ export default function Advisor({ profileId, onDone }: { profileId: string; onDo
   const tools = steps.filter((s) => s.type === "tool");
 
   return (
-    <Card title="Purchasing advisor" className="lg:row-span-2">
+    <Card title={t("adv.title")} className="lg:row-span-2">
       <div className="space-y-2">
         <textarea
           value={question}
@@ -52,10 +50,10 @@ export default function Advisor({ profileId, onDone }: { profileId: string; onDo
           className="w-full rounded border border-stone-300 p-2 text-sm"
         />
         <div className="flex flex-wrap items-center gap-2">
-          <Button onClick={ask} disabled={busy || !question.trim()}>{busy ? "Thinking on AMD…" : "Ask"}</Button>
-          {SUGGESTIONS.slice(1).map((s) => (
-            <button key={s} onClick={() => setQuestion(s)} className="text-left text-xs text-stone-500 hover:text-red-700">
-              {s}
+          <Button onClick={ask} disabled={busy || !question.trim()}>{busy ? t("adv.thinking") : t("adv.ask")}</Button>
+          {SUGGESTIONS.map((k) => (
+            <button key={k} onClick={() => setQuestion(t(k))} className="text-left text-xs text-stone-500 hover:text-red-700">
+              {t(k)}
             </button>
           ))}
         </div>
@@ -79,7 +77,7 @@ export default function Advisor({ profileId, onDone }: { profileId: string; onDo
               <ReactMarkdown remarkPlugins={[remarkGfm]}>{answer}</ReactMarkdown>
             </div>
             <p className="text-xs text-stone-500">
-              {tools.length} tool calls · {elapsed} ms total · numbers come from tool results, not the model
+              {t("adv.footer", { n: tools.length, ms: elapsed ?? 0 })}
             </p>
           </>
         )}
