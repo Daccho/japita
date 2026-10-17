@@ -20,3 +20,9 @@ def test_workflow_output_text_falls_back_to_last_step():
     assert output_text({"output": "", "stepOutputs": {"1": "a", "2": "b"}}) == "b"
     assert output_text({"output": "final", "stepOutputs": {"1": "a"}}) == "final"
     assert output_text({"output": None, "stepOutputs": None}) is None
+
+
+def test_parse_answer_with_latex_backslashes():
+    text = '```json\n{"action": "answer", "text": "Idratazione $\\le 30\\%$ richiesta"}\n```'
+    text = text.replace("\\\\", "\\")  # single backslashes, as the model writes them
+    assert parse_action(text)["text"].startswith("Idratazione")
