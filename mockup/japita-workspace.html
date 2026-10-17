@@ -1,5 +1,6 @@
 <div id="japita-lookbook">
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;600&family=Bodoni+Moda:ital,wght@0,700;0,800;1,400;1,600&family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap');
     #japita-lookbook { --jp-bg:light-dark(#f7f6f1,#191c19); --jp-paper:light-dark(#ffffff,#222722); --jp-text:light-dark(#23312b,#e8ece6); --jp-muted:light-dark(#657068,#acb6ac); --jp-line:light-dark(#e0e5dc,#3b443b); --jp-soft:light-dark(#eef2e9,#2c352b); --jp-accent:light-dark(#335b45,#a2cfad); --jp-on-accent:light-dark(#ffffff,#19271b); --jp-warn:light-dark(#946023,#e9bc82); --jp-warn-bg:light-dark(#fbf2e4,#3a3023); --jp-nav:light-dark(#e7ece2,#323e31); color:var(--jp-text); font:400 14px/1.5 Inter, ui-sans-serif, system-ui, sans-serif; }
     #japita-lookbook * { box-sizing:border-box; }
     #japita-lookbook [hidden] { display:none!important; }
@@ -259,7 +260,933 @@
     #japita-lookbook .jp-guide .jp-columns { grid-template-columns:minmax(0,1fr) 280px; }
     #japita-lookbook .jp-guide .jp-advisor { background:var(--jp-paper); }
     #japita-lookbook .jp-guide .jp-week-title { margin-bottom:16px; }
+    /* Ajitama foundation. Shared component styling follows in the approved step sequence. */
+    #japita-lookbook #jp-workspace {
+      --aj-yolk:#F4BC2B;
+      --aj-ink:#1E1B18;
+      --aj-ink-soft:#5A4512;
+      --aj-muted:#625B52;
+      --aj-line:#ECE8DF;
+      --aj-page:#F5F4F0;
+      --aj-surface:#FFFFFF;
+      --aj-yolk-tint:#FFF2CC;
+      --aj-chili:#E0482B;
+      --aj-alert-ink:#12100E;
+      --aj-chili-tint:#FDE2DA;
+      --aj-chili-text:#A3260F;
+      --aj-pending-row:#FEF3F0;
+      --aj-detail-bg:#FFFAED;
+      --aj-detail-line:#B0AFAE;
+      --aj-menu-ink:#1A1A1A;
+      --aj-menu-muted:#57534D;
+      --aj-menu-tagline:#635F59;
+      --aj-menu-leader:#8B867E;
+      --aj-menu-edit:#8B1E2D;
+      --aj-header-divider:color-mix(in srgb,var(--aj-ink) 25%,transparent);
+      --aj-font-ui:'Zen Kaku Gothic New',system-ui,sans-serif;
+      --aj-font-display:'Dela Gothic One','Arial Black',sans-serif;
+      --aj-font-menu:'Bodoni Moda',Didot,serif;
+      --aj-font-menu-copy:'Archivo',system-ui,sans-serif;
+      --aj-type-base:14px;
+      --aj-type-small:12px;
+      --aj-type-alert:11.5px;
+      --aj-type-request:15px;
+      --aj-type-touch:16px;
+      --aj-type-restaurant:25px;
+      --aj-type-subtitle:12.5px;
+      --aj-restaurant-name-size:clamp(var(--aj-type-base),2.5vw,var(--aj-type-restaurant));
+      --aj-restaurant-tracking:.01em;
+      --aj-line-display:1.05;
+      --aj-line-body:1.45;
+      --aj-weight-regular:400;
+      --aj-weight-medium:500;
+      --aj-weight-bold:700;
+      --aj-radius-badge:6px;
+      --aj-radius-control:10px;
+      --aj-radius-card:12px;
+      --aj-radius-table:14px;
+      --aj-radius-popup:16px;
+      --aj-radius-circle:50%;
+      --aj-radius-square:0;
+      --aj-shadow-control:0 3px 0 var(--aj-ink);
+      --aj-shadow-dropdown:0 2px 0 var(--aj-ink);
+      --aj-shadow-pressed:0 1px 0 var(--aj-ink);
+      --aj-shadow-bubble:0 4px 0 var(--aj-ink);
+      --aj-shadow-popup:7px 7px 0 var(--aj-ink);
+      --aj-shadow-none:none;
+      --aj-border-strong:2px solid var(--aj-ink);
+      --aj-border-light:1.5px solid var(--aj-line);
+      --aj-border-detail:1.5px dashed var(--aj-detail-line);
+      --aj-border-none:0;
+      --aj-transparent:transparent;
+      --aj-focus-outline:2px solid var(--aj-chili);
+      --aj-focus-offset:2px;
+      --aj-press-duration:80ms;
+      --aj-reduced-duration:0ms;
+      --aj-press-distance:2px;
+      --aj-control-height:38px;
+      --aj-dropdown-height:36px;
+      --aj-touch-size:44px;
+      --aj-alert-size:22px;
+      --aj-control-padding:16px;
+      --aj-field-padding:12px;
+      --aj-badge-padding:8px;
+      --aj-count-padding:6px;
+      --aj-icon-size:19px;
+      --aj-icon-stroke:1.8;
+      --aj-underline-offset:3px;
+      --aj-header-control-height:40px;
+      --aj-header-alert-offset:-9px;
+      --aj-brand-plate-padding:8px;
+      --aj-type-nav:15px;
+      --aj-type-nav-note:11.5px;
+      --aj-nav-height:42px;
+      --aj-nav-padding-block:22px;
+      --aj-nav-padding-inline:14px;
+      --aj-nav-item-padding:12px;
+      --aj-nav-icon-gap:12px;
+      --aj-nav-compact-padding:7px;
+      --aj-nav-compact-gap:8px;
+      --aj-type-page-title:36px;
+      --aj-type-page-title-compact:28px;
+      --aj-type-page-description:14.5px;
+      --aj-page-title-size:var(--aj-type-page-title);
+      --aj-page-title-tracking:.005em;
+      --aj-line-page-title:1;
+      --aj-page-description-gap:6px;
+      --aj-search-height:52px;
+      --aj-search-button-padding:24px;
+      --aj-search-icon-size:20px;
+      --aj-type-result:13px;
+      --aj-type-supplier:16px;
+      --aj-type-spec:12.5px;
+      --aj-type-price:19px;
+      --aj-supplier-row-height:68px;
+      --aj-supplier-row-padding-block:10px;
+      --aj-supplier-row-padding-inline:16px;
+      --aj-supplier-detail-padding:16px;
+      --aj-supplier-group-height:38px;
+      --aj-supplier-group-padding:8px;
+      --aj-shadow-pending:inset 6px 0 0 var(--aj-chili);
+      --aj-weight-menu-semibold:600;
+      --aj-weight-menu-heavy:800;
+      --aj-profile-tab-gap:8px;
+      --aj-type-menu-restaurant:40px;
+      --aj-type-menu-restaurant-compact:24px;
+      --aj-type-menu-tagline:16px;
+      --aj-type-menu-section:22px;
+      --aj-type-menu-dish:19px;
+      --aj-type-menu-dish-compact:17px;
+      --aj-type-menu-description:13.5px;
+      --aj-type-menu-note:11px;
+      --aj-type-menu-control:13px;
+      --aj-menu-restaurant-size:var(--aj-type-menu-restaurant);
+      --aj-menu-dish-size:var(--aj-type-menu-dish);
+      --aj-menu-paper-padding:40px 56px 38px;
+      --aj-menu-paper-padding-compact:30px 20px 23px;
+      --aj-menu-name-tracking:-.01em;
+      --aj-menu-section-gap:16px;
+      --aj-menu-leader-offset:-4px;
+      --aj-menu-description-width:58ch;
+      --aj-menu-pencil-size:36px;
+      --aj-menu-control-height:34px;
+      --aj-menu-pencil-padding:8px;
+      --aj-menu-field-offset:3px;
+      --aj-line-menu-heading:1.2;
+      --aj-line-menu-dish:1.3;
+      --aj-border-menu:1px solid var(--aj-menu-ink);
+      --aj-border-menu-control:1.5px solid var(--aj-menu-ink);
+      --aj-border-menu-leader:1.5px dotted var(--aj-menu-leader);
+      --aj-outline-menu-field:1px dashed var(--aj-menu-edit);
+      --aj-outline-menu-focus:2px solid var(--aj-menu-edit);
+      --aj-shadow-menu-frame:inset 0 0 0 7px var(--aj-surface),inset 0 0 0 8px var(--aj-menu-ink);
+      --aj-advisor-icon-size:26px;
+      --aj-advisor-icon-stroke:2.1;
+      --aj-border-advisor-bubble:2.5px solid var(--aj-ink);
+      --aj-type-advisor-title:17px;
+      --aj-type-advisor-context:12.5px;
+      --aj-type-advisor-main:16.5px;
+      --aj-type-advisor-copy:13.5px;
+      --aj-type-advisor-price:21px;
+      --aj-line-advisor:1.4;
+      --aj-advisor-body-padding:12px 18px;
+      --aj-advisor-card-padding:10px 12px;
+      --aj-advisor-control-height:36px;
+      --aj-advisor-control-padding:11px;
+      --aj-advisor-close-size:30px;
+      --aj-radius-advisor-close:8px;
+      --aj-type-section-title:18px;
+      --aj-type-promotion-price:26px;
+      --aj-type-basket-total:24px;
+      --aj-line-section-title:1.3;
+      --aj-border-notice:3px solid var(--aj-ink);
+      /* Bridge the existing workspace to the new palette without changing its structure. */
+      --jp-bg:var(--aj-page);
+      --jp-paper:var(--aj-surface);
+      --jp-text:var(--aj-ink);
+      --jp-muted:var(--aj-muted);
+      --jp-line:var(--aj-line);
+      --jp-soft:var(--aj-yolk-tint);
+      --jp-accent:var(--aj-ink);
+      --jp-on-accent:var(--aj-surface);
+      --jp-warn:var(--aj-chili-text);
+      --jp-warn-bg:var(--aj-chili-tint);
+      --jp-nav:var(--aj-yolk-tint);
+      color-scheme:light;
+      font:var(--aj-weight-regular) var(--aj-type-base)/var(--aj-line-body) var(--aj-font-ui);
+    }
+    #japita-lookbook #jp-workspace h1,
+    #japita-lookbook #jp-workspace .jp-restaurant-name,
+    #japita-lookbook #jp-workspace .jp-popup-head h2 {
+      font-family:var(--aj-font-display);
+      font-weight:var(--aj-weight-regular);
+    }
+    #japita-lookbook #jp-workspace .jp-supplier-price,
+    #japita-lookbook #jp-workspace .jp-offer-price,
+    #japita-lookbook #jp-workspace .jp-price,
+    #japita-lookbook #jp-workspace .jp-promotion-prices strong,
+    #japita-lookbook #jp-workspace .jp-number,
+    #japita-lookbook #jp-workspace input[type="number"] {
+      font-family:var(--aj-font-ui);
+      font-variant-numeric:tabular-nums;
+    }
+    /* Step 2: shared controls, scoped to the original workspace. */
+    #japita-lookbook #jp-workspace :is(.jp-action:not(.jp-sheet-edit),.jp-subnav button,.jp-priority button,.jp-profile-tabs button) {
+      min-width:0;
+      max-width:100%;
+      min-height:var(--aj-control-height);
+      padding:0 var(--aj-control-padding);
+      border:var(--aj-border-strong);
+      border-radius:var(--aj-radius-control);
+      background:var(--aj-surface);
+      color:var(--aj-ink);
+      box-shadow:var(--aj-shadow-control);
+      font-family:var(--aj-font-ui);
+      font-size:var(--aj-type-base);
+      font-weight:var(--aj-weight-bold);
+      line-height:var(--aj-line-body);
+      white-space:normal;
+      text-align:center;
+      transition:transform var(--aj-press-duration),box-shadow var(--aj-press-duration);
+    }
+    #japita-lookbook #jp-workspace .jp-action.jp-primary,
+    #japita-lookbook #jp-workspace :is(.jp-subnav,.jp-priority,.jp-profile-tabs) button[aria-pressed="true"] {
+      background:var(--aj-ink);
+      color:var(--aj-surface);
+      border-color:var(--aj-ink);
+    }
+    #japita-lookbook #jp-workspace :is(.jp-action:not(.jp-sheet-edit),.jp-subnav button,.jp-priority button,.jp-profile-tabs button):not([data-act="clearDirectorySearch"]):not(:disabled):active,
+    #japita-lookbook #jp-workspace :is(.jp-notification-bell,.jp-close):not(:disabled):active {
+      transform:translateY(var(--aj-press-distance));
+      box-shadow:var(--aj-shadow-pressed);
+    }
+    #japita-lookbook #jp-workspace :is(.jp-action,.jp-subnav button,.jp-priority button,.jp-profile-tabs button):disabled {
+      box-shadow:var(--aj-shadow-none);
+      transform:none;
+      cursor:not-allowed;
+    }
+    #japita-lookbook #jp-workspace .jp-action[data-act="clearDirectorySearch"] {
+      min-height:0;
+      padding:0;
+      border:var(--aj-border-none);
+      background:var(--aj-transparent);
+      box-shadow:var(--aj-shadow-none);
+      text-decoration:underline;
+      text-underline-offset:var(--aj-underline-offset);
+    }
+    #japita-lookbook #jp-workspace :is(.jp-notification-bell,.jp-close) {
+      display:inline-grid;
+      place-items:center;
+      width:var(--aj-control-height);
+      min-height:var(--aj-control-height);
+      padding:0;
+      border:var(--aj-border-strong);
+      border-radius:var(--aj-radius-control);
+      background:var(--aj-surface);
+      color:var(--aj-ink);
+      box-shadow:var(--aj-shadow-control);
+      transition:transform var(--aj-press-duration),box-shadow var(--aj-press-duration);
+    }
+    #japita-lookbook #jp-workspace :where(input:not([type="checkbox"]):not(.jp-menu-inline),textarea:not(.jp-menu-inline),select) {
+      min-width:0;
+      max-width:100%;
+      padding:8px var(--aj-field-padding);
+      border:var(--aj-border-strong);
+      border-radius:var(--aj-radius-control);
+      background:var(--aj-surface);
+      color:var(--aj-ink);
+      font-family:var(--aj-font-ui);
+      font-size:var(--aj-type-base);
+      font-weight:var(--aj-weight-medium);
+      line-height:var(--aj-line-body);
+    }
+    #japita-lookbook #jp-workspace input:not([type="checkbox"]):not(.jp-menu-inline) { min-height:var(--aj-control-height); }
+    #japita-lookbook #jp-workspace select {
+      min-height:var(--aj-dropdown-height);
+      padding:0 var(--aj-field-padding);
+      box-shadow:var(--aj-shadow-dropdown);
+      font-weight:var(--aj-weight-bold);
+    }
+    #japita-lookbook #jp-workspace .jp-search { border-radius:var(--aj-radius-card); }
+    #japita-lookbook #jp-workspace .jp-directory-search {
+      border:var(--aj-border-strong);
+      border-radius:var(--aj-radius-card);
+      background:var(--aj-surface);
+      box-shadow:var(--aj-shadow-control);
+    }
+    #japita-lookbook #jp-workspace .jp-directory-search textarea {
+      padding:4px 0;
+      border:var(--aj-border-none);
+      border-radius:var(--aj-radius-square);
+      background:var(--aj-transparent);
+      font-size:var(--aj-type-request);
+    }
+    #japita-lookbook #jp-workspace :is(input,textarea):not(.jp-menu-inline)::placeholder { color:var(--aj-muted); opacity:1; }
+    #japita-lookbook #jp-workspace :is(.jp-field,.jp-select-label,.jp-directory-filters label) { color:var(--aj-muted); font-weight:var(--aj-weight-medium); }
+    #japita-lookbook #jp-workspace input[type="checkbox"] { accent-color:var(--aj-ink); }
+    #japita-lookbook #jp-workspace :is(button,input,select,textarea,summary,a[href]):focus-visible {
+      outline:var(--aj-focus-outline);
+      outline-offset:var(--aj-focus-offset);
+    }
+    #japita-lookbook #jp-workspace .jp-badge {
+      padding:0 var(--aj-badge-padding);
+      border-radius:var(--aj-radius-badge);
+      background:var(--aj-yolk-tint);
+      color:var(--aj-ink);
+      font-family:var(--aj-font-ui);
+      font-size:var(--aj-type-small);
+      font-weight:var(--aj-weight-bold);
+      line-height:var(--aj-line-body);
+    }
+    #japita-lookbook #jp-workspace .jp-badge.jp-warning { background:var(--aj-chili-tint); color:var(--aj-chili-text); }
+    #japita-lookbook #jp-workspace [data-basket-count] {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:0 var(--aj-count-padding);
+      border-radius:var(--aj-radius-badge);
+      background:var(--aj-ink);
+      color:var(--aj-surface);
+      font-size:var(--aj-type-small);
+      font-weight:var(--aj-weight-bold);
+      font-variant-numeric:tabular-nums;
+    }
+    #japita-lookbook #jp-workspace .jp-unread {
+      min-width:var(--aj-alert-size);
+      height:var(--aj-alert-size);
+      padding:0;
+      border:var(--aj-border-strong);
+      border-radius:var(--aj-radius-circle);
+      background:var(--aj-chili);
+      color:var(--aj-alert-ink);
+      font-size:var(--aj-type-alert);
+      font-weight:var(--aj-weight-bold);
+      line-height:1;
+      font-variant-numeric:tabular-nums;
+    }
+    #japita-lookbook #jp-workspace svg.lucide { stroke-width:var(--aj-icon-stroke); }
+    #japita-lookbook #jp-workspace :is(.jp-action:not(.jp-sheet-edit),.jp-notification-bell,.jp-close) :is(i,svg) {
+      width:var(--aj-icon-size);
+      height:var(--aj-icon-size);
+      flex-shrink:0;
+      color:inherit;
+    }
+    /* Step 3: retain the existing branding geometry and page-toolbar positions. */
+    #japita-lookbook #jp-workspace .jp-top {
+      background:var(--aj-yolk);
+      color:var(--aj-ink);
+      border-bottom:var(--aj-border-strong);
+    }
+    #japita-lookbook #jp-workspace .jp-restaurant-name {
+      font-size:var(--aj-restaurant-name-size);
+      font-weight:var(--aj-weight-regular);
+      line-height:var(--aj-line-display);
+      letter-spacing:var(--aj-restaurant-tracking);
+    }
+    #japita-lookbook #jp-workspace .jp-restaurant .jp-muted {
+      color:var(--aj-ink-soft);
+      font-size:var(--aj-type-subtitle);
+      font-weight:var(--aj-weight-medium);
+    }
+    #japita-lookbook #jp-workspace .jp-brand {
+      padding:0 var(--aj-brand-plate-padding);
+      border-radius:var(--aj-radius-badge);
+      background:var(--aj-surface);
+    }
+    #japita-lookbook #jp-workspace .jp-brand-divider { background:var(--aj-header-divider); }
+    #japita-lookbook #jp-workspace .jp-toolbar > .jp-action { min-height:var(--aj-header-control-height); }
+    #japita-lookbook #jp-workspace .jp-notification-bell {
+      width:var(--aj-header-control-height);
+      height:var(--aj-header-control-height);
+      min-height:var(--aj-header-control-height);
+    }
+    #japita-lookbook #jp-workspace .jp-notification-bell .jp-unread {
+      top:var(--aj-header-alert-offset);
+      right:var(--aj-header-alert-offset);
+    }
+    /* Step 4: the fixed-width rail keeps its existing order and responsive layout. */
+    #japita-lookbook #jp-workspace .jp-sidebar {
+      padding:var(--aj-nav-padding-block) var(--aj-nav-padding-inline);
+      background:var(--aj-surface);
+      border-right:var(--aj-border-strong);
+    }
+    #japita-lookbook #jp-workspace .jp-nav button {
+      min-width:0;
+      max-width:100%;
+      min-height:var(--aj-nav-height);
+      padding:0 var(--aj-nav-item-padding);
+      gap:var(--aj-nav-icon-gap);
+      border-radius:var(--aj-radius-control);
+      background:var(--aj-transparent);
+      color:var(--aj-ink);
+      font-family:var(--aj-font-ui);
+      font-size:var(--aj-type-nav);
+      font-weight:var(--aj-weight-bold);
+      line-height:var(--aj-line-body);
+      overflow-wrap:anywhere;
+    }
+    #japita-lookbook #jp-workspace .jp-nav button[aria-current="page"] { background:var(--aj-yolk-tint); color:var(--aj-ink); }
+    #japita-lookbook #jp-workspace .jp-nav :is(i,svg) { width:var(--aj-icon-size); height:var(--aj-icon-size); }
+    #japita-lookbook #jp-workspace .jp-sidebar-foot { font-size:var(--aj-type-nav-note); color:var(--aj-muted); }
+    /* Step 5: page typography changes within the existing padded content area. */
+    #japita-lookbook #jp-workspace .jp-body { background:var(--aj-page); }
+    #japita-lookbook #jp-workspace .jp-header h1 {
+      color:var(--aj-ink);
+      font-family:var(--aj-font-display);
+      font-size:var(--aj-page-title-size);
+      font-weight:var(--aj-weight-regular);
+      line-height:var(--aj-line-page-title);
+      letter-spacing:var(--aj-page-title-tracking);
+      overflow-wrap:anywhere;
+    }
+    #japita-lookbook #jp-workspace .jp-header h1 + p {
+      margin-top:var(--aj-page-description-gap);
+      color:var(--aj-muted);
+      font-family:var(--aj-font-ui);
+      font-size:var(--aj-type-page-description);
+      font-weight:var(--aj-weight-medium);
+      line-height:var(--aj-line-body);
+    }
+    /* Step 6: preserve the supplier views, photo-first grid and existing expansions. */
+    #japita-lookbook #jp-workspace .jp-discovery-search {
+      border:var(--aj-border-strong);
+      border-radius:var(--aj-radius-card);
+      background:var(--aj-yolk-tint);
+    }
+    #japita-lookbook #jp-workspace .jp-discovery-search > label {
+      color:var(--aj-ink);
+      font-weight:var(--aj-weight-bold);
+    }
+    #japita-lookbook #jp-workspace .jp-directory-search { min-height:var(--aj-search-height); }
+    #japita-lookbook #jp-workspace .jp-directory-search > .jp-action {
+      min-height:var(--aj-search-height);
+      padding:0 var(--aj-search-button-padding);
+      border-radius:var(--aj-radius-card);
+    }
+    #japita-lookbook #jp-workspace .jp-directory-search > .jp-action :is(i,svg) {
+      width:var(--aj-search-icon-size);
+      height:var(--aj-search-icon-size);
+    }
+    #japita-lookbook #jp-workspace input.jp-search:not(.jp-menu-inline) { min-height:var(--aj-search-height); }
+    #japita-lookbook #jp-workspace .jp-search {
+      font-size:var(--aj-type-request);
+      box-shadow:var(--aj-shadow-control);
+    }
+    #japita-lookbook #jp-workspace .jp-directory-filter-panel {
+      border:var(--aj-border-strong);
+      border-radius:var(--aj-radius-card);
+      background:var(--aj-surface);
+    }
+    #japita-lookbook #jp-workspace .jp-directory-controls > .jp-action[aria-expanded="true"] {
+      border-color:var(--aj-ink);
+      background:var(--aj-yolk-tint);
+    }
+    #japita-lookbook #jp-workspace .jp-directory-count { font-size:var(--aj-type-result); color:var(--aj-muted); }
+    #japita-lookbook #jp-workspace :is(.jp-search-note,.jp-directory-sort-note,.jp-match-reason,.jp-directory-filter-foot p) {
+      color:var(--aj-muted);
+      font-size:var(--aj-type-small);
+      font-weight:var(--aj-weight-medium);
+    }
+    #japita-lookbook #jp-workspace .jp-directory-list {
+      border:var(--aj-border-strong);
+      border-radius:var(--aj-radius-table);
+      background:var(--aj-surface);
+      overflow:hidden;
+    }
+    #japita-lookbook #jp-workspace .jp-directory-group {
+      min-height:var(--aj-supplier-group-height);
+      padding:var(--aj-supplier-group-padding) var(--aj-supplier-row-padding-inline);
+      border-top:var(--aj-border-light);
+      background:var(--aj-yolk-tint);
+      color:var(--aj-ink);
+      font-size:var(--aj-type-spec);
+      font-weight:var(--aj-weight-bold);
+    }
+    #japita-lookbook #jp-workspace .jp-supplier-row {
+      min-height:var(--aj-supplier-row-height);
+      padding:var(--aj-supplier-row-padding-block) var(--aj-supplier-row-padding-inline);
+      border-top:var(--aj-border-light);
+      background:var(--aj-surface);
+    }
+    #japita-lookbook #jp-workspace :is(.jp-supplier-row,.jp-directory-group):first-child { border-top:var(--aj-border-none); }
+    #japita-lookbook #jp-workspace .jp-supplier-row.jp-supplier-pending {
+      background:var(--aj-pending-row);
+      box-shadow:var(--aj-shadow-pending);
+    }
+    #japita-lookbook #jp-workspace .jp-supplier-summary h3 {
+      color:var(--aj-ink);
+      font-size:var(--aj-type-supplier);
+      font-weight:var(--aj-weight-bold);
+    }
+    #japita-lookbook #jp-workspace .jp-supplier-summary p {
+      color:var(--aj-muted);
+      font-size:var(--aj-type-spec);
+      font-weight:var(--aj-weight-medium);
+    }
+    #japita-lookbook #jp-workspace .jp-supplier-product { color:var(--aj-ink); font-weight:var(--aj-weight-bold); }
+    #japita-lookbook #jp-workspace .jp-supplier-product small {
+      color:var(--aj-muted);
+      font-size:var(--aj-type-spec);
+      font-weight:var(--aj-weight-medium);
+    }
+    /* Price and quantity bases share an existing text node; keep it intact. */
+    #japita-lookbook #jp-workspace :is(.jp-supplier-price,.jp-offer-price) {
+      color:var(--aj-ink);
+      font-family:var(--aj-font-ui);
+      font-size:var(--aj-type-price);
+      font-weight:var(--aj-weight-bold);
+      font-variant-numeric:tabular-nums;
+    }
+    #japita-lookbook #jp-workspace .jp-supplier-price { text-align:right; }
+    #japita-lookbook #jp-workspace :is(.jp-supplier-price small,.jp-offer-price + small) {
+      color:var(--aj-muted);
+      font-size:var(--aj-type-small);
+      font-weight:var(--aj-weight-medium);
+    }
+    #japita-lookbook #jp-workspace :is(.jp-supplier-price,.jp-offer-price).jp-price-request {
+      color:var(--aj-chili-text);
+      font-size:var(--aj-type-request);
+      white-space:nowrap;
+    }
+    #japita-lookbook #jp-workspace .jp-supplier-expanded {
+      padding:var(--aj-supplier-detail-padding);
+      border-top:var(--aj-border-detail);
+      background:var(--aj-detail-bg);
+    }
+    #japita-lookbook #jp-workspace .jp-offer,
+    #japita-lookbook #jp-workspace .jp-supplier-expanded .jp-offer {
+      padding:var(--jp-pad);
+      border:var(--aj-border-strong);
+      border-radius:var(--aj-radius-card);
+      background:var(--aj-surface);
+      box-shadow:var(--aj-shadow-none);
+    }
+    #japita-lookbook #jp-workspace .jp-offer h3 { color:var(--aj-ink); font-weight:var(--aj-weight-bold); }
+    #japita-lookbook #jp-workspace .jp-offer .jp-supplier-country { font-size:var(--aj-type-result); }
+    #japita-lookbook #jp-workspace .jp-offer-meta {
+      color:var(--aj-ink);
+      font-size:var(--aj-type-result);
+      font-weight:var(--aj-weight-medium);
+    }
+    #japita-lookbook #jp-workspace .jp-offer-actions { border-top:var(--aj-border-light); }
+    #japita-lookbook #jp-workspace .jp-detail { border-top:var(--aj-border-detail); }
+    #japita-lookbook #jp-workspace .jp-detail dl { font-size:var(--aj-type-result); font-variant-numeric:tabular-nums; }
+    #japita-lookbook #jp-workspace .jp-detail dt { color:var(--aj-muted); font-weight:var(--aj-weight-medium); }
+    #japita-lookbook #jp-workspace .jp-detail dd { color:var(--aj-ink); overflow-wrap:anywhere; }
+    #japita-lookbook #jp-workspace .jp-quote {
+      border:var(--aj-border-strong);
+      border-radius:var(--aj-radius-card);
+      background:var(--aj-yolk-tint);
+      color:var(--aj-ink);
+    }
+    #japita-lookbook #jp-workspace .jp-directory-empty {
+      border:var(--aj-border-strong);
+      border-radius:var(--aj-radius-card);
+      background:var(--aj-surface);
+      color:var(--aj-ink);
+    }
+    #japita-lookbook #jp-workspace .jp-directory-list > .jp-directory-empty { border:var(--aj-border-none); border-radius:var(--aj-radius-square); }
+    #japita-lookbook #jp-workspace .jp-directory-empty p { color:var(--aj-muted); }
+    /* Step 7: retain photographic assets, crops and sizes; match card corners only. */
+    #japita-lookbook #jp-workspace .jp-supplier-thumb,
+    #japita-lookbook #jp-workspace .jp-offer-photo img { border-radius:var(--aj-radius-card); }
+    /* Step 8: print typography within the current menu document and editor. */
+    #japita-lookbook #jp-workspace .jp-profile-tabs {
+      gap:var(--aj-profile-tab-gap);
+      border-bottom:var(--aj-border-none);
+    }
+    #japita-lookbook #jp-workspace .jp-menu-document {
+      --jp-menu-paper:var(--aj-surface);
+      --jp-menu-ink:var(--aj-menu-ink);
+      --jp-menu-faint:var(--aj-menu-muted);
+      --jp-menu-rule:var(--aj-menu-ink);
+      padding:var(--aj-menu-paper-padding);
+      border:var(--aj-border-menu);
+      border-radius:var(--aj-radius-square);
+      background:var(--aj-surface);
+      color:var(--aj-menu-ink);
+      box-shadow:var(--aj-shadow-menu-frame);
+    }
+    #japita-lookbook #jp-workspace .jp-menu-masthead { border-bottom:var(--aj-border-menu); }
+    #japita-lookbook #jp-workspace .jp-menu-document .jp-menu-restaurant {
+      color:var(--aj-menu-ink);
+      font-family:var(--aj-font-menu);
+      font-size:var(--aj-menu-restaurant-size);
+      font-weight:var(--aj-weight-menu-heavy);
+      line-height:var(--aj-line-menu-heading);
+      letter-spacing:var(--aj-menu-name-tracking);
+      overflow-wrap:anywhere;
+    }
+    #japita-lookbook #jp-workspace .jp-menu-masthead p {
+      color:var(--aj-menu-tagline);
+      font-family:var(--aj-font-menu);
+      font-size:var(--aj-type-menu-tagline);
+      font-style:italic;
+      font-weight:var(--aj-weight-regular);
+    }
+    #japita-lookbook #jp-workspace .jp-menu-label {
+      color:var(--aj-menu-ink);
+      font-family:var(--aj-font-menu-copy);
+      font-size:var(--aj-type-menu-note);
+      font-weight:var(--aj-weight-menu-semibold);
+    }
+    #japita-lookbook #jp-workspace .jp-menu-document .jp-menu-chapter-title {
+      display:flex;
+      align-items:center;
+      gap:var(--aj-menu-section-gap);
+      color:var(--aj-menu-ink);
+      font-family:var(--aj-font-menu);
+      font-size:var(--aj-type-menu-section);
+      font-style:italic;
+      font-weight:var(--aj-weight-menu-semibold);
+      line-height:var(--aj-line-menu-heading);
+      letter-spacing:normal;
+      text-align:center;
+      text-transform:none;
+    }
+    #japita-lookbook #jp-workspace .jp-menu-chapter-title::before,
+    #japita-lookbook #jp-workspace .jp-menu-chapter-title::after {
+      content:"";
+      flex:1;
+      border-top:var(--aj-border-menu);
+    }
+    #japita-lookbook #jp-workspace .jp-menu-document .jp-menu-dish-line h3,
+    #japita-lookbook #jp-workspace .jp-menu-dish-price {
+      color:var(--aj-menu-ink);
+      font-family:var(--aj-font-menu);
+      font-size:var(--aj-menu-dish-size);
+      font-weight:var(--aj-weight-bold);
+      line-height:var(--aj-line-menu-dish);
+      font-variant-numeric:lining-nums tabular-nums;
+    }
+    #japita-lookbook #jp-workspace .jp-menu-dish-price { text-align:right; }
+    #japita-lookbook #jp-workspace .jp-menu-leader {
+      border-bottom:var(--aj-border-menu-leader);
+      transform:translateY(var(--aj-menu-leader-offset));
+    }
+    #japita-lookbook #jp-workspace .jp-menu-dish p {
+      max-width:var(--aj-menu-description-width);
+      color:var(--aj-menu-muted);
+      font-family:var(--aj-font-menu-copy);
+      font-size:var(--aj-type-menu-description);
+      font-weight:var(--aj-weight-regular);
+      line-height:var(--aj-line-body);
+    }
+    #japita-lookbook #jp-workspace .jp-menu-paper-foot {
+      border-top:var(--aj-border-menu);
+      color:var(--aj-menu-muted);
+      font-family:var(--aj-font-menu-copy);
+      font-size:var(--aj-type-menu-note);
+      font-weight:var(--aj-weight-regular);
+    }
+    #japita-lookbook #jp-workspace .jp-menu-document > .jp-sheet-edit {
+      width:var(--aj-menu-pencil-size);
+      height:var(--aj-menu-pencil-size);
+      min-height:var(--aj-menu-pencil-size);
+      padding:var(--aj-menu-pencil-padding);
+      border:var(--aj-border-menu);
+      border-radius:var(--aj-radius-square);
+      background:var(--aj-surface);
+      color:var(--aj-menu-ink);
+      box-shadow:var(--aj-shadow-none);
+    }
+    #japita-lookbook #jp-workspace .jp-sheet-edit :is(i,svg) { width:var(--aj-icon-size); height:var(--aj-icon-size); }
+    #japita-lookbook #jp-workspace .jp-menu-editbar .jp-action {
+      min-height:var(--aj-menu-control-height);
+      border:var(--aj-border-menu-control);
+      border-radius:var(--aj-radius-square);
+      background:var(--aj-surface);
+      color:var(--aj-menu-ink);
+      box-shadow:var(--aj-shadow-none);
+      font-family:var(--aj-font-menu-copy);
+      font-size:var(--aj-type-menu-control);
+      font-weight:var(--aj-weight-menu-semibold);
+    }
+    #japita-lookbook #jp-workspace .jp-menu-editbar .jp-action.jp-primary { background:var(--aj-menu-ink); color:var(--aj-surface); }
+    #japita-lookbook #jp-workspace .jp-menu-editbar .jp-form-actions .jp-action:not(:disabled):active {
+      transform:none;
+      box-shadow:var(--aj-shadow-none);
+    }
+    #japita-lookbook #jp-workspace .jp-menu-document .jp-menu-inline {
+      border:var(--aj-border-none);
+      border-radius:var(--aj-radius-square);
+      background:var(--aj-transparent);
+      color:inherit;
+      box-shadow:var(--aj-shadow-none);
+      font:inherit;
+      font-variant-numeric:inherit;
+      outline:var(--aj-outline-menu-field);
+      outline-offset:var(--aj-menu-field-offset);
+    }
+    #japita-lookbook #jp-workspace .jp-menu-document .jp-menu-inline:hover,
+    #japita-lookbook #jp-workspace .jp-menu-document .jp-menu-inline:focus {
+      background:var(--aj-surface);
+    }
+    #japita-lookbook #jp-workspace .jp-menu-document .jp-menu-inline:focus,
+    #japita-lookbook #jp-workspace .jp-menu-document .jp-menu-inline:focus-visible {
+      outline:var(--aj-outline-menu-focus);
+      outline-offset:var(--aj-menu-field-offset);
+    }
+    #japita-lookbook #jp-workspace .jp-menu-document .jp-menu-inline::placeholder { color:var(--aj-menu-muted); opacity:1; }
+    #japita-lookbook #jp-workspace .jp-menu-planning {
+      border:var(--aj-border-strong);
+      border-radius:var(--aj-radius-card);
+      background:var(--aj-surface);
+      color:var(--aj-ink);
+    }
+    #japita-lookbook #jp-workspace .jp-menu-planning > summary { font-size:var(--aj-type-base); font-weight:var(--aj-weight-bold); }
+    #japita-lookbook #jp-workspace .jp-menu-planning-row { border-top:var(--aj-border-light); }
+    #japita-lookbook #jp-workspace .jp-menu-planning-row > summary { font-size:var(--aj-type-result); font-weight:var(--aj-weight-bold); }
+    #japita-lookbook #jp-workspace .jp-menu-planning-row [data-menu-summary] { color:var(--aj-muted); font-weight:var(--aj-weight-medium); }
+    /* Step 9: retain the existing advisor dimensions, position and interaction model. */
+    #japita-lookbook #jp-workspace .jp-advisor-launcher {
+      border:var(--aj-border-advisor-bubble);
+      border-radius:var(--aj-radius-circle);
+      background:var(--aj-yolk);
+      color:var(--aj-ink);
+      box-shadow:var(--aj-shadow-bubble);
+      transition:transform var(--aj-press-duration),box-shadow var(--aj-press-duration);
+    }
+    #japita-lookbook #jp-workspace .jp-advisor-launcher svg {
+      width:var(--aj-advisor-icon-size);
+      height:var(--aj-advisor-icon-size);
+      stroke-width:var(--aj-advisor-icon-stroke);
+    }
+    #japita-lookbook #jp-workspace .jp-advisor-launcher:active {
+      transform:translateY(var(--aj-press-distance));
+      box-shadow:var(--aj-shadow-pressed);
+    }
+    #japita-lookbook #jp-workspace .jp-advisor-popup {
+      padding:0;
+      border:var(--aj-border-strong);
+      border-radius:var(--aj-radius-popup);
+      background:var(--aj-surface);
+      color:var(--aj-ink);
+      box-shadow:var(--aj-shadow-popup);
+    }
+    #japita-lookbook #jp-workspace .jp-popup-head {
+      margin-bottom:0;
+      padding:var(--aj-advisor-body-padding);
+      border-bottom:var(--aj-border-strong);
+      background:var(--aj-yolk);
+      color:var(--aj-ink);
+    }
+    #japita-lookbook #jp-workspace .jp-popup-head h2 {
+      font-size:var(--aj-type-advisor-title);
+      line-height:var(--aj-line-display);
+      letter-spacing:normal;
+    }
+    #japita-lookbook #jp-workspace .jp-popup-head .jp-close {
+      width:var(--aj-advisor-close-size);
+      height:var(--aj-advisor-close-size);
+      min-height:var(--aj-advisor-close-size);
+      flex-shrink:0;
+      border-radius:var(--aj-radius-advisor-close);
+      box-shadow:var(--aj-shadow-none);
+    }
+    #japita-lookbook #jp-workspace .jp-advisor-popup .jp-advisor {
+      padding:var(--aj-advisor-body-padding);
+      border:var(--aj-border-none);
+      border-radius:var(--aj-radius-square);
+      background:var(--aj-surface);
+      font-size:var(--aj-type-advisor-copy);
+      line-height:var(--aj-line-advisor);
+    }
+    #japita-lookbook #jp-workspace .jp-advisor-popup .jp-advisor > small {
+      color:var(--aj-muted);
+      font-size:var(--aj-type-advisor-context);
+      font-weight:var(--aj-weight-medium);
+    }
+    #japita-lookbook #jp-workspace .jp-advisor-popup .jp-recommendation {
+      padding:var(--aj-advisor-card-padding);
+      border:var(--aj-border-none);
+      border-radius:var(--aj-radius-card);
+      background:var(--aj-yolk-tint);
+    }
+    #japita-lookbook #jp-workspace .jp-advisor-popup .jp-recommendation .jp-kicker {
+      color:var(--aj-ink);
+      font-size:var(--aj-type-result);
+      font-weight:var(--aj-weight-bold);
+    }
+    #japita-lookbook #jp-workspace .jp-advisor-popup .jp-recommendation h3 { font-size:var(--aj-type-base); font-weight:var(--aj-weight-bold); }
+    #japita-lookbook #jp-workspace .jp-advisor-popup .jp-advisor p {
+      color:var(--aj-muted);
+      font-size:var(--aj-type-advisor-copy);
+      line-height:var(--aj-line-advisor);
+    }
+    #japita-lookbook #jp-workspace .jp-advisor-popup .jp-recommendation > p:first-of-type {
+      color:var(--aj-ink);
+      font-size:var(--aj-type-advisor-main);
+      font-weight:var(--aj-weight-bold);
+    }
+    #japita-lookbook #jp-workspace .jp-advisor-popup .jp-recommendation .jp-price {
+      color:var(--aj-ink);
+      font-family:var(--aj-font-ui);
+      font-size:var(--aj-type-advisor-price);
+      font-weight:var(--aj-weight-bold);
+      font-variant-numeric:tabular-nums;
+      letter-spacing:normal;
+    }
+    #japita-lookbook #jp-workspace .jp-advisor-popup .jp-recommendation > small { font-size:var(--aj-type-small); color:var(--aj-muted); }
+    #japita-lookbook #jp-workspace .jp-advisor-popup .jp-proof { font-size:var(--aj-type-advisor-context); color:var(--aj-muted); }
+    #japita-lookbook #jp-workspace .jp-advisor-popup :is(.jp-action,.jp-priority button) {
+      min-height:var(--aj-advisor-control-height);
+      padding:0 var(--aj-advisor-control-padding);
+      font-size:var(--aj-type-result);
+    }
+    /* Step 10: remaining screens retain their current structure and shared controls. */
+    #japita-lookbook #jp-workspace :is(.jp-panel,.jp-promotion) {
+      border:var(--aj-border-strong);
+      border-radius:var(--aj-radius-card);
+      background:var(--aj-surface);
+      color:var(--aj-ink);
+      box-shadow:var(--aj-shadow-none);
+    }
+    #japita-lookbook #jp-workspace :is(.jp-panel,.jp-promotion-body) h2,
+    #japita-lookbook #jp-workspace .jp-notifications h3 {
+      color:var(--aj-ink);
+      font-family:var(--aj-font-ui);
+      font-size:var(--aj-type-section-title);
+      font-weight:var(--aj-weight-bold);
+      line-height:var(--aj-line-section-title);
+      letter-spacing:normal;
+    }
+    #japita-lookbook #jp-workspace .jp-panel h3 {
+      color:var(--aj-ink);
+      font-family:var(--aj-font-ui);
+      font-size:var(--aj-type-base);
+      font-weight:var(--aj-weight-bold);
+    }
+    #japita-lookbook #jp-workspace :is(.jp-section-note,.jp-select-label,.jp-field) { color:var(--aj-muted); font-weight:var(--aj-weight-medium); }
+    #japita-lookbook #jp-workspace .jp-promotion-image .jp-badge {
+      background:var(--aj-yolk-tint);
+      color:var(--aj-ink);
+      border-radius:var(--aj-radius-badge);
+      padding:0 var(--aj-badge-padding);
+      font-weight:var(--aj-weight-bold);
+    }
+    #japita-lookbook #jp-workspace .jp-promotion-body p {
+      color:var(--aj-muted);
+      font-size:var(--aj-type-result);
+      line-height:var(--aj-line-body);
+    }
+    #japita-lookbook #jp-workspace .jp-promotion-prices { font-family:var(--aj-font-ui); font-variant-numeric:tabular-nums; }
+    #japita-lookbook #jp-workspace .jp-promotion-prices strong {
+      color:var(--aj-ink);
+      font-size:var(--aj-type-promotion-price);
+      font-weight:var(--aj-weight-bold);
+    }
+    #japita-lookbook #jp-workspace .jp-promotion-prices > span {
+      color:var(--aj-muted);
+      font-size:var(--aj-type-spec);
+      font-weight:var(--aj-weight-medium);
+    }
+    #japita-lookbook #jp-workspace .jp-promotion-prices s { color:var(--aj-muted); font-size:var(--aj-type-result); }
+    #japita-lookbook #jp-workspace .jp-promotion-terms { border-top:var(--aj-border-light); font-size:var(--aj-type-result); }
+    #japita-lookbook #jp-workspace .jp-promotion-terms p { color:var(--aj-ink); }
+    #japita-lookbook #jp-workspace .jp-promotions-icon { border-radius:var(--aj-radius-card); background:var(--aj-yolk-tint); color:var(--aj-ink); }
+    #japita-lookbook #jp-workspace .jp-promotions-empty p { color:var(--aj-muted); font-size:var(--aj-type-base); }
+    #japita-lookbook #jp-workspace .jp-row { border-top:var(--aj-border-light); }
+    #japita-lookbook #jp-workspace .jp-row:first-of-type { border-top:var(--aj-border-none); }
+    #japita-lookbook #jp-workspace .jp-row p { color:var(--aj-muted); font-size:var(--aj-type-result); }
+    #japita-lookbook #jp-workspace .jp-panel .jp-row > .jp-number {
+      color:var(--aj-ink);
+      font-family:var(--aj-font-ui);
+      font-size:var(--aj-type-price);
+      font-weight:var(--aj-weight-bold);
+      font-variant-numeric:tabular-nums;
+    }
+    #japita-lookbook #jp-workspace .jp-budget {
+      border-top:var(--aj-border-strong);
+      color:var(--aj-ink);
+      font-size:var(--aj-type-base);
+      font-weight:var(--aj-weight-medium);
+    }
+    #japita-lookbook #jp-workspace .jp-budget strong {
+      font-family:var(--aj-font-ui);
+      font-size:var(--aj-type-basket-total);
+      font-weight:var(--aj-weight-bold);
+      font-variant-numeric:tabular-nums;
+      letter-spacing:normal;
+    }
+    #japita-lookbook #jp-workspace .jp-panel .jp-alert {
+      border-radius:var(--aj-radius-card);
+      background:var(--aj-yolk-tint);
+      color:var(--aj-ink);
+      font-weight:var(--aj-weight-medium);
+    }
+    #japita-lookbook #jp-workspace .jp-description { color:var(--aj-ink); font-size:var(--aj-type-base); line-height:var(--aj-line-body); }
+    #japita-lookbook #jp-workspace .jp-facts dt { color:var(--aj-muted); font-size:var(--aj-type-small); font-weight:var(--aj-weight-medium); }
+    #japita-lookbook #jp-workspace .jp-facts dd { color:var(--aj-ink); font-size:var(--aj-type-result); }
+    #japita-lookbook #jp-workspace .jp-source { border-top:var(--aj-border-light); }
+    #japita-lookbook #jp-workspace .jp-source:first-child { border-top:var(--aj-border-none); }
+    #japita-lookbook #jp-workspace .jp-source summary { font-size:var(--aj-type-result); font-weight:var(--aj-weight-bold); }
+    #japita-lookbook #jp-workspace .jp-owner-notes {
+      border-left:var(--aj-border-strong);
+      color:var(--aj-ink);
+      font-size:var(--aj-type-result);
+      line-height:var(--aj-line-body);
+    }
+    #japita-lookbook #jp-workspace .jp-checkbox { border-bottom:var(--aj-border-light); font-size:var(--aj-type-result); }
+    #japita-lookbook #jp-workspace [id$="-profile-content"] .jp-row > .jp-badge { background:var(--aj-ink); color:var(--aj-surface); }
+    #japita-lookbook #jp-workspace [id$="-profile-content"] .jp-pill-row .jp-badge { background:var(--aj-yolk-tint); color:var(--aj-ink); }
+    #japita-lookbook #jp-workspace .jp-link-row { border-bottom:var(--aj-border-light); }
+    #japita-lookbook #jp-workspace .jp-link-row > :is(i,svg) { width:var(--aj-icon-size); height:var(--aj-icon-size); color:var(--aj-muted); }
+    #japita-lookbook #jp-workspace .jp-link-row p { color:var(--aj-muted); font-size:var(--aj-type-result); }
+    #japita-lookbook #jp-workspace .jp-notifications {
+      border:var(--aj-border-strong);
+      border-radius:var(--aj-radius-popup);
+      background:var(--aj-surface);
+      color:var(--aj-ink);
+      box-shadow:var(--aj-shadow-popup);
+    }
+    #japita-lookbook #jp-workspace .jp-notifications p { color:var(--aj-muted); font-size:var(--aj-type-result); line-height:var(--aj-line-body); }
+    #japita-lookbook #jp-workspace .jp-notifications .jp-badge.jp-warning { background:var(--aj-yolk-tint); color:var(--aj-ink); }
+    #japita-lookbook #jp-workspace .jp-error { color:var(--aj-chili-text); font-size:var(--aj-type-small); font-weight:var(--aj-weight-bold); }
+    #japita-lookbook #jp-workspace .jp-toast {
+      border-left:var(--aj-border-notice);
+      border-radius:var(--aj-radius-control);
+      background:var(--aj-yolk-tint);
+      color:var(--aj-ink);
+      font-size:var(--aj-type-result);
+      line-height:var(--aj-line-body);
+    }
+    #japita-lookbook #jp-workspace .jp-footer { color:var(--aj-muted); font-size:var(--aj-type-small); }
+    @media(prefers-reduced-motion:reduce) { #japita-lookbook #jp-workspace { --aj-press-duration:var(--aj-reduced-duration); } }
+    @media(pointer:coarse) {
+      #japita-lookbook #jp-workspace :is(.jp-action:not(.jp-sheet-edit),.jp-subnav button,.jp-priority button,.jp-profile-tabs button,.jp-notification-bell,.jp-close,.jp-nav button) { min-height:var(--aj-touch-size); }
+      #japita-lookbook #jp-workspace :is(.jp-notification-bell,.jp-close) { width:var(--aj-touch-size); }
+      #japita-lookbook #jp-workspace :is(input,select,textarea),
+      #japita-lookbook #jp-workspace .jp-directory-search textarea,
+      #japita-lookbook #jp-workspace .jp-search { font-size:var(--aj-type-touch); }
+      #japita-lookbook #jp-workspace .jp-menu-document > .jp-sheet-edit { width:var(--aj-touch-size); height:var(--aj-touch-size); min-height:var(--aj-touch-size); }
+      #japita-lookbook #jp-workspace .jp-menu-document .jp-menu-inline { font-size:max(var(--aj-type-touch),1em); }
+      #japita-lookbook #jp-workspace .jp-popup-head .jp-close { width:var(--aj-touch-size); height:var(--aj-touch-size); min-height:var(--aj-touch-size); }
+      #japita-lookbook #jp-workspace .jp-advisor-popup :is(.jp-action,.jp-priority button) { min-height:var(--aj-touch-size); }
+    }
     @media(max-width:900px) {
+      #japita-lookbook #jp-workspace .jp-sidebar { padding:20px 8px; }
+      #japita-lookbook #jp-workspace .jp-nav button { padding:0 var(--aj-nav-compact-padding); gap:var(--aj-nav-compact-gap); font-size:var(--aj-type-small); }
       #japita-lookbook .jp-shell { grid-template-columns:130px minmax(0,1fr); }
       #japita-lookbook .jp-sidebar { padding:20px 8px; }
       #japita-lookbook .jp-nav button { font-size:12px; padding:10px 7px; }
@@ -267,6 +1194,10 @@
       #japita-lookbook .jp-columns { grid-template-columns:minmax(0,1fr) 210px; gap:12px; }
     }
     @media(max-width:700px) {
+      #japita-lookbook #jp-workspace { --aj-page-title-size:var(--aj-type-page-title-compact); }
+      #japita-lookbook #jp-workspace .jp-notifications { box-shadow:var(--aj-shadow-none); }
+      #japita-lookbook #jp-workspace .jp-supplier-price { text-align:left; }
+      #japita-lookbook #jp-workspace .jp-sidebar { padding:10px; border-right:var(--aj-border-none); border-bottom:var(--aj-border-strong); }
       #japita-lookbook .jp-shell { grid-template-columns:1fr; }
       #japita-lookbook .jp-sidebar { border-right:0; border-bottom:1px solid var(--jp-line); padding:10px; }
       #japita-lookbook .jp-nav { flex-direction:row; gap:3px; flex-wrap:wrap; }
@@ -300,6 +1231,11 @@
       #japita-lookbook .jp-body,#japita-lookbook .jp-guide-shell { padding-bottom:90px; }
     }
     @media(max-width:480px) {
+      #japita-lookbook #jp-workspace {
+        --aj-menu-paper-padding:var(--aj-menu-paper-padding-compact);
+        --aj-menu-restaurant-size:var(--aj-type-menu-restaurant-compact);
+        --aj-menu-dish-size:var(--aj-type-menu-dish-compact);
+      }
       #japita-lookbook .jp-discovery-search { padding:17px; }
       #japita-lookbook .jp-directory-search { flex-wrap:wrap; }
       #japita-lookbook .jp-directory-search textarea { flex-basis:100%; }
@@ -383,10 +1319,20 @@
       ]);
       const promotionExamples=[
         {id:'noodle-restock',supplier:'fresh',title:'Fresh noodle restock',badge:'10% off',referenceCents:680,percent:10,basis:'/ kg',terms:'50 kg minimum · delivery €20',detail:'Fictional promotion for 19–25 October 2026. For 50 kg: €306 in noodles + €20 delivery = €326, compared with the demo regular total of €360.'},
+        {id:'frozen-noodle-offer',supplier:'frozen',title:'Frozen noodle offer',badge:'10% off',referenceCents:610,percent:10,basis:'/ kg',terms:'50 kg minimum · delivery €25',detail:'Fictional promotion for 19–25 October 2026. For 50 kg: €274.50 in noodles + €25 delivery = €299.50, compared with the demo regular total of €330. Frozen substitution still needs your permission.'},
         {id:'soy-case',supplier:'soy',title:'Soy sauce case offer',badge:'Save €12',referenceCents:12000,discountCents:1200,basis:'/ 20 L',terms:'20 L bundle · delivery terms to confirm',detail:'Fictional promotion for 19–25 October 2026. The €120 saved basket line is the demo reference. The example bundle price is €108; delivery and availability still need confirmation.'},
         {id:'mayu-bundle',supplier:'mayu',title:'Mayu kitchen bundle',badge:'Bundle price',referenceCents:4400,bundleCents:4000,basis:'/ 2 L',terms:'2 L bundle · delivery terms to confirm',detail:'Fictional promotion for 19–25 October 2026. The €44 saved basket line is the demo reference. The example bundle price is €40; delivery and availability still need confirmation.'}
       ];
       function promotionCents(promotion) {return promotion.bundleCents!==undefined?promotion.bundleCents:promotion.discountCents!==undefined?promotion.referenceCents-promotion.discountCents:Math.round(promotion.referenceCents*(100-promotion.percent)/100);}
+      function relevantPromotions(profile,menu) {
+        // Bounded demo matching of saved purchasing context to the three catalog groups.
+        const usage=[profile.buy].concat(menu.map(function(item){return item.ingredients.join(' ')+' '+item.purchase;})).join('\n').normalize('NFKC').toLowerCase();
+        const products={noodles:/\b(?:noodles?|ramen|kaedama)\b|ラーメン|麺/,soy:/\b(?:soy\s+sauce|shoyu|koikuchi|honjozo)\b|しょうゆ|醤油|醬油/,mayu:/\b(?:mayu|black\s+garlic(?:\s+oil)?|garlic\s+oil)\b|マー油/};
+        return promotionExamples.filter(function(promotion){
+          const supplier=supplierDirectory.find(function(item){return item.id===promotion.supplier;});
+          return supplier&&products[supplier.category]&&products[supplier.category].test(usage);
+        });
+      }
       function searchSuppliers(query,filters,relationship) {
         let remaining=String(query||'').normalize('NFKC').toLowerCase();
         const categories=[];
@@ -586,7 +1532,7 @@
         }
         function offerCard(o) {
           const received=o.id==='quote'&&s.quoteReceived;
-          const price=o.unit===null?(received?'<span class="jp-offer-price">€345</span><small class="jp-muted"> quoted · approval pending</small>':'<span class="jp-offer-price">Quote needed</span>'):'<span class="jp-offer-price jp-number">'+money(o.unit*50+o.shipping)+'</span><small class="jp-muted"> delivered / 50 kg</small>';
+          const price=o.unit===null?(received?'<span class="jp-offer-price">€345</span><small class="jp-muted"> quoted · approval pending</small>':'<span class="jp-offer-price jp-price-request">Quote needed</span>'):'<span class="jp-offer-price jp-number">'+money(o.unit*50+o.shipping)+'</span><small class="jp-muted"> delivered / 50 kg</small>';
           const photo='<figure class="jp-offer-photo"><img src="'+imageAssets[o.image.asset]+'" alt="'+escapeHtml(o.image.alt)+'" width="144" height="108" loading="lazy"><figcaption>Illustrative image</figcaption></figure>';
           return '<article class="jp-offer"><div class="jp-line-head" style="margin-bottom:0"><span class="jp-kicker">'+o.relationship+'</span><span class="jp-badge '+(o.available?'':'jp-warning')+'">'+(o.available?'Ready to compare':received?'Sample needed':'Missing terms')+'</span></div><div class="jp-offer-identity">'+photo+'<div><h3>'+o.name+'</h3><p class="jp-supplier-country">'+icon('map-pin')+'<span>Supplier country: <strong>'+o.supplierCountry+'</strong></span></p><p>'+o.product+'</p></div></div><div class="jp-offer-meta"><span>Product origin: '+o.productOrigin+'</span><span>Ships from: '+o.dispatchCountry+'</span><span>'+o.format+'</span><span>'+(received?'Friday, before 12:00':o.date)+'</span><span>'+o.approval+'</span></div><div class="jp-offer-actions"><div>'+price+'</div><div style="display:flex;gap:8px;flex-wrap:wrap">'+button('Details','detail:'+o.id,false)+(o.available?button(s.selected===o.id?'Selected':'Add to basket','add:'+o.id,true,(o.id==='frozen'&&!s.frozenAllowed?'disabled':'')):button(received?'View quote':'Request quote','quote',false))+'</div></div>'+(s.detail===o.id?'<div class="jp-detail"><dl><dt>Supplier country</dt><dd>'+o.supplierCountry+'</dd><dt>Product origin</dt><dd>'+o.productOrigin+'</dd><dt>Dispatch country</dt><dd>'+o.dispatchCountry+'</dd><dt>Unit price</dt><dd>'+(o.unit===null?(received?'€6.40 / kg':'Unknown'):money(o.unit)+'/kg')+'</dd><dt>Minimum order</dt><dd>50 kg</dd><dt>Delivery charge</dt><dd>'+(o.shipping===null?(received?'€25':'Unknown'):money(o.shipping))+'</dd><dt>Evidence</dt><dd>'+(o.id==='quote'?'Sample catalog listing':'Sample supplier quote')+'</dd></dl></div>':'')+(o.id==='quote'&&s.quoteDraft?'<div class="jp-quote"><h3>Quote request · draft</h3><p>Please quote 50 kg of straight ramen noodles for delivery to Milan on Friday before service. Include shipping, availability and a product sample.</p>'+button('Load example supplier reply','exampleReply',false)+'</div>':'')+'</article>';
         }
@@ -622,7 +1568,7 @@
             const expanded=s.supplierDetail===item.id;
             const relationship=item.relationship==='existing'?'Existing supplier':item.relationship==='new'?'New supplier':'Candidate · terms pending';
             const details=item.offer?offerCard(item.offer)+'<div class="jp-pill-row">'+button('Compare noodle prices','compare',false)+'</div>':basketProduct(item);
-            return group+'<article class="jp-supplier-row"><div class="jp-supplier-summary"><img class="jp-supplier-thumb" src="'+imageAssets[item.image.asset]+'" alt="'+escapeHtml(item.image.alt)+'" width="60" height="60" loading="lazy"><div><h3>'+escapeHtml(item.name)+'</h3><p>'+escapeHtml(item.supplierCountry)+' · '+relationship+'</p></div><div class="jp-supplier-product">'+escapeHtml(item.product)+'<small>1 product in the demo catalog</small></div>'+supplierPrice(item)+button(expanded?'Close':'View products','supplier:'+item.id,false,'aria-expanded="'+expanded+'" aria-controls="'+id+'-supplier-'+item.id+'"')+'</div>'+(discovering&&s.directoryQuery&&result.reasons.length?'<p class="jp-match-reason">'+result.reasons.map(escapeHtml).join(' · ')+'</p>':'')+'<div class="jp-supplier-expanded" id="'+id+'-supplier-'+item.id+'" '+(expanded?'':'hidden')+'>'+(expanded?details:'')+'</div>'+'</article>';
+            return group+'<article class="jp-supplier-row'+(item.relationship==='candidate'?' jp-supplier-pending':'')+'"><div class="jp-supplier-summary"><img class="jp-supplier-thumb" src="'+imageAssets[item.image.asset]+'" alt="'+escapeHtml(item.image.alt)+'" width="60" height="60" loading="lazy"><div><h3>'+escapeHtml(item.name)+'</h3><p>'+escapeHtml(item.supplierCountry)+' · '+relationship+'</p></div><div class="jp-supplier-product">'+escapeHtml(item.product)+'<small>1 product in the demo catalog</small></div>'+supplierPrice(item)+button(expanded?'Close':'View products','supplier:'+item.id,false,'aria-expanded="'+expanded+'" aria-controls="'+id+'-supplier-'+item.id+'"')+'</div>'+(discovering&&s.directoryQuery&&result.reasons.length?'<p class="jp-match-reason">'+result.reasons.map(escapeHtml).join(' · ')+'</p>':'')+'<div class="jp-supplier-expanded" id="'+id+'-supplier-'+item.id+'" '+(expanded?'':'hidden')+'>'+(expanded?details:'')+'</div>'+'</article>';
           }).join('');
           const listing=showResults?'<div class="jp-directory-count"><span role="status" aria-live="polite">'+result.rows.length+' '+(result.rows.length===1?'supplier':'suppliers')+(discovering?' matching your search':' in your list')+'</span><span>Illustrative product images</span></div>'+(discovering&&filters.sort.startsWith('price')?'<p class="jp-directory-sort-note">Prices are ordered within each product group. Missing delivered quotes appear last.</p>':'')+'<div class="jp-directory-list">'+(rows||'<div class="jp-directory-empty"><h3>No matching '+(discovering?'new ':'')+'suppliers</h3><p>'+(discovering?'Try another request or change the filters. This preview searches the fictional demo catalog.':'Change your filters to see more saved suppliers.')+'</p></div>')+'</div>':'<div class="jp-directory-empty"><h2>Your search starts here</h2><p>Describe what you need above to find new suppliers.</p></div>';
           return '<div class="jp-header"><div><span class="jp-kicker">Your suppliers, together</span><h1 style="margin-top:8px">Suppliers</h1><p class="jp-muted">'+(discovering?'Find new partners for your restaurant.':'Manage the suppliers you work with.')+'</p></div>'+button('View basket','basket',false)+'</div>'+tabs+search+panel+listing;
@@ -633,17 +1579,18 @@
         function supplierPrice(item) {
           if(!item.offer)return '<div class="jp-supplier-price">'+money(item.basketTotal)+' / '+item.basketQuantity+'<small>Saved basket price</small></div>';
           const offer=item.offer;
-          if(offer.unit===null)return '<div class="jp-supplier-price">'+(s.quoteReceived?'€6.40 / kg<small>€345 / 50 kg · approval pending</small>':'Price on request<small>Quote needed</small>')+'</div>';
+          if(offer.unit===null)return '<div class="jp-supplier-price'+(s.quoteReceived?'':' jp-price-request')+'">'+(s.quoteReceived?'€6.40 / kg<small>€345 / 50 kg · approval pending</small>':'Price on request<small>Quote needed</small>')+'</div>';
           return '<div class="jp-supplier-price">€'+offer.unit.toLocaleString('en-IE',{minimumFractionDigits:2,maximumFractionDigits:2})+' / kg<small>'+money(offer.unit*offer.amount+offer.shipping)+' delivered / '+offer.amount+' kg</small></div>';
         }
         function suppliers() {return s.supplierMode==='compare'?noodleComparison():supplierDirectoryPage();}
         function promotions() {
-          const cards=promotionExamples.map(function(promotion){
+          const cards=relevantPromotions(s.profile,s.menu).map(function(promotion){
             const supplier=supplierDirectory.find(function(item){return item.id===promotion.supplier;});
             const expanded=s.promotionDetail===promotion.id;
             return '<article class="jp-promotion"><div class="jp-promotion-image"><img src="'+imageAssets[supplier.image.asset]+'" alt="'+escapeHtml(supplier.image.alt)+'" width="400" height="160" loading="lazy"><span class="jp-badge">'+promotion.badge+'</span></div><div class="jp-promotion-body"><span class="jp-kicker">'+escapeHtml(supplier.name)+'</span><h2>'+promotion.title+'</h2><p>'+escapeHtml(supplier.product)+'</p><div class="jp-promotion-prices"><strong>'+money(promotionCents(promotion)/100)+'</strong><span>'+promotion.basis+'</span><s aria-label="Fictional reference price">'+money(promotion.referenceCents/100)+'</s></div><p>'+promotion.terms+'</p><p style="margin-top:8px">19–25 Oct 2026 · Fictional example</p><div class="jp-pill-row">'+button(expanded?'Close details':'View promotion','promotion:'+promotion.id,false,'aria-expanded="'+expanded+'" aria-controls="'+id+'-promotion-'+promotion.id+'"')+'</div><div class="jp-promotion-terms" id="'+id+'-promotion-'+promotion.id+'" '+(expanded?'':'hidden')+'><p>'+promotion.detail+'</p>'+button('View supplier','promotionSupplier:'+supplier.id,false,'style="margin-top:12px"')+'</div></div></article>';
           }).join('');
-          return '<div class="jp-header"><div><span class="jp-kicker">Supplier promotions</span><h1 style="margin-top:8px">Offers</h1><p class="jp-muted">Discounts and special deals from suppliers.</p></div>'+button('View basket','basket',false)+'</div><p class="jp-section-note">Demo promotions · Fictional examples for the 19–25 October purchasing period. These are not live supplier offers.</p><div class="jp-promotions-grid">'+cards+'</div>';
+          const listing=cards?'<div class="jp-promotions-grid">'+cards+'</div>':'<section class="jp-panel jp-promotions-empty"><div class="jp-promotions-icon">'+icon('tags')+'</div><h2>No matching promotions</h2><p>Promotions appear here for products in your saved restaurant profile and menu purchasing plan.</p></section>';
+          return '<div class="jp-header"><div><span class="jp-kicker">Supplier promotions</span><h1 style="margin-top:8px">Offers</h1><p class="jp-muted">Discounts from all suppliers, for the products you use.</p></div>'+button('View basket','basket',false)+'</div><p class="jp-section-note">Demo promotions · Fictional examples for the 19–25 October purchasing period. These are not live supplier offers.</p>'+listing;
         }
         function basket() {
           const o=offers.find(function(v){return v.id===s.selected;});
