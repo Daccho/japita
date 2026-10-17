@@ -73,15 +73,7 @@ Limits to remember: 60 requests per minute, 50,000 credits until 15 November 202
 
 ## 5. Run the app locally
 
-```bash
-cp .env.example .env     # fill in the values from steps 2 and 4
-docker compose up        # backend, frontend, database volume (T35)
-```
-
-Then:
-
-- `GET /health/model` returns our model name, the AMD backend, and a latency from a real call (T24).
-- Load the fictional demo dataset (command TBD) and run one analysis for the demo week.
+Fill in `.env` with the values from steps 2 and 4, then follow [Run locally in the README](../README.md#run-locally). `GET /health/model` should return our model name, the AMD backend, and a latency from a real call (T24).
 
 ## 6. Troubleshooting
 
