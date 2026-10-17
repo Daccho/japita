@@ -84,3 +84,14 @@ def test_changed_basket_requires_new_approval():
     po = next(p for p in store.data["purchase_orders"] if p["approval_id"] == approval["id"])
     with pytest.raises(ValueError, match="approve it again"):
         orders.submit_order(store, po["id"], "key-3")
+
+
+def test_submitting_one_order_does_not_block_the_others():
+    store = _unlocked_store()
+    approval = orders.approve_basket(store, "on_time")
+    pos = [p for p in store.data["purchase_orders"] if p["approval_id"] == approval["id"]]
+    for i, po in enumerate(pos):
+        assert orders.submit_order(store, po["id"], f"key-all-{i}")["state"] == "acknowledged"
+    assert orders.spending(store)["committed_eur"] == 444.10
+    assert not orders.approval_status(store)["stale"]
+

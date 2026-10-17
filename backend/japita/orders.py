@@ -63,7 +63,11 @@ def approval_status(store: Store) -> dict | None:
     if not current:
         return None
     a = current[-1]
-    basket = _current(store, a["kind"])
+    # Deliveries created by this approval's own orders must not make it look stale.
+    own = {po["id"] for po in store.data["purchase_orders"] if po["approval_id"] == a["id"]}
+    view = store.clone()
+    view.week["deliveries"] = [d for d in view.week.get("deliveries", []) if d.get("purchase_order_id") not in own]
+    basket = _current(view, a["kind"])
     now = basket_version(basket) if basket else None
     return {**a, "stale": now != a["version"], "current_version": now}
 
