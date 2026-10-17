@@ -3,7 +3,8 @@
 These assets belong to the local, fictional demo. The restaurant logo and food photographs were created with the built-in image generation tool; they are not supplier evidence.
 
 - `japita-logo-original.png`: the user's supplied Japita logo, copied without changes.
-- `japita-logo.webp`: a smaller web copy of the full supplied artwork, with no cropping or redesign.
+- `japita-logo-simplified.png`: the user's requested logo edit, generated from the original. It retains the chef hat, fork and knife, cart, wordmark, and tagline; removes groceries and the checklist; and aligns a wheel as the i's dot.
+- `japita-logo.webp`: the web copy of the simplified logo currently displayed in the header.
 - `kumo-demo-logo.webp`: temporary logo for the fictional Kumo Ramen Milano restaurant. Used beside Japita in the header and in Restaurant profile.
 - `fresh-noodles.webp`: illustrative fresh ramen noodles, used by the fresh offer and the unconfirmed candidate.
 - `frozen-noodles.webp`: illustrative frozen noodles in unbranded bags, used by the frozen offer.
@@ -13,6 +14,12 @@ These assets belong to the local, fictional demo. The restaurant logo and food p
 `python mockup/refresh-preview.py` embeds the WebP files into the marked image block in `japita-workspace.html`, then regenerates `index.html`. The fragment and standalone preview use the same embedded images without changing the sandbox or CSP. `--check` verifies that the embedded assets and preview match their source files.
 
 ## Generation prompts
+
+### Japita logo edit
+
+Built-in image generation edit, using `japita-logo-original.png` as the target, with an opaque white background:
+
+Use case: precise-object-edit. Edit the supplied Japita logo; this image is the edit target, not a loose style reference. Preserve the logo's navy shopping cart silhouette, three motion strokes at the left, rounded Japita lettering, orange final a, and the exact bottom tagline EASIER PURCHASING HAPPIER RESTAURANTS. Preserve the same white background and overall composition. Make ONLY these requested changes: (1) Remove ALL colorful groceries from the cart: green leaves, tomato, orange package, and green bottle. (2) Remove the entire checklist contents on the front panel: every green checkmark and navy list line. Keep the shopping cart contour itself. (3) Keep the chef hat with its fork and knife as the ONLY object above/in the cart, visually centered and clearly legible. (4) Align the cart's RIGHT circular wheel precisely above the lowercase i in Japita, so that wheel acts as the i's dot. Move that existing wheel into place; do not add a third wheel. Keep the other cart wheel. Do not replace the lettering or add an extra dot to the i. Keep all wording and the original friendly rounded brand character. No new objects, no extra colored groceries, no checklist, no watermark.
 
 ### Soy sauce
 
