@@ -1,29 +1,36 @@
-"""In-memory demo state loaded from the fictional dataset.
+"""Purchasing state as plain dicts. Calculations and tools only depend on this interface.
 
-Persistence (SQLAlchemy) comes later; the agent and calculations only depend on this interface.
+The app loads and saves it through `repo` (SQLite); tests load the seed file directly.
 """
 
 import copy
 import json
 from pathlib import Path
 
-DATA_PATH = Path(__file__).parent / "data" / "demo.json"
 
 
 class Store:
     def __init__(self, data: dict, profile_id: str = "kumo-authentic"):
         self.data = data
         self.profile_id = profile_id
-        self.clarifications: list[dict] = []
+        data.setdefault("clarifications", [])
         # Double-read disagreements: offer_id -> {field: {"read_1": ..., "read_2": ...}}
-        self.review_flags: dict[str, dict] = {}
+        data.setdefault("review_flags", {})
 
     @classmethod
-    def load(cls, profile_id: str = "kumo-authentic", path: Path = DATA_PATH) -> "Store":
-        return cls(json.loads(path.read_text(encoding="utf-8")), profile_id)
+    def load(cls, path: Path, profile_id: str = "kumo-authentic") -> "Store":
+        return cls(json.loads(Path(path).read_text(encoding="utf-8")), profile_id)
 
     def clone(self) -> "Store":
         return copy.deepcopy(self)
+
+    @property
+    def clarifications(self) -> list[dict]:
+        return self.data["clarifications"]
+
+    @property
+    def review_flags(self) -> dict[str, dict]:
+        return self.data["review_flags"]
 
     @property
     def profile(self) -> dict:
@@ -54,7 +61,7 @@ class Store:
     def add_clarification(self, offer_id: str, field: str, text_ja: str, reason: str) -> dict:
         self.offer(offer_id)
         c = {
-            "id": f"C{len(self.clarifications) + 1}",
+            "id": f"C{max((int(c['id'][1:]) for c in self.clarifications), default=0) + 1}",
             "offer_id": offer_id,
             "field": field,
             "text_ja": text_ja,

@@ -35,9 +35,11 @@ Keep it short: rules and pointers live here, details live in `docs/`. Each fact 
 ### Commands
 ```bash
 # install:  cd backend && uv sync
-# agent:    cd backend && uv run python -m japita.agent "質問"   # needs LLM_* in .env
-# test:     cd backend && uv run pytest
-# build:    TBD
+# db:       docker compose up -d db && (cd backend && uv run python -m japita.repo seed tests/fixtures/kumo.json)
+# api:      cd backend && uv run uvicorn japita.api:app --reload      # docs at http://localhost:8000/docs
+# agent:    cd backend && uv run python -m japita.agent "質問"       # needs LLM_* and DATABASE_URL in .env
+# test:     cd backend && uv run pytest                               # offline
+# live:     cd backend && uv run pytest -m live -s                    # real model endpoint
 ```
 
 ---

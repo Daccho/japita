@@ -1,11 +1,14 @@
 """Agent loop against a scripted fake model: tool dispatch, results fed back, draft-only side effects."""
 
 import json
+from pathlib import Path
 from types import SimpleNamespace as NS
 
 from japita.agent import run_agent
 from japita.llm import LLM, LLMConfig
 from japita.store import Store
+
+FIXTURE = Path(__file__).parent / "fixtures" / "kumo.json"
 
 
 def tool_call(i, name, args):
@@ -34,7 +37,7 @@ def test_agent_runs_tools_and_answers():
     ]
     fake = FakeCompletions(script)
     llm = LLM(LLMConfig(base_url="http://fake", model="fake-gemma"), client=NS(chat=NS(completions=fake)))
-    store = Store.load()
+    store = Store.load(FIXTURE)
 
     result = run_agent(llm, store, "おすすめは？")
 

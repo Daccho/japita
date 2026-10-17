@@ -79,16 +79,21 @@ def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s")
     ap = argparse.ArgumentParser(description="Ask the Japita purchasing agent a question.")
     ap.add_argument("question", nargs="?", default="今週のおすすめバスケットを、今の仕入先との差額と理由つきで教えてください。")
-    ap.add_argument("--profile", default="kumo-authentic", choices=["kumo-authentic", "kumo-value"])
+    ap.add_argument("--profile", default="kumo-authentic", help="Restaurant profile id stored in the database")
     args = ap.parse_args()
 
-    store = Store.load(args.profile)
-    result = run_agent(LLM(), store, args.question)
+    from . import repo
+
+    store = Store(repo.load_state(), args.profile)
+    llm = LLM()
+    result = run_agent(llm, store, args.question)
+    repo.save_state(store.data)
+    repo.log_calls(llm.calls, "agent")
     for s in result.steps:
         print(f"[{s['type']}] {s.get('name', '')} {s.get('arguments', '')}  ({s['model']}, {s['latency_ms']} ms, {s['request_id']})")
     print("\n" + result.answer)
     if store.clarifications:
-        print("\nDraft clarifications (need human approval):")
+        print("\nClarifications (drafts need human approval):")
         print(json.dumps(store.clarifications, ensure_ascii=False, indent=2))
 
 
