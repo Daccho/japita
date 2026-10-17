@@ -53,7 +53,7 @@ def test_agent_answers_from_tools_and_drafts_clarification():
     print("  tools:", sorted(tools_used))
     print("  clarifications:", [(c["offer_id"], c["field"]) for c in store.clarifications])
     assert "calculate_baskets" in tools_used
-    assert "507.8" in result.answer.replace(",", "")  # baseline total from code, not the model
+    assert "493.8" in result.answer.replace(",", "")  # baseline total from code, not the model
     assert all(c["state"] == "draft" for c in store.clarifications)
 
 
@@ -69,4 +69,4 @@ def test_agent_through_evolus():
     print("  tools:", [s.get("name") for s in result.steps if s["type"] == "tool"])
     print("  answer:", result.answer[:800])
     assert any(s.get("name") == "calculate_baskets" for s in result.steps)
-    assert "507.8" in result.answer.replace(",", "")
+    assert "493.8" in result.answer.replace(",", "")

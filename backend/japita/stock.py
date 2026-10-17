@@ -38,7 +38,8 @@ def arrivals_in_week(store: Store, ingredient: str) -> float:
 
 
 def _daily_demand(store: Store, line: dict, day: dict) -> float:
-    return sum(day["servings"].get(item, 0) for item in line["menu_items"]) * line["qty_per_serving"]
+    qty = line.get("per_item") or {item: line["qty_per_serving"] for item in line["menu_items"]}
+    return sum(day["servings"].get(item, 0) * q for item, q in qty.items())
 
 
 def timeline(store: Store) -> dict:

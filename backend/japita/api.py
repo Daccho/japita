@@ -17,7 +17,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from . import calc, repo
 from .agent import run_agent
 from .evolus import EvolusAgent, run_agent_evolus
-from .extract import double_read, read_reply
+from .extract import double_read, read_reply, translate
 from .llm import LLM
 from .store import Store
 
@@ -56,9 +56,8 @@ class Profile(In):
 
 class RecipeLine(In):
     ingredient: str
-    qty_per_serving: float = Field(gt=0)
     unit: Literal["g", "ml"]
-    menu_items: list[str]
+    per_item: dict[str, float] = Field(description="Quantity per serving for each menu item, e.g. half kaedama 60 g")
 
 
 class Recipe(In):
@@ -133,7 +132,10 @@ class Reply(BaseModel):
 
 
 class SupplierReply(BaseModel):
-    text_ja: str = Field(min_length=1, max_length=4000)
+    """From the supplier's phone: a structured value from the form, free Japanese text, or both."""
+    value: Any = Field(default=None, description="Value entered in the mobile form for the requested field")
+    note_ja: str | None = Field(default=None, max_length=2000, description="Optional comment, translated for the owner")
+    text_ja: str | None = Field(default=None, max_length=4000, description="Free-text answer; Gemma double-reads it")
 
 
 class ApplyReply(BaseModel):
@@ -415,6 +417,20 @@ def reply_clarification(clarification_id: str, body: Reply):
 
 SUPPLIER_NOTICE_JA = "これはデモ用のテスト仕入先画面です。実際の取引・発注は行われません。"
 
+# How each requested field appears on the supplier's mobile form.
+FIELD_FORM_JA = {
+    "hydration_pct": {"label_ja": "加水率", "input": "number", "unit": "%", "min": 0, "max": 100},
+    "contains_kansui": {"label_ja": "かんすい使用の有無", "input": "boolean"},
+    "fresh": {"label_ja": "生麺（冷凍ではない）", "input": "boolean"},
+    "origin_country": {"label_ja": "製造国（例：JP）", "input": "text"},
+    "brewing_method": {"label_ja": "製法（例：本醸造 = honjozo）", "input": "text"},
+    "additive_free": {"label_ja": "無添加", "input": "boolean"},
+}
+
+
+def _form(field: str) -> dict:
+    return {"field": field, **FIELD_FORM_JA.get(field, {"label_ja": field, "input": "text"})}
+
 
 def _supplier_view(store: Store, c: dict) -> dict:
     """Only what the supplier needs: the question about their own product. No prices of other suppliers."""
@@ -426,6 +442,7 @@ def _supplier_view(store: Store, c: dict) -> dict:
         "supplier": store.suppliers[offer["supplier_id"]]["name"],
         "product": offer["product"],
         "question_ja": c["text_ja"],
+        "form": _form(c["field"]),
         "sent_at": c.get("sent_at"),
         "state": "awaiting_reply" if c["state"] == "sent" else "replied",
         "reply_ja": reply["text_ja"] if reply else None,
@@ -457,10 +474,28 @@ def supplier_reply(token: str, body: SupplierReply):
     data, store, c = _by_token(token)
     if c["state"] != "sent":
         raise HTTPException(409, "この依頼にはすでにご回答いただいています")
+    if body.value is None and not (body.text_ja or "").strip():
+        raise HTTPException(422, "回答を入力してください")
     field = c["field"]
     label, sample = _spec_fields(data, store.offer(c["offer_id"])["ingredient"]).get(field, (field, ""))
     llm = LLM()
     started = time.perf_counter()
+    if body.value is not None:
+        # Entered in a typed form field by the supplier: no reading needed, only the note is translated.
+        value = _coerce(body.value, sample)
+        if value is None:
+            raise HTTPException(422, "入力値の形式が正しくありません")
+        source = f"[仕入先フォーム入力] {_form(field)['label_ja']}: {body.value}{_form(field).get('unit', '')}"
+        extraction = {"status": "ok", "value": value, "read_1": value, "read_2": value, "source_text": source,
+                      "method": "supplier_form"}
+        translations = translate(llm, body.note_ja) if body.note_ja else {}
+        text_ja = source + (f"\n{body.note_ja}" if body.note_ja else "")
+        extraction["elapsed_ms"] = int((time.perf_counter() - started) * 1000)
+        extraction["calls"] = [call.__dict__ for call in llm.calls]
+        store.receive_supplier_reply(token, text_ja, extraction, translations)
+        repo.save_state(data)
+        repo.log_calls(llm.calls, f"supplier_form:{c['id']}")
+        return _supplier_view(store, c)
     extraction, translations = read_reply(llm, field, _describe(label, sample), body.text_ja)
     extraction["read_1"], extraction["read_2"] = _coerce(extraction["read_1"], sample), _coerce(extraction["read_2"], sample)
     extraction["value"] = _coerce(extraction["value"], sample)

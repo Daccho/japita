@@ -19,14 +19,14 @@ def test_daily_servings_sum_to_weekly():
 def test_delayed_friday_delivery_causes_friday_stockout():
     tl = stock.timeline(Store.load(FIXTURE))["ingredients"]["noodles"]
     days = {r["weekday"]: r for r in tl["days"]}
-    # Mon: 20 kg opening stock, 138 servings x 120 g = 16.56 kg used
-    assert days["mon"]["demand"] == 16560 and days["mon"]["end_stock"] == 3440
+    # Mon: 20 kg opening stock; 135 full portions x 120 g + 8 half refills x 60 g = 16.68 kg used
+    assert days["mon"]["demand"] == 16680 and days["mon"]["end_stock"] == 3320
     # Tue: +70 kg; the opening lot expires after Wednesday but is used first
     assert days["tue"]["arrived"] == 70000
-    # Fri: 235 servings x 120 g = 28.2 kg, only 8.76 kg left -> 19.44 kg short
-    assert days["fri"]["available_start"] == 8760 and days["fri"]["shortfall"] == 19440
+    # Fri: 231 full x 120 g + 14 half x 60 g = 28.56 kg, only 8.1 kg left -> 20.46 kg short
+    assert days["fri"]["available_start"] == 8100 and days["fri"]["shortfall"] == 20460
     assert tl["first_stockout"] == "2026-10-23"
-    assert tl["total_shortfall"] == 75600  # equals the weekly requirement after usable arrivals
+    assert tl["total_shortfall"] == 76800  # equals the weekly requirement after usable arrivals
 
 
 def test_expired_stock_is_discarded():
@@ -57,14 +57,14 @@ def test_approve_creates_supplier_orders_and_submit_is_idempotent():
     approval = orders.approve_basket(store, "on_time")
     pos = [p for p in store.data["purchase_orders"] if p["approval_id"] == approval["id"]]
     assert {p["supplier_id"] for p in pos} == {"S1", "S3", "S6"}
-    assert round(sum(p["total_eur"] for p in pos), 2) == approval["delivered_total_eur"] == 459.20
+    assert round(sum(p["total_eur"] for p in pos), 2) == approval["delivered_total_eur"] == 444.10
 
     s3 = next(p for p in pos if p["supplier_id"] == "S3")
     first = orders.submit_order(store, s3["id"], "key-1")
     again = orders.submit_order(store, s3["id"], "key-1")
     assert first is again and first["state"] == "acknowledged" and first["acknowledgment"]["simulated"]
     assert len([d for d in store.week["deliveries"] if d.get("purchase_order_id") == s3["id"]]) == 1
-    assert orders.spending(store)["committed_eur"] == 323.80  # 288.80 + 35 shipping
+    assert orders.spending(store)["committed_eur"] == 327.60  # 292.60 + 35 shipping
 
 
 def test_acknowledged_backup_clears_friday_stockout():

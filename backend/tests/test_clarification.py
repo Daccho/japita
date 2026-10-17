@@ -96,7 +96,7 @@ def test_drafts_are_not_visible_to_suppliers():
 
 def test_owner_decided_fields_are_not_asked_of_suppliers():
     store = Store.load(FIXTURE)
-    mayu = next(o["id"] for o in store.offers if o["ingredient"] == "mayu" and o["attributes"].get("chef_approved") is None)
+    mayu = next(o["id"] for o in store.offers if o["ingredient"] == "kikurage" and o["attributes"].get("chef_approved") is None)
     result = json.loads(call_tool(store, "draft_clarification", {
         "offer_id": mayu, "field": "chef_approved", "text_ja": "シェフの承認はありますか？", "reason": "x"}))
     assert "error" in result and not store.clarifications

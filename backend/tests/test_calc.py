@@ -18,19 +18,19 @@ def baskets_by_kind(result):
 
 def test_week_needs():
     needs = calc.week_needs(Store.load(FIXTURE))
-    # Kaedama refills add noodle portions beyond the 1,000 bowls
+    # 900 bowls + 450 full refills at 120 g, 80 half refills at 60 g
     # Tuesday's 70 kg arrives; Friday's 76 kg is delayed past the week, so it does not count
-    assert needs["noodles"]["required"] == (550 + 200 + 120 + 130 + 380) * 120 - 20000 - 70000 == 75600
-    assert needs["soy_sauce"]["required"] == (550 + 200 + 120) * 15 - 3000 == 10050
-    assert needs["mayu"]["required"] == 120 * 10 - 700 == 500
+    assert needs["noodles"]["required"] == (450 + 150 + 200 + 100 + 450) * 120 + 80 * 60 - 20000 - 70000 == 76800
+    assert needs["soy_sauce"]["required"] == (450 + 150 + 200) * 15 - 3000 == 9000
+    assert needs["kikurage"]["required"] == (150 + 60) * 3 - 300 == 330
 
 
 def test_missing_evidence_blocks_japanese_noodle_offer():
     store = Store.load(FIXTURE)
     assert calc.check_evidence(store, "O-noo-3")["status"] == "missing_evidence"  # hydration not stated
-    assert calc.check_evidence(store, "O-mayu-2")["status"] == "missing_evidence"  # no chef sample
+    assert calc.check_evidence(store, "O-kik-2")["status"] == "missing_evidence"  # no chef sample
     _, excluded = calc.eligible_offers(store)
-    assert {"O-noo-3", "O-mayu-2"} <= {e["offer_id"] for e in excluded}
+    assert {"O-noo-3", "O-kik-2"} <= {e["offer_id"] for e in excluded}
 
 
 def test_mandatory_and_orderability_exclusions():
@@ -43,8 +43,8 @@ def test_mandatory_and_orderability_exclusions():
 def test_baskets_before_clarification():
     result = calc.calculate_baskets(Store.load(FIXTURE))
     b = baskets_by_kind(result)
-    # Baseline: S2 noodles 76 x 4.90; S1 soy 6 x 13.90 + 20; S6 mayu 1 x 24.00 + 8
-    assert b["baseline"]["delivered_total_eur"] == 507.80
+    # Baseline: S2 noodles 77 x 4.90; S1 soy 5 x 13.90 + 20; S6 kikurage 1 x 19.00 + 8
+    assert b["baseline"]["delivered_total_eur"] == 493.80
     assert b["lowest_cost"] is b["baseline"]
     # S2 cannot deliver before its delayed lot (Tue 27), after Friday's noodle stockout; nothing else qualifies yet
     assert b["baseline"]["late_lines"] == ["noodles: earliest delivery 2026-10-27, stock runs out 2026-10-23"]
@@ -59,13 +59,13 @@ def test_reply_unlocks_cheaper_basket():
     c["state"] = "approved"
     store.record_reply(c["id"], 28, "加水率は28%です。")
     b = baskets_by_kind(calc.calculate_baskets(store))
-    # S3: noodles 76 x 3.80 + soy 11 x 7.20 + 35 = 403.00; S6 mayu 24.00 + 8 -> 435.00, but S3 soy (Thu) is late
-    assert b["lowest_cost"]["delivered_total_eur"] == 435.00
+    # S3: noodles 77 x 3.80 + soy 9 x 7.20 + 35 = 392.40; S6 kikurage 19.00 + 8 -> 419.40, but S3 soy (Thu) is late
+    assert b["lowest_cost"]["delivered_total_eur"] == 419.40
     assert b["lowest_cost"]["late_lines"] == ["soy_sauce: earliest delivery 2026-10-22, stock runs out 2026-10-21"]
-    # On time: S3 frozen noodles Thu 22 (before Friday) 288.80 + 35; S1 soy Tue 83.40 + 20; S6 mayu 32.00
-    assert b["on_time"]["delivered_total_eur"] == 459.20
+    # On time: S3 frozen noodles Thu 22 (before Friday) 292.60 + 35; S1 soy Tue 69.50 + 20; S6 kikurage 27.00
+    assert b["on_time"]["delivered_total_eur"] == 444.10
     assert b["on_time"]["late_lines"] == []
-    assert b["on_time"]["vs_baseline_eur"] == -48.60
+    assert b["on_time"]["vs_baseline_eur"] == -49.70
 
 
 def test_reply_requires_approval():
@@ -82,15 +82,15 @@ def test_profile_changes_recommendation():
     authentic = baskets_by_kind(calc.calculate_baskets(Store.load(FIXTURE, "kumo-authentic")))
     value = baskets_by_kind(calc.calculate_baskets(Store.load(FIXTURE, "kumo-value")))
     # Value profile treats origin, hydration, and chef approval as preferences: S3 consolidates all three items
-    assert value["lowest_cost"]["delivered_total_eur"] == 383.90  # 288.80 + 50.60 + 9.50 + 35
-    assert value["on_time"]["delivered_total_eur"] == 436.70  # S3 noodles + mayu 333.30, S1 soy 103.40
+    assert value["lowest_cost"]["delivered_total_eur"] == 377.50  # S3: 292.60 + 41.40 + 8.50 + 35
+    assert value["on_time"]["delivered_total_eur"] == 425.60  # S3 noodles + kikurage 336.10, S1 soy 89.50
     assert value["lowest_cost"]["delivered_total_eur"] < authentic["lowest_cost"]["delivered_total_eur"]
 
 
 def test_median_only_with_three_offers():
     soy = calc.compare_prices(Store.load(FIXTURE), "soy_sauce")["groups"][0]
     assert soy["count"] == 4 and soy["median_eur"] is not None
-    mayu = calc.compare_prices(Store.load(FIXTURE), "mayu")["groups"][0]
-    assert mayu["count"] == 3 and mayu["median_eur"] is not None
+    kikurage = calc.compare_prices(Store.load(FIXTURE), "kikurage")["groups"][0]
+    assert kikurage["count"] == 3 and kikurage["median_eur"] is not None
     fresh = calc.compare_prices(Store.load(FIXTURE), "noodles")["groups"][0]
     assert fresh["comparison_group"] == "noodles:fresh_hakata" and fresh["median_eur"] is None

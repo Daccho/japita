@@ -24,6 +24,11 @@ def week_servings(store: Store) -> dict[str, float]:
     return total
 
 
+def per_item(line: dict) -> dict[str, float]:
+    """Quantity per serving for each menu item ({item: qty}); older lines use one quantity for all items."""
+    return line.get("per_item") or {item: line["qty_per_serving"] for item in line["menu_items"]}
+
+
 def week_needs(store: Store) -> dict[str, dict]:
     servings = week_servings(store)
     needs = {}
@@ -32,8 +37,9 @@ def week_needs(store: Store) -> dict[str, dict]:
         stock = dict(store.week["stock"].get(ing, {"usable": 0, "confirmed_arrivals": 0}))
         if "deliveries" in store.week:  # dated deliveries replace the weekly confirmed-arrivals total
             stock["confirmed_arrivals"] = stock_mod.arrivals_in_week(store, ing)
-        count = sum(servings.get(item, 0) for item in line["menu_items"])
-        gross = count * line["qty_per_serving"]
+        qty = per_item(line)
+        count = sum(servings.get(item, 0) for item in qty)
+        gross = sum(servings.get(item, 0) * q for item, q in qty.items())
         net = max(0, gross - stock["usable"] - stock["confirmed_arrivals"])
         needs[ing] = {
             "ingredient": ing,
@@ -43,9 +49,9 @@ def week_needs(store: Store) -> dict[str, dict]:
             "confirmed_arrivals": stock["confirmed_arrivals"],
             "required": net,
             "servings": count,
-            "menu_items": line["menu_items"],
-            "formula": f"{count} servings ({' + '.join(line['menu_items'])}) x {line['qty_per_serving']} {line['unit']}"
-                       f" - {stock['usable']} stock - {stock['confirmed_arrivals']} arrivals",
+            "menu_items": list(qty),
+            "formula": " + ".join(f"{servings.get(item, 0)} {item} x {q} {line['unit']}" for item, q in qty.items())
+                       + f" - {stock['usable']} stock - {stock['confirmed_arrivals']} arrivals",
         }
     return needs
 

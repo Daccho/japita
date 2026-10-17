@@ -12,22 +12,26 @@ All menu prices, volumes, supplier relationships, ordering patterns, and storage
 
 | Item | Target selling price | Planned weekly servings |
 | --- | --- | --- |
-| Tonkotsu ramen | EUR 14 | 550 |
-| Tonkotsu set (extra chashu, seasoned egg, one kaedama) | EUR 18 | 200 |
-| Kuro mayu tonkotsu | EUR 16 | 120 |
-| Veggie miso ramen (kombu and shiitake broth) | EUR 14 | 130 |
-| Kaedama (noodle refill) | EUR 3 | Owner-entered rate per bowl |
-| Toppings: seasoned egg, chashu, kikurage, green onion, nori, garlic | Various | Not specified |
-| Sides and drinks: rice, beer, almond tofu | Various | Not specified |
+| Classic tonkotsu ramen | EUR 14 | 450 |
+| Kumo full set (ramen, extra chashu, kikurage, nori, half-boiled egg) | EUR 19 | 150 |
+| Kumo refill set (ramen, one kaedama, half-boiled egg) | EUR 16 | 200 |
+| Veggie miso ramen (kombu and shiitake broth) | EUR 14 | 100 |
+| Kaedama (noodle refill, 120 g) | EUR 3 | 450, including the 200 in refill sets |
+| Half kaedama (60 g) | EUR 2 | 80 |
+| Extra kikurage | EUR 2 | 60 |
+| Other toppings: chashu, green onion, garlic, nori, seasoned egg | Various | Not specified |
+| Rice, sides, drinks, dessert (chashu rice bowl, beer, soft drinks, matcha almond pudding) | Various | Not specified |
 
-The ramen volumes sum to 1,000 bowls. They are owner-entered planning assumptions, not model forecasts or observed sales. Kaedama means noodle demand exceeds one portion per bowl: noodle quantity comes from bowls, the set's included refill, and an owner-entered refill rate, never a model estimate. The menu is context; the MVP does not need complete recipes or cost coverage for every dish.
+The menu structure (one classic tonkotsu ramen, two sets, full and half refills, toppings, rice, sides, drinks, dessert) is inspired by common Hakata-style shops in Japan. Names, wording, and prices are our own; no real chain's names, signature items, or menu text. Daily servings and the per-item purchased quantities are in `backend/tests/fixtures/kumo.json`.
+
+The ramen volumes sum to 900 bowls. They are owner-entered planning assumptions, not model forecasts or observed sales. Kaedama means noodle demand exceeds one portion per bowl: noodle quantity comes from bowls, full refills (including those in refill sets), and half refills, never a model estimate. The menu is context; the MVP does not need complete recipes or cost coverage for every dish.
 
 ### Kitchen model
 
 - Prepare pork-bone broth and the vegetarian kombu-shiitake broth in-house.
 - Blend tonkotsu and miso tare in-house using purchased ingredients.
 - Prepare chashu, seasoned eggs, and other toppings in-house.
-- Buy noodles, specialty soy sauces, mayu, and Japanese condiments and dried goods.
+- Buy noodles, specialty soy sauces, dried kikurage, and Japanese condiments and dried goods.
 
 Record make-or-buy per component. The scenario does not establish whether stock concentrate is used. Vegetarian items must not share pork-based tare or oil; record this as a mandatory requirement on those ingredients, not as a model judgment.
 
@@ -37,7 +41,7 @@ Record make-or-buy per component. The scenario does not establish whether stock 
 | --- | --- | --- | --- |
 | Hakata-style noodles | 10 kg crate | Thin, straight, firm; low hydration; another fresh product or an approved frozen product may be acceptable | Twice weekly |
 | Koikuchi soy sauce | 20 L container | Naturally brewed, for tare; Japanese origin preferred; consistent salinity; sensory fit requires chef judgment | Every three weeks |
-| Mayu | 1 L bottle | Chef-approved aroma and bitterness | Every two weeks |
+| Dried kikurage | 500 g or 1 kg bag | Chef-approved texture after rehydration; Japanese-grown and pre-cut strips preferred | Every two weeks |
 | Pork bones | kg | Femur/backbone mix; traceability; fresh preferred; approved frozen alternative possible | Three deliveries weekly |
 | Pork back fat and chashu pork | kg | Consistent trim; traceability | Twice weekly |
 | Kombu and dried shiitake | 1 kg bag | For vegetarian broth; Japanese origin preferred | Monthly |
@@ -54,7 +58,7 @@ The stated shelf lives and storage instructions are fictional placeholders, not 
 | A: Lombardy noodle manufacturer | Custom Hakata-style noodles, Tuesday/Friday deliveries | A reported missed delivery, capacity uncertainty, transport surcharge |
 | B: Japanese food importer | Soy sauce, miso, kombu, shiitake, condiments | Lead times, minimum orders, changing prices |
 | C: local meat distributor | Pork bones, back fat, chashu pork | Variable specification and delivery windows |
-| D: specialty ramen importer | Mayu | Dependence on one supplier and unknown availability |
+| D: Japanese dried-goods supplier in Milan | Kikurage | Dependence on one supplier and unknown availability |
 
 A candidate Japanese noodle maker offering frozen Hakata-style noodles, with a Japanese specification sheet, is a natural discovered alternative for the primary demo. These are invented supplier histories, not measured reliability ratings. Show actual dated events if the demo uses them, and do not derive an authoritative supplier score from one event.
 
@@ -62,9 +66,9 @@ A candidate Japanese noodle maker offering frozen Hakata-style noodles, with a J
 
 1. **Primary demo: Friday noodle delivery at risk.** Compare existing and newly discovered backup offers on required date, product fit, pack size, minimum order, and delivered cost. Kaedama makes the noodle quantity visibly larger than the bowl count. An unapproved product or candidate account stays pending. A clarification can resolve a missing delivery commitment, then the owner approves a replacement order.
 2. **Secondary: evaluate a new soy sauce for tare.** Compare specifications, purchasing terms, price per unit, and chef sample notes. Leave unknown prices unknown. Origin and sensory requirements must be explicit.
-3. **Later: make or buy mayu.** This requires a recipe, batch yield, prep time, labor/energy assumptions, and chef validation. It is not part of the hackathon calculation engine.
+3. **Kikurage comparison.** Origin and cut are preferences; chef approval of texture is decided inside the restaurant (a sample), never asked of the supplier.
 
-The first two decisions plus mayu quote comparison provide three active purchase items. Pork bones, back fat, chashu pork, kombu, shiitake, and condiments can appear as background catalog records without adding full purchasing workflows. Japanese specification sheets for these background items add work for the parallel AMD analysis.
+The first two decisions plus the kikurage comparison provide three active purchase items. Pork bones, back fat, chashu pork, kombu, shiitake, and condiments can appear as background catalog records without adding full purchasing workflows. Japanese specification sheets for these background items add work for the parallel AMD analysis.
 
 ### Data still required before numerical claims
 
@@ -76,7 +80,7 @@ The first two decisions plus mayu quote comparison provide three active purchase
 | Expected deliveries, quantities, revised dates, and confirmation status | A delayed arrival must not count as available before receipt |
 | Comparable offers, quoted/synthetic prices, minimum orders, shipping, and storage capacity | Establishes feasible orders and delivered cost |
 | Weekly purchasing budget and hard versus negotiable preferences | Makes price/quality trade-offs testable |
-| Soy-sauce and mayu usage or owner-entered purchase needs | Prevents inferring consumption from replenishment frequency alone |
+| Soy-sauce and kikurage usage or owner-entered purchase needs | Prevents inferring consumption from replenishment frequency alone |
 | Evidence of chef approval and candidate account readiness | Distinguishes a promising offer from an orderable product |
 
 Use expressly labeled synthetic prices if needed for calculation tests. They are not wholesale market evidence. Do not claim a stockout time, cost saving, or complete dish margin until the required data supports it.

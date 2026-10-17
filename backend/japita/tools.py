@@ -80,7 +80,7 @@ def _p(props: dict, required: list[str] | None = None) -> dict:
     return {"type": "object", "properties": props, "required": required or []}
 
 
-INGREDIENT = {"type": "string", "enum": ["noodles", "soy_sauce", "mayu"]}
+INGREDIENT = {"type": "string", "enum": ["noodles", "soy_sauce", "kikurage"]}
 
 TOOLS: dict[str, tuple[Callable[..., Any], str, dict]] = {
     "get_restaurant_profile": (

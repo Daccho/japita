@@ -4,10 +4,10 @@
     "kumo-authentic": {
       "id": "kumo-authentic",
       "name": "Kumo Ramen Milano (fictional)",
-      "concept": "Hakata-style tonkotsu specialist in Milan, authentic profile: Japanese-brewed tare soy sauce and low-hydration noodles are mandatory",
+      "concept": "Hakata-style tonkotsu specialist in Milan (fictional): one classic pork-bone ramen, two sets, refills, plus one vegetarian bowl. Authentic profile: Japanese-brewed tare soy sauce, low-hydration noodles, and chef-approved kikurage are mandatory",
       "menu_price_eur": [
         14,
-        18
+        19
       ],
       "weekly_budget_eur": 900,
       "priorities": {
@@ -70,21 +70,27 @@
             }
           ]
         },
-        "mayu": {
+        "kikurage": {
           "mandatory": [
             {
               "field": "chef_approved",
               "op": "eq",
               "value": true,
-              "label": "Chef-approved aroma and bitterness"
+              "label": "Chef-approved texture after rehydration"
             }
           ],
           "negotiable": [
             {
-              "field": "additive_free",
+              "field": "origin_country",
               "op": "eq",
-              "value": true,
-              "label": "No additives"
+              "value": "JP",
+              "label": "Japanese-grown preferred"
+            },
+            {
+              "field": "cut",
+              "op": "eq",
+              "value": "strips",
+              "label": "Pre-cut strips (saves prep)"
             }
           ]
         }
@@ -96,7 +102,7 @@
       "concept": "Same tonkotsu shop, value profile: Japanese origin, low hydration, and chef approval are preferences, delivered cost comes first",
       "menu_price_eur": [
         12,
-        15
+        17
       ],
       "weekly_budget_eur": 750,
       "priorities": {
@@ -154,7 +160,7 @@
             }
           ]
         },
-        "mayu": {
+        "kikurage": {
           "mandatory": [],
           "negotiable": [
             {
@@ -162,6 +168,12 @@
               "op": "eq",
               "value": true,
               "label": "Chef-approved preferred"
+            },
+            {
+              "field": "cut",
+              "op": "eq",
+              "value": "strips",
+              "label": "Pre-cut strips (saves prep)"
             }
           ]
         }
@@ -173,33 +185,32 @@
     "lines": [
       {
         "ingredient": "noodles",
-        "qty_per_serving": 120,
         "unit": "g",
-        "menu_items": [
-          "tonkotsu",
-          "tonkotsu_set",
-          "kuro_mayu_tonkotsu",
-          "veggie_miso",
-          "kaedama"
-        ]
+        "per_item": {
+          "tonkotsu": 120,
+          "set_full": 120,
+          "set_kaedama": 120,
+          "veggie_miso": 120,
+          "kaedama": 120,
+          "half_kaedama": 60
+        }
       },
       {
         "ingredient": "soy_sauce",
-        "qty_per_serving": 15,
         "unit": "ml",
-        "menu_items": [
-          "tonkotsu",
-          "tonkotsu_set",
-          "kuro_mayu_tonkotsu"
-        ]
+        "per_item": {
+          "tonkotsu": 15,
+          "set_full": 15,
+          "set_kaedama": 15
+        }
       },
       {
-        "ingredient": "mayu",
-        "qty_per_serving": 10,
-        "unit": "ml",
-        "menu_items": [
-          "kuro_mayu_tonkotsu"
-        ]
+        "ingredient": "kikurage",
+        "unit": "g",
+        "per_item": {
+          "set_full": 3,
+          "extra_kikurage": 3
+        }
       }
     ]
   },
@@ -209,13 +220,15 @@
       "2026-10-19",
       "2026-10-25"
     ],
-    "_note": "Owner-entered servings. kaedama counts every refill, including the one in each set (200 + 180 extra).",
+    "_note": "Owner-entered servings (fictional). kaedama counts every full refill, including the one in each refill set (200 + 250 extra).",
     "servings": {
-      "tonkotsu": 550,
-      "tonkotsu_set": 200,
-      "kuro_mayu_tonkotsu": 120,
-      "veggie_miso": 130,
-      "kaedama": 380
+      "tonkotsu": 450,
+      "set_full": 150,
+      "set_kaedama": 200,
+      "veggie_miso": 100,
+      "kaedama": 450,
+      "half_kaedama": 80,
+      "extra_kikurage": 60
     },
     "stock": {
       "noodles": {
@@ -230,82 +243,96 @@
         "unit": "ml",
         "usable_until": "2027-03-31"
       },
-      "mayu": {
-        "usable": 700,
+      "kikurage": {
+        "usable": 300,
         "confirmed_arrivals": 0,
-        "unit": "ml",
-        "usable_until": "2026-12-31"
+        "unit": "g",
+        "usable_until": "2027-06-30"
       }
     },
     "days": [
       {
         "date": "2026-10-19",
         "servings": {
-          "tonkotsu": 55,
-          "tonkotsu_set": 20,
-          "kuro_mayu_tonkotsu": 12,
-          "veggie_miso": 13,
-          "kaedama": 38
+          "tonkotsu": 45,
+          "set_full": 15,
+          "set_kaedama": 20,
+          "veggie_miso": 10,
+          "kaedama": 45,
+          "half_kaedama": 8,
+          "extra_kikurage": 6
         }
       },
       {
         "date": "2026-10-20",
         "servings": {
-          "tonkotsu": 66,
-          "tonkotsu_set": 24,
-          "kuro_mayu_tonkotsu": 14,
-          "veggie_miso": 16,
-          "kaedama": 46
+          "tonkotsu": 54,
+          "set_full": 18,
+          "set_kaedama": 24,
+          "veggie_miso": 12,
+          "kaedama": 54,
+          "half_kaedama": 10,
+          "extra_kikurage": 7
         }
       },
       {
         "date": "2026-10-21",
         "servings": {
-          "tonkotsu": 72,
-          "tonkotsu_set": 26,
-          "kuro_mayu_tonkotsu": 16,
-          "veggie_miso": 17,
-          "kaedama": 49
+          "tonkotsu": 59,
+          "set_full": 20,
+          "set_kaedama": 26,
+          "veggie_miso": 13,
+          "kaedama": 59,
+          "half_kaedama": 10,
+          "extra_kikurage": 8
         }
       },
       {
         "date": "2026-10-22",
         "servings": {
-          "tonkotsu": 77,
-          "tonkotsu_set": 28,
-          "kuro_mayu_tonkotsu": 17,
-          "veggie_miso": 18,
-          "kaedama": 53
+          "tonkotsu": 63,
+          "set_full": 21,
+          "set_kaedama": 28,
+          "veggie_miso": 14,
+          "kaedama": 63,
+          "half_kaedama": 11,
+          "extra_kikurage": 9
         }
       },
       {
         "date": "2026-10-23",
         "servings": {
-          "tonkotsu": 94,
-          "tonkotsu_set": 34,
-          "kuro_mayu_tonkotsu": 20,
-          "veggie_miso": 22,
-          "kaedama": 65
+          "tonkotsu": 77,
+          "set_full": 26,
+          "set_kaedama": 34,
+          "veggie_miso": 17,
+          "kaedama": 77,
+          "half_kaedama": 14,
+          "extra_kikurage": 10
         }
       },
       {
         "date": "2026-10-24",
         "servings": {
-          "tonkotsu": 104,
-          "tonkotsu_set": 38,
-          "kuro_mayu_tonkotsu": 23,
-          "veggie_miso": 25,
-          "kaedama": 72
+          "tonkotsu": 85,
+          "set_full": 28,
+          "set_kaedama": 38,
+          "veggie_miso": 19,
+          "kaedama": 85,
+          "half_kaedama": 15,
+          "extra_kikurage": 11
         }
       },
       {
         "date": "2026-10-25",
         "servings": {
-          "tonkotsu": 82,
-          "tonkotsu_set": 30,
-          "kuro_mayu_tonkotsu": 18,
-          "veggie_miso": 19,
-          "kaedama": 57
+          "tonkotsu": 67,
+          "set_full": 22,
+          "set_kaedama": 30,
+          "veggie_miso": 15,
+          "kaedama": 67,
+          "half_kaedama": 12,
+          "extra_kikurage": 9
         }
       }
     ],
@@ -407,12 +434,13 @@
       "name": "Nippon Ramen Supply Europe (fictional)",
       "relationship": "existing",
       "account_status": "approved",
-      "min_order_eur": 20,
+      "min_order_eur": 15,
       "shipping_eur": 8,
       "delivery_days": [
         "thu"
       ],
-      "lead_time_days": 1
+      "lead_time_days": 1,
+      "_note": "Fictional existing supplier of Japanese dried goods in Milan."
     }
   },
   "offers": [
@@ -578,67 +606,136 @@
       "document": "doc-soy-4.pdf"
     },
     {
-      "id": "O-mayu-1",
+      "id": "O-kik-1",
       "supplier_id": "S6",
-      "ingredient": "mayu",
-      "product": "Kuro Mayu Black Garlic Oil 1 L",
-      "unit": "ml",
+      "ingredient": "kikurage",
+      "product": "Dried kikurage, whole 1 kg",
+      "unit": "g",
       "pack_size": 1000,
-      "price_eur": 24.0,
+      "price_eur": 19.0,
       "offer_date": "2026-10-08",
-      "origin_route": "japan",
-      "comparison_group": "mayu:black_garlic_oil",
+      "origin_route": "europe",
+      "comparison_group": "kikurage:dried",
       "attributes": {
         "chef_approved": true,
-        "additive_free": true
+        "origin_country": "CN",
+        "cut": "whole"
       },
       "evidence": {
         "chef_approved": "[TEST DATA] Chef sample note 2026-09-30: approved",
-        "additive_free": "原材料：ごま油、にんにく、ラード（添加物不使用）"
+        "origin_country": "原産国：中国",
+        "cut": "形状：ホール"
       },
-      "document": "doc-mayu-1.pdf"
+      "document": "doc-kik-1.pdf"
     },
     {
-      "id": "O-mayu-2",
+      "id": "O-kik-2",
       "supplier_id": "S3",
-      "ingredient": "mayu",
-      "product": "Black Garlic Oil 500 ml",
-      "unit": "ml",
+      "ingredient": "kikurage",
+      "product": "Dried kikurage strips 500 g",
+      "unit": "g",
       "pack_size": 500,
-      "price_eur": 9.5,
+      "price_eur": 8.5,
       "offer_date": "2026-10-14",
       "origin_route": "europe",
-      "comparison_group": "mayu:black_garlic_oil",
+      "comparison_group": "kikurage:dried",
       "attributes": {
         "chef_approved": null,
-        "additive_free": false
+        "origin_country": "CN",
+        "cut": "strips"
       },
       "evidence": {
         "chef_approved": "No chef sample recorded",
-        "additive_free": "Ingredients: sunflower oil, sesame oil, garlic, colour E150a"
+        "origin_country": "Origin: China",
+        "cut": "Cut: strips"
       },
-      "document": "doc-mayu-2.pdf"
+      "document": "doc-kik-2.pdf"
     },
     {
-      "id": "O-mayu-3",
+      "id": "O-kik-3",
       "supplier_id": "S5",
-      "ingredient": "mayu",
-      "product": "Kumamoto Mayu 1 L",
-      "unit": "ml",
-      "pack_size": 1000,
-      "price_eur": 18.0,
+      "ingredient": "kikurage",
+      "product": "Kyushu-grown dried kikurage strips 500 g",
+      "unit": "g",
+      "pack_size": 500,
+      "price_eur": 21.0,
       "offer_date": "2026-10-10",
       "origin_route": "japan",
-      "comparison_group": "mayu:black_garlic_oil",
+      "comparison_group": "kikurage:dried",
       "attributes": {
         "chef_approved": null,
-        "additive_free": true
+        "origin_country": "JP",
+        "cut": "strips"
       },
       "evidence": {
         "chef_approved": "No chef sample recorded",
-        "additive_free": "原材料：ごま油、にんにく（無添加）"
+        "origin_country": "原産地：熊本県",
+        "cut": "形状：スライス"
       },
-      "document": "doc-mayu-3.jpg"
+      "document": "doc-kik-3.jpg"
     }
-  ]
+  ],
+  "menu": [
+    {
+      "id": "tonkotsu",
+      "name": "Classic tonkotsu ramen",
+      "price_eur": 14,
+      "description": "Pork-bone broth, thin straight noodles, chashu and green onion."
+    },
+    {
+      "id": "set_full",
+      "name": "Kumo full set",
+      "price_eur": 19,
+      "description": "Classic ramen with extra chashu, kikurage, nori and a half-boiled seasoned egg."
+    },
+    {
+      "id": "set_kaedama",
+      "name": "Kumo refill set",
+      "price_eur": 16,
+      "description": "Classic ramen with one noodle refill and a half-boiled seasoned egg."
+    },
+    {
+      "id": "veggie_miso",
+      "name": "Veggie miso ramen",
+      "price_eur": 14,
+      "description": "Kombu and shiitake broth with miso tare. Vegetarian: no pork-based tare or oil."
+    },
+    {
+      "id": "kaedama",
+      "name": "Kaedama (noodle refill)",
+      "price_eur": 3,
+      "description": "Extra portion of noodles for the remaining broth. Weekly count includes the refill in each refill set."
+    },
+    {
+      "id": "half_kaedama",
+      "name": "Half kaedama",
+      "price_eur": 2,
+      "description": "Half portion of noodles."
+    },
+    {
+      "id": "extra_kikurage",
+      "name": "Extra kikurage",
+      "price_eur": 2,
+      "description": "Topping: sliced wood-ear mushroom."
+    },
+    {
+      "id": "toppings",
+      "name": "Other toppings",
+      "price_eur": null,
+      "description": "Extra chashu, green onion, garlic, nori, seasoned egg."
+    },
+    {
+      "id": "rice",
+      "name": "Rice (regular or small)",
+      "price_eur": null,
+      "description": "Steamed rice."
+    },
+    {
+      "id": "sides_drinks",
+      "name": "Sides, drinks and dessert",
+      "price_eur": null,
+      "description": "Chashu rice bowl, beer, soft drinks, matcha almond pudding."
+    }
+  ],
+  "_notice_menu": "Menu structure is inspired by common Hakata-style tonkotsu shops in Japan; names, wording, and prices are our own. No real brand's names, signature items, or menu text."
 }
