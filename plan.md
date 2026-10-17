@@ -4,13 +4,15 @@ Working draft - 17 October 2026
 
 ## Product
 
-Japita helps Japanese ramen businesses opening in Italy turn recipes, ingredient specifications, and supplier offers into a practical sourcing and purchasing plan. It compares Japanese imports with European alternatives against the chef's requirements, budget, delivery needs, and available compliance evidence. It identifies missing information, prepares supplier clarification requests, and updates the plan before a person approves purchases.
+Japita centralizes restaurant suppliers, product offers, purchasing, and spending in one app. Its advisor helps owners compare their existing suppliers with new options and choose a weekly purchasing basket based on quality, delivered price, and their own preferences. It explains trade-offs, identifies missing supplier information, and prepares purchases for human approval.
 
-**First demo customer:** a Japanese ramen business preparing to open in Milan.
+**Main promise:** Manage your suppliers in one place and choose the right ingredients for your restaurant's goals.
 
-**Core question:** What should we source from Japan, what can we source in Europe, and what still needs checking?
+**First demo customer:** a Japanese ramen business in Milan, managing a normal week of purchasing. This refines the previously selected Japanese-business-in-Italy audience from pre-opening planning to recurring operations.
 
-**Proposed primary value:** reduce sourcing research and supplier coordination while respecting budget and chef requirements. This value proposition still needs confirmation and customer validation.
+**Core question:** What should we buy this week, from which suppliers, and why are those choices right for our restaurant?
+
+**Confirmed product direction:** support both existing-supplier management and new-supplier discovery. Evaluate price and quality against the owner's preferences. Reduced coordination and better purchasing decisions are complementary benefits. Customer demand, achievable savings, and willingness to pay remain unvalidated.
 
 ## Confirmed context
 
@@ -18,7 +20,9 @@ Japita helps Japanese ramen businesses opening in Italy turn recipes, ingredient
 - The Japanese teammate has more experience building with AI agents.
 - The team reports having an AMD API key, Evolus credits, and access to Gemma.
 - There is no restaurant contact and no real supplier documentation yet.
-- The user selected Japanese ramen businesses opening in Italy as the first audience.
+- The user initially selected Japanese ramen businesses opening in Italy, then chose a normal purchasing week as the demo workflow.
+- The user confirmed both existing suppliers and discovery of new suppliers belong in the product.
+- The user wants choices tailored to quality, price, and restaurant preferences, with centralized management and advice.
 - The repository currently has no application implementation.
 
 An AMD API key does not establish access to a GPU machine or an independently operated vLLM endpoint. The exact infrastructure and Gemma model remain to be confirmed. Do not put credentials in this document or the repository.
@@ -46,30 +50,46 @@ Build one complete process for one restaurant, one recipe, and three ingredients
 2. Soup base: demonstrate ambiguous ingredients and supplier clarification.
 3. Fresh noodles: demonstrate specifications, delivery, and local alternatives.
 
-Use a small curated catalog with three to five fictional suppliers. Add kombu and katsuobushi only after the initial process works end to end.
+Use a small curated catalog with three to five fictional suppliers, including both existing relationships and new candidates. Discovery searches this bounded catalog for the MVP; do not imply exhaustive supplier coverage. Add kombu and katsuobushi only after the initial process works end to end.
+
+### Main interface
+
+- **Weekly overview:** purchasing needs, spending against budget, pending approvals, delivery status, and actionable recommendations.
+- **Suppliers and products:** existing suppliers and discoverable candidates in one searchable view, with offers, specifications, delivery terms, and document references.
+- **Purchasing basket:** compare feasible options, inspect trade-offs, adjust selections, and approve supplier-specific orders from one basket.
+- **Restaurant goals:** edit concept, quality requirements, budget, delivery needs, and substitution preferences.
+
+Place advice alongside the relevant product comparison or basket. Chat can help clarify goals and missing information but should not be the only way to operate the app.
 
 ### Owner inputs
 
-- Restaurant concept, location, and opening date.
+- Restaurant concept, location, target menu price range, and purchasing week.
 - Expected bowls per week, supplied by the owner rather than forecast by the LLM.
 - Recipe quantities per bowl and purchasing period.
-- Purchasing budget.
+- Manually entered usable stock and confirmed incoming quantities for that period; no full inventory integration is required.
+- Purchasing budget and the owner's relative priorities for quality, cost, and convenience.
 - Chef-defined requirements such as Japanese-brewed soy sauce, noodle specifications, or acceptable substitutions.
-- Ingredient specifications and supplier offers.
+- Storage limits, required delivery dates, and preference for fewer suppliers or deliveries.
+- Existing supplier relationships, ingredient specifications, and offers.
+
+Concept labels such as premium or casual are initial context. Confirm concrete ingredient requirements rather than assuming a premium business always wants the most expensive product or a casual business always accepts lower quality. Preferences may differ by ingredient.
 
 ### Plan output
 
 For each ingredient, show:
 
-- Product and supplier.
+- Product and supplier, including whether the supplier is an existing relationship or a new candidate.
 - Source route: Japan, Europe, or Italy.
 - Required amount, pack size, purchase quantity, and minimum order.
 - Estimated delivered cost, with assumptions and missing costs visible.
-- Delivery assumptions and whether the opening date can be met.
+- Delivery assumptions and whether the week's required delivery dates can be met.
+- Documented quality characteristics and fit with the owner's stated preferences.
 - Evidence status, source document references, and unresolved questions.
 - Recommended next action and explanation.
 
 Keep sourcing route separate from evidence status. An item can be available locally and still require document review.
+
+Show the current-supplier basket as a baseline when comparable offers exist. A new candidate with missing terms, availability, or account approval is not ready to order merely because its listed price is attractive.
 
 ### Approval and execution
 
@@ -81,17 +101,19 @@ Real supplier communications, purchases, payments, and official submissions requ
 
 ## Demo scenario
 
-1. The owner enters a Milan location, opening date, expected bowls, budget, and chef requirements.
-2. The owner uploads Japanese specifications and fictional supplier offers.
-3. The system extracts records and presents initial sourcing options with evidence.
-4. A low-cost soup base contains chicken extract and an unspecified protein source. The original Japanese text is highlighted, and the option is marked as requiring clarification.
-5. Gemma prepares a precise, polite Japanese supplier question.
-6. A person approves the test message. A team-controlled supplier reply supplies missing information; identify the exchange as test data.
-7. The system updates the ingredient record, applies the limited rules, and recalculates feasible purchasing baskets. New information changes the recommendation or review requirements without implying automatic legal clearance.
-8. The owner compares trade-offs and approves a plan.
-9. Purchase-order drafts are created, demo orders receive simulated acknowledgments, and committed spending updates.
+1. The owner opens a normal purchasing week for a ramen restaurant in Milan, with expected bowls, usable stock, budget, and saved chef requirements.
+2. Existing supplier offers and specifications are centralized in the app. The owner searches the curated catalog for new alternatives.
+3. The system calculates needs and compares the existing-supplier basket with alternative baskets, including pack sizes, minimum orders, and shipping.
+4. The advisor explains which offers meet mandatory requirements and where price, quality preferences, delivery, and convenience differ.
+5. A cheaper offer lacks a required product or delivery detail. Gemma prepares a specific Japanese clarification request, with the missing evidence shown.
+6. A person approves the test message. A team-controlled supplier reply supplies the missing detail; identify the exchange as test data.
+7. The system updates the offer and recalculates the baskets. The owner changes a quality preference or substitution rule and sees the recommendation change, with an explanation and calculated cost difference.
+8. The owner compares the trade-offs and approves the weekly basket.
+9. Supplier-specific purchase-order drafts are created, demo orders receive simulated acknowledgments, and committed spending updates in the overview.
 
-The key moment is a supplier answer changing a business decision, with evidence and numerical consequences visible.
+The key moment is a weekly basket changing for an understandable reason: a restaurant preference or a supplier answer. Show why the recommended choice fits the restaurant, not just which unit price is lowest. A premium and an affordable ramen profile can illustrate this with the same offer catalog, provided the relevant preferences are explicit.
+
+Ingredient ambiguity and import evidence remain useful supporting capabilities. They do not need to dominate the weekly-purchasing demonstration.
 
 ## Architecture
 
@@ -111,11 +133,11 @@ Start with one main agent and explicit tools. Do not build six separate agents f
 
 | Component | Responsibility |
 | --- | --- |
-| Gemma on AMD through vLLM | Interpret Japanese specifications, identify ambiguity, choose clarification questions, and explain alternatives. |
+| Gemma on AMD through vLLM | Interpret restaurant goals and Japanese specifications, identify ambiguity, choose clarification questions, and explain price/quality trade-offs using tool results. |
 | Evolus workflow | Coordinate document intake, extraction, agent steps, and result delivery. |
 | Evolus document extractor | Convert specifications into structured records using a defined schema. |
 | Application code | Validate records, calculate costs and quantities, enforce approvals, and persist state. |
-| Web interface | Compare options, inspect evidence, approve actions, and show spending and execution status. |
+| Web interface | Centralize existing suppliers, discover candidates, compare options, inspect evidence, approve actions, and show spending and execution status. |
 
 Workflow plus document extractor provides two relevant Evolus building blocks. A knowledge library is an optional later addition.
 
@@ -140,18 +162,27 @@ Native tool calling requires model-appropriate vLLM configuration. Test it befor
 
 Gemma interprets preferences and evidence; application code calculates quantities and evaluates feasible baskets.
 
-- Convert recipe usage and owner-entered bowl counts into ingredient requirements.
+- Convert recipe usage and owner-entered bowl counts into requirements, subtracting usable stock and confirmed arrivals within the purchasing period.
 - Round to saleable pack sizes and apply minimum-order quantities.
 - Include supplier-level shipping charges and delivery constraints.
 - Apply hard chef requirements before ranking options.
+- Distinguish mandatory requirements from negotiable preferences. User-confirmed quality attributes and product evidence determine preference fit; do not invent supplier ratings or quality claims.
 - Compare only products with explicit, compatible units and specifications.
 - Record exchange-rate and import-cost assumptions where applicable.
 - Keep unknown costs visible; do not silently treat them as zero.
 - If no basket satisfies the constraints, explain the conflict and ask which constraint may change.
 
-For the small catalog, enumerate feasible combinations and choose the lowest estimated cost among options meeting the owner's requirements. Avoid a large optimization framework for the MVP.
+For the small catalog, enumerate feasible combinations and show meaningful alternatives: lowest delivered cost meeting mandatory requirements, strongest fit with stated quality preferences, or fewer suppliers/deliveries. Show these only when the data supports distinct options. Explain why a recommendation fits the current priorities and how it differs from the existing-supplier basket. Avoid an arbitrary combined score that hides the trade-offs, and avoid a large optimization framework for the MVP.
 
 Do not invent an authenticity score. Ask about concrete origin, production method, brand, texture, and substitution requirements. A chef determines acceptability.
+
+### Price comparisons and benchmarks
+
+The MVP compares known supplier offers. Show normalized unit prices and basket-level delivered costs, with offer dates, source documents, and the number of comparable offers. If displaying a median or average, calculate it in code and identify the underlying comparison set.
+
+Compare like products or explicitly label substitutes. Different grades, production methods, origins, pack sizes, tax bases, and delivery terms must not silently become one benchmark. Show insufficient comparable data rather than manufacturing a market price.
+
+The demo uses labeled sample-offer comparisons, not real market benchmarks. Later versions can add the restaurant's invoice history and broader benchmarks when suitable data and permissions exist.
 
 ## Evidence and compliance boundaries
 
@@ -171,9 +202,11 @@ The original PDF's claim that all data remains exclusively on our own GPUs must 
 Create a clearly labeled fictional supplier pack containing:
 
 - One shoyu ramen recipe with consistent usage quantities.
+- One normal purchasing week, with manually entered stock and confirmed arrivals.
+- A restaurant profile with mandatory and negotiable ingredient preferences, plus a second profile for demonstrating different priorities.
 - Three Japanese ingredient specifications.
-- Supplier offers with prices, units, pack sizes, minimum orders, and delivery assumptions.
-- One deliberately ambiguous soup-base specification.
+- Existing and candidate supplier offers with prices, units, quality attributes, offer dates, pack sizes, minimum orders, and delivery assumptions.
+- One offer missing a decision-relevant product or delivery detail; an ambiguous soup-base specification can be used if useful.
 - A Japanese clarification request and test supplier reply.
 - Expected extraction records and independently calculated basket totals.
 
@@ -187,8 +220,8 @@ The Japanese teammate reviews language and ingredient ambiguity. The Italian tea
 | --- | --- | --- |
 | 1 | Infrastructure proof | Evolus calls Gemma on AMD through vLLM and successfully invokes one tool. |
 | 2 | Demo data and schemas | Documents, extracted records, offers, and expected calculations agree. |
-| 3 | One complete ingredient | Upload, extraction, clarification, reply ingestion, and revised recommendation work. |
-| 4 | Three-ingredient sourcing plan | Costs and constraints are calculated in code, with evidence shown. |
+| 3 | One complete ingredient | Existing and candidate offers, extraction, comparison, clarification, and a revised recommendation work. |
+| 4 | Three-ingredient weekly basket | Quantities, costs, and constraints are calculated in code; changing an explicit preference produces an explained result. |
 | 5 | Approval and demo execution | Approved purchase orders receive simulated acknowledgments and update committed spending. |
 | 6 | Submission package | Hosted app, public repo, runnable README, Docker setup, cover, video, and pitch are ready. |
 
@@ -208,6 +241,9 @@ Both teammates can use AI coding tools. Review generated changes in small steps 
 
 - Compare extracted fields with manually reviewed expected records, especially omissions and unknowns.
 - Verify pack rounding, minimum orders, shipping allocation, and budget totals against independent calculations.
+- Verify usable stock and incoming quantities are counted once and applied to the right purchasing period.
+- Verify benchmark groups, offer counts, unit conversions, dates, and any displayed mean or median.
+- Verify changing a negotiable preference changes the relevant comparison while mandatory requirements remain enforced.
 - Confirm that missing evidence cannot silently become an approved recommendation.
 - Confirm that approval applies to the current plan version and that changes require renewed approval.
 - Prevent duplicate demo orders when a submission is retried.
@@ -235,10 +271,10 @@ The longer-term roadmap can add real supplier onboarding, verified catalog feeds
 1. What AMD API base URL/domain and exact Gemma model are already available? Is there SSH access to an AMD Developer Cloud GPU machine? Share no credentials.
 2. Is the existing Evolus workspace an event workspace, and can its main agent use our own model endpoint?
 3. How many hours can each teammate work before submission? Has implementation started elsewhere?
-4. Should the primary promise be reduced research and coordination, lower purchasing costs, or preserving chef requirements?
+4. Which documented quality attributes and mandatory preferences should distinguish the two demo restaurant profiles?
 5. What is the exact submission cutoff and time zone? Which track selections are available?
 
-Customer interviews remain a post-demo validation priority. Test whether overseas expansion teams experience this problem often enough and would pay for the proposed workflow.
+Customer interviews remain a post-demo validation priority. Test whether ramen owners and purchasing managers find enough value in centralized weekly purchasing, supplier discovery, and personalized advice to adopt and pay for it.
 
 ## Research references
 
@@ -254,5 +290,6 @@ Reviewed on 17 October 2026. Public integration documentation is not proof that 
 - [EU Regulation 2023/915, consolidated 1 July 2025: Annex I, entry 5.1.8](https://eur-lex.europa.eu/eli/reg/2023/915/2025-07-01/eng/pdf)
 - [Supy procurement: existing procurement and approval functionality](https://supy.io/platform/restaurant-procurement-software)
 - [Choco: restaurant ordering and distributor automation](https://choco.com/us/stories/suppliers/from-restaurant-app-to-ai-partner-for-distributors-the-evolution-of-choco)
+- [MarketMan: centralized vendors, price comparisons, and purchasing](https://www.marketman.com/platform/restaurant-purchasing-software-and-order-management)
 
 The seven-page user-provided proposal, "Hackathon Idea: Ramen Sourcing Agent," informed this plan. Its unverified legal, market, and privacy claims are not adopted as established facts.

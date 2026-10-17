@@ -52,7 +52,7 @@ When making trade-offs, favor things that are **visible in the demo** and that m
 
 ## 2. Project: japita
 
-- **What it is:** _TBD — one-paragraph pitch: problem, target user, solution._
+- **What it is:** A restaurant supplier and purchasing app that centralizes existing suppliers, helps discover new ones, and advises on weekly baskets based on quality, delivered price, and owner preferences. The first demo serves a Japanese ramen business in Italy during a normal purchasing week. See `plan.md` for the working scope.
 - **AMD usage:** _TBD — which part runs on AMD (e.g. model X served with vLLM on MI-series GPU via AMD Developer Cloud)._
 - **Stack:** _TBD_
 - **Architecture:** _TBD — keep a short diagram/bullet list here as it emerges._
@@ -104,3 +104,4 @@ Record important decisions here (date — decision — reason) so every agent sh
 
 - 2026-10-17 — Created AGENTS.md as shared memory for Claude Code and Codex.
 - 2026-10-17 — Selected Japanese ramen businesses opening in Italy as the first demo audience, as confirmed by the user. See `plan.md` for the working MVP proposal and unresolved infrastructure questions.
+- 2026-10-17 — Refined the demo to a normal purchasing week, including both existing suppliers and discovery of new options. The user confirmed that centralized management and advice based on quality, price, and restaurant preferences are the product's focus; pre-opening import planning is no longer the central workflow.
