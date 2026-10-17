@@ -14,7 +14,7 @@ Keep it short: rules and pointers live here, details live in `docs/`. Each fact 
 - **Track (proposed):** Reinvent Commerce + Evolus Business Agents on AMD.
 - **AMD usage (planned, not yet proven):** `google/gemma-4-26B-A4B-it` in BF16, served with vLLM on one AMD Instinct GPU on AMD Developer Cloud, as the Evolus main agent's model. It reads Japanese specifications (including images), analyzes all offers in parallel, and double-reads specifications to catch extraction errors. Fallback: `google/gemma-4-E4B-it`.
 - **Stack (provisional):** FastAPI, Next.js, SQLite via SQLAlchemy, Docker.
-- **Status:** no application code yet. Milestone 1 is the infrastructure proof in `docs/architecture.md`.
+- **Status:** the backend has an agent, deterministic calculations, an input API, and Postgres persistence. The interactive mockup in `mockup/` is separate from the backend; see `docs/mockup-handoff.md`.
 
 ### Docs map (read only what the task needs)
 
@@ -31,6 +31,7 @@ Keep it short: rules and pointers live here, details live in `docs/`. Each fact 
 | `docs/demo.md` | Demo scenario, dataset, verification |
 | `docs/hackathon.md` | Awards, build sequence, division of work, submission checklist, resources |
 | `docs/open-questions.md` | Unresolved questions |
+| `docs/mockup-handoff.md` | Current visual mockup, approved UI decisions, exclusions, and continuation prompt |
 
 ### Commands
 ```bash
@@ -105,3 +106,4 @@ Record important decisions here (date — decision — reason) so every agent sh
 - 2026-10-17 — Documented a proposed supplier data strategy in `docs/supplier-data.md`: combine restaurant uploads, web discovery, and supplier-confirmed terms; public discovery alone does not establish an orderable offer. Live web discovery remains a stretch proposal pending scope agreement.
 - 2026-10-17 — Changed the Kumo Ramen Milano fixture to a fictional Hakata-style tonkotsu specialist with one vegetarian bowl, replacing the mixed shoyu/tonkotsu menu. Kaedama makes noodle demand exceed bowl count, which strengthens the noodle-delay demo; noodles, soy sauce, and mayu remain the three active items. Real chains are general reference only; no real brand names, menus, or signature items.
 - 2026-10-17 — Connected the agent to `Gemma-4-31B-IT` on AMD Radeon Cloud TokenFactory (`https://developer.amd.com.cn/radeon/api/v1`, OpenAI-compatible, hackathon API key). Smoke test passed: Japanese spec reading and native tool calling work. This is an AMD-hosted service, not our own vLLM; whether it satisfies the Evolus track's "own vLLM endpoint" rule is still unconfirmed.
+- 2026-10-17 — Preserved the selected Weekly workspace mockup in `mockup/` for cross-chat editing. UI decisions, explicit exclusions, preview instructions, and the continuation prompt are in `docs/mockup-handoff.md`; the mockup remains separate from the backend.

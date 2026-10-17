@@ -1,0 +1,415 @@
+<div id="japita-lookbook">
+  <style>
+    #japita-lookbook { --jp-bg:light-dark(#f7f6f1,#191c19); --jp-paper:light-dark(#ffffff,#222722); --jp-text:light-dark(#23312b,#e8ece6); --jp-muted:light-dark(#657068,#acb6ac); --jp-line:light-dark(#e0e5dc,#3b443b); --jp-soft:light-dark(#eef2e9,#2c352b); --jp-accent:light-dark(#335b45,#a2cfad); --jp-on-accent:light-dark(#ffffff,#19271b); --jp-warn:light-dark(#946023,#e9bc82); --jp-warn-bg:light-dark(#fbf2e4,#3a3023); --jp-nav:light-dark(#e7ece2,#323e31); color:var(--jp-text); font:400 14px/1.5 Inter, ui-sans-serif, system-ui, sans-serif; }
+    #japita-lookbook * { box-sizing:border-box; }
+    #japita-lookbook [hidden] { display:none!important; }
+    #japita-lookbook .jp-stage { min-height:800px; }
+    #japita-lookbook .jp-app { --jp-radius:14px; --jp-pad:20px; background:var(--jp-bg); border:1px solid var(--jp-line); border-radius:16px; min-height:780px; overflow:clip; color:var(--jp-text); }
+    #japita-lookbook .jp-app.jp-compact { --jp-pad:14px; }
+    #japita-lookbook button,#japita-lookbook input,#japita-lookbook select,#japita-lookbook textarea { font:inherit; color:inherit; }
+    #japita-lookbook button { border:0; background:transparent; }
+    #japita-lookbook button:focus-visible,#japita-lookbook input:focus-visible,#japita-lookbook select:focus-visible { outline:2px solid var(--jp-accent); outline-offset:3px; }
+    #japita-lookbook .jp-app h1,#japita-lookbook .jp-app h2,#japita-lookbook .jp-app h3,#japita-lookbook .jp-app p { margin:0; }
+    #japita-lookbook .jp-app h1 { font-size:27px; line-height:1.22; font-weight:500; letter-spacing:-.8px; }
+    #japita-lookbook .jp-app h2 { font-size:18px; font-weight:500; letter-spacing:-.35px; }
+    #japita-lookbook .jp-app h3 { font-size:14px; font-weight:500; }
+    #japita-lookbook .jp-app small { font-size:12px; }
+    #japita-lookbook .jp-muted { color:var(--jp-muted); }
+    #japita-lookbook .jp-kicker { font-size:11px; letter-spacing:1.5px; text-transform:uppercase; font-weight:500; color:var(--jp-muted); }
+    #japita-lookbook .jp-number { font-variant-numeric:tabular-nums; }
+    #japita-lookbook .jp-brand { display:flex; align-items:center; gap:9px; font-size:23px; font-weight:500; letter-spacing:-1px; }
+    #japita-lookbook .jp-logo { width:29px; height:29px; background:var(--jp-accent); color:var(--jp-on-accent); border-radius:50%; display:grid; place-items:center; }
+    #japita-lookbook .jp-logo i,#japita-lookbook .jp-logo svg { width:17px; height:17px; }
+    #japita-lookbook .jp-top { background:var(--jp-paper); padding:20px 120px 19px 24px; border-bottom:1px solid var(--jp-line); display:flex; justify-content:space-between; align-items:center; gap:15px; }
+    #japita-lookbook .jp-restaurant { display:flex; align-items:center; gap:10px; font-size:12px; }
+    #japita-lookbook .jp-avatar { width:31px; height:31px; background:var(--jp-soft); border-radius:50%; display:grid; place-items:center; color:var(--jp-accent); font-weight:500; }
+    #japita-lookbook .jp-shell { display:grid; grid-template-columns:180px minmax(0,1fr); min-height:698px; }
+    #japita-lookbook .jp-sidebar { padding:23px 12px; border-right:1px solid var(--jp-line); display:flex; flex-direction:column; gap:22px; }
+    #japita-lookbook .jp-nav { display:flex; flex-direction:column; gap:5px; }
+    #japita-lookbook .jp-nav button { padding:11px 10px; text-align:left; display:flex; gap:8px; align-items:center; border-radius:8px; font-size:13px; white-space:normal; }
+    #japita-lookbook .jp-nav button[aria-current="page"] { background:var(--jp-nav); color:var(--jp-accent); font-weight:500; }
+    #japita-lookbook .jp-nav i,#japita-lookbook .jp-nav svg { width:16px; height:16px; flex-shrink:0; }
+    #japita-lookbook .jp-sidebar-foot { margin-top:auto; padding:12px 7px; font-size:11px; color:var(--jp-muted); }
+    #japita-lookbook .jp-body { min-width:0; padding:26px; }
+    #japita-lookbook .jp-header { display:flex; justify-content:space-between; align-items:flex-start; gap:15px; margin-bottom:22px; }
+    #japita-lookbook .jp-header p { margin-top:7px; }
+    #japita-lookbook .jp-toolbar { position:relative; display:flex; align-items:center; justify-content:flex-end; gap:8px; flex-wrap:wrap; max-width:100%; }
+    #japita-lookbook .jp-notification-bell { position:relative; width:38px; height:38px; padding:9px; border:1px solid var(--jp-line); border-radius:8px; display:grid; place-items:center; background:var(--jp-paper); }
+    #japita-lookbook .jp-notification-bell i,#japita-lookbook .jp-notification-bell svg { width:18px; height:18px; }
+    #japita-lookbook .jp-unread { position:absolute; top:-5px; right:-5px; min-width:17px; height:17px; display:grid; place-items:center; border-radius:9px; background:var(--jp-accent); color:var(--jp-on-accent); font-size:11px; }
+    #japita-lookbook .jp-notifications { position:absolute; top:calc(100% + 10px); right:0; width:330px; max-width:calc(100vw - 64px); z-index:20; padding:17px; background:var(--jp-paper); border:1px solid var(--jp-line); border-radius:var(--jp-radius); box-shadow:0 12px 30px light-dark(#23312b20,#00000050); text-align:left; }
+    #japita-lookbook .jp-notifications .jp-line-head { margin-bottom:12px; }
+    #japita-lookbook .jp-notifications p { margin:7px 0 13px; font-size:12px; color:var(--jp-muted); }
+    #japita-lookbook .jp-notifications .jp-close { display:grid; place-items:center; padding:5px; border-radius:5px; }
+    #japita-lookbook .jp-close i,#japita-lookbook .jp-close svg { width:16px; height:16px; }
+    #japita-lookbook .jp-action { display:inline-flex; gap:7px; justify-content:center; align-items:center; border:1px solid var(--jp-line); border-radius:8px; background:var(--jp-paper); padding:9px 12px; font-size:12px; white-space:nowrap; font-weight:500; }
+    #japita-lookbook .jp-action i,#japita-lookbook .jp-action svg { width:15px; height:15px; }
+    #japita-lookbook .jp-action.jp-primary { background:var(--jp-accent); color:var(--jp-on-accent); border-color:var(--jp-accent); }
+    #japita-lookbook .jp-action:disabled { opacity:.5; }
+    #japita-lookbook .jp-columns { display:grid; grid-template-columns:minmax(0,1fr) 230px; gap:18px; align-items:start; }
+    #japita-lookbook .jp-stack { display:grid; gap:18px; }
+    #japita-lookbook .jp-panel { background:var(--jp-paper); border:1px solid var(--jp-line); border-radius:var(--jp-radius); padding:var(--jp-pad); min-width:0; }
+    #japita-lookbook .jp-alert { background:var(--jp-warn-bg); border-radius:var(--jp-radius); padding:16px; display:flex; align-items:flex-start; gap:12px; }
+    #japita-lookbook .jp-alert>i,#japita-lookbook .jp-alert>svg { color:var(--jp-warn); width:19px; height:19px; flex-shrink:0; margin-top:2px; }
+    #japita-lookbook .jp-alert p { font-size:12px; margin:5px 0 12px; color:var(--jp-muted); }
+    #japita-lookbook .jp-line-head { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:15px; }
+    #japita-lookbook .jp-badge { font-size:11px; font-weight:500; display:inline-flex; align-items:center; gap:5px; background:var(--jp-soft); color:var(--jp-accent); padding:4px 8px; border-radius:5px; }
+    #japita-lookbook .jp-badge.jp-warning { background:var(--jp-warn-bg); color:var(--jp-warn); }
+    #japita-lookbook .jp-row { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:12px; padding:15px 0; border-top:1px solid var(--jp-line); }
+    #japita-lookbook .jp-row:first-of-type { border-top:0; }
+    #japita-lookbook .jp-row p { font-size:12px; color:var(--jp-muted); margin-top:3px; }
+    #japita-lookbook .jp-row-right { text-align:right; }
+    #japita-lookbook .jp-row-right .jp-badge { margin-top:5px; }
+    #japita-lookbook .jp-budget { display:flex; justify-content:space-between; gap:12px; align-items:center; padding-top:16px; margin-top:4px; border-top:1px solid var(--jp-line); font-size:12px; }
+    #japita-lookbook .jp-budget strong { font-size:20px; font-weight:500; letter-spacing:-.7px; }
+    #japita-lookbook .jp-budget-track { height:5px; border-radius:3px; background:var(--jp-soft); margin-top:10px; overflow:hidden; }
+    #japita-lookbook .jp-budget-track span { display:block; height:100%; background:var(--jp-accent); }
+    #japita-lookbook .jp-advisor { background:var(--jp-soft); border:1px solid var(--jp-line); border-radius:var(--jp-radius); padding:18px; }
+    #japita-lookbook .jp-advisor-head { display:flex; gap:8px; align-items:center; margin-bottom:14px; }
+    #japita-lookbook .jp-advisor-head i,#japita-lookbook .jp-advisor-head svg { width:16px; height:16px; color:var(--jp-accent); }
+    #japita-lookbook .jp-advisor p { margin:9px 0 14px; font-size:12px; color:var(--jp-muted); }
+    #japita-lookbook .jp-priority { display:flex; flex-wrap:wrap; gap:5px; margin:10px 0 16px; }
+    #japita-lookbook .jp-priority button { padding:6px 8px; border:1px solid var(--jp-line); border-radius:6px; background:var(--jp-paper); font-size:11px; }
+    #japita-lookbook .jp-priority button[aria-pressed="true"] { background:var(--jp-accent); color:var(--jp-on-accent); border-color:var(--jp-accent); }
+    #japita-lookbook .jp-recommendation { border-top:1px solid var(--jp-line); padding-top:14px; }
+    #japita-lookbook .jp-recommendation .jp-price { font-size:25px; letter-spacing:-1px; margin:10px 0 2px; }
+    #japita-lookbook .jp-proof { display:flex; gap:7px; align-items:flex-start; font-size:11px; color:var(--jp-muted); margin:7px 0; }
+    #japita-lookbook .jp-proof i,#japita-lookbook .jp-proof svg { width:13px; height:13px; flex-shrink:0; margin-top:2px; }
+    #japita-lookbook .jp-full { width:100%; margin-top:12px; }
+    #japita-lookbook .jp-subnav { display:flex; align-items:center; gap:4px; padding:4px; background:var(--jp-soft); border-radius:8px; width:fit-content; margin:16px 0; }
+    #japita-lookbook .jp-subnav button { padding:7px 11px; font-size:12px; border-radius:5px; }
+    #japita-lookbook .jp-subnav button[aria-pressed="true"] { background:var(--jp-paper); color:var(--jp-accent); }
+    #japita-lookbook .jp-search { border:1px solid var(--jp-line); border-radius:8px; padding:10px 12px; background:var(--jp-paper); width:100%; font-size:13px; }
+    #japita-lookbook .jp-offer { padding:var(--jp-pad); border:1px solid var(--jp-line); background:var(--jp-paper); border-radius:var(--jp-radius); }
+    #japita-lookbook .jp-offer h3 { font-size:16px; margin:9px 0 4px; }
+    #japita-lookbook .jp-offer p { font-size:12px; color:var(--jp-muted); margin-top:5px; }
+    #japita-lookbook .jp-offer .jp-supplier-country { display:flex; align-items:center; flex-wrap:wrap; gap:6px; color:var(--jp-text); margin:8px 0; font-size:13px; }
+    #japita-lookbook .jp-supplier-country i,#japita-lookbook .jp-supplier-country svg { width:14px; height:14px; color:var(--jp-muted); }
+    #japita-lookbook .jp-supplier-country strong { font-weight:500; }
+    #japita-lookbook .jp-offer-meta { display:flex; flex-wrap:wrap; gap:7px 16px; margin:14px 0; font-size:12px; }
+    #japita-lookbook .jp-offer-actions { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; padding-top:12px; border-top:1px solid var(--jp-line); }
+    #japita-lookbook .jp-offer-price { font-size:20px; font-weight:500; }
+    #japita-lookbook .jp-detail { margin-top:14px; padding-top:12px; border-top:1px solid var(--jp-line); }
+    #japita-lookbook .jp-detail dl { display:grid; grid-template-columns:1fr 1fr; gap:7px; font-size:12px; margin:0; }
+    #japita-lookbook .jp-detail dt { color:var(--jp-muted); }
+    #japita-lookbook .jp-detail dd { margin:0; text-align:right; }
+    #japita-lookbook .jp-quote { margin-top:12px; background:var(--jp-soft); padding:13px; border-radius:8px; font-size:12px; }
+    #japita-lookbook .jp-quote p { margin-bottom:12px; }
+    #japita-lookbook .jp-pill-row { display:flex; flex-wrap:wrap; gap:7px; margin-top:12px; }
+    #japita-lookbook .jp-checkbox { display:flex; gap:10px; align-items:flex-start; padding:15px 0; border-bottom:1px solid var(--jp-line); font-size:13px; }
+    #japita-lookbook .jp-checkbox input { accent-color:var(--jp-accent); margin-top:4px; }
+    #japita-lookbook .jp-select-label { display:grid; gap:7px; font-size:12px; margin:18px 0; }
+    #japita-lookbook select { background:var(--jp-paper); border:1px solid var(--jp-line); border-radius:7px; padding:9px; max-width:100%; }
+    #japita-lookbook .jp-profile-tabs { display:flex; flex-wrap:wrap; gap:4px 18px; border-bottom:1px solid var(--jp-line); margin-bottom:24px; }
+    #japita-lookbook .jp-profile-tabs button { padding:11px 0; font-size:13px; border-bottom:2px solid transparent; }
+    #japita-lookbook .jp-profile-tabs button[aria-pressed="true"] { border-bottom-color:var(--jp-accent); color:var(--jp-accent); font-weight:500; }
+    #japita-lookbook .jp-profile-title { display:flex; align-items:flex-start; gap:14px; margin-bottom:20px; }
+    #japita-lookbook .jp-profile-mark { width:50px; height:50px; display:grid; place-items:center; border-radius:12px; flex-shrink:0; background:var(--jp-soft); color:var(--jp-accent); }
+    #japita-lookbook .jp-profile-mark svg { width:25px; height:25px; }
+    #japita-lookbook .jp-description { max-width:720px; line-height:1.75; white-space:pre-line; }
+    #japita-lookbook .jp-facts { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px 30px; margin:22px 0 0; }
+    #japita-lookbook .jp-facts dt { color:var(--jp-muted); font-size:12px; margin-bottom:3px; }
+    #japita-lookbook .jp-facts dd { margin:0; font-size:13px; overflow-wrap:anywhere; }
+    #japita-lookbook .jp-source { border-top:1px solid var(--jp-line); padding:16px 0; }
+    #japita-lookbook .jp-source:first-child { border-top:0; padding-top:0; }
+    #japita-lookbook .jp-source:last-child { padding-bottom:0; }
+    #japita-lookbook summary { font-weight:500; }
+    #japita-lookbook .jp-source summary { font-size:13px; }
+    #japita-lookbook .jp-source-body { margin-top:13px; }
+    #japita-lookbook .jp-owner-notes { margin:0; padding-left:14px; border-left:2px solid var(--jp-line); font-size:13px; white-space:pre-line; }
+    #japita-lookbook .jp-field { display:grid; gap:7px; font-size:12px; min-width:0; margin-bottom:16px; }
+    #japita-lookbook .jp-field input,#japita-lookbook .jp-field textarea { width:100%; min-width:0; background:var(--jp-bg); border:1px solid var(--jp-line); border-radius:7px; padding:10px; }
+    #japita-lookbook .jp-field textarea { resize:vertical; min-height:105px; }
+    #japita-lookbook .jp-field-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 16px; }
+    #japita-lookbook .jp-form-actions { display:flex; align-items:center; flex-wrap:wrap; gap:9px; margin-top:5px; }
+    #japita-lookbook .jp-section-note { margin:0 0 18px!important; font-size:12px; color:var(--jp-muted); }
+    #japita-lookbook .jp-menu-item { border-top:1px solid var(--jp-line); }
+    #japita-lookbook .jp-menu-item summary { padding:17px 0; display:grid; grid-template-columns:minmax(0,1fr) auto 16px; gap:14px; align-items:center; list-style:none; }
+    #japita-lookbook .jp-menu-item summary::-webkit-details-marker { display:none; }
+    #japita-lookbook .jp-menu-item summary svg { width:16px; height:16px; color:var(--jp-muted); }
+    #japita-lookbook .jp-menu-item[open] summary svg { transform:rotate(180deg); }
+    #japita-lookbook .jp-menu-item summary small { display:block; color:var(--jp-muted); font-weight:400; margin-top:4px; }
+    #japita-lookbook .jp-menu-detail { padding:0 28px 18px 0; font-size:13px; }
+    #japita-lookbook .jp-menu-detail p+p { margin-top:9px; }
+    #japita-lookbook .jp-ingredients { display:flex; flex-wrap:wrap; gap:6px; margin:12px 0; }
+    #japita-lookbook .jp-link-group+.jp-link-group { margin-top:26px; }
+    #japita-lookbook .jp-link-row { display:grid; grid-template-columns:24px minmax(0,1fr) auto; gap:12px; align-items:center; padding:17px 0; border-bottom:1px solid var(--jp-line); }
+    #japita-lookbook .jp-link-row>svg { width:18px; height:18px; color:var(--jp-muted); }
+    #japita-lookbook .jp-link-row p { margin-top:3px; font-size:12px; color:var(--jp-muted); overflow-wrap:anywhere; }
+    #japita-lookbook .jp-link-row.jp-link-edit { align-items:start; }
+    #japita-lookbook .jp-link-row .jp-field { margin:8px 0; }
+    #japita-lookbook .jp-link-row.jp-link-edit .jp-link-editor { grid-column:2/-1; }
+    #japita-lookbook .jp-error { font-size:12px; color:var(--jp-warn); margin-bottom:10px!important; }
+    #japita-lookbook .jp-toast { margin-top:14px; border-left:3px solid var(--jp-accent); padding:9px 12px; font-size:12px; background:var(--jp-soft); }
+    #japita-lookbook .jp-footer { margin-top:18px; display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; color:var(--jp-muted); font-size:11px; }
+    #japita-lookbook .jp-guide-shell { padding:24px 30px 32px; }
+    #japita-lookbook .jp-guide .jp-top { padding-bottom:16px; }
+    #japita-lookbook .jp-guide .jp-nav { flex-direction:row; flex-wrap:wrap; padding:9px 24px; border-bottom:1px solid var(--jp-line); background:var(--jp-paper); gap:8px; }
+    #japita-lookbook .jp-guide .jp-nav button { padding:9px 13px; }
+    #japita-lookbook .jp-guide .jp-hero { border-bottom:1px solid var(--jp-line); padding:4px 0 23px; margin-bottom:22px; }
+    #japita-lookbook .jp-guide .jp-hero h1 { font-size:32px; margin:10px 0; }
+    #japita-lookbook .jp-guide .jp-hero p { max-width:620px; color:var(--jp-muted); font-size:14px; }
+    #japita-lookbook .jp-guide .jp-hero .jp-priority { margin-bottom:0; }
+    #japita-lookbook .jp-guide .jp-columns { grid-template-columns:minmax(0,1fr) 280px; }
+    #japita-lookbook .jp-guide .jp-advisor { background:var(--jp-paper); }
+    #japita-lookbook .jp-guide .jp-week-title { margin-bottom:16px; }
+    @media(max-width:900px) {
+      #japita-lookbook .jp-shell { grid-template-columns:130px minmax(0,1fr); }
+      #japita-lookbook .jp-sidebar { padding:20px 8px; }
+      #japita-lookbook .jp-nav button { font-size:12px; padding:10px 7px; }
+      #japita-lookbook .jp-body { padding:23px 18px; }
+      #japita-lookbook .jp-columns { grid-template-columns:minmax(0,1fr) 210px; gap:12px; }
+    }
+    @media(max-width:700px) {
+      #japita-lookbook .jp-shell { grid-template-columns:1fr; }
+      #japita-lookbook .jp-sidebar { border-right:0; border-bottom:1px solid var(--jp-line); padding:10px; }
+      #japita-lookbook .jp-nav { flex-direction:row; gap:3px; flex-wrap:wrap; }
+      #japita-lookbook .jp-nav button { font-size:12px; padding:10px; }
+      #japita-lookbook .jp-sidebar-foot { display:none; }
+      #japita-lookbook .jp-top { padding:19px 110px 18px 17px; flex-wrap:wrap; }
+      #japita-lookbook .jp-restaurant { font-size:11px; }
+      #japita-lookbook .jp-columns,#japita-lookbook .jp-guide .jp-columns { grid-template-columns:1fr; }
+      #japita-lookbook .jp-advisor { order:-1; }
+      #japita-lookbook .jp-guide-shell { padding:22px 17px; }
+      #japita-lookbook .jp-guide .jp-nav { padding:8px 10px; gap:2px; }
+      #japita-lookbook .jp-header { flex-wrap:wrap; }
+      #japita-lookbook .jp-toolbar { width:100%; }
+      #japita-lookbook .jp-notifications { position:static; width:100%; max-width:100%; flex-basis:100%; box-shadow:none; }
+      #japita-lookbook .jp-app h1 { font-size:25px; }
+      #japita-lookbook .jp-guide .jp-hero h1 { font-size:28px; }
+      #japita-lookbook .jp-stage { min-height:1270px; }
+      #japita-lookbook .jp-facts,#japita-lookbook .jp-field-grid { grid-template-columns:1fr; }
+      #japita-lookbook .jp-profile-tabs { gap:4px 14px; }
+      #japita-lookbook .jp-profile-tabs button { font-size:12px; }
+      #japita-lookbook .jp-link-row { grid-template-columns:20px minmax(0,1fr); gap:10px; }
+      #japita-lookbook .jp-link-row>.jp-action { grid-column:2; justify-self:start; }
+      #japita-lookbook .jp-menu-item summary { gap:9px; }
+    }
+    @media(pointer:coarse) { #japita-lookbook button,#japita-lookbook summary { min-height:44px; } #japita-lookbook input,#japita-lookbook select,#japita-lookbook textarea { font-size:16px; } }
+  </style>
+  <div class="viz-carousel" aria-label="Japita interface directions">
+    <section data-variant="Weekly workspace" aria-label="Weekly workspace design" class="jp-stage">
+      <div id="jp-workspace" class="jp-app" aria-label="Weekly workspace appearance">
+        <header class="jp-top"><div class="jp-brand"><span class="jp-logo"><i data-lucide="sprout" aria-hidden="true"></i></span>japita<span class="jp-badge">Concept</span></div><div class="jp-restaurant"><span class="jp-avatar">K</span><div>Kumo Ramen Milano<br><span class="jp-muted">Restaurant workspace</span></div></div></header>
+        <div class="jp-shell"><aside class="jp-sidebar"><nav class="jp-nav" aria-label="Main navigation"><button type="button" class="cursor-interaction" data-page="week" aria-current="page"><i data-lucide="layout-dashboard" aria-hidden="true"></i>This week</button><button type="button" class="cursor-interaction" data-page="suppliers"><i data-lucide="store" aria-hidden="true"></i>Suppliers</button><button type="button" class="cursor-interaction" data-page="basket"><i data-lucide="shopping-basket" aria-hidden="true"></i>Basket <span data-basket-count>2</span></button><button type="button" class="cursor-interaction" data-page="goals"><i data-lucide="sliders-horizontal" aria-hidden="true"></i>Restaurant profile</button></nav><div class="jp-sidebar-foot">Kumo Ramen<br>42 seats · Milan<br><br>Fictional demo workspace</div></aside><main class="jp-body" data-content></main></div>
+      </div>
+    </section>
+    <section data-variant="Advisor first" aria-label="Advisor first design" class="jp-stage" hidden>
+      <div id="jp-guided" class="jp-app jp-guide" aria-label="Advisor first appearance">
+        <header class="jp-top"><div class="jp-brand"><span class="jp-logo"><i data-lucide="sprout" aria-hidden="true"></i></span>japita<span class="jp-badge">Concept</span></div><div class="jp-restaurant"><span class="jp-avatar">K</span><div>Kumo Ramen Milano<br><span class="jp-muted">Restaurant workspace</span></div></div></header>
+        <nav class="jp-nav" aria-label="Main navigation"><button type="button" class="cursor-interaction" data-page="week" aria-current="page">This week</button><button type="button" class="cursor-interaction" data-page="suppliers">Suppliers</button><button type="button" class="cursor-interaction" data-page="basket">Basket <span data-basket-count>2</span></button><button type="button" class="cursor-interaction" data-page="goals">Restaurant profile</button></nav><main class="jp-guide-shell" data-content></main>
+      </div>
+    </section>
+  </div>
+  <script>
+    (function () {
+      const root = document.getElementById('japita-lookbook');
+      const saved = window.openai && window.openai.widgetState;
+      const savedPrivate = saved && saved.privateContent ? saved.privateContent : {};
+      const controllers = [];
+      const offers = [
+        { id:'fresh', name:'Cascina Noodle Works', relationship:'Existing backup', product:'Fresh straight ramen noodles', unit:6.80, shipping:20, amount:50, format:'Chilled · 10 kg crate', date:'Friday, before 10:00', approval:'Chef approved', reason:'Fresh format and firm texture match your preferred specification.', available:true },
+        { id:'frozen', name:'Kansui Supply', relationship:'New supplier · account ready', product:'Frozen straight ramen noodles', unit:6.10, shipping:25, amount:50, format:'Frozen · 10 kg case', date:'Friday, before 10:00', approval:'Sample approved', reason:'An approved frozen substitute reduces this order by €30.', available:true },
+        { id:'quote', name:'Hikari Ingredients', relationship:'Discovered candidate', product:'Straight ramen noodles', unit:null, shipping:null, amount:50, format:'Chilled · 10 kg crate', date:'Needs confirmation', approval:'Sample needed', reason:'Product specifications found; quote and chef approval still needed.', available:false }
+      ];
+      const geography = {
+        fresh:{supplierCountry:'Italy',dispatchCountry:'Italy',productOrigin:'Italy'},
+        frozen:{supplierCountry:'Netherlands',dispatchCountry:'Netherlands',productOrigin:'Japan'},
+        quote:{supplierCountry:'Japan',dispatchCountry:'Netherlands',productOrigin:'Japan'}
+      };
+      offers.forEach(function(o){Object.assign(o,geography[o.id]);});
+      const money = function(n) { return '€' + n.toLocaleString('en-IE',{maximumFractionDigits:2,minimumFractionDigits:0}); };
+      const escapeHtml = function(value) { return String(value).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); };
+      const icon = function(name) { return '<i data-lucide="'+name+'" aria-hidden="true"></i>'; };
+      const button = function(text, action, primary, extra) { return '<button type="button" class="jp-action cursor-interaction '+(primary?'jp-primary':'')+'" data-act="'+action+'" '+(extra||'')+'>'+text+'</button>'; };
+      const profileDefaults = {
+        description:'Kumo Ramen Milano is an independent, 42-seat Hakata-style tonkotsu restaurant in Milan. It serves casual lunch guests and ramen enthusiasts, with thin, firm noodles, house-made pork-bone broth and kaedama refills. A separate kombu and shiitake broth supports the vegetarian miso bowl.',
+        location:'Milan, Italy', seats:'42', concept:'Hakata-style tonkotsu specialist', positioning:'Casual lunch dining and ramen enthusiasts', menuPrice:'€14–18 for ramen and sets',
+        make:'Pork-bone broth, vegetarian broth, tare blends, chashu and seasoned eggs',
+        buy:'Noodles, specialty soy sauce, mayu, Japanese condiments and dried goods',
+        ownerNotes:'We want a focused Hakata-style ramen shop in Milan: rich pork broth, thin firm noodles and kaedama refills. We make our broths, tare and toppings in-house and buy noodles and specialist Japanese ingredients. Keep the vegetarian bowl separate from pork-based tare and oil. Quality and consistency matter, while purchasing needs to stay manageable.',
+        storage:''
+      };
+      const profileLimits = {description:900,location:80,seats:3,concept:100,positioning:160,menuPrice:80,make:260,buy:260,ownerNotes:1200,storage:160};
+      function readProfile(value) {
+        const profile={};
+        Object.keys(profileDefaults).forEach(function(key){profile[key]=typeof (value||{})[key]==='string'?value[key].slice(0,profileLimits[key]):profileDefaults[key];});
+        return profile;
+      }
+      const menu = [
+        {id:'tonkotsu',name:'Tonkotsu ramen',price:14,servings:550,description:'House-made pork-bone broth with thin Hakata-style noodles.',ingredients:['Hakata noodles','Pork-bone broth','Tonkotsu tare'],purchase:'120 g noodles + 15 ml soy sauce per bowl in the demo recipe.'},
+        {id:'tonkotsu_set',name:'Tonkotsu set',price:18,servings:200,description:'Tonkotsu ramen with extra chashu, a seasoned egg and one kaedama refill.',ingredients:['Hakata noodles','Pork-bone broth','Tonkotsu tare','Chashu','Seasoned egg'],purchase:'120 g noodles + 15 ml soy sauce per bowl, plus a separate 120 g noodle refill included in each set.'},
+        {id:'kuro_mayu_tonkotsu',name:'Kuro mayu tonkotsu',price:16,servings:120,description:'Tonkotsu ramen finished with black garlic oil.',ingredients:['Hakata noodles','Pork-bone broth','Tonkotsu tare','Black garlic oil'],purchase:'120 g noodles + 15 ml soy sauce + 10 ml mayu per bowl in the demo recipe.'},
+        {id:'veggie_miso',name:'Veggie miso ramen',price:14,servings:130,description:'House-made kombu and shiitake broth with miso tare.',ingredients:['Hakata noodles','Kombu','Shiitake','Vegetarian miso tare'],purchase:'120 g noodles per bowl in the demo recipe. Broth and tare quantities have not been entered.',note:'Vegetarian requirement: no pork-based tare or oil.'},
+        {id:'kaedama',name:'Kaedama',price:3,servings:380,description:'An extra portion of thin noodles to add to the remaining broth.',ingredients:['Hakata noodles'],purchase:'120 g noodles per refill. The plan includes 200 set refills and 180 additional refills; set refills are not counted twice.'},
+        {id:'toppings',name:'Extra toppings',price:null,description:'Seasoned egg, chashu, kikurage, green onion, nori and garlic.',ingredients:['Seasoned egg','Chashu','Kikurage','Green onion','Nori','Garlic'],purchase:'Individual prices, portions and serving plans have not been entered.'},
+        {id:'sides',name:'Sides and drinks',price:null,description:'Rice, beer and almond tofu.',ingredients:['Rice','Beer','Almond tofu'],purchase:'Individual prices, portions and serving plans have not been entered.'}
+      ];
+      const linkTypes = [
+        {id:'website',name:'Official website',group:'Owned channels',icon:'globe',placeholder:'https://your-restaurant.com'},
+        {id:'publicMenu',name:'Public menu',group:'Owned channels',icon:'book-open',placeholder:'https://your-restaurant.com/menu'},
+        {id:'instagram',name:'Instagram',group:'Owned channels',icon:'instagram',placeholder:'https://www.instagram.com/your-restaurant'},
+        {id:'googleMaps',name:'Google Maps',group:'Discovery and reservations',icon:'map-pin',placeholder:'https://maps.google.com/…'},
+        {id:'tripadvisor',name:'Tripadvisor',group:'Discovery and reservations',icon:'message-square',placeholder:'https://www.tripadvisor.com/…'},
+        {id:'thefork',name:'TheFork',group:'Discovery and reservations',icon:'calendar-days',placeholder:'https://www.thefork.com/…'}
+      ];
+      function readLinks(value) {
+        const links={};
+        linkTypes.forEach(function(item){const url=(value||{})[item.id];try{const parsed=new URL(url);if(typeof url==='string'&&url.length<=400&&['https:','http:'].includes(parsed.protocol)&&!parsed.username&&!parsed.password)links[item.id]=url;}catch(e){}});
+        return links;
+      }
+      function mount(id, guided) {
+        const app = document.getElementById(id);
+        const prior = savedPrivate[id] || {};
+        const s = { page:prior.profileVersion===1&&['week','suppliers','basket','goals'].includes(prior.page)?prior.page:'goals', priority:['quality','cost'].includes(prior.priority)?prior.priority:'quality', selected:['fresh','frozen'].includes(prior.selected)?prior.selected:null, filter:prior.filter==='discover'?'discover':'all', query:'', detail:prior.detail||null, quoteDraft:false, quoteReceived:!!prior.quoteReceived, frozenAllowed:prior.frozenAllowed!==false, orderReviewed:!!prior.orderReviewed, toast:'', appearance:{ radius:14, density:'Comfortable' } };
+        s.profileTab=['overview','menu','buying','links'].includes(prior.profileTab)?prior.profileTab:'overview';
+        s.profile=readProfile(prior.profile);
+        s.links=readLinks(prior.links);
+        s.budget=Number.isFinite(prior.budget)&&prior.budget>0&&prior.budget<=100000?prior.budget:900;
+        s.profileEditing=false;
+        s.linkEditing=null;
+        s.linkError='';
+        s.preferredCountry=['Italy','Japan','Netherlands'].includes(prior.preferredCountry)?prior.preferredCountry:'Any';
+        s.notificationsOpen=false;
+        s.notificationsRead=!!prior.notificationsRead;
+        const content = app.querySelector('[data-content]');
+        const total = function() { const o=offers.find(function(v){return v.id===s.selected;}); return 164+(o?o.unit*o.amount+o.shipping:0); };
+        const suggested = function() {
+          const eligible=offers.filter(function(o){return o.available&&(o.id!=='frozen'||s.frozenAllowed);});
+          const preferred=eligible.filter(function(o){return o.supplierCountry===s.preferredCountry;});
+          const pool=preferred.length?preferred:eligible;
+          if(s.priority==='cost')return pool.slice().sort(function(a,b){return a.unit*50+a.shipping-b.unit*50-b.shipping;})[0];
+          return pool.find(function(o){return o.id==='fresh';})||pool[0];
+        };
+        const footer = function() { return '<footer class="jp-footer"><span>Sample data · fictional suppliers and prices</span><span>Oct 19–25 · 1,000 planned bowls</span></footer>'; };
+        function notificationControls() {
+          const unread=s.notificationsRead?0:1;
+          return '<button type="button" class="jp-notification-bell cursor-interaction" data-act="notifications" aria-label="Notifications'+(unread?', 1 unread':'')+'" aria-expanded="'+s.notificationsOpen+'" aria-controls="'+id+'-notifications">'+icon('bell')+(unread?'<span class="jp-unread" aria-hidden="true">1</span>':'')+'</button><section class="jp-notifications" id="'+id+'-notifications" aria-label="Notifications" '+(s.notificationsOpen?'':'hidden')+'><div class="jp-line-head"><h3>Notifications</h3><button type="button" class="jp-close cursor-interaction" data-act="closeNotifications" aria-label="Close notifications">'+icon('x')+'</button></div><span class="jp-badge jp-warning">Delivery update</span><h3 style="margin-top:10px">Friday noodle delivery moved</h3><p>Lombardia’s usual delivery has moved to Monday. You need 50 kg before Friday service.</p>'+button('Compare noodle suppliers','compare',false)+'</section>';
+        }
+        function mountNotifications() {
+          const header=content.querySelector('.jp-header');
+          const existing=header?header.querySelector('button'):content.querySelector('.jp-hero [data-act="basket"]');
+          const host=header||content.querySelector('.jp-pill-row');
+          if(!host)return;
+          const toolbar=document.createElement('div');
+          toolbar.className='jp-toolbar';
+          if(existing){existing.replaceWith(toolbar);toolbar.appendChild(existing);}
+          else{host.appendChild(toolbar);toolbar.innerHTML=button(icon('shopping-basket')+'Review basket','basket',false);}
+          toolbar.insertAdjacentHTML('beforeend',notificationControls());
+        }
+        function persist() {
+          if(!window.openai || !window.openai.setWidgetState) return;
+          const privateContent={};
+          controllers.forEach(function(c){privateContent[c.id]=c.snapshot();});
+          window.openai.setWidgetState({modelContent:{concept:'Japita web app',lastExploredLayout:guided?'Advisor first':'Weekly workspace',screen:s.page,profileSection:s.profileTab,priority:s.priority,selectedNoodle:s.selected,frozenAllowed:s.frozenAllowed,preferredSupplierCountry:s.preferredCountry,budget:s.budget},privateContent:privateContent}).catch(function(){});
+        }
+        function priorities() { return '<div class="jp-priority" aria-label="Purchasing priority"><button type="button" class="cursor-interaction" data-act="quality" aria-pressed="'+(s.priority==='quality')+'">Quality fit</button><button type="button" class="cursor-interaction" data-act="cost" aria-pressed="'+(s.priority==='cost')+'">Lower cost</button></div>'; }
+        function advisor() {
+          const o=suggested();
+          const countryNote=s.preferredCountry==='Any'?'':(o.supplierCountry===s.preferredCountry?'Fits your preference for a supplier based in '+s.preferredCountry+'.':'No orderable offer matches your '+s.preferredCountry+' supplier preference. This alternative meets your required product and delivery conditions.');
+          return '<aside class="jp-advisor" aria-label="Purchasing advice"><div class="jp-advisor-head">'+icon('sparkles')+'<h3>Your purchasing advisor</h3></div><small class="jp-muted">What matters most this week?</small>'+priorities()+'<div class="jp-recommendation"><span class="jp-kicker">Suggested noodle order</span><h3 style="margin-top:8px">'+o.name+'</h3><p>'+o.reason+'</p>'+(countryNote?'<p>'+countryNote+'</p>':'')+'<div class="jp-proof">'+icon('map-pin')+'<span>Supplier: '+o.supplierCountry+'<br>Ships from: '+o.dispatchCountry+'</span></div><div class="jp-price jp-number">'+money(o.unit*50+o.shipping)+'</div><small class="jp-muted">50 kg · delivery included</small><div class="jp-proof">'+icon('check')+'<span>'+o.approval+'</span></div><div class="jp-proof">'+icon('truck')+'<span>'+o.date+'</span></div>'+button((s.selected===o.id?'Added to basket':icon('plus')+'Add 50 kg'),'add:'+o.id,true,'style="width:100%;margin-top:13px"')+'<div style="margin-top:10px">'+button('Compare alternatives','compare',false)+'</div></div></aside>';
+        }
+        function week() {
+          const headline=guided?'<div class="jp-hero"><span class="jp-kicker">Your week, thoughtfully sourced</span><h1>Good ingredients. Better decisions.</h1><p>Your Friday noodle delivery needs a backup. Let’s keep your kitchen supplied, with the quality and price that fit Kumo.</p><div class="jp-pill-row">'+button('Find backup noodles','compare',true)+button('Review basket','basket',false)+button('Edit restaurant profile','goals',false)+'</div></div>':'<div class="jp-header"><div><span class="jp-kicker">Kumo Ramen · Milan</span><h1 style="margin-top:8px">Your purchasing week</h1><p class="jp-muted">October 19–25 · Keep the kitchen moving.</p></div>'+button(icon('shopping-basket')+'Review basket','basket',false)+'</div>';
+          return headline+'<div class="jp-columns"><div class="jp-stack"><section class="jp-panel"><div class="jp-line-head"><h2>This week’s basket</h2><span class="jp-badge">'+(s.selected?'3 items selected':'2 of 3 selected')+'</span></div><div class="jp-row"><div><h3>Ramen noodles</h3><p>50 kg · '+(s.selected?offers.find(function(o){return o.id===s.selected;}).name:'Backup supplier needed')+'</p></div><div class="jp-row-right">'+(s.selected?'<span class="jp-number">'+money(total()-164)+'</span><br><span class="jp-badge">In basket</span>':'<span class="jp-badge jp-warning">Needs attention</span>')+'</div></div><div class="jp-row"><div><h3>Koikuchi soy sauce</h3><p>20 L · Umami Trade Italia</p></div><div class="jp-row-right"><span class="jp-number">€120</span><br><span class="jp-badge">Selected</span></div></div><div class="jp-row"><div><h3>Black garlic oil · mayu</h3><p>2 L · Ramen Pantry</p></div><div class="jp-row-right"><span class="jp-number">€44</span><br><span class="jp-badge">Selected</span></div></div><div class="jp-budget"><div><span class="jp-muted">Draft spending</span><br><strong class="jp-number">'+money(total())+'</strong><span class="jp-muted"> / '+money(s.budget)+' limit</span></div>'+button('Open basket','basket',false)+'</div><div class="jp-budget-track"><span style="width:'+(Math.min(100,total()/s.budget*100))+'%"></span></div></section><section class="jp-panel"><div class="jp-line-head"><h3>Explore a new supplier</h3><span class="jp-badge">Needs a quote</span></div><p class="jp-muted" style="font-size:12px;margin-bottom:13px">Hikari is based in Japan and dispatches from the Netherlands. Price, delivery and sample approval are still pending.</p>'+button('View candidate','discover',false)+'</section></div>'+advisor()+'</div>';
+        }
+        function offerCard(o) {
+          const received=o.id==='quote'&&s.quoteReceived;
+          const price=o.unit===null?(received?'<span class="jp-offer-price">€345</span><small class="jp-muted"> quoted · approval pending</small>':'<span class="jp-offer-price">Quote needed</span>'):'<span class="jp-offer-price jp-number">'+money(o.unit*50+o.shipping)+'</span><small class="jp-muted"> delivered / 50 kg</small>';
+          return '<article class="jp-offer"><div class="jp-line-head" style="margin-bottom:0"><span class="jp-kicker">'+o.relationship+'</span><span class="jp-badge '+(o.available?'':'jp-warning')+'">'+(o.available?'Ready to compare':received?'Sample needed':'Missing terms')+'</span></div><h3>'+o.name+'</h3><p class="jp-supplier-country">'+icon('map-pin')+'<span>Supplier country: <strong>'+o.supplierCountry+'</strong></span></p><p>'+o.product+'</p><div class="jp-offer-meta"><span>Product origin: '+o.productOrigin+'</span><span>Ships from: '+o.dispatchCountry+'</span><span>'+o.format+'</span><span>'+(received?'Friday, before 12:00':o.date)+'</span><span>'+o.approval+'</span></div><div class="jp-offer-actions"><div>'+price+'</div><div style="display:flex;gap:8px;flex-wrap:wrap">'+button('Details','detail:'+o.id,false)+(o.available?button(s.selected===o.id?'Selected':'Add to basket','add:'+o.id,true,(o.id==='frozen'&&!s.frozenAllowed?'disabled':'')):button(received?'View quote':'Request quote','quote',false))+'</div></div>'+(s.detail===o.id?'<div class="jp-detail"><dl><dt>Supplier country</dt><dd>'+o.supplierCountry+'</dd><dt>Product origin</dt><dd>'+o.productOrigin+'</dd><dt>Dispatch country</dt><dd>'+o.dispatchCountry+'</dd><dt>Unit price</dt><dd>'+(o.unit===null?(received?'€6.40 / kg':'Unknown'):money(o.unit)+'/kg')+'</dd><dt>Minimum order</dt><dd>50 kg</dd><dt>Delivery charge</dt><dd>'+(o.shipping===null?(received?'€25':'Unknown'):money(o.shipping))+'</dd><dt>Evidence</dt><dd>'+(o.id==='quote'?'Sample catalog listing':'Sample supplier quote')+'</dd></dl></div>':'')+(o.id==='quote'&&s.quoteDraft?'<div class="jp-quote"><h3>Quote request · draft</h3><p>Please quote 50 kg of straight ramen noodles for delivery to Milan on Friday before service. Include shipping, availability and a product sample.</p>'+button('Load example supplier reply','exampleReply',false)+'</div>':'')+'</article>';
+        }
+        function suppliers() {
+          const shown=offers.filter(function(o){return(s.filter!=='discover'||o.id==='quote'||o.id==='frozen')&&(!s.query||((o.name+' '+o.product+' '+o.format+' '+o.supplierCountry+' '+o.productOrigin+' '+o.dispatchCountry).toLowerCase().includes(s.query.toLowerCase())));});
+          return '<div class="jp-header"><div><span class="jp-kicker">Your suppliers, together</span><h1 style="margin-top:8px">Find the right noodles</h1><p class="jp-muted">50 kg · Milan · delivery by Friday</p></div>'+button('View basket','basket',false)+'</div><label><span class="jp-kicker" style="display:block;margin-bottom:7px">Search this sample catalog</span><input class="jp-search" data-search value="" placeholder="Supplier, product, country or format" aria-label="Search sample supplier catalog"></label><div class="jp-subnav" aria-label="Supplier relationship"><button type="button" class="cursor-interaction" data-act="all" aria-pressed="'+(s.filter==='all')+'">All suppliers</button><button type="button" class="cursor-interaction" data-act="discover" aria-pressed="'+(s.filter==='discover')+'">Discover new</button></div><div class="jp-stack" data-offer-list>'+shown.map(offerCard).join('')+'</div>';
+        }
+        function basket() {
+          const o=offers.find(function(v){return v.id===s.selected;});
+          return '<div class="jp-header"><div><span class="jp-kicker">One basket · separate supplier orders</span><h1 style="margin-top:8px">Your weekly order</h1><p class="jp-muted">Review quantities and delivered costs.</p></div>'+button('Compare suppliers','compare',false)+'</div><div class="jp-columns"><section class="jp-panel"><h2>'+ (s.orderReviewed?'Reviewed draft':'Draft basket')+'</h2>'+(o?'<div class="jp-row"><div><h3>'+o.name+'</h3><p>50 kg noodles · '+o.date+'</p></div><span class="jp-number">'+money(o.unit*50+o.shipping)+'</span></div>':'<div class="jp-alert" style="margin-top:16px">Noodles still need a supplier.</div>')+'<div class="jp-row"><div><h3>Umami Trade Italia</h3><p>20 L koikuchi soy sauce</p></div><span class="jp-number">€120</span></div><div class="jp-row"><div><h3>Ramen Pantry</h3><p>2 L black garlic oil</p></div><span class="jp-number">€44</span></div><div class="jp-budget"><span>Total including delivery</span><strong class="jp-number">'+money(total())+'</strong></div><p class="jp-muted" style="font-size:12px;margin:13px 0">'+money(s.budget-total())+' remaining within your '+money(s.budget)+' weekly limit.</p>'+button(s.orderReviewed?'Draft reviewed':icon('check')+'Review this draft','review',true,(!o?'disabled':''))+'<p class="jp-muted" style="font-size:11px;margin-top:10px">Concept preview · no orders are sent.</p></section>'+advisor()+'</div>';
+        }
+        function profileField(key,label,multiline) {
+          return '<label class="jp-field">'+label+(multiline?'<textarea name="'+key+'" maxlength="'+profileLimits[key]+'" rows="4">'+escapeHtml(s.profile[key])+'</textarea>':'<input name="'+key+'" maxlength="'+profileLimits[key]+'" value="'+escapeHtml(s.profile[key])+'" '+(key==='seats'?'inputmode="numeric" pattern="[0-9]{1,3}"':'')+'>')+'</label>';
+        }
+        function overview() {
+          const p=s.profile;
+          if(s.profileEditing)return '<section class="jp-panel"><div class="jp-line-head"><h2>Edit restaurant profile</h2><span class="jp-badge">Demo workspace</span></div><form data-profile-form>'+profileField('description','Restaurant description',true)+'<div class="jp-field-grid">'+profileField('concept','Restaurant concept')+profileField('positioning','Target guests and positioning')+profileField('location','Location')+profileField('seats','Seats')+profileField('menuPrice','Menu price range')+'</div>'+profileField('make','Prepared in-house',true)+profileField('buy','Purchased components',true)+profileField('ownerNotes','Owner notes',true)+'<div class="jp-form-actions"><button type="submit" class="jp-action jp-primary cursor-interaction">Save profile</button>'+button('Cancel','cancelProfile',false)+'</div></form></section>';
+          const fact=function(label,value){return '<div><dt>'+label+'</dt><dd>'+escapeHtml(value||'Not entered')+'</dd></div>';};
+          return '<div class="jp-stack"><section class="jp-panel"><div class="jp-line-head"><h2>About the restaurant</h2>'+button(icon('pencil')+'Edit profile','editProfile',false)+'</div><div class="jp-profile-title"><span class="jp-profile-mark">'+icon('soup')+'</span><div><h2>Kumo Ramen Milano</h2><p class="jp-muted" style="margin-top:4px">'+escapeHtml(p.location)+' · '+escapeHtml(p.seats)+' seats</p></div></div><p class="jp-description">'+escapeHtml(p.description)+'</p><dl class="jp-facts">'+fact('Concept',p.concept)+fact('Target guests',p.positioning)+fact('Menu prices',p.menuPrice)+fact('Prepared in-house',p.make)+fact('Purchased components',p.buy)+'</dl></section><section class="jp-panel" aria-label="Profile source information"><details class="jp-source"><summary class="cursor-interaction">Owner notes</summary><div class="jp-source-body"><p class="jp-section-note">Example notes for the fictional restaurant.</p><blockquote class="jp-owner-notes">'+escapeHtml(p.ownerNotes)+'</blockquote></div></details><details class="jp-source"><summary class="cursor-interaction">Onboarding questionnaire</summary><div class="jp-source-body"><p class="jp-section-note">Demo answers drawn from the restaurant scenario. Edit them using Edit profile.</p><dl class="jp-facts">'+fact('What kind of restaurant do you run?',p.concept)+fact('Who do you want to serve?',p.positioning)+fact('Where is the restaurant?',p.location)+fact('How many seats do you have?',p.seats)+fact('What is your menu price range?',p.menuPrice)+fact('What do you make in-house?',p.make)+fact('What do you purchase?',p.buy)+'</dl></div></details></section></div>';
+        }
+        function menuPage() {
+          return '<section class="jp-panel"><div class="jp-line-head"><h2>Restaurant menu</h2><span class="jp-badge">Hakata-style tonkotsu</span></div><p class="jp-section-note">Demo menu · 1,000 planned ramen bowls and 380 noodle refills. Serving counts are entered planning assumptions.</p>'+menu.map(function(item){return '<details class="jp-menu-item"><summary class="cursor-interaction"><span>'+item.name+'<small>'+(item.servings?item.servings.toLocaleString('en-IE')+' planned '+(item.id==='kaedama'?'refills':'servings'):'Toppings, sides and drinks')+'</small></span><span class="jp-number">'+(item.price===null?'Various':money(item.price))+'</span>'+icon('chevron-down')+'</summary><div class="jp-menu-detail"><p>'+item.description+'</p><div class="jp-ingredients">'+item.ingredients.map(function(ingredient){return '<span class="jp-badge">'+ingredient+'</span>';}).join('')+'</div><p class="jp-muted">'+item.purchase+'</p>'+(item.note?'<p>'+item.note+'</p>':'')+'</div></details>';}).join('')+'</section>';
+        }
+        function buyingPreferences() {
+          const countryOptions=['Any','Italy','Japan','Netherlands'].map(function(c){return '<option value="'+c+'" '+(s.preferredCountry===c?'selected':'')+'>'+(c==='Any'?'Any country':c)+'</option>';}).join('');
+          return '<section class="jp-panel"><div class="jp-line-head"><h2>Buying preferences</h2><span class="jp-badge">Authentic demo profile</span></div><div class="jp-field-grid"><label class="jp-select-label">Purchasing priority<select data-priority><option value="quality" '+(s.priority==='quality'?'selected':'')+'>Quality fit</option><option value="cost" '+(s.priority==='cost'?'selected':'')+'>Lower delivered cost</option></select></label><label class="jp-select-label">Preferred supplier country<select data-supplier-country>'+countryOptions+'</select></label></div><p class="jp-section-note">Supplier location and product origin are separate preferences.</p><div class="jp-row"><div><h3>Hakata-style noodles</h3><p>Kansui required · hydration 30% or less · thin, straight and firm.</p></div><span class="jp-badge">Required</span></div><label class="jp-checkbox"><input type="checkbox" data-frozen '+(s.frozenAllowed?'checked':'')+'><span>Allow chef-approved frozen noodles<br><small class="jp-muted">Fresh preferred. A frozen alternative must still meet the ingredient requirements.</small></span></label><div class="jp-row"><div><h3>Koikuchi soy sauce</h3><p>Brewed in Japan and naturally brewed (honjozo). No additives preferred.</p></div><span class="jp-badge">Required</span></div><div class="jp-row"><div><h3>Black garlic oil · mayu</h3><p>Chef-approved aroma and bitterness. No additives preferred.</p></div><span class="jp-badge">Required</span></div><div class="jp-row"><div><h3>Vegetarian ingredients</h3><p>No pork-based tare or oil in the veggie miso bowl.</p></div><span class="jp-badge">Required</span></div><div class="jp-field-grid" style="margin-top:20px"><label class="jp-field">Purchasing budget · EUR per week<input type="number" min="1" max="100000" step="1" value="'+s.budget+'" data-budget><small class="jp-muted">For the three active demo ingredients.</small></label><div class="jp-field"><span>Accepted delivery days</span><div class="jp-pill-row" style="margin-top:0"><span class="jp-badge">Tuesday</span><span class="jp-badge">Wednesday</span><span class="jp-badge">Thursday</span><span class="jp-badge">Friday</span></div></div></div><label class="jp-field">Storage capacity and receiving notes<input type="text" maxlength="160" data-storage value="'+escapeHtml(s.profile.storage)+'" placeholder="Add chilled or frozen capacity and receiving instructions"><small class="jp-muted">Not yet entered in the demo data.</small></label>'+button('View purchasing week','week',true)+'</section>';
+        }
+        function linksPage() {
+          return '<section class="jp-panel"><div class="jp-line-head"><h2>Restaurant links</h2></div><p class="jp-section-note">Keep your public pages together. Add the restaurant’s actual URLs; links do not import reviews or ratings.</p>'+['Owned channels','Discovery and reservations'].map(function(group){return '<div class="jp-link-group"><h3>'+group+'</h3>'+linkTypes.filter(function(item){return item.group===group;}).map(function(item){const url=s.links[item.id];const editing=s.linkEditing===item.id;return '<div class="jp-link-row '+(editing?'jp-link-edit':'')+'">'+icon(item.icon)+'<div><h3>'+item.name+'</h3><p>'+(url?escapeHtml(url):'Not added')+'</p></div>'+button(url?'Edit link':icon('plus')+'Add link','editLink:'+item.id,false)+(editing?'<form class="jp-link-editor" data-link-form="'+item.id+'"><label class="jp-field">Page URL<input type="url" name="url" value="'+escapeHtml(url||'')+'" maxlength="400" placeholder="'+item.placeholder+'" required aria-label="'+item.name+' URL"></label>'+(s.linkError?'<p class="jp-error" role="alert">'+s.linkError+'</p>':'')+'<div class="jp-form-actions"><button type="submit" class="jp-action jp-primary cursor-interaction">Save link</button>'+button('Cancel','cancelLink',false)+(url?button('Remove','removeLink:'+item.id,false):'')+'</div></form>':'')+'</div>';}).join('')+'</div>';}).join('')+'<p class="jp-muted" style="font-size:12px;margin-top:20px">Kumo is fictional, so no public listings are prefilled.</p></section>';
+        }
+        function goals() {
+          const tabs=[['overview','Overview'],['menu','Menu'],['buying','Buying preferences'],['links','Links']];
+          return '<div class="jp-header"><div><span class="jp-kicker">Kumo Ramen Milano</span><h1 style="margin-top:8px">Restaurant profile</h1><p class="jp-muted">Your restaurant, menu and purchasing preferences.</p></div></div><nav class="jp-profile-tabs" aria-label="Restaurant profile sections">'+tabs.map(function(tab){return '<button type="button" class="cursor-interaction" data-act="profileTab:'+tab[0]+'" aria-pressed="'+(s.profileTab===tab[0])+'" aria-controls="'+id+'-profile-content">'+tab[1]+'</button>';}).join('')+'</nav><div id="'+id+'-profile-content" aria-label="'+tabs.find(function(tab){return tab[0]===s.profileTab;})[1]+'">'+(s.profileTab==='overview'?overview():s.profileTab==='menu'?menuPage():s.profileTab==='buying'?buyingPreferences():linksPage())+'</div>';
+        }
+        function render() {
+          app.querySelectorAll('[data-page]').forEach(function(n){if(n.dataset.page===s.page)n.setAttribute('aria-current','page');else n.removeAttribute('aria-current');});
+          app.querySelectorAll('[data-basket-count]').forEach(function(n){n.textContent=s.selected?'3':'2';});
+          content.innerHTML=(s.page==='week'?week():s.page==='suppliers'?suppliers():s.page==='basket'?basket():goals())+(s.toast?'<div class="jp-toast" role="status">'+s.toast+'</div>':'')+footer();
+          mountNotifications();
+          const input=content.querySelector('[data-search]'); if(input)input.value=s.query;
+          if(globalThis.lucide)globalThis.lucide.createIcons({attrs:{width:16,height:16}});
+        }
+        app.addEventListener('click',function(e){
+          const nav=e.target.closest('[data-page]');
+          if(nav){s.page=nav.dataset.page;s.notificationsOpen=false;s.toast='';render();persist();return;}
+          const trigger=e.target.closest('[data-act]'); if(!trigger||trigger.disabled)return;
+          const action=trigger.dataset.act; s.toast='';
+          if(action==='notifications'){s.notificationsOpen=!s.notificationsOpen;if(s.notificationsOpen)s.notificationsRead=true;render();persist();return;}
+          if(action==='closeNotifications'){s.notificationsOpen=false;render();const bell=content.querySelector('.jp-notification-bell');if(bell)bell.focus();return;}
+          s.notificationsOpen=false;
+          if(['week','basket','goals'].includes(action))s.page=action;
+          else if(action.startsWith('profileTab:')){s.profileTab=action.split(':')[1];s.profileEditing=false;s.linkEditing=null;s.linkError='';}
+          else if(action==='editProfile')s.profileEditing=true;
+          else if(action==='cancelProfile')s.profileEditing=false;
+          else if(action.startsWith('editLink:')){s.linkEditing=action.split(':')[1];s.linkError='';}
+          else if(action==='cancelLink'){s.linkEditing=null;s.linkError='';}
+          else if(action.startsWith('removeLink:')){delete s.links[action.split(':')[1]];s.linkEditing=null;s.toast='Link removed from the demo workspace.';}
+          else if(action==='compare'){s.page='suppliers';s.filter='all';s.query='';}
+          else if(action==='discover'){s.page='suppliers';s.filter='discover';s.query='';}
+          else if(action==='all')s.filter='all';
+          else if(action==='quality'||action==='cost')s.priority=action;
+          else if(action.startsWith('add:')){s.selected=action.split(':')[1];s.orderReviewed=false;s.toast='Noodle selection updated. Your draft basket is '+money(total())+'.';}
+          else if(action.startsWith('detail:'))s.detail=s.detail===action.split(':')[1]?null:action.split(':')[1];
+          else if(action==='quote'){s.quoteDraft=!s.quoteDraft;s.detail='quote';}
+          else if(action==='exampleReply'){s.quoteDraft=false;s.quoteReceived=true;s.toast='Example reply loaded: €345 delivered. Product sample approval is still pending.';}
+          else if(action==='review'){s.orderReviewed=true;s.toast='Draft reviewed in this concept. No purchase order has been sent.';}
+          render();persist();
+          if(action==='editProfile'){const field=content.querySelector('[name="description"]');if(field)field.focus();}
+          if(action.startsWith('editLink:')){const field=content.querySelector('[data-link-form] input');if(field)field.focus();}
+        });
+        app.addEventListener('submit',function(e){
+          if(e.target.matches('[data-profile-form]')){
+            e.preventDefault();
+            const form=new FormData(e.target);
+            const values={};
+            Object.keys(profileDefaults).forEach(function(key){values[key]=key==='storage'?s.profile.storage:String(form.get(key)||'').trim();});
+            s.profile=readProfile(values);s.profileEditing=false;s.toast='Restaurant profile saved in this demo workspace.';render();persist();
+          }else if(e.target.matches('[data-link-form]')){
+            e.preventDefault();
+            const key=e.target.dataset.linkForm;
+            const url=String(new FormData(e.target).get('url')||'').trim();
+            const accepted=readLinks({[key]:url});
+            if(!accepted[key]){s.linkError='Enter a full http:// or https:// URL without account credentials.';render();return;}
+            s.links[key]=accepted[key];s.linkEditing=null;s.linkError='';s.toast='Restaurant link saved in this demo workspace.';render();persist();
+          }
+        });
+        app.addEventListener('change',function(e){if(e.target.matches('[data-frozen]')){s.frozenAllowed=e.target.checked;if(!s.frozenAllowed&&s.selected==='frozen'){s.selected=null;s.orderReviewed=false;s.toast='Frozen noodles removed because your requirement changed.';}render();persist();}else if(e.target.matches('[data-priority]')){s.priority=e.target.value;render();persist();}else if(e.target.matches('[data-supplier-country]')){s.preferredCountry=e.target.value;render();persist();}else if(e.target.matches('[data-budget]')){const budget=Number(e.target.value);if(e.target.validity.valid&&budget>0&&budget<=100000){s.budget=budget;render();persist();}}else if(e.target.matches('[data-storage]')){s.profile.storage=e.target.value.slice(0,160);persist();}});
+        app.addEventListener('input',function(e){if(!e.target.matches('[data-search]'))return;s.query=e.target.value;const list=content.querySelector('[data-offer-list]');const shown=offers.filter(function(o){return(s.filter!=='discover'||o.id!=='fresh')&&((o.name+' '+o.product+' '+o.format+' '+o.supplierCountry+' '+o.productOrigin+' '+o.dispatchCountry).toLowerCase().includes(s.query.toLowerCase()));});list.innerHTML=shown.length?shown.map(offerCard).join(''):'<div class="jp-panel">No matching offers in this sample catalog.</div>';if(globalThis.lucide)globalThis.lucide.createIcons({attrs:{width:16,height:16}});});
+        app.addEventListener('keydown',function(e){if(e.key==='Escape'&&s.notificationsOpen){s.notificationsOpen=false;render();const bell=content.querySelector('.jp-notification-bell');if(bell)bell.focus();}});
+        const controller={id:id,snapshot:function(){return{profileVersion:1,page:s.page,profileTab:s.profileTab,profile:s.profile,links:s.links,budget:s.budget,priority:s.priority,selected:s.selected,filter:s.filter,detail:s.detail,quoteReceived:s.quoteReceived,frozenAllowed:s.frozenAllowed,orderReviewed:s.orderReviewed,preferredCountry:s.preferredCountry,notificationsRead:s.notificationsRead};},restore:function(v){if(!v)return;['priority','selected','filter','detail','quoteReceived','frozenAllowed','orderReviewed','preferredCountry','notificationsRead'].forEach(function(k){if(v[k]!==undefined)s[k]=v[k];});if(v.profileVersion===1){if(['week','suppliers','basket','goals'].includes(v.page))s.page=v.page;if(['overview','menu','buying','links'].includes(v.profileTab))s.profileTab=v.profileTab;s.profile=readProfile(v.profile);s.links=readLinks(v.links);if(Number.isFinite(v.budget)&&v.budget>0&&v.budget<=100000)s.budget=v.budget;}render();}};
+        controllers.push(controller);render();
+        if(globalThis.Tweak){const tweak=new globalThis.Tweak({container:app,onChange:function(){app.style.setProperty('--jp-radius',s.appearance.radius+'px');app.classList.toggle('jp-compact',s.appearance.density==='Compact');}});tweak.addSlider(s.appearance,'radius',{label:'Corner radius',min:4,max:24,unit:'px'});tweak.addSelect(s.appearance,'density',{label:'Content spacing',options:['Comfortable','Compact']});}
+      }
+      mount('jp-workspace',false);mount('jp-guided',true);
+      window.addEventListener('openai:set_globals',function(e){const ws=e.detail&&e.detail.globals&&e.detail.globals.widgetState;const p=ws&&ws.privateContent;if(p)controllers.forEach(function(c){c.restore(p[c.id]);});});
+    })();
+  </script>
+</div>
