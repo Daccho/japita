@@ -70,9 +70,10 @@ def _compare_prices(store: Store, ingredient: str) -> dict:
 
 
 def _draft_clarification(store: Store, offer_id: str, field: str, text_ja: str, reason: str,
-                         text_it: str = "", text_en: str = "") -> dict:
+                         text_it: str = "", text_en: str = "", reason_it: str = "") -> dict:
     translations = {k: v for k, v in (("it", text_it), ("en", text_en)) if v}
-    c = store.add_clarification(offer_id, field, text_ja, reason, translations)
+    c = store.add_clarification(offer_id, field, text_ja, reason, translations,
+                                {k: v for k, v in (("it", reason_it), ("en", reason)) if v})
     return {**c, "note": "Saved as a draft. A person must approve it before anything is sent."}
 
 
@@ -117,7 +118,7 @@ TOOLS: dict[str, tuple[Callable[..., Any], str, dict]] = {
     ),
     "calculate_baskets": (
         _calculate_baskets,
-        "Compute baseline (current suppliers) and alternative baskets in code: lowest cost, best preference fit, fewest suppliers, and on_time (lowest cost arriving before every stockout). Each line has earliest_delivery and arrives_in_time; late_lines lists deliveries that come after a stockout. Includes totals, exclusions and infeasible combinations.",
+        "Compute baseline (current suppliers) and alternative baskets in code: lowest cost, best preference fit, fewest suppliers, and on_time (lowest cost arriving before every stockout). Each line has earliest_delivery and arrives_in_time; late_lines lists deliveries that come after a stockout. Includes totals, exclusions, infeasible combinations, and open_questions (missing evidence and who can answer it).",
         _p({}),
     ),
     "compare_prices": (
@@ -134,7 +135,8 @@ TOOLS: dict[str, tuple[Callable[..., Any], str, dict]] = {
             "text_ja": {"type": "string", "description": "The question in Japanese"},
             "reason": {"type": "string", "description": "Short English reason shown to the owner"},
             "text_it": {"type": "string", "description": "Faithful Italian translation of text_ja for the owner"},
-            "text_en": {"type": "string", "description": "Faithful English translation of text_ja for the owner"}},
+            "text_en": {"type": "string", "description": "Faithful English translation of text_ja for the owner"},
+            "reason_it": {"type": "string", "description": "The reason in Italian"}},
            ["offer_id", "field", "text_ja", "reason"]),
     ),
 }

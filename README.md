@@ -19,7 +19,7 @@ These public pages and account flows are future design and implementation work. 
 
 Open [`mockup/index.html`](mockup/index.html) in a browser, or ask Codex to open it in the right-hand browser panel beside the chat. No application server or package installation is needed. Approved CDN assets need an internet connection on initial load.
 
-The prototype includes the Weekly workspace, supplier comparisons, a basket, and Restaurant profile with Overview, Menu, Buying preferences, and Links. It uses fictional data and is separate from the backend.
+The prototype includes a searchable supplier directory with compact image rows, supplier comparisons, an Offers section for promotions, a basket, and Restaurant profile with Overview, Menu, Buying preferences, and Links. A draggable advisor bubble opens purchasing advice. Natural-language search is a local demo interaction. It uses fictional data and is separate from the backend.
 
 See [mockup editing instructions](mockup/README.md) and the [handoff and next-chat prompt](docs/mockup-handoff.md) to continue visual refinement.
 

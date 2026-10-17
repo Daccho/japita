@@ -6,6 +6,7 @@ The model interprets and explains; tools (application code) compute every number
 import json
 from dataclasses import dataclass, field
 
+from . import calc
 from .llm import LLM
 from .store import Store
 from .tools import call_tool, openai_tool_specs
@@ -29,12 +30,30 @@ late delivery as the fix for a stockout. Then compare against the current-suppli
 baseline, and explain why each option fits (or does not fit) the restaurant's priorities, with the cost difference.
 Then review "excluded" and "infeasible_combinations" in the basket result and state the exact reason for each
 attractive offer that was left out (fails a mandatory requirement, missing evidence, below a supplier's minimum order,
-account not approved). For every excluded offer's missing_fields entry with resolved_by "supplier", call
-draft_clarification right away with Italian and English translations, without asking first (it only saves a draft;
-a person approves before anything is sent), and tell the owner what answer would unlock it. Fields with resolved_by "owner", such as
-chef_approved, are decided inside the restaurant: never ask the supplier; tell the owner what to do instead (for
-example, order a sample for the chef to taste).
+account not approved).
+Then handle every entry in "open_questions" of the basket result:
+- resolved_by "supplier" and drafted false: call draft_clarification right away, without asking the owner first
+  (it only saves a draft; a person approves before anything is sent), for that offer and field (one question each,
+  with Italian and English translations of the question and the reason), and tell the owner what answer would
+  unlock the offer.
+- resolved_by "owner" (such as chef_approved): decided inside the restaurant. Never ask the supplier; tell the owner
+  what to do instead (for example, order a sample for the chef to taste).
 Answer in the language the owner uses."""
+
+
+def missing_drafts_nudge(store: Store) -> str | None:
+    """Supplier questions from open_questions that are still undrafted, as a reminder to the model.
+
+    The model tends to recommend the baseline and stop; this check makes the clarification step reliable.
+    """
+    pending = [q for q in calc.open_questions(store) if q["resolved_by"] == "supplier" and not q["drafted"]]
+    if not pending:
+        return None
+    items = "\n".join(f"- offer {q['offer_id']} ({q['product']}, {q['supplier']}): {q['field']} for rule "
+                      f"\"{q['rule']}\"" for q in pending)
+    return ("Before answering: these supplier questions are still undrafted. Call draft_clarification for each "
+            f"(polite business Japanese, one question each, with Italian and English translations):\n{items}\n"
+            "Then give your full final answer again, including what each answer would unlock.")
 
 
 @dataclass
@@ -49,6 +68,7 @@ def run_agent(llm: LLM, store: Store, user_message: str, history: list[dict] | N
                 {"role": "user", "content": user_message}]
     tools = openai_tool_specs()
     steps: list[dict] = []
+    nudged = False
 
     for _ in range(max_steps):
         resp = llm.chat(messages, tools=tools, tool_choice="auto")
@@ -56,6 +76,12 @@ def run_agent(llm: LLM, store: Store, user_message: str, history: list[dict] | N
         call = llm.calls[-1]
         tool_calls = msg.tool_calls or []
         if not tool_calls:
+            nudge = None if nudged or not any(s.get("name") == "calculate_baskets" for s in steps) \
+                else missing_drafts_nudge(store)
+            if nudge:
+                nudged = True
+                messages += [{"role": "assistant", "content": msg.content or ""}, {"role": "user", "content": nudge}]
+                continue
             steps.append({"type": "answer", "request_id": call.request_id, "model": call.model,
                           "latency_ms": call.latency_ms})
             return AgentResult(answer=msg.content or "", steps=steps)

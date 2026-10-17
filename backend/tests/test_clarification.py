@@ -102,3 +102,18 @@ def test_owner_decided_fields_are_not_asked_of_suppliers():
     assert "error" in result and not store.clarifications
     rule = next(m for m in calc.check_evidence(store, mayu)["mandatory"] if m["field"] == "chef_approved")
     assert rule["resolved_by"] == "owner"
+
+
+def test_open_questions_list_missing_evidence_and_who_answers():
+    store = Store.load(FIXTURE)
+    qs = {(q["offer_id"], q["field"]): q for q in calc.calculate_baskets(store)["open_questions"]}
+    assert qs[("O-noo-3", "hydration_pct")]["resolved_by"] == "supplier"
+    assert qs[("O-kik-2", "chef_approved")]["resolved_by"] == "owner"
+    assert not qs[("O-noo-3", "hydration_pct")]["drafted"]
+
+    call_tool(store, "draft_clarification", {"offer_id": "O-noo-3", "field": "hydration_pct", "text_ja": "加水率は？",
+                                             "reason": "hydration not stated", "reason_it": "idratazione non indicata"})
+    assert store.clarifications[0]["reason_translations"] == {"it": "idratazione non indicata",
+                                                              "en": "hydration not stated"}
+    qs = {(q["offer_id"], q["field"]): q for q in calc.calculate_baskets(store)["open_questions"]}
+    assert qs[("O-noo-3", "hydration_pct")]["drafted"]

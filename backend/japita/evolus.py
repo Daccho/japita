@@ -14,7 +14,7 @@ import uuid
 import httpx
 from dotenv import load_dotenv
 
-from .agent import SYSTEM_PROMPT, AgentResult
+from .agent import SYSTEM_PROMPT, AgentResult, missing_drafts_nudge
 from .llm import CallRecord
 from .store import Store
 from .tools import TOOLS, call_tool
@@ -94,7 +94,7 @@ def run_agent_evolus(agent: EvolusAgent, store: Store, user_message: str, max_st
     # Repeat the operating rules so behavior does not depend on the agent instructions saved in the Evolus UI.
     message = (f"Operating rules:\n{SYSTEM_PROMPT}\n\n" + PROTOCOL.format(tools=_tool_catalog())
                + f"\n\nOwner's request:\n{user_message}")
-    retried = False
+    retried = nudged = False
     for _ in range(max_steps):
         reply = agent.send(message)
         call = agent.calls[-1]
@@ -110,6 +110,12 @@ def run_agent_evolus(agent: EvolusAgent, store: Store, user_message: str, max_st
             continue
         retried = False
         if action["action"] == "answer":
+            nudge = None if nudged or not any(s.get("name") == "calculate_baskets" for s in steps) \
+                else missing_drafts_nudge(store)
+            if nudge:
+                nudged = True
+                message = nudge + "\nReply with one JSON object as specified."
+                continue
             steps.append({"type": "answer", **meta})
             return AgentResult(answer=action["text"], steps=steps)
         results = []

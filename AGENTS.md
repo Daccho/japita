@@ -44,6 +44,7 @@ Keep it short: rules and pointers live here, details live in `docs/`. Each fact 
 # agent:    cd backend && uv run python -m japita.agent "質問"       # needs LLM_* and DATABASE_URL in .env
 # test:     cd backend && uv run pytest                               # offline
 # live:     cd backend && uv run pytest -m live -s                    # real model endpoint
+# web:      cd frontend && pnpm install && pnpm dev                   # http://localhost:3000, API from NEXT_PUBLIC_API_BASE
 ```
 
 ---
@@ -113,6 +114,8 @@ Record important decisions here (date — decision — reason) so every agent sh
 - 2026-10-17 — Clarified the workspace mockup and future website scope in `README.md`, following the user's confirmation that public pricing and restaurant registration belong to the full product.
 - 2026-10-17 — Evolus: registered our TokenFactory Gemma as an OpenAI-compatible model (Evolus test: answers, tool calling, streaming OK) and created the main agent. Evolus agent chat ignores client-supplied `tools`, so we use option B: the app runs the loop and the Evolus agent replies with JSON actions in one `X-Conversation-Id` conversation (`backend/japita/evolus.py`). Option A (our MCP server as an Evolus connector) needs a public URL; revisit after deployment.
 - 2026-10-17 — Two screens: the owner app (Italian, switchable to English for judges) and a one-page test supplier page (Japanese), opened by a secret link token issued on approval. Supplier replies are double-read by Gemma (value + source text) and translated, but change the offer only after the owner applies them. Owner-decided fields (`chef_approved`) are never asked of suppliers.
+- 2026-10-17 — Revised the mockup navigation and supplier search from the user's design feedback; the current decisions, including the promotion-only Offers section and floating advisor, are in `docs/mockup-handoff.md`.
+- 2026-10-17 — Adopted constrained document-style menu editing at the user's request; current behavior is in `docs/mockup-handoff.md`.
 - 2026-10-17 — Menu follows the structure of common Hakata-style shops (user-supplied reference menu): one classic tonkotsu ramen, a full set and a refill set, full and half kaedama, toppings, rice, sides, drinks, dessert; the vegetarian miso bowl stays. Names and prices are our own. Kikurage replaces mayu as the third purchased item. Recipe lines now hold per-menu-item quantities (`per_item`), so a half refill uses 60 g.
 - 2026-10-17 — Daily stock: weeks carry daily servings, dated deliveries (confirmed, delayed, cancelled), and usable-until dates; baskets flag deliveries that arrive after a stockout and offer an `on_time` basket. Basket approval creates simulated supplier purchase orders with idempotent submit. Inference stays on AMD TokenFactory; no Developer Cloud GPU credits will be requested, so the droplet deployment in `docs/deploy-amd.md` is not pursued for now.
 - 2026-10-17 — Suppliers answer clarification requests in a mobile web form (typed value for the requested field plus an optional Japanese note) instead of uploading documents; free-text replies are still double-read by Gemma.
