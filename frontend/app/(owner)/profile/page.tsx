@@ -7,12 +7,14 @@ import Overview from "@/components/profile/Overview";
 import MenuSheet from "@/components/profile/MenuSheet";
 import BuyingPreferences from "@/components/profile/BuyingPreferences";
 import Links from "@/components/profile/Links";
+import Passkeys from "@/components/profile/Passkeys";
 
 const TABS = [
   ["overview", "pr.overview"],
   ["menu", "pr.menu"],
   ["buying", "pr.buying"],
   ["links", "pr.links"],
+  ["signin", "au.security"],
 ] as const;
 type Tab = (typeof TABS)[number][0];
 
@@ -36,7 +38,7 @@ export default function ProfilePage() {
         ))}
       </nav>
       <div id="jp-profile-content">
-        {tab === "overview" ? <Overview /> : tab === "menu" ? <MenuSheet /> : tab === "buying" ? <BuyingPreferences /> : <Links />}
+        {tab === "overview" ? <Overview /> : tab === "menu" ? <MenuSheet /> : tab === "buying" ? <BuyingPreferences /> : tab === "links" ? <Links /> : <Passkeys />}
       </div>
     </>
   );

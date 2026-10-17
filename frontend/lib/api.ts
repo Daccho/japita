@@ -1,6 +1,7 @@
 // Thin client for the FastAPI backend. Types mirror backend/japita (api.py, calc.py, stock.py, orders.py, portal.py).
 
-export const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000";
+// Same-origin proxy to the backend (next.config.ts), so the session cookie travels with every request.
+export const API_BASE = "/api";
 
 export class ApiError extends Error {
   constructor(public status: number, public path: string, public body: string) {
@@ -10,8 +11,15 @@ export class ApiError extends Error {
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, { cache: "no-store", ...init });
+  // The session expired or was revoked: the server refuses, so go back to sign-in.
+  if (res.status === 401 && typeof window !== "undefined") window.location.assign(loginUrl());
   if (!res.ok) throw new ApiError(res.status, path, (await res.text()).slice(0, 500));
   return res.json() as Promise<T>;
+}
+
+export function loginUrl() {
+  const next = window.location.pathname + window.location.search;
+  return next === "/" ? "/login" : `/login?next=${encodeURIComponent(next)}`;
 }
 
 const json = (method: string, body: unknown, headers: Record<string, string> = {}): RequestInit => ({

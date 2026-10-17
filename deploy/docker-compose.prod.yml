@@ -30,6 +30,7 @@ services:
       EVOLUS_WORKFLOW_ID: ${EVOLUS_WORKFLOW_ID:-}
       ADMIN_KEY: ${ADMIN_KEY}
       APP_HOST: ${SITE_HOST}
+      APP_ORIGIN: https://${SITE_HOST}
     depends_on:
       db: {condition: service_healthy}
     restart: unless-stopped
@@ -38,7 +39,7 @@ services:
     build:
       context: ../frontend
       args:
-        NEXT_PUBLIC_API_BASE: https://${SITE_HOST}/api
+        API_ORIGIN: http://api:8000
     depends_on: [api]
     restart: unless-stopped
 

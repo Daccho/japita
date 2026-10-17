@@ -4,11 +4,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { CalendarDays, Loader2, ShoppingBasket, SlidersHorizontal, Store } from "lucide-react";
+import { CalendarDays, Loader2, LogOut, ShoppingBasket, SlidersHorizontal, Store } from "lucide-react";
 import { LangToggle, useDates, useI18n, type Key } from "@/lib/i18n";
 import { PROFILES, useWorkspace } from "@/components/workspace";
 import { suggestedBasket } from "@/components/helpers";
 import AdvisorDock from "@/components/Advisor";
+import { useAccount } from "@/components/AuthGate";
+import { logout } from "@/lib/auth";
 
 const NAV: { href: string; key: Key; icon: typeof Store }[] = [
   { href: "/", key: "nav.week", icon: CalendarDays },
@@ -59,6 +61,8 @@ export default function Shell({ children }: { children: ReactNode }) {
   const path = usePathname();
   const { data, connecting, profileId, setProfileId } = useWorkspace();
   const lines = suggestedBasket(data?.baskets)?.lines.length;
+  const { user } = useAccount();
+  const signOut = () => logout().finally(() => window.location.replace("/login"));
   return (
     <div className="jp">
       <div className="jp-app">
@@ -87,6 +91,13 @@ export default function Shell({ children }: { children: ReactNode }) {
               ))}
             </div>
             <LangToggle />
+            <div className="jp-account">
+              <span className="jp-muted">{user.display_name}</span>
+              <button type="button" className="jp-action" onClick={signOut}>
+                <LogOut aria-hidden />
+                {t("au.logout")}
+              </button>
+            </div>
           </div>
         </header>
         <div className="jp-shell">

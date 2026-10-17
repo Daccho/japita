@@ -46,7 +46,8 @@ Keep it short: rules and pointers live here, details live in `docs/`. Each fact 
 # agent:    cd backend && uv run python -m japita.agent "質問"       # needs LLM_* and DATABASE_URL in .env
 # test:     cd backend && uv run pytest                               # offline
 # live:     cd backend && uv run pytest -m live -s                    # real model endpoint
-# web:      cd frontend && pnpm install && pnpm dev                   # http://localhost:3000, API from NEXT_PUBLIC_API_BASE
+# web:      cd frontend && pnpm install && pnpm dev                   # http://localhost:3000, /api proxied to API_ORIGIN
+# account:  cd backend && uv run python -m japita.auth add-user kumo-milano --name "Kumo Ramen Milano"
 ```
 
 ---
@@ -125,3 +126,4 @@ Record important decisions here (date — decision — reason) so every agent sh
 - 2026-10-17 — Adopted the user's new Japita logo for the mockup and website; current artwork and provenance are documented in `mockup/assets/README.md`.
 - 2026-10-17 — Made website design/backend reconciliation explicit in the build plan at the user's request; confirmed collaboration decisions and the natural-language search assessment are in `docs/design-integration.md`.
 - 2026-10-17 — Refined saved-supplier management and discovery from the user's filter feedback; approved view, search, country, and price-ordering behavior is in `docs/mockup-handoff.md`.
+- 2026-10-18 — Added sign-in at the user's request: login ID + password (Argon2id) and passkeys (WebAuthn), with a restaurant/supplier choice first. Authorization is server-side and deny-by-default (`backend/japita/auth.py`): HttpOnly session cookie through the same-origin `/api` proxy, Origin check on writes, roles checked per request. No public sign-up; accounts come from the CLI. One deployment for both sides for now; the user noted separate hosting may suit production.

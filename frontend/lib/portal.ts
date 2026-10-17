@@ -1,6 +1,6 @@
 // Typed client for the supplier portal (Japanese, mobile). Shapes mirror backend/japita/portal.py.
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000";
+const API_BASE = "/api"; // same-origin proxy, see next.config.ts
 
 export type FormField = {
   field: string;

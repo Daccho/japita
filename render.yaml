@@ -30,5 +30,7 @@ services:
         sync: false
       - key: EVOLUS_WORKFLOW_ID
         sync: false
+      - key: APP_ORIGIN         # the Vercel URL, e.g. https://japita.vercel.app
+        sync: false
       - key: ADMIN_KEY          # required to reset demo data (POST /state/seed)
         generateValue: true
