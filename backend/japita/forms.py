@@ -51,3 +51,12 @@ def coerce(value: Any, sample: Any) -> Any:
         except ValueError:
             return None
     return value
+
+
+def display_ja(value: Any) -> str:
+    """A typed value as the supplier would read it: booleans as はい/いいえ."""
+    if isinstance(value, bool):
+        return "はい" if value else "いいえ"
+    if isinstance(value, str) and value.strip().lower() in ("true", "false"):
+        return "はい" if value.strip().lower() == "true" else "いいえ"
+    return str(value)

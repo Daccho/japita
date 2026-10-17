@@ -5,7 +5,7 @@ Suppliers never change restaurant data directly: product updates and new product
 
 import secrets
 
-from .forms import FIELD_FORM_JA, INGREDIENT_EN, INGREDIENT_JA, coerce, form, spec_fields
+from .forms import FIELD_FORM_JA, INGREDIENT_EN, INGREDIENT_JA, coerce, display_ja, form, spec_fields
 from .store import Store, _now
 
 OWNER_ONLY_FIELDS = {"chef_approved"}  # decided inside the restaurant, never entered by a supplier
@@ -41,7 +41,7 @@ def _typed_attributes(store: Store, ingredient: str, attributes: dict) -> tuple[
             raise ValueError(f"invalid value for {field}")
         values[field] = value
         label = FIELD_FORM_JA.get(field, {}).get("label_ja", field)
-        evidence[field] = f"[サプライヤー入力] {label}: {raw}{FIELD_FORM_JA.get(field, {}).get('unit', '')}"
+        evidence[field] = f"[サプライヤー入力] {label}: {display_ja(raw)}{FIELD_FORM_JA.get(field, {}).get('unit', '')}"
     return values, evidence
 
 

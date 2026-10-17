@@ -19,7 +19,7 @@ from . import calc, repo
 from .agent import run_agent
 from .evolus import EvolusAgent, run_agent_evolus
 from .extract import double_read, read_reply, translate
-from .forms import coerce as _coerce, form as _form, spec_fields as _spec_fields
+from .forms import coerce as _coerce, display_ja, form as _form, spec_fields as _spec_fields
 from .llm import LLM
 from .store import Store
 
@@ -458,7 +458,7 @@ def supplier_reply(token: str, body: SupplierReply):
         value = _coerce(body.value, sample)
         if value is None:
             raise HTTPException(422, "入力値の形式が正しくありません")
-        source = f"[仕入先フォーム入力] {_form(field)['label_ja']}: {body.value}{_form(field).get('unit', '')}"
+        source = f"[仕入先フォーム入力] {_form(field)['label_ja']}: {display_ja(body.value)}{_form(field).get('unit', '')}"
         extraction = {"status": "ok", "value": value, "read_1": value, "read_2": value, "source_text": source,
                       "method": "supplier_form"}
         translations = translate(llm, body.note_ja) if body.note_ja else {}
