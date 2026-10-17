@@ -89,8 +89,6 @@ class User(repo.Base):
     role = Column(String, nullable=False, default="restaurant")
     supplier_id = Column(String)  # role "supplier" only
     password_hash = Column(String)
-    # Unused legacy column (passkeys were removed). Kept because databases created earlier have it as NOT NULL.
-    webauthn_user_id = Column(String, nullable=False, default=lambda: secrets.token_urlsafe(32))
     created_at = Column(DateTime(timezone=True), default=_now)
 
 
