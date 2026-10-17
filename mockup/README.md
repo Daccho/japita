@@ -20,7 +20,11 @@ python mockup/refresh-preview.py --check
 
 Then refresh or reopen the same preview tab. Commit both HTML files when saving changes. Do not edit the generated iframe document separately or weaken its sandbox or CSP.
 
-The selected design is **Weekly workspace**. **Advisor first** remains an earlier comparison variant; continue work on Weekly workspace unless requested otherwise. Restaurant profile opens first for review; the weekly purchasing screen remains available in the sidebar.
+The selected design retains the **Weekly workspace** layout. **Advisor first** remains an earlier comparison variant. The current sidebar is Suppliers, Offers, Basket, and Restaurant profile; Suppliers opens first. The former This week section has been removed.
+
+Suppliers uses compact image rows with one search box and supplier, supplier-country, and product filters. Search supports keywords and a limited natural-language demo, such as “Japanese soy sauce from a supplier in Italy.” It uses local catalog matching, with no live AI or web search. Product prices and quotes are accessible from supplier products and the noodle comparison. Offers is reserved for promotions and discounts; its empty state reflects that no promotions have been provided.
+
+The purchasing advisor opens from a floating bubble at the bottom right. Drag the bubble to move it; its position is stored locally. The popup contains the existing noodle-backup recommendation and basket actions.
 
 In Restaurant profile → Menu, the menu is displayed as a sheet. Use the top-right pencil to edit cells, then Save menu or Cancel. Row chevrons open ingredient and purchasing details. Saved changes remain local to the preview.
 

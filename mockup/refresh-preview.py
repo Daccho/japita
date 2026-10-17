@@ -23,7 +23,7 @@ def embed_images(fragment):
         image.stem: 'data:image/webp;base64,' + base64.b64encode(image.read_bytes()).decode('ascii')
         for image in sorted((ROOT / 'assets').glob('*.webp'))
     }
-    required = {'japita-logo', 'kumo-demo-logo', 'fresh-noodles', 'frozen-noodles'}
+    required = {'japita-logo', 'kumo-demo-logo', 'fresh-noodles', 'frozen-noodles', 'soy-sauce', 'mayu-oil'}
     if not required.issubset(assets):
         raise ValueError('Required mockup images are missing from mockup/assets/.')
     before, rest = fragment.split(IMAGE_START, 1)
