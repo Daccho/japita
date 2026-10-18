@@ -12,10 +12,13 @@ import pytest
 from sqlalchemy import create_engine, update
 from sqlalchemy.orm import Session
 
-from japita import auth, drawings, drawings_repo as cache, repo
+from japita.accounts import auth
+from japita.drawings import service as drawings
+from japita.drawings import cache
+from japita.core import repo
 from japita.api import app
-from japita.drawings_library import drawing_svg, validate_svg
-from japita.drawings_match import identify
+from japita.drawings.library import drawing_svg, validate_svg
+from japita.drawings.match import identify
 
 
 @pytest.fixture

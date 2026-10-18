@@ -8,6 +8,12 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
 import type { FormField } from "@/lib/portal";
 import { fieldHint, fieldLabel } from "./format";
 import { useLang, type Lang } from "./i18n";
+import { Req, RequiredLegend } from "@/components/Required";
+
+/** "* Required" at the top of a portal form with required fields. */
+export function PortalRequiredLegend() {
+  return <RequiredLegend text={useLang().t.required} />;
+}
 
 export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
   return <section className={`jp-panel ${className}`}>{children}</section>;
@@ -56,12 +62,13 @@ export function ErrorBox({ message }: { message: string | null }) {
   );
 }
 
-/** A labelled form field in the workspace style. */
-export function Field({ label, hint, note, children }: { label: ReactNode; hint?: string; note?: ReactNode; children: ReactNode }) {
+/** A labelled form field in the workspace style; `required` adds the red asterisk (the input sets `required`). */
+export function Field({ label, hint, note, required, children }: { label: ReactNode; hint?: string; note?: ReactNode; required?: boolean; children: ReactNode }) {
   return (
     <label className="jp-field">
       <span>
         {label}
+        {required && <Req />}
         {hint && <span className="jp-field-hint"> · {hint}</span>}
       </span>
       {children}
@@ -125,22 +132,22 @@ export function FieldBlock({
   value,
   onChange,
   allowClear,
-  optional,
+  required,
 }: {
   field: FormField;
   value: string | boolean | null;
   onChange: (v: string | boolean | null) => void;
   allowClear?: boolean;
-  optional?: boolean;
+  required?: boolean;
 }) {
-  const { t, lang } = useLang();
+  const { lang } = useLang();
   return (
     <div className="jp-field">
       <span>
         {fieldLabel(field, lang)}
-        {optional && <span className="jp-field-hint"> · {t.optional}</span>}
+        {required && <Req />}
       </span>
-      <FieldInput field={field} value={value} onChange={onChange} allowClear={allowClear} />
+      <FieldInput field={field} value={value} onChange={onChange} allowClear={allowClear} required={required} />
       {fieldHint(field, lang) && <span className="jp-field-hint">{fieldHint(field, lang)}</span>}
     </div>
   );
@@ -152,14 +159,17 @@ export function FieldInput({
   value,
   onChange,
   allowClear,
+  required,
 }: {
   field: FormField;
   value: string | boolean | null;
   onChange: (v: string | boolean | null) => void;
   allowClear?: boolean;
+  required?: boolean;
 }) {
   const { t, lang } = useLang();
   const label = fieldLabel(field, lang);
+  const req = required ? { required: true, "aria-required": true } : {};
   if (field.input === "boolean") {
     return (
       <Choice
@@ -186,10 +196,10 @@ export function FieldInput({
   }
   if (field.input === "number") {
     return (
-      <UnitInput value={str} onChange={onChange} unit={field.unit} min={field.min} max={field.max} placeholder={t.enterNumber} aria-label={label} />
+      <UnitInput value={str} onChange={onChange} unit={field.unit} min={field.min} max={field.max} placeholder={t.enterNumber} aria-label={label} {...req} />
     );
   }
-  return <input type="text" value={str} onChange={(e) => onChange(e.target.value)} placeholder={t.enterText} aria-label={label} />;
+  return <input type="text" value={str} onChange={(e) => onChange(e.target.value)} placeholder={t.enterText} aria-label={label} {...req} />;
 }
 
 /** Validates a typed field value; returns an error or null. */

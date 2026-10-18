@@ -2,8 +2,8 @@
 
 from pathlib import Path
 
-from japita import calc
-from japita.store import Store
+from japita.purchasing import calc
+from japita.core.store import Store
 
 FIXTURE = Path(__file__).parent / "fixtures" / "kumo.json"
 

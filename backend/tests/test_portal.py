@@ -4,8 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from japita import calc, portal
-from japita.store import Store
+from japita.purchasing import calc
+from japita.portal import service as portal
+from japita.core.store import Store
 
 FIXTURE = Path(__file__).parent / "fixtures" / "kumo.json"
 

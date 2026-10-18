@@ -8,7 +8,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
-from japita import auth, repo
+from japita.accounts import auth
+from japita.core import repo
 from japita.api import app
 
 

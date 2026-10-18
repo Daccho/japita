@@ -16,8 +16,9 @@ Ready-to-render, localized data. Pages print the texts as they are; they never c
 - **Profile:** `?profile_id=`, else the restaurant's active profile (`GET/PUT /restaurant/settings`).
 - **Errors:** `{"error": {"code", "message"}, "detail"}`; `message` is localized when the request names a language.
 - **Labels:** each view has `labels: {catalog key: text}` for the page's static headings and buttons.
-- **Avatar:** `{ "url": string | null, "initials": "HS" }`: a logo URL when set, else 1–2 letters from the name
-  (legal forms such as B.V., S.r.l., GmbH skipped) for a round badge.
+- **Avatar:** `{ "url": string | null, "initials": "HS" }`: `url` is the uploaded logo (`/api/logos/{id}.webp`, the
+  browser path through the `/api` proxy) or null; `initials` are 1–2 letters from the name (legal forms such as B.V.,
+  S.r.l., GmbH skipped) for a round badge. See "Logos" below.
 - **Drawing:** `DrawingReference` `{ "key", "source": "library" | "generated" | "fallback", "state", "needs_drawing",
   "tree" }`, rendered by `components/ProductDrawing.tsx`. Views read cached art only; they never start a model call.
 - **Unknown sourcing route:** offers and supplier proposals accept `origin_route: "unknown"`; views show a localized
@@ -237,15 +238,25 @@ PUT `{ "active_profile_id" }` (404 for an unknown id). Both return
 
 ## GET/PUT /restaurant/profile
 
-PUT `{ "values"?: { description, concept, positioning, location, seats, menuPrice, make, buy, ownerNotes },
-"logo_url"?: string }` (partial; multi-line fields ≤ 1200, others ≤ 160 characters). `logo_url` is a site path
-(`/kumo-demo-logo.webp`, not `//host`) or an http(s) URL without credentials, ≤ 400 characters (`invalid_url`); an
-empty value restores the default `/kumo-demo-logo.webp`.
+PUT `{ "values"?: { description, concept, positioning, location, seats, menuPrice, make, buy, ownerNotes } }`
+(partial; multi-line fields ≤ 1200, others ≤ 160 characters). The logo has its own endpoints (see "Logos").
 
 ```jsonc
-{ "lang", "values", "name", "logo_url", "avatar", "subtitle", "facts": [{ "label", "value" }], "questionnaire": [{ "label", "value" }],
+{ "lang", "values", "name", "avatar", "has_logo", "subtitle", "facts": [{ "label", "value" }], "questionnaire": [{ "label", "value" }],
   "fields": [{ "key", "label", "multiline", "max_length" }], "labels" }
 ```
+
+## Logos
+
+Logos are uploaded files, never URLs. `POST /restaurant/logo` (restaurant session, its own workspace) and
+`POST /portal/me/logo` (supplier session, its own supplier) take multipart `file`; `DELETE` on the same paths removes
+the logo (the avatar falls back to initials). The restaurant endpoints return the `/restaurant/profile` view, the
+supplier ones the portal view. A supplier's logo applies at once in every restaurant that lists it.
+The server accepts at most 2 MB (`logo_too_large`, 413) of PNG, JPEG or WebP recognized by content
+(`logo_unsupported_type`, 415; SVG and GIF are refused), decodes it under a pixel cap (`logo_invalid_image`, 422),
+turns it upright from EXIF, fits it within 512 × 512 and stores it re-encoded as WebP without metadata (table `logos`,
+one row per owner). `GET /logos/{id}.webp` is public, `image/webp` with `nosniff` and a one-year immutable cache;
+the id changes with every new image. Seeding a fixture also stores its `<fixture>.logo.webp` (Kumo Ramen Milano).
 
 ## GET/PUT /restaurant/links
 
@@ -263,8 +274,8 @@ Every account gets `{ "username", "display_name", "role", "has_password", "avata
 accounts add `supplier_id`. Restaurant accounts also get `{ "lang", "active_profile_id", "default_profile_id",
 "profiles": [{ "id", "label", "description", "active" }] }` (labels in `?lang=it|en|ja`, else the language cookie).
 `place_text`: restaurant → the place line (`42 seats · Milan`, restaurant language); supplier → `For Kumo Ramen Milano`
-/ `Kumo Ramen Milano 様向け` (portal language: `?lang=ja|en` or `japita_portal_lang`, default `ja`). The supplier's
-avatar uses its `logo_url` when the restaurant applied one.
+/ `Kumo Ramen Milano 様向け` (portal language: `?lang=ja|en` or `japita_portal_lang`, default `ja`). Avatars use the
+uploaded logos.
 
 ## POST /agent/ask → GET /jobs/{id} result
 
@@ -286,8 +297,7 @@ received_text, state_text, badge, delivery_label, delivery_text, goods_text, shi
 can_accept, can_change_delivery`, lines add `ingredient_name, pack_word (本/袋/bottle/bag), qty_text, cost_text`,
 changes add `from_text, to_text, at_text`; each product adds `ingredient_name, is_restaurant_ingredient,
 not_ingredient_text, price_text, price_amount, pack_text, origin_text, updated_text, attribute_rows, pending_view,
-drawing`. The profile includes `logo_url`; `POST …/profile` accepts `logo_url` (same rules as the restaurant logo;
-empty removes it) as part of the profile proposal the restaurant applies or rejects.
+drawing`. The supplier's logo is not part of the profile proposal: the supplier uploads it directly (see "Logos").
 Every POST under `/portal/{token}/…` returns the same view, including
 `POST /portal/me/requests/{request_id}/reply` `{ "value"?, "note_ja"?, "text_ja"? }` (the request id from `requests[].id`;
 404 for another supplier's question).

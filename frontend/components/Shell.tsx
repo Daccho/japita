@@ -11,6 +11,7 @@ import { LiveProvider, useView } from "@/components/live";
 import { NotificationsProvider, type NotificationFeed } from "@/components/Notifications";
 import { forgetSession, type ShellView } from "@/lib/api";
 import { logout } from "@/lib/auth";
+import { RequiredTextContext } from "@/components/Required";
 
 const NAV: { href: string; key: Key; icon: typeof Store; count?: "basket" }[] = [
   { href: "/restaurants", key: "nav.week", icon: CalendarDays },
@@ -29,6 +30,7 @@ function Frame({ shell: initial, children }: { shell: ShellView | null; children
     });
   const name = shell?.account.name ?? "";
   return (
+    <RequiredTextContext.Provider value={shell?.labels["form.required"] ?? null}>
     <AppShell
       homeHref="/restaurants"
       controls={<LangToggle />}
@@ -64,6 +66,7 @@ function Frame({ shell: initial, children }: { shell: ShellView | null; children
         </footer>
       )}
     </AppShell>
+    </RequiredTextContext.Provider>
   );
 }
 

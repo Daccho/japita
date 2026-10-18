@@ -30,8 +30,8 @@ The Japanese teammate reviews language and ingredient ambiguity. The Italian tea
 
 ## Import rule checks
 
-The active ruleset is a versioned record in the database (table `import_rule_sets`); `backend/japita/rules.py` judges
-it in code (no LLM) for each offer and its supplier. `backend/japita/data/import_rules.json` is the first version,
+The active ruleset is a versioned record in the database (table `import_rule_sets`); `backend/japita/import_rules/rules.py` judges
+it in code (no LLM) for each offer and its supplier. `backend/japita/import_rules/data/import_rules.json` is the first version,
 stored when the database has none (and used directly when no database is configured). Outcomes are `ok`, `info`, `needs_review` or `missing_document`; no rule outputs an
 approval or a clearance. Results appear at `GET /views/import-checks`, as `import_checks` summaries on supplier offers
 and plan lines, and in the agent tool `check_import_rules`, which Gemma uses to explain the outcomes with their sources
@@ -67,11 +67,11 @@ Rules change, so an operator replaces them by importing a file; no deploy is nee
 
 1. A person reads the official source and decides what the rule says. The app never fetches or interprets legal
    texts, and Gemma never writes rules or decides an outcome.
-2. Export the active set: `GET /admin/import-rules/export.csv` or `uv run python -m japita.rules export rules.csv`
-   (`backend/japita/data/import_rules.sample.csv` is the export of the bundled rules).
+2. Export the active set: `GET /admin/import-rules/export.csv` or `uv run python -m japita.import_rules.rules export rules.csv`
+   (`backend/japita/import_rules/data/import_rules.sample.csv` is the export of the bundled rules).
 3. Edit the rows, setting `source_accessed` to the date the source was checked.
 4. Check the file: `POST /admin/import-rules?dry_run=true` (multipart `file`) or
-   `uv run python -m japita.rules import rules.csv --dry-run`. The answer lists `added`, `changed` and `removed` rule ids.
+   `uv run python -m japita.import_rules.rules import rules.csv --dry-run`. The answer lists `added`, `changed` and `removed` rule ids.
 5. Import it: the same call without `dry_run` stores it as a new version and activates it. A file identical to the
    active set creates no version.
 6. Roll back with `POST /admin/import-rules/activate/{version}`; `GET /admin/import-rules/versions` lists them.
@@ -117,7 +117,7 @@ problem: `{row, rule_id, column, code, message}` (CSV row numbers count the head
 `invalid_outcome`, `invalid_boolean`, `blocking_not_allowed`, `unknown_question_field`, `missing_source`,
 `invalid_source_url`, `invalid_accessed_date`, `forbidden_claim`. `forbidden_claim` rejects wording that presents a
 check as clearance, approval or legality in any language (for example "customs cleared", "legal to import",
-"sdoganato", "通関可能", "適法"; list in `backend/japita/rules_import.py`).
+"sdoganato", "通関可能", "適法"; list in `backend/japita/import_rules/rules_import.py`).
 
 Each check carries its `accessed` date and is `stale` when the source was last checked more than 90 days before the
 server's date, so the interface can ask for a re-check.

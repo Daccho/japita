@@ -6,7 +6,8 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from japita import auth, repo
+from japita.accounts import auth
+from japita.core import repo
 
 FIXTURE = Path(__file__).parent / "fixtures" / "kumo.json"
 APP = "http://localhost:3000"

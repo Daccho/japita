@@ -5,8 +5,10 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from japita import fx, portal, repo
-from japita.store import Store
+from japita.core import fx
+from japita.portal import service as portal
+from japita.core import repo
+from japita.core.store import Store
 
 FIXTURE = Path(__file__).parent / "fixtures" / "kumo.json"
 RATES = ({"JPY": 163.12, "USD": 1.08}, "2026-10-16")

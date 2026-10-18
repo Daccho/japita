@@ -9,12 +9,18 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
-from japita import api, auth, calc, orders, repo, stock
-from japita.advice import brief, validate_explanation
-from japita.catalog import Criteria, search
-from japita.context import input_version
-from japita.store import Store
-from japita.agent import AgentResult
+from japita import api
+from japita.advisor import api as advisor_api
+from japita.accounts import auth
+from japita.purchasing import calc
+from japita.purchasing import orders
+from japita.core import repo
+from japita.purchasing import stock
+from japita.purchasing.advice import brief, validate_explanation
+from japita.catalog.api import Criteria, search
+from japita.core.context import input_version
+from japita.core.store import Store
+from japita.advisor.agent import AgentResult
 
 FIXTURE = Path(__file__).parent / "fixtures/kumo.json"
 
@@ -202,7 +208,7 @@ def test_agent_run_does_not_overwrite_concurrent_edits_and_retains_followup_cont
     seen = []
     class FakeLLM:
         calls = []
-    monkeypatch.setattr(api, "LLM", FakeLLM)
+    monkeypatch.setattr(advisor_api, "LLM", FakeLLM)
     def fake_agent(llm, store, question, history):
         seen.append(history)
         c = store.add_clarification("O-noo-3", "hydration_pct", "加水率は？", "test")
@@ -212,12 +218,12 @@ def test_agent_run_does_not_overwrite_concurrent_edits_and_retains_followup_cont
             repo.save_state(latest)
         return AgentResult(answer=json.dumps({"recommended_kind": None, "focus": "missing_information",
                                               "evidence": [{"offer_id": c["offer_id"], "field": c["field"], "outcome": "missing_evidence"}]}))
-    monkeypatch.setattr(api, "run_agent", fake_agent)
-    first = api.answer_question(api.Question(question="What should I buy?", via="direct", conversation_id="same-chat"))
+    monkeypatch.setattr(advisor_api, "run_agent", fake_agent)
+    first = advisor_api.answer_question(advisor_api.Question(question="What should I buy?", via="direct", conversation_id="same-chat"))
     assert first["stale"]
     assert repo.load_state()["week"]["stock"]["noodles"]["usable"] == 21000
     assert not repo.load_state()["clarifications"]  # stale run does not add obsolete drafts
-    second = api.answer_question(api.Question(question="What about the frozen option?", via="direct", conversation_id="same-chat"))
+    second = advisor_api.answer_question(advisor_api.Question(question="What about the frozen option?", via="direct", conversation_id="same-chat"))
     assert not second["stale"] and second["explanation"]["validated"]
     assert second["answer_view"]["headline"] and not second["answer_view"]["fallback"]
     assert seen[1][0]["content"] == "What should I buy?"
@@ -270,7 +276,7 @@ def test_restaurant_context_participates_in_advisor_freshness():
 
 
 def test_catalog_job_uses_server_currency_text(client):
-    from japita.catalog import Search, run_search
+    from japita.catalog.api import Search, run_search
     result = run_search(Search(lang="en", criteria=Criteria(ingredient="noodles")))
     assert result["offers"] and result["offers"][0]["delivered_text"].startswith("$")
     assert "kg" in result["offers"][0]["basis_text"]
@@ -304,7 +310,7 @@ def test_empty_evidence_is_filled_from_recorded_outcomes():
 
 
 def test_orderability_evidence_explains_why_the_cheapest_soy_sauce_is_excluded():
-    from japita import views
+    from japita.views import service as views
     store = Store.load(FIXTURE)
     for q in calc.open_questions(store):
         if q["resolved_by"] == "supplier":
@@ -319,7 +325,7 @@ def test_orderability_evidence_explains_why_the_cheapest_soy_sauce_is_excluded()
 
 
 def test_no_draft_and_failing_rule_shown_for_an_offer_that_fails_another_rule():
-    from japita.tools import call_tool
+    from japita.advisor.tools import call_tool
     store = Store.load(FIXTURE)
     store.profile["ingredients"]["noodles"]["mandatory"].append(
         {"field": "fresh", "op": "eq", "value": True, "label": "Fresh noodles"})
@@ -334,8 +340,8 @@ def test_no_draft_and_failing_rule_shown_for_an_offer_that_fails_another_rule():
 
 
 def _answer(store, kind, focus="recommendation", lang="en"):
-    from japita import views
-    from japita.textfmt import Money
+    from japita.core.textfmt import Money
+    from japita.views import service as views
     decision = brief(store)
     explanation = validate_explanation(json.dumps({"recommended_kind": kind, "focus": focus, "evidence": []}),
                                        store, decision)

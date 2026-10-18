@@ -6,11 +6,11 @@ from types import SimpleNamespace as NS
 
 import pytest
 
-from japita import calc
-from japita.extract import read_reply
-from japita.llm import LLM, LLMConfig
-from japita.store import Store
-from japita.tools import call_tool
+from japita.purchasing import calc
+from japita.advisor.extract import read_reply
+from japita.core.llm import LLM, LLMConfig
+from japita.core.store import Store
+from japita.advisor.tools import call_tool
 
 FIXTURE = Path(__file__).parent / "fixtures" / "kumo.json"
 REPLY_JA = "お問い合わせありがとうございます。博多細麺の加水率は28%でございます。"

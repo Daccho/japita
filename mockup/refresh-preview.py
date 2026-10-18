@@ -37,7 +37,7 @@ def embed_ingredient_aliases(fragment):
     start, end = '/* JAPITA_INGREDIENT_ALIASES_START */', '/* JAPITA_INGREDIENT_ALIASES_END */'
     if fragment.count(start) != 1 or fragment.count(end) != 1:
         raise ValueError('Mockup must contain exactly one ingredient alias block.')
-    path = ROOT.parent / 'backend/japita/assets/product-drawings/manifest.json'
+    path = ROOT.parent / 'backend/japita/drawings/assets/product-drawings/manifest.json'
     drawings = json.loads(path.read_text(encoding='utf-8'))['drawings']
     aliases = {re.sub(r'[\W_]+', ' ', unicodedata.normalize('NFKC', alias).casefold()).strip(): item['ingredient']
                for item in drawings if item['ingredient'] != 'generic' for alias in item['aliases']}

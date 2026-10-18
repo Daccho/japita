@@ -6,10 +6,16 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from japita import auth, orders, portal, repo, restaurant, textfmt, views
-from japita.errors import DomainError
-from japita.store import Store, active_profile_id
-from japita.textfmt import Money
+from japita.accounts import auth
+from japita.purchasing import orders
+from japita.portal import service as portal
+from japita.core import repo
+from japita.accounts import restaurant
+from japita.core import textfmt
+from japita.views import service as views
+from japita.core.errors import DomainError
+from japita.core.store import Store, active_profile_id
+from japita.core.textfmt import Money
 
 FIXTURE = Path(__file__).parent / "fixtures" / "kumo.json"
 APP = "http://localhost:3000"

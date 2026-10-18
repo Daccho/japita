@@ -78,7 +78,7 @@ export default function Links({ initial }: { initial: LinksView | null }) {
                   >
                     <label className="jp-field">
                       {L("ln.url")}
-                      <input type="url" name="url" defaultValue={item.url ?? ""} maxLength={v.max_length} placeholder={item.placeholder} required />
+                      <input type="url" name="url" defaultValue={item.url ?? ""} maxLength={v.max_length} placeholder={item.placeholder} />
                     </label>
                     {error && (
                       <p className="jp-error" role="alert">

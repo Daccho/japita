@@ -2,7 +2,7 @@
 
 import json
 
-from japita.evolus import output_text, parse_action
+from japita.advisor.evolus import output_text, parse_action
 
 
 def test_parse_answer_and_calls():

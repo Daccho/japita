@@ -9,9 +9,16 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from japita import api, auth, evolus, evolus_api, jobs, repo
-from japita.errors import AppError
-from japita.llm import LLM, LLMConfig
+from japita import api
+from japita.advisor import api as advisor_api
+from japita.purchasing import calc
+from japita.accounts import auth
+from japita.advisor import evolus
+from japita.advisor import evolus_api
+from japita.core import jobs
+from japita.core import repo
+from japita.core.errors import AppError
+from japita.core.llm import LLM, LLMConfig
 
 FIXTURE = Path(__file__).parent / "fixtures" / "kumo.json"
 APP = "http://localhost:3000"
@@ -82,7 +89,7 @@ def test_portal_refusals_have_domain_codes(client, sign_in_supplier):
 def test_unexpected_errors_do_not_leak(client, monkeypatch):
     def boom(*a, **k):
         raise RuntimeError("secret-key-123 at /srv/app.py")
-    monkeypatch.setattr(api.calc, "calculate_baskets", boom)
+    monkeypatch.setattr(calc, "calculate_baskets", boom)
     r = client.get("/baskets")
     assert r.status_code == 500 and r.json()["error"]["code"] == "internal"
     assert "secret" not in r.text and "app.py" not in r.text
@@ -91,7 +98,7 @@ def test_unexpected_errors_do_not_leak(client, monkeypatch):
 # --- jobs -----------------------------------------------------------------------------------------
 
 def test_agent_ask_runs_as_a_job(client, monkeypatch):
-    monkeypatch.setattr(api, "answer_question", lambda body: {"answer": f"echo: {body.question}", "clarifications": []})
+    monkeypatch.setattr(advisor_api, "answer_question", lambda body: {"answer": f"echo: {body.question}", "clarifications": []})
     r = ask(client)
     assert r.status_code == 202 and r.json()["status"] == "running" and r.json()["kind"] == "agent"
     job = wait(client, r.json()["job_id"]).json()
@@ -110,7 +117,7 @@ def test_weekly_intake_runs_as_a_job(client, monkeypatch):
 def test_job_error_carries_the_code(client, monkeypatch):
     def fail(body):
         raise AppError(429, "evolus_rate_limited", "Evolus rate limit reached")
-    monkeypatch.setattr(api, "answer_question", fail)
+    monkeypatch.setattr(advisor_api, "answer_question", fail)
     job = wait(client, ask(client).json()["job_id"]).json()
     assert job["status"] == "error" and job["error"]["code"] == "evolus_rate_limited" and "result" not in job
 
@@ -118,14 +125,14 @@ def test_job_error_carries_the_code(client, monkeypatch):
 def test_job_crash_is_internal_without_details(client, monkeypatch):
     def crash(body):
         raise KeyError("LLM_API_KEY=sk-secret")
-    monkeypatch.setattr(api, "answer_question", crash)
+    monkeypatch.setattr(advisor_api, "answer_question", crash)
     job = wait(client, ask(client).json()["job_id"]).json()
     assert job["error"]["code"] == "internal" and "secret" not in str(job)
 
 
 def test_job_past_the_hard_timeout_is_model_timeout(client, monkeypatch):
     monkeypatch.setattr(jobs, "JOB_TIMEOUT_SECONDS", 0.1)
-    monkeypatch.setattr(api, "answer_question", lambda body: time.sleep(0.5) or {"answer": "late"})
+    monkeypatch.setattr(advisor_api, "answer_question", lambda body: time.sleep(0.5) or {"answer": "late"})
     job_id = ask(client).json()["job_id"]
     time.sleep(0.2)
     job = client.get(f"/jobs/{job_id}").json()
@@ -137,7 +144,7 @@ def test_job_past_the_hard_timeout_is_model_timeout(client, monkeypatch):
 def test_unknown_or_expired_job_is_job_not_found(client, monkeypatch):
     r = client.get("/jobs/does-not-exist")
     assert r.status_code == 404 and r.json()["error"]["code"] == "job_not_found"
-    monkeypatch.setattr(api, "answer_question", lambda body: {"answer": "x"})
+    monkeypatch.setattr(advisor_api, "answer_question", lambda body: {"answer": "x"})
     job_id = ask(client).json()["job_id"]
     wait(client, job_id)
     monkeypatch.setattr(jobs, "KEEP_FINISHED_SECONDS", -1)
@@ -145,7 +152,7 @@ def test_unknown_or_expired_job_is_job_not_found(client, monkeypatch):
 
 
 def test_jobs_need_a_restaurant_session(client, monkeypatch):
-    monkeypatch.setattr(api, "answer_question", lambda body: {"answer": "x"})
+    monkeypatch.setattr(advisor_api, "answer_question", lambda body: {"answer": "x"})
     job_id = ask(client).json()["job_id"]
     client.post("/auth/logout", headers={"origin": APP})
     assert client.get(f"/jobs/{job_id}").status_code == 401

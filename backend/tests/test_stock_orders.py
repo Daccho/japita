@@ -4,8 +4,10 @@ from pathlib import Path
 
 import pytest
 
-from japita import calc, orders, stock
-from japita.store import Store
+from japita.purchasing import calc
+from japita.purchasing import orders
+from japita.purchasing import stock
+from japita.core.store import Store
 
 FIXTURE = Path(__file__).parent / "fixtures" / "kumo.json"
 
