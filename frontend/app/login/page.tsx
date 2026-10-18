@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
-import { ArrowLeft, Loader2, Store, Truck } from "lucide-react";
+import { ArrowLeft, ChefHat, Factory, Loader2, PackageOpen } from "lucide-react";
+import { AppHeader } from "@/components/AppShell";
 import { useInitialLang } from "@/lib/initial-lang";
 import { LANG_COOKIE, LOGIN_LANG_COOKIE, PORTAL_LANG_COOKIE, saveLangCookie } from "@/lib/lang-cookies";
 import { AuthError, login, me, safeNext, type Me, type Role } from "@/lib/auth";
@@ -100,8 +100,9 @@ function LoginForm() {
   }
 
   return (
-    <main className="jp-login">
-      <div className="jp-login-top">
+    <>
+    <AppHeader
+      controls={
         <div className="jp-segment" role="group" aria-label="Language">
           {LANGS.map((l) => (
             <button key={l} type="button" aria-pressed={lang === l} onClick={() => setLang(l)}>
@@ -109,21 +110,31 @@ function LoginForm() {
             </button>
           ))}
         </div>
-      </div>
+      }
+    />
+    <main className="jp-login">
       <section className="jp-panel jp-login-card">
-        <Image className="jp-brand-logo" src="/japita-logo-jp.webp" alt="Japita" width={1024} height={302} sizes="204px" priority />
         {!role ? (
           <>
             <h1>{t("who")}</h1>
             <div className="jp-login-roles">
               {(
                 [
-                  ["restaurant", Store, "restaurant", "restaurantNote"],
-                  ["supplier", Truck, "supplier", "supplierNote"],
+                  ["restaurant", "restaurant", "restaurantNote"],
+                  ["supplier", "supplier", "supplierNote"],
                 ] as const
-              ).map(([r, Icon, label, note]) => (
+              ).map(([r, label, note]) => (
                 <button key={r} type="button" className="jp-login-role" onClick={() => setRole(r)}>
-                  <Icon aria-hidden />
+                  <span className="jp-login-tile" aria-hidden>
+                    {r === "restaurant" ? (
+                      <ChefHat />
+                    ) : (
+                      <>
+                        <Factory />
+                        <PackageOpen className="jp-login-tile-badge" />
+                      </>
+                    )}
+                  </span>
                   <span>
                     <strong>{t(label)}</strong>
                     <small className="jp-muted">{t(note)}</small>
@@ -167,6 +178,7 @@ function LoginForm() {
         )}
       </section>
     </main>
+    </>
   );
 }
 

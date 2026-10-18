@@ -2,12 +2,12 @@
 
 | Part | Service | Config |
 | --- | --- | --- |
-| Web app (Next.js, `frontend/`) | Vercel, Hobby plan | Root directory `frontend`, env `API_ORIGIN` |
+| Web app (Next.js, `frontend/`) | Vercel, Hobby plan | Root directory `frontend`; optional env `API_ORIGIN` |
 | API (FastAPI, Docker, `backend/`) | Render, free plan | `render.yaml` Blueprint |
 | Database (Postgres) | Neon, free plan | Connection string in Render's `DATABASE_URL` |
 | Inference | AMD Radeon Cloud TokenFactory (Gemma-4-31B-IT), through the Evolus agent | `LLM_*`, `EVOLUS_*` on Render |
 
-Status: prepared, not yet deployed.
+Status: deployed. Web app https://japita.vercel.app, API https://japita-api.onrender.com.
 
 ## Limits to plan for
 
@@ -32,13 +32,13 @@ Status: prepared, not yet deployed.
    | Login ID | Side | Opens |
    | --- | --- | --- |
    | `restaurant1`, `restaurant2`, `restaurant3` | Restaurant (Kumo Ramen Milano) | `/restaurants` |
-   | `supplier1` / `supplier2` / `supplier3` | Supplier S1 Tokyo Shokuhin / S2 Pasta Fresca / S3 EuroAsia | `/suppliers` |
+   | `supplier1` … `supplier6` | Suppliers S1 … S6 (S1 Tokyo Shokuhin, S3 Hokuto Shoji Europe B.V., S6 Daikoku Shoten Milano, …) | `/suppliers` |
 
    Real accounts are created with `DATABASE_URL='<neon>' uv run python -m japita.auth add-user <id> --name "<name>" [--role supplier --supplier S1]` (password at least 12 characters).
 4. **Vercel:**
    1. Choose Add New → Project and import `Daccho/japita`.
    2. Set the root directory to `frontend`. The framework is detected as Next.js.
-   3. Add the environment variable `API_ORIGIN` = the Render service URL. It is read at build time, so redeploy after changing it.
+   3. Optional: set `API_ORIGIN` to the Render service URL. Without it (or when it is empty), Vercel builds proxy `/api` to `https://japita-api.onrender.com`. It is read at build time, so redeploy after changing it.
    4. Deploy. The Vercel URL is the public application URL for the submission.
 
 ## Check

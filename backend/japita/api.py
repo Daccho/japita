@@ -18,14 +18,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from datetime import date
 
-from . import auth, calc, jobs, repo
+from . import auth, calc, fx, jobs, portal, repo, rules, views
 from .agent import run_agent
 from .errors import AppError, from_value_error, install as install_error_handlers
 from .evolus import EvolusAgent, run_agent_evolus
 from .extract import double_read, read_reply, translate
-from .forms import coerce as _coerce, display_ja, form as _form, spec_fields as _spec_fields
+from .forms import coerce as _coerce, display_ja, form as _form, in_range, spec_fields as _spec_fields
 from .llm import LLM
-from .store import Store
+from .store import Store, active_profile_id
+from .textfmt import Money, lang_from_request, restaurant_lang
 
 
 def _demo_accounts() -> None:
@@ -75,12 +76,18 @@ class IngredientPrefs(In):
     negotiable: list[Rule] = []
 
 
+class Budget(BaseModel):
+    amount: float = Field(ge=1, le=100000, description="Weekly budget in `currency`")
+    currency: Literal["EUR", "USD", "JPY"] = "EUR"
+
+
 class Profile(In):
     id: str
     name: str
     concept: str = ""
     menu_price_eur: list[float] = []
-    weekly_budget_eur: float
+    weekly_budget_eur: float | None = Field(default=None, ge=1, le=100000)
+    budget: Budget | None = Field(default=None, description="Weekly budget in a display currency; converted to EUR")
     priorities: dict[str, Literal["low", "medium", "high"]] = {}
     accepted_delivery_days: list[Day]
     ingredients: dict[str, IngredientPrefs]
@@ -238,7 +245,7 @@ class ChefAssessment(BaseModel):
 
 class Question(BaseModel):
     question: str
-    profile_id: str = "kumo-authentic"
+    profile_id: str | None = None
     conversation_id: str | None = Field(default=None, max_length=80)
     offer_id: str | None = None
     basket_kind: str | None = None
@@ -249,7 +256,7 @@ class Question(BaseModel):
 
 def _store(profile_id: str | None = None) -> Store:
     data = repo.load_state()
-    pid = profile_id or next(iter(data["profiles"]), None)
+    pid = profile_id or active_profile_id(data)
     if pid not in data["profiles"]:
         raise AppError(404, "not_found", f"profile {pid!r} not found; create one with PUT /profiles/{{id}}")
     return Store(data, pid)
@@ -292,13 +299,25 @@ def seed_state(fixture: str = "kumo", x_admin_key: str | None = Header(default=N
 
 
 @app.put("/profiles/{profile_id}")
-def put_profile(profile_id: str, body: Profile):
+def put_profile(profile_id: str, body: Profile, request: Request):
+    """Save a purchasing profile. The response adds `impact`: the cheapest plan total before and after."""
     data = repo.load_state()
-    data["profiles"][profile_id] = {**_dump(body), "id": profile_id}
+    profile = {**_dump(body), "id": profile_id}
+    profile.pop("impact", None)
+    budget = profile.pop("budget", None)
+    if budget is not None:
+        eur, _, _ = fx.to_eur(budget["amount"], budget["currency"])
+        profile["weekly_budget_eur"] = eur
+    if not profile.get("weekly_budget_eur") or not 1 <= profile["weekly_budget_eur"] <= 100000:
+        raise AppError(422, "invalid_budget", "weekly budget must be between 1 and 100000")
+    before = views.cheapest_total(Store(data, profile_id)) if profile_id in data["profiles"] else None
+    data["profiles"][profile_id] = profile
+    after = views.cheapest_total(Store(data, profile_id))
     repo.save_state(data)
     from .drawings import register_state
     register_state(data)
-    return data["profiles"][profile_id]
+    lang = restaurant_lang(lang_from_request(request))
+    return {**profile, "impact": views.impact(before, after, lang, Money(lang))}
 
 
 @app.put("/recipe")
@@ -507,9 +526,12 @@ def answer_question(body: Question) -> dict:
     from .advice import brief, validate_explanation
     from .context import input_version
     from .store import _now
+    body.profile_id = store.profile_id
     version = input_version(store)
     previous_ids = {c["id"] for c in store.clarifications}
-    store.advisor_context = {"offer_id": body.offer_id, "basket_kind": body.basket_kind}
+    store.advisor_context = {"offer_id": body.offer_id, "basket_kind": body.basket_kind,
+                             "restaurant_details": store.data.get("restaurant_profile", {}),
+                             "links": store.data.get("restaurant_links", {})}
     if body.offer_id:
         store.offer(body.offer_id)
     turns = sorted([t for t in store.data.get("advisor_turns", [])
@@ -527,6 +549,7 @@ def answer_question(body: Question) -> dict:
         llm = LLM()
         result = run_agent(llm, store, message, history=history)
         calls = llm.calls
+    views.mark_not_needed(store)
     decision = brief(store)
     explanation = validate_explanation(result.answer, store, decision)
     changed = input_version(_store(body.profile_id)) != version
@@ -539,7 +562,8 @@ def answer_question(body: Question) -> dict:
     current = _store(body.profile_id)
     return {"via": body.via, "answer": "", "steps": result.steps, "brief": decision,
             "input_version": version, "stale": input_version(current) != version,
-            "explanation": explanation, "clarifications": current.clarifications}
+            "explanation": explanation, "clarifications": current.clarifications,
+            "drafts": views.drafts_view(current, current.clarifications, body.lang)}
 
 
 @app.get("/advisor/brief")
@@ -567,7 +591,11 @@ def approve_clarification(clarification_id: str):
     The response carries `token`; the supplier page lives at /supplier/{token}.
     """
     data = repo.load_state()
-    store = Store(data, next(iter(data["profiles"])))
+    store = Store(data, active_profile_id(data))
+    views.mark_not_needed(store)
+    if any(c["id"] == clarification_id and c["state"] == "not_needed" for c in store.clarifications):
+        repo.save_state(data)
+        raise AppError(409, "clarification_not_needed", "the offer already fails another required rule")
     try:
         c = store.approve(clarification_id)
     except StopIteration:
@@ -589,6 +617,9 @@ def apply_clarification(clarification_id: str, body: ApplyReply, profile_id: str
         raise HTTPException(404, "clarification not found")
     except ValueError as e:
         raise from_value_error(e, 409)
+    portal.record_decision(store, store.offer(c["offer_id"])["supplier_id"], "answer", c["field"],
+                           "applied" if portal.answer_used(c) else "rejected")
+    views.mark_not_needed(Store(data, active_profile_id(data)))
     repo.save_state(data)
     return {"clarification": c, "baskets": calc.calculate_baskets(_store(profile_id))}
 
@@ -610,7 +641,6 @@ def reply_clarification(clarification_id: str, body: Reply):
 
 # --- test supplier page (Japanese) -------------------------------------------------------------------
 
-SUPPLIER_NOTICE_JA = "これはデモ用のテスト仕入先画面です。実際の取引・発注は行われません。"
 
 
 def _supplier_view(store: Store, c: dict) -> dict:
@@ -618,7 +648,6 @@ def _supplier_view(store: Store, c: dict) -> dict:
     offer = store.offer(c["offer_id"])
     reply = c.get("reply")
     return {
-        "notice_ja": SUPPLIER_NOTICE_JA,
         "restaurant": store.profile["name"],
         "supplier": store.suppliers[offer["supplier_id"]]["name"],
         "product": offer["product"],
@@ -631,40 +660,47 @@ def _supplier_view(store: Store, c: dict) -> dict:
     }
 
 
-def _by_token(token: str) -> tuple[dict, Store, dict]:
+def _by_token(token: str, request: Request) -> tuple[dict, Store, dict]:
+    """A question sent to the signed-in supplier; a question about another supplier's product is refused (403)."""
     data = repo.load_state()
     store = Store(data, next(iter(data["profiles"])))
     try:
-        return data, store, store.clarification_by_token(token)
+        c = store.clarification_by_token(token)
     except StopIteration:
         raise AppError(404, "link_not_found", "依頼が見つかりません（リンクをご確認ください）")
+    if store.offer(c["offer_id"])["supplier_id"] != getattr(request.state, "supplier_id", None):
+        raise AppError(403, "forbidden", "this request belongs to another supplier")
+    return data, store, c
 
 
 @app.get("/supplier/requests/{token}")
-def supplier_request(token: str):
-    _, store, c = _by_token(token)
+def supplier_request(token: str, request: Request):
+    _, store, c = _by_token(token, request)
     return _supplier_view(store, c)
 
 
 @app.post("/supplier/requests/{token}/reply")
-def supplier_reply(token: str, body: SupplierReply):
+def supplier_reply(token: str, body: SupplierReply, request: Request):
     """Test supplier answers in Japanese. Gemma double-reads the value and translates for the owner.
 
     The offer is unchanged until the owner applies the reply (POST /clarifications/{id}/apply).
     """
-    data, store, c = _by_token(token)
+    data, store, c = _by_token(token, request)
     if c["state"] != "sent":
         raise AppError(409, "reply_already_sent", "この依頼にはすでにご回答いただいています")
     if body.value is None and not (body.text_ja or "").strip():
         raise AppError(422, "empty_reply", "回答を入力してください")
     field = c["field"]
-    label, sample = _spec_fields(data, store.offer(c["offer_id"])["ingredient"]).get(field, (field, ""))
-    llm = LLM()
+    label, sample = _spec_fields(data, store.offer(c["offer_id"])["ingredient"]).get(field) \
+        or rules.field_spec(field) or (field, "")
     started = time.perf_counter()
     if body.value is not None:
+        # A typed value needs the model only to translate an optional note.
+        llm = LLM() if body.note_ja else None
         # Entered in a typed form field by the supplier: no reading needed, only the note is translated.
         value = _coerce(body.value, sample)
-        if value is None:
+        choices = [ch["value"] for ch in _form(field).get("choices", [])]
+        if value is None or not in_range(field, value) or (choices and value not in choices):
             raise AppError(422, "invalid_value", "入力値の形式が正しくありません")
         source = f"[仕入先フォーム入力] {_form(field)['label_ja']}: {display_ja(body.value)}{_form(field).get('unit', '')}"
         extraction = {"status": "ok", "value": value, "read_1": value, "read_2": value, "source_text": source,
@@ -672,11 +708,14 @@ def supplier_reply(token: str, body: SupplierReply):
         translations = translate(llm, body.note_ja) if body.note_ja else {}
         text_ja = source + (f"\n{body.note_ja}" if body.note_ja else "")
         extraction["elapsed_ms"] = int((time.perf_counter() - started) * 1000)
-        extraction["calls"] = [call.__dict__ for call in llm.calls]
+        calls = llm.calls if llm else []
+        extraction["calls"] = [call.__dict__ for call in calls]
         store.receive_supplier_reply(token, text_ja, extraction, translations)
         repo.save_state(data)
-        repo.log_calls(llm.calls, f"supplier_form:{c['id']}")
+        if calls:
+            repo.log_calls(calls, f"supplier_form:{c['id']}")
         return _supplier_view(store, c)
+    llm = LLM()
     extraction, translations = read_reply(llm, field, _describe(label, sample), body.text_ja)
     extraction["read_1"], extraction["read_2"] = _coerce(extraction["read_1"], sample), _coerce(extraction["read_2"], sample)
     extraction["value"] = _coerce(extraction["value"], sample)
@@ -688,7 +727,32 @@ def supplier_reply(token: str, body: SupplierReply):
     return _supplier_view(store, c)
 
 
+@app.post("/portal/{portal_token}/requests/{clarification_id}/reply")
+def portal_request_reply(portal_token: str, clarification_id: str, body: SupplierReply, request: Request):
+    """The same reply from the portal (`/portal/me/requests/{id}/reply`): the question is found by id among the
+    signed-in supplier's requests; returns the updated portal view."""
+    from .portal_api import _load, _view
+    _, store, sup = _load(portal_token, request)
+    offers = {o["id"] for o in store.offers if o["supplier_id"] == sup["id"]}
+    c = next((c for c in store.clarifications if c["id"] == clarification_id and c["offer_id"] in offers
+              and c.get("token")), None)
+    if c is None:
+        raise AppError(404, "link_not_found", "依頼が見つかりません（リンクをご確認ください）")
+    supplier_reply(c["token"], body, request)
+    _, store, sup = _load(portal_token, request)
+    return _view(store, sup, request)
+
+
+# --- Currency ----------------------------------------------------------------------------------------
+
+@app.get("/fx")
+def fx_rates():
+    """Latest ECB reference rates from EUR, for showing EUR prices in the UI language's currency."""
+    return fx.rates()
+
+
 # --- AMD evidence ------------------------------------------------------------------------------------
+
 
 @app.get("/health/model")
 def health_model():
@@ -720,10 +784,15 @@ from .drawings_api import router as drawings_router  # noqa: E402
 
 app.include_router(drawings_router)
 
-from .menu_api import router as menu_router  # noqa: E402
+from .menu_api import router as menu_router, views_router as menu_views_router  # noqa: E402
 
 app.include_router(menu_router)
 
 from .catalog import router as catalog_router  # noqa: E402
 
 app.include_router(catalog_router)
+app.include_router(menu_views_router)
+
+from .views_api import router as views_router  # noqa: E402
+
+app.include_router(views_router)

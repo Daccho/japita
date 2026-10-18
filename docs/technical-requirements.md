@@ -59,6 +59,7 @@ One main agent. Tools are its only access to data. Human-only actions are not to
 | `search_catalog` | Offers from existing and candidate suppliers in the bounded catalog, filtered by ingredient or attribute | No |
 | `get_offer_detail` | One offer: price, unit, pack size, minimum order, shipping, delivery days, quality attributes, offer date, account status, extracted spec fields with source text | No |
 | `check_evidence` | Rule outcomes for one offer (`ok`, `needs_review`, `missing_evidence`) and the inputs used | No |
+| `check_import_rules` | EU import and labelling rule checks for one offer from the sourced ruleset (`ok`, `info`, `needs_review`, `missing_document`), each with its official source and the field a supplier question can fill. See `compliance.md` | No |
 | `calculate_baskets` | Baseline (current suppliers) and alternative baskets: lowest cost meeting mandatory requirements, best preference fit, fewest suppliers. Totals, unmet constraints, unknown costs | No |
 | `compare_prices` | Normalized unit prices for a like-for-like comparison set, its size, offer dates, and median if computed | No |
 | `draft_clarification` | Saves a Japanese supplier question as a **draft** linked to the missing field | Draft only |

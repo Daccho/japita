@@ -10,5 +10,8 @@ def input_version(store: Store) -> str:
              "suppliers": {key: {k: v for k, v in s.items() if k != "portal_token"}
                            for key, s in store.suppliers.items()},
              "offers": store.offers, "review_flags": store.review_flags,
-             "orders": store.data.get("purchase_orders", [])}
+             "orders": store.data.get("purchase_orders", []),
+             "restaurant_profile": store.data.get("restaurant_profile", {}),
+             "restaurant_links": store.data.get("restaurant_links", {}),
+             "restaurant_settings": store.data.get("restaurant_settings", {})}
     return hashlib.sha256(json.dumps(facts, sort_keys=True, ensure_ascii=False).encode()).hexdigest()[:20]

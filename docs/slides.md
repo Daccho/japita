@@ -56,12 +56,12 @@ There are 10 slides. Each slide has a headline, bullets, speaker notes and a sug
 - Monday: supplier warns the Friday noodle delivery moves to next Tuesday → bell alert: **noodles run out Fri 23 Oct** (20.46 kg short that day)
 - Baseline basket (current suppliers) €493.80 **arrives too late**. The EU-stocked frozen Hakata noodle backup is not orderable because hydration is not stated.
 - Gemma drafts a polite Japanese question → owner approves → supplier answers **27%** on a Japanese phone portal
-- Recalculated: **on-time basket €444.10**, delivered Thursday. Owner approves → per-supplier purchase orders → supplier presses 受注する
+- Recalculated: **on-time basket €444.10**, delivered Thursday. Owner approves → one order per supplier → owner presses Send → supplier presses 受注する with a delivery date
 - Stockout cleared. Committed spending €444.10 of €900.
 
-**Speaker notes:** walk through the flow in the order of the video. Point out the two screens: the owner workspace (Italian/English) and the supplier portal (Japanese, phone-first, private link, no account).
+**Speaker notes:** walk through the flow in the order of the video. Point out the two screens: the owner workspace (Italian with EUR, or English with USD at the daily ECB rate) and the supplier portal (Japanese with JPY, or English; phone-first; the supplier signs in or opens a shared link without an account).
 
-**Visual:** five-step horizontal timeline with small screenshots: bell alert → not-orderable card → Japanese draft → phone portal → approved basket.
+**Visual:** five-step horizontal timeline with small screenshots: bell alert and 7-day stock strip → "Missing details" offer card → Japanese draft in Questions to suppliers → phone portal (依頼 / 受注) → supplier orders "Confirmed by supplier".
 
 ---
 
@@ -70,7 +70,8 @@ There are 10 slides. Each slide has a headline, bullets, speaker notes and a sug
 **AI reads, translates and explains. Code does the math.**
 
 ```text
-Owner workspace (Next.js, Vercel)        Supplier portal (Next.js, phone, Japanese)
+Restaurant workspace (Next.js, Vercel)   Supplier portal (Next.js, phone, Japanese/English)
+  sign-in: login ID + password             sign-in, or shared link without an account
               \                                /
                FastAPI on Render  ── Postgres on Neon
                |  deterministic engine: needs, pack rounding, minimum orders,
@@ -85,6 +86,7 @@ Owner workspace (Next.js, Vercel)        Supplier portal (Next.js, phone, Japane
 - Quantities and totals are calculated in code. No combined "AI score" hides the trade-offs.
 - The LLM only interprets, reads Japanese, translates, drafts and explains, using tool results.
 - Every model call is logged server-side with model, backend and latency
+- Advisor questions and the weekly check run as background jobs (about 1–2 minutes); the UI shows the elapsed time
 
 **Speaker notes:** "This split is deliberate. Numbers that drive money must be reproducible, so they come from code. The model does the language work humans find slow: reading a Japanese spec, writing a polite question, explaining why basket B beats basket A."
 
@@ -112,8 +114,8 @@ Owner workspace (Next.js, Vercel)        Supplier portal (Next.js, phone, Japane
 **An Evolus agent on our own model, plus a workflow that runs the weekly check**
 
 - **Agent:** Evolus main agent configured on Gemma-4-31B-IT (AMD TokenFactory), with tool calling
-- **Workflow:** the "Weekly check" button runs an Evolus workflow that reviews all offers together
-- Output: cross-offer inconsistencies and missing details, in English + Italian
+- **Workflow:** "Run weekly check" on the This week screen runs an Evolus workflow that reviews all offers together
+- Output: cross-offer inconsistencies and missing details, in English then Italian
 - Workflow execution used **0 Evolus credits**. Inference runs on our model.
 - Driven through the Evolus API from our backend. API keys are kept in env vars and never committed.
 
@@ -159,11 +161,11 @@ Owner workspace (Next.js, Vercel)        Supplier portal (Next.js, phone, Japane
 **Next: real suppliers, more cuisines, the restaurant's own documents**
 
 - Pilot with a few Japanese restaurants in Italy, with real supplier offers
-- Supplier onboarding through the same private-link portal, with more languages (Chinese, Korean, Thai)
+- Supplier onboarding through the same portal (sign-in or shared link), with more languages (Chinese, Korean, Thai)
 - Upload of photographed spec sheets and invoices; longer-term price history per supplier
 - Real order delivery (email/EDI) behind the same approval step
-- Team: _[names, roles, contact]_ · App: _[URL]_ · Repo: _[GitHub URL]_ (MIT)
+- Team: _[names, roles, contact]_ · App: https://japita.vercel.app · Repo: https://github.com/Daccho/japita (MIT)
 
-**Speaker notes:** "Everything shown today runs end to end on fictional data. The next step is real suppliers with the same human-approved flow." Fill in the team line before export.
+**Speaker notes:** "Everything shown today runs end to end on fictional data. The next step is real suppliers with the same human-approved flow." Fill in the team line before export. Judges can sign in with `restaurant1` / `restaurant1` and `supplier3` / `supplier3`.
 
 **Visual:** team photos/avatars placeholder, QR codes for the app and repo.

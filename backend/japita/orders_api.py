@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 from . import orders, repo, stock
 from .errors import from_value_error
-from .store import Store
+from .store import Store, active_profile_id
 
 router = APIRouter(tags=["week and orders"])
 
@@ -17,7 +17,7 @@ class ApproveBasket(BaseModel):
 
 def _store(profile_id: str | None) -> Store:
     data = repo.load_state()
-    pid = profile_id or next(iter(data["profiles"]), None)
+    pid = profile_id or active_profile_id(data)
     if pid not in data["profiles"]:
         raise HTTPException(404, f"profile {pid!r} not found")
     return Store(data, pid)
@@ -40,6 +40,19 @@ def approve_basket(body: ApproveBasket):
     repo.save_state(store.data)
     return {"approval": approval,
             "purchase_orders": [p for p in store.data["purchase_orders"] if p["approval_id"] == approval["id"]]}
+
+
+@router.post("/baskets/approve-and-send")
+def approve_and_send(body: ApproveBasket, idempotency_key: str = Header(..., alias="Idempotency-Key")):
+    """Human action: approve the plan and send all its supplier orders at once. The same key returns the same
+    result."""
+    store = _store(body.profile_id)
+    try:
+        result = orders.approve_and_send(store, body.kind, idempotency_key)
+    except ValueError as e:
+        raise from_value_error(e, 409)
+    repo.save_state(store.data)
+    return result
 
 
 @router.get("/baskets/approval")

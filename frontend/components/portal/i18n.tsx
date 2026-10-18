@@ -1,9 +1,8 @@
 "use client";
 
-// Supplier portal language toggle (日本語 default / English). Self-contained: does not use lib/i18n.tsx.
+// Supplier portal static labels (日本語 default / English). Data texts come from the portal view.
 
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
-import { useInitialLang } from "@/lib/initial-lang";
+import { createContext, useContext, useEffect, type ReactNode } from "react";
 import { PORTAL_LANG_COOKIE, saveLangCookie } from "@/lib/lang-cookies";
 
 export type Lang = "ja" | "en";
@@ -12,6 +11,42 @@ const ja = {
   tabRequests: "依頼",
   tabOrders: "受注",
   tabProducts: "商品",
+  tabProfile: "プロフィール",
+  navLabel: "ポータルメニュー",
+  menu: "メニュー",
+  account: "アカウント",
+  signOut: "ログアウト",
+  introRequests: "店舗からの商品に関する質問に回答します。",
+  introOrders: "届いた注文を受注し、納品日を確定します。",
+  introProducts: "取扱商品の情報を更新し、新商品を提案します。",
+  introProfile: "会社情報と配送条件です。変更は店舗が確認してから反映されます。",
+  orderFrom: (r: string) => `発注元：${r}`,
+  // profile
+  profileCompany: "会社情報",
+  profileDelivery: "配送条件",
+  companyName: "会社名",
+  country: "国",
+  address: "住所",
+  city: "市区町村",
+  contactName: "担当者名",
+  email: "メールアドレス",
+  phone: "電話番号",
+  deliveryDays: "配送曜日",
+  minOrder: "最低注文金額",
+  shippingFee: "送料（1回あたり）",
+  leadTime: "リードタイム",
+  days: "日",
+  editProfile: "プロフィールを編集",
+  logoUrl: "ロゴ画像URL",
+  logoUrlHint: "任意・https:// で始まる画像のURL",
+  fixProfile: "変更内容を修正",
+  sendProfile: "変更を店舗に送信",
+  profileSent: "プロフィールの変更を店舗に送信しました。店舗の確認後に反映されます。",
+  invalidAmount: "金額を正しく入力してください。",
+  invalidLeadTime: "リードタイムは0以上の整数で入力してください。",
+  enterCompanyName: "会社名を入力してください。",
+  notePlaceholderProfile: "変更の理由など",
+  dayNames: { mon: "月", tue: "火", wed: "水", thu: "木", fri: "金", sat: "土", sun: "日" } as Record<string, string>,
   forRestaurant: (r: string) => `${r} 様向け`,
   supplierPortal: "サプライヤーポータル",
   loading: "読み込み中…",
@@ -104,6 +139,9 @@ const ja = {
   newProductIntro: (r: string) => `${r}に新しい商品を提案します。店舗の確認後に比較対象に加わります。`,
   ingredient: "食材",
   productNamePlaceholder: "例：博多細麺 1kg",
+  ingredientPlaceholder: "例：麺、醤油、きくらげ、白味噌",
+  ingredientOther: "店舗の取扱品目以外の食材として提案されます。",
+  enterIngredient: "食材を入力してください。",
   unit: "単位",
   priceNew: "価格（1点あたり・送料別）",
   origin: "出荷元",
@@ -122,6 +160,41 @@ const en: Dict = {
   tabRequests: "Requests",
   tabOrders: "Orders",
   tabProducts: "Products",
+  tabProfile: "Profile",
+  navLabel: "Portal menu",
+  menu: "Menu",
+  account: "Account",
+  signOut: "Sign out",
+  introRequests: "Answer the restaurant's questions about your products.",
+  introOrders: "Accept incoming orders and confirm the delivery date.",
+  introProducts: "Keep your product details up to date and propose new products.",
+  introProfile: "Company details and delivery terms. Changes take effect after the restaurant reviews them.",
+  orderFrom: (r) => `Ordered by ${r}`,
+  profileCompany: "Company",
+  profileDelivery: "Delivery terms",
+  companyName: "Company name",
+  country: "Country",
+  address: "Address",
+  city: "City",
+  contactName: "Contact person",
+  email: "Email",
+  phone: "Phone",
+  deliveryDays: "Delivery days",
+  minOrder: "Minimum order",
+  shippingFee: "Shipping (per delivery)",
+  leadTime: "Lead time",
+  days: "days",
+  editProfile: "Edit profile",
+  logoUrl: "Logo image URL",
+  logoUrlHint: "optional · an image URL starting with https://",
+  fixProfile: "Edit proposed change",
+  sendProfile: "Send changes to the restaurant",
+  profileSent: "Profile changes sent. They take effect after the restaurant reviews them.",
+  invalidAmount: "Please enter a valid amount.",
+  invalidLeadTime: "Lead time must be a whole number of days, 0 or more.",
+  enterCompanyName: "Please enter the company name.",
+  notePlaceholderProfile: "Reason for the change, etc.",
+  dayNames: { mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun" },
   forRestaurant: (r) => `For ${r}`,
   supplierPortal: "Supplier portal",
   loading: "Loading…",
@@ -210,6 +283,9 @@ const en: Dict = {
   newProductIntro: (r) => `Propose a new product to ${r}. It joins the comparison after their review.`,
   ingredient: "Ingredient",
   productNamePlaceholder: "e.g. Hakata thin noodles 1 kg",
+  ingredientPlaceholder: "e.g. noodles, soy sauce, kikurage, white miso",
+  ingredientOther: "This will be proposed as an ingredient the restaurant does not buy yet.",
+  enterIngredient: "Enter the ingredient.",
   unit: "Unit",
   priceNew: "Price (per pack, excl. shipping)",
   origin: "Ships from",
@@ -223,40 +299,18 @@ const en: Dict = {
 };
 
 const DICTS: Record<Lang, Dict> = { ja, en };
-const STORAGE_KEY = "japita.portal.lang";
 
 type Ctx = { lang: Lang; t: Dict; setLang: (l: Lang) => void };
 const LangContext = createContext<Ctx>({ lang: "ja", t: ja, setLang: () => {} });
 
-export function PortalLangProvider({ children }: { children: ReactNode }) {
-  const initial = useInitialLang().portal;
-  const [lang, setLangState] = useState<Lang>(initial === "en" ? "en" : "ja");
-  // Without a cookie, fall back to a choice saved in localStorage and copy it into the cookie.
-  useEffect(() => {
-    if (initial) return;
-    try {
-      const saved = window.localStorage.getItem(STORAGE_KEY);
-      if (saved === "en" || saved === "ja") {
-        setLangState(saved);
-        saveLangCookie(PORTAL_LANG_COOKIE, saved);
-      }
-    } catch {
-      // storage unavailable: keep Japanese
-    }
-  }, [initial]);
+/** The portal language comes from the server render (cookie); changing it saves the cookie for the next render. */
+export function PortalLangProvider({ lang, setLang, children }: { lang: Lang; setLang: (l: Lang) => void; children: ReactNode }) {
   useEffect(() => {
     document.documentElement.lang = lang;
   }, [lang]);
-  const setLang = useCallback((l: Lang) => {
-    setLangState(l);
-    saveLangCookie(PORTAL_LANG_COOKIE, l);
-    try {
-      window.localStorage.setItem(STORAGE_KEY, l);
-    } catch {
-      // storage unavailable: choice lasts for this visit only
-    }
-  }, []);
   return <LangContext.Provider value={{ lang, t: DICTS[lang], setLang }}>{children}</LangContext.Provider>;
 }
+
+export const saveLang = (l: Lang) => saveLangCookie(PORTAL_LANG_COOKIE, l);
 
 export const useLang = () => useContext(LangContext);

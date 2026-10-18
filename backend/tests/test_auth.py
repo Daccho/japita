@@ -104,8 +104,25 @@ def test_passkey_routes_are_gone(client):
     assert "passkeys" not in client.get("/auth/me").json()
 
 
-def test_supplier_token_pages_stay_public(client):
-    assert client.get("/portal/not-a-token").status_code == 404  # reached the route, not 401
+def test_portal_needs_the_suppliers_own_session(client, sign_in_supplier):
+    from japita import portal
+    from japita.store import Store
+    data = repo.load_state()
+    store = Store(data, next(iter(data["profiles"])))
+    own, other = portal.portal_token(store, "S3"), portal.portal_token(store, "S1")
+    repo.save_state(data)
+    for path in (f"/portal/{own}", "/portal/me", "/portal/me/notifications", f"/portal/{own}/forms?ingredient=x"):
+        assert client.get(path).status_code == 401, path
+    login(client)
+    assert client.get(f"/portal/{own}").status_code == 403 and client.get("/portal/me").status_code == 403
+    client.post("/auth/logout", headers={"origin": APP})
+    sign_in_supplier(client, "S3", APP)
+    assert client.get(f"/portal/{own}").status_code == 200
+    assert client.get("/portal/me").json()["supplier"]["id"] == "S3"
+    assert client.get(f"/portal/{other}").status_code == 403
+    assert client.post(f"/portal/{other}/profile", json={"phone": "1"}, headers={"origin": APP}).status_code == 403
+    assert client.get("/portal/not-a-token").status_code == 404
+    assert client.get("/state").status_code == 403
 
 
 def test_demo_accounts_only_with_flag(client, monkeypatch):
@@ -120,6 +137,24 @@ def test_demo_accounts_only_with_flag(client, monkeypatch):
     assert r.status_code == 200
     assert client.get("/state").status_code == 403  # suppliers never see restaurant data
     assert client.get("/auth/supplier/portal").json()["supplier_id"] == "S3"
+
+
+def test_profile_proposal_from_portal_is_decided_by_the_restaurant(client):
+    login(client, "tokyo-shokuhin", role="supplier")
+    path = client.get("/auth/supplier/portal").json()["path"]
+    token = path.rsplit("/", 1)[1]
+    r = client.post(f"/portal/{token}/profile", json={"phone": "+81 3 1234 5678", "shipping": 7000, "currency": "JPY"},
+                    headers={"origin": APP})
+    assert r.status_code == 200
+    pending = r.json()["pending_profile"]
+    assert pending["changes"]["phone"] == "+81 3 1234 5678" and pending["changes"]["shipping_eur"] > 0
+    assert client.post("/suppliers/S1/profile-update/apply", headers={"origin": APP}).status_code == 403
+    client.post("/auth/logout", headers={"origin": APP})
+    login(client)
+    r = client.post("/suppliers/S1/profile-update/apply", headers={"origin": APP})
+    assert r.status_code == 200 and r.json()["phone"] == "+81 3 1234 5678"
+    r = client.post("/suppliers/S1/profile-update/reject", headers={"origin": APP})
+    assert r.status_code == 409 and r.json()["error"]["code"] == "no_pending_update"
 
 
 def test_startup_prepares_demo_accounts_and_runs_drawing_lifecycle(tmp_path, monkeypatch):
@@ -138,3 +173,58 @@ def test_startup_prepares_demo_accounts_and_runs_drawing_lifecycle(tmp_path, mon
         assert client.get("/menu").status_code == 200
         assert lifecycle == [("start", {"scan_catalog": True})]
     assert lifecycle[-1] == ("stop", {})
+
+
+def test_portal_reply_by_request_id(client, sign_in_supplier, monkeypatch):
+    from japita.store import Store
+    monkeypatch.delenv("LLM_BASE_URL", raising=False)  # a typed value needs no model
+    data = repo.load_state()
+    store = Store(data, next(iter(data["profiles"])))
+    c = store.add_clarification("O-noo-3", "hydration_pct", "加水率を教えてください", "missing")
+    store.approve(c["id"])
+    repo.save_state(data)
+    sign_in_supplier(client, "S1", APP)
+    assert client.post(f"/portal/me/requests/{c['id']}/reply", json={"value": 27},
+                       headers={"origin": APP}).status_code == 404  # another supplier's question
+    assert client.get(f"/supplier/requests/{c['token']}").status_code == 403
+    client.post("/auth/logout", headers={"origin": APP})
+    sign_in_supplier(client, "S3", APP)
+    r = client.post(f"/portal/me/requests/{c['id']}/reply?lang=en", json={"value": 27}, headers={"origin": APP})
+    assert r.status_code == 200, r.text
+    q = next(q for q in r.json()["requests"] if q["id"] == c["id"])
+    assert q["state"] == "answered" and q["state_text"] == "Answered" and q["next_step_text"].startswith("After the")
+    client.post("/auth/logout", headers={"origin": APP})
+    login(client)
+    assert client.post(f"/clarifications/{c['id']}/apply", json={}, headers={"origin": APP}).status_code == 200
+    client.post("/auth/logout", headers={"origin": APP})
+    sign_in_supplier(client, "S3", APP)
+    q = next(q for q in client.get("/portal/me?lang=ja").json()["requests"] if q["id"] == c["id"])
+    assert q["state"] == "applied" and q["state_text"] == "店舗が反映しました" and q["next_step_text"] is None
+    feed = client.get("/portal/me/notifications?lang=en").json()
+    assert feed["items"][0]["body"] == "Kumo Ramen Milano applied your hydration answer."
+
+
+def test_supplier_notifications_and_decisions(client, sign_in_supplier):
+    from japita.store import Store
+    data = repo.load_state()
+    store = Store(data, next(iter(data["profiles"])))
+    c = store.add_clarification("O-noo-3", "hydration_pct", "加水率を教えてください", "missing")
+    store.approve(c["id"])
+    repo.save_state(data)
+    sign_in_supplier(client, "S3", APP)
+    feed = client.get("/portal/me/notifications?lang=en").json()
+    assert [i["kind"] for i in feed["items"]] == ["request"] and feed["unread"] == 1
+    assert feed["items"][0]["href"] == "?tab=requests" and feed["items"][0]["tab"] == "requests"
+    r = client.post("/portal/me/profile", json={"phone": "+31 20 000"}, headers={"origin": APP})
+    assert r.json()["pending_profile_view"]["changes"] == [{"label": "電話番号", "value": "+31 20 000"}]
+    seen = client.post("/portal/me/notifications/seen", json={"ids": [feed["items"][0]["id"]]}, headers={"origin": APP})
+    assert seen.json()["unread"] == 0
+    client.post("/auth/logout", headers={"origin": APP})
+    login(client)
+    assert client.post("/suppliers/S3/profile-update/reject", headers={"origin": APP}).status_code == 200
+    client.post("/auth/logout", headers={"origin": APP})
+    sign_in_supplier(client, "S3", APP)
+    feed = client.get("/portal/me/notifications?lang=ja").json()
+    decision = next(i for i in feed["items"] if i["kind"] == "decision")
+    assert decision["unread"] and decision["tab"] == "profile" and "見送りました" in decision["body"]
+    assert feed["unread"] == 1

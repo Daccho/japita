@@ -3,155 +3,172 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowDown, ArrowUp } from "lucide-react";
-import { api, errorText, money, type BasketResult, type Day, type Profile, type Rule } from "@/lib/api";
-import { useDates, useI18n, useLabel, type Key } from "@/lib/i18n";
-import { useWorkspace } from "@/components/workspace";
-import { findBasket } from "@/components/helpers";
+import { api, errorText, type ProfileView } from "@/lib/api";
+import { useI18n } from "@/lib/i18n";
+import { Badge, useBump, useToast, useView } from "@/components/live";
+import { InfoTip } from "@/components/InfoTip";
 
-const DAYS: Day[] = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
-const cheapest = (r: BasketResult) => findBasket(r, "lowest_cost")?.delivered_total_eur ?? null;
+type Draft = { amount: number; days: string[] };
 
-// The active profile's real purchasing rules (backend). Moving a rule and saving recalculates every basket.
-export default function BuyingPreferences() {
-  const { t } = useI18n();
-  const label = useLabel();
-  const d = useDates();
-  const { data, profileId, refresh } = useWorkspace();
-  const saved = data?.state.profiles[profileId];
-  const [draft, setDraft] = useState<Profile | null>(null);
+// Purchasing priority (the active profile, saved on the server) and its rules. Moving a rule saves at once; budget
+// and delivery days save together. The server answers with the effect on this week's plan.
+export default function BuyingPreferences({ initial }: { initial: ProfileView | null }) {
+  const { t, lang } = useI18n();
+  const toast = useToast();
+  const bump = useBump();
+  const { data: v, setData } = useView<ProfileView>(`/views/profile?lang=${lang}`, initial);
+  const [draft, setDraft] = useState<Draft | null>(null);
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
-  if (!saved) return null;
-  const p = draft && draft.id === profileId ? draft : saved;
-  const dirty = p !== saved;
-  const edit = (next: Profile) => {
-    setDraft(next);
-    setMsg(null);
-  };
+  if (!v) return null;
+  const L = (k: string) => v.labels[k] ?? k;
+  const current: Draft = draft ?? { amount: v.budget.amount, days: v.days.filter((d) => d.on).map((d) => d.day) };
 
-  const move = (ing: string, rule: Rule, from: "mandatory" | "negotiable") => {
-    const to = from === "mandatory" ? "negotiable" : "mandatory";
-    const cur = p.ingredients[ing];
-    edit({
-      ...p,
-      ingredients: { ...p.ingredients, [ing]: { ...cur, [from]: cur[from].filter((r) => r !== rule), [to]: [...cur[to], rule] } },
-    });
-  };
-
-  const save = async () => {
+  const run = async (fn: () => Promise<ProfileView | unknown>, done?: (r: ProfileView) => string | undefined) => {
     setBusy(true);
-    setMsg(null);
-    const before = data ? cheapest(data.baskets) : null;
     try {
-      await api.putProfile(p);
-      const after = cheapest(await api.baskets(profileId));
-      await refresh();
-      setDraft(null);
-      setMsg(t("by.impact", { a: money(before, "—"), b: money(after, "—") }));
+      const r = (await fn()) as ProfileView;
+      if (r && "ingredients" in (r as object)) setData(r);
+      const msg = done?.(r);
+      if (msg) toast(msg);
+      bump();
     } catch (e) {
-      setMsg(errorText(e, t));
+      toast(errorText(e, t), "error");
     } finally {
       setBusy(false);
     }
   };
 
-  const ruleRow = (ing: string, r: Rule, kind: "mandatory" | "negotiable") => (
-    <div key={`${kind}-${r.field}`} className="jp-row" style={{ padding: "10px 0" }}>
-      <div>
-        <p style={{ color: "var(--jp-text)", fontSize: 13, marginTop: 0 }}>{r.label}</p>
-      </div>
-      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-        <span className={`jp-badge ${kind === "mandatory" ? "" : "jp-neutral"}`}>{kind === "mandatory" ? t("by.required") : t("by.preferred")}</span>
-        <button type="button" className="jp-action" style={{ padding: "6px 9px" }} onClick={() => move(ing, r, kind)}>
-          {kind === "mandatory" ? <ArrowDown aria-hidden /> : <ArrowUp aria-hidden />}
-          {kind === "mandatory" ? t("by.toPref") : t("by.toReq")}
-        </button>
-      </div>
-    </div>
-  );
+  const choose = (id: string) => {
+    const p = v.profiles.find((x) => x.id === id);
+    if (!p || p.active) return;
+    run(() => api.setActiveProfile(id), () => p.switch_effect?.text);
+  };
 
   return (
-    <section className="jp-panel">
-      <div className="jp-line-head">
-        <h2>{t("by.title")}</h2>
-        <span className="jp-badge">{t("by.badge", { name: t(`profile.${profileId}` as Key) })}</span>
-      </div>
-      <p className="jp-section-note">{t("by.note")}</p>
-      {Object.entries(p.ingredients).map(([ing, rules]) => (
-        <div key={ing} style={{ borderTop: "1px solid var(--jp-line)", paddingTop: 14, marginTop: 6 }}>
-          <h3>{label("ing", ing)}</h3>
-          {rules.mandatory.length + rules.negotiable.length === 0 && <p className="jp-muted" style={{ fontSize: 12 }}>{t("by.none")}</p>}
-          {rules.mandatory.map((r) => ruleRow(ing, r, "mandatory"))}
-          {rules.negotiable.map((r) => ruleRow(ing, r, "negotiable"))}
-        </div>
-      ))}
-      <div className="jp-field-grid" style={{ marginTop: 20 }}>
-        <label className="jp-field">
-          {t("by.budget")}
-          <input
-            type="number"
-            min={1}
-            max={100000}
-            step={1}
-            value={p.weekly_budget_eur}
-            onChange={(e) => Number(e.target.value) > 0 && edit({ ...p, weekly_budget_eur: Number(e.target.value) })}
-          />
-          <small className="jp-muted">{t("by.budgetNote")}</small>
-        </label>
-        <div className="jp-field">
-          <span>{t("by.days")}</span>
-          <div className="jp-pill-row" style={{ marginTop: 0 }}>
-            {DAYS.map((day) => {
-              const on = p.accepted_delivery_days.includes(day);
-              return (
-                <button
-                  key={day}
-                  type="button"
-                  className={`jp-badge ${on ? "" : "jp-neutral"}`}
-                  aria-pressed={on}
-                  style={{ cursor: "pointer", opacity: on ? 1 : 0.6 }}
-                  onClick={() =>
-                    edit({ ...p, accepted_delivery_days: on ? p.accepted_delivery_days.filter((x) => x !== day) : DAYS.filter((x) => x === day || p.accepted_delivery_days.includes(x)) })
-                  }
-                >
-                  {d.weekdayName(day)}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-      <div className="jp-field">
-        <span>{t("by.priorities")}</span>
-        <div className="jp-field-grid">
-          {Object.entries(p.priorities).map(([k, v]) => (
-            <label key={k} className="jp-select-label" style={{ margin: "4px 0" }}>
-              {label("prio", k)}
-              <select value={v} onChange={(e) => edit({ ...p, priorities: { ...p.priorities, [k]: e.target.value as typeof v } })}>
-                {(["low", "medium", "high"] as const).map((l) => (
-                  <option key={l} value={l}>
-                    {label("lvl", l)}
-                  </option>
-                ))}
-              </select>
-            </label>
+    <>
+      <section className="jp-panel" style={{ marginBottom: 18 }}>
+        <h2>{L("prof.active")}</h2>
+        <div className="jp-basket-options" role="group" aria-label={L("prof.active")} style={{ marginTop: 14 }}>
+          {v.profiles.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              className="jp-basket-option"
+              style={{ display: "grid", gap: 4 }}
+              aria-pressed={p.active}
+              disabled={busy}
+              onClick={() => choose(p.id)}
+            >
+              <span style={{ fontWeight: 700, fontSize: 15 }}>{p.label}</span>
+              <small>{p.description}</small>
+              <strong className="jp-number" style={{ marginTop: 4 }}>
+                {p.suggested_total_text}
+              </strong>
+            </button>
           ))}
         </div>
-      </div>
-      <div className="jp-form-actions">
-        <button type="button" className="jp-action jp-primary" disabled={!dirty || busy} onClick={save}>
-          {busy ? t("by.saving") : t("by.save")}
-        </button>
-        {dirty && (
-          <button type="button" className="jp-action" onClick={() => setDraft(null)}>
-            {t("by.discard")}
+      </section>
+      <section className="jp-panel">
+        <div className="jp-line-head">
+          <h2>{L("by.title")}</h2>
+          <Badge>{v.badge_text}</Badge>
+        </div>
+        <p className="jp-section-note">{L("by.note")}</p>
+        {v.ingredients.map((ing) => (
+          <div key={ing.ingredient} style={{ borderTop: "1px solid var(--jp-line)", paddingTop: 14, marginTop: 6 }}>
+            <h3>{ing.label}</h3>
+            {ing.empty_text && (
+              <p className="jp-muted" style={{ fontSize: 12 }}>
+                {ing.empty_text}
+              </p>
+            )}
+            {ing.rules.map((r) => (
+              <div key={`${r.kind}-${r.field}`} className="jp-row jp-rule-row">
+                <div className="jp-rule-name">
+                  <p style={{ color: "var(--jp-text)", fontSize: 13, marginTop: 0 }}>
+                    {r.label}
+                    <InfoTip hint={r.hint} />
+                  </p>
+                </div>
+                <div className="jp-rule-actions">
+                  <Badge tone={r.kind === "mandatory" ? "ok" : "neutral"}>{r.kind_text}</Badge>
+                  <button
+                    type="button"
+                    className="jp-action"
+                    disabled={busy}
+                    onClick={() => run(() => api.moveRule(v.profile_id, ing.ingredient, r.field, lang), (res) => res.impact?.text)}
+                  >
+                    {r.kind === "mandatory" ? <ArrowDown aria-hidden /> : <ArrowUp aria-hidden />}
+                    {r.move_text}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ))}
+        <div className="jp-field-grid" style={{ marginTop: 20 }}>
+          <label className="jp-field">
+            {v.budget.label}
+            <input
+              type="number"
+              min={v.budget.min}
+              max={v.budget.max}
+              step={1}
+              value={current.amount}
+              onChange={(e) => setDraft({ ...current, amount: Number(e.target.value) })}
+            />
+            <small className="jp-muted">{v.budget.note}</small>
+          </label>
+          <div className="jp-field">
+            <span>{L("by.days")}</span>
+            <div className="jp-pill-row" style={{ marginTop: 0 }}>
+              {v.days.map(({ day, label }) => {
+                const on = current.days.includes(day);
+                return (
+                  <button
+                    key={day}
+                    type="button"
+                    className={`jp-badge ${on ? "" : "jp-neutral"}`}
+                    aria-pressed={on}
+                    style={{ cursor: "pointer", opacity: on ? 1 : 0.6 }}
+                    onClick={() =>
+                      setDraft({ ...current, days: on ? current.days.filter((x) => x !== day) : v.days.map((d) => d.day).filter((x) => x === day || current.days.includes(x)) })
+                    }
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+        <div className="jp-form-actions">
+          <button
+            type="button"
+            className="jp-action jp-primary"
+            disabled={!draft || busy || !(current.amount >= v.budget.min && current.amount <= v.budget.max)}
+            onClick={() =>
+              run(
+                () => api.patchProfile(v.profile_id, { budget: { amount: current.amount, currency: v.budget.currency }, accepted_delivery_days: current.days }, lang),
+                (res) => {
+                  setDraft(null);
+                  return res.impact?.text;
+                },
+              )
+            }
+          >
+            {busy ? L("by.saving") : L("by.save")}
           </button>
-        )}
-        <Link href="/restaurants/suppliers" className="jp-action">
-          {t("by.browse")}
-        </Link>
-      </div>
-      {msg && <p className="jp-toast">{msg}</p>}
-    </section>
+          {draft && (
+            <button type="button" className="jp-action" onClick={() => setDraft(null)}>
+              {L("by.discard")}
+            </button>
+          )}
+          <Link href="/restaurants/suppliers" className="jp-action">
+            {L("by.browse")}
+          </Link>
+        </div>
+      </section>
+    </>
   );
 }

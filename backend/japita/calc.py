@@ -8,6 +8,7 @@ import itertools
 import math
 import statistics
 
+from . import rules
 from . import stock as stock_mod
 from .store import OWNER_DECIDED_FIELDS, Store
 
@@ -126,21 +127,30 @@ def check_evidence(store: Store, offer_id: str) -> dict:
 def orderability(store: Store, offer_id: str) -> dict:
     offer = store.offer(offer_id)
     sup = store.suppliers[offer["supplier_id"]]
-    reasons = []
+    reasons, codes = [], []
     need = next((line for line in store.recipe["lines"] if line["ingredient"] == offer["ingredient"]), None)
     if need and offer["unit"] != need["unit"]:
         reasons.append("offer unit does not match the purchasing recipe")
+        codes.append("unit_mismatch")
     if offer.get("availability_status") != "confirmed" or not offer.get("availability_source"):
         reasons.append("availability not confirmed with a source")
+        codes.append("availability_unknown")
     if offer.get("valid_until") and offer["valid_until"] < (store.week.get("as_of") or store.week["dates"][0]):
         reasons.append("offer has expired")
+        codes.append("offer_expired")
     if sup["account_status"] != "approved":
         reasons.append(f"supplier account is {sup['account_status']}")
+        codes.append(f"account_{sup['account_status']}")
     if sup["shipping_eur"] is None:
         reasons.append("shipping cost unknown")
+        codes.append("shipping_unknown")
     if not set(sup["delivery_days"]) & set(store.profile["accepted_delivery_days"]):
         reasons.append("no delivery day matches the restaurant's accepted days")
-    return {"orderable": not reasons, "reasons": reasons}
+        codes.append("no_delivery_day")
+    for check in rules.blocking(store, offer_id):
+        reasons.append(f"import document missing: {check['title']}")
+        codes.append("import_document_missing")
+    return {"orderable": not reasons, "reasons": reasons, "codes": codes}
 
 
 def line_for(store: Store, offer: dict, required: float) -> dict:

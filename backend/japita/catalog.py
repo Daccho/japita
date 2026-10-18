@@ -33,6 +33,7 @@ class Interpretation(BaseModel):
 
 
 class Search(BaseModel):
+    lang: Literal["it", "en"] = "it"
     query: str = Field(default="", max_length=240)
     profile_id: str = "kumo-authentic"
     criteria: Criteria = Field(default_factory=Criteria)
@@ -93,6 +94,8 @@ def search(store: Store, criteria: Criteria, unsupported: list[str] | None = Non
                      "minimum_met": minimum_met, "earliest_delivery": arrival,
                      "evidence": calc.check_evidence(store, offer["id"]),
                      "orderability": calc.orderability(store, offer["id"])})
+    rows.sort(key=lambda row: (row["comparison_key"], row["delivered_total_eur"] is None,
+                               row["delivered_total_eur"] or 0, row["product"]))
     return {"criteria": criteria.model_dump(mode="json"), "unsupported": unsupported or [], "unchecked": unchecked,
             "offers": rows, "note": "Bounded fictional catalog. Delivered quotes are standalone purchases; basket consolidation can change shipping and minimum-order feasibility."}
 
@@ -128,9 +131,17 @@ def run_search(body: Search):
             if inferred is not None and inferred != value:
                 parsed.unsupported.append(f"{key}: query conflicts with the selected filter")
         parsed.criteria = Criteria(**{**parsed.criteria.model_dump(), **controls})
-    return search(store, parsed.criteria, parsed.unsupported)
+    from .textfmt import Money, qty
+    result = search(store, parsed.criteria, parsed.unsupported)
+    money = Money(body.lang)
+    for offer in result["offers"]:
+        offer["delivered_text"] = money(offer["delivered_total_eur"])
+        offer["basis_text"] = qty(offer["basis_qty"], offer["unit"])
+    return result
 
 
 @router.post("/search", status_code=202)
 def search_catalog(body: Search, request: Request):
+    from .textfmt import lang_from_request, restaurant_lang
+    body.lang = restaurant_lang(lang_from_request(request))
     return jobs.start("catalog_search", lambda: run_search(body), getattr(request.state, "user_id", None))

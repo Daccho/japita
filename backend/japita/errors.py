@@ -1,7 +1,8 @@
 """One error shape for every non-2xx response: {"error": {"code", "message"}, "detail": message}.
 
 `code` is stable and is what the frontends translate; `message` is short English (or Japanese on the supplier
-pages) for logs and API users. Upstream bodies, stack traces and keys never reach the response.
+pages) for logs and API users. When the request names a language (`?lang=` or the japita_lang / japita_portal_lang
+cookie), `message` is the localized text for the code instead. Upstream bodies, stack traces and keys never reach the response.
 """
 
 import logging
@@ -61,18 +62,33 @@ def describe(e: BaseException) -> tuple[int, str, str]:
     return 500, "internal", "unexpected server error"
 
 
+def localize(request: Request, status: int, code: str, message: str) -> str:
+    """The message in the request's language when the catalog has the code (or its status's generic code)."""
+    from . import textfmt
+
+    is_portal = request.url.path.startswith(("/portal/", "/supplier/"))
+    lang = textfmt.lang_from_request(request, portal=is_portal)
+    if lang is None:
+        return message
+    for c in (code, STATUS_CODES.get(status)):
+        if c and textfmt.has(lang, f"err.{c}", portal=is_portal):
+            return textfmt.pt(lang, f"err.{c}") if is_portal else textfmt.t(lang, f"err.{c}")
+    return message
+
+
 def install(app: FastAPI) -> None:
     @app.exception_handler(StarletteHTTPException)
     async def _http(request: Request, e: StarletteHTTPException):
         status, code, message = describe(e)
-        return response(status, code, message, getattr(e, "headers", None))
+        return response(status, code, localize(request, status, code, message), getattr(e, "headers", None))
 
     @app.exception_handler(RequestValidationError)
     async def _validation(request: Request, e: RequestValidationError):
         fields = sorted({".".join(str(p) for p in err.get("loc", ())[1:]) or "body" for err in e.errors()})
-        return response(422, "invalid_input", "invalid input: " + ", ".join(fields[:5]))
+        message = localize(request, 422, "invalid_input", "invalid input: " + ", ".join(fields[:5]))
+        return response(422, "invalid_input", message)
 
     @app.exception_handler(Exception)
     async def _unexpected(request: Request, e: Exception):
         log.exception("unhandled error on %s %s", request.method, request.url.path)
-        return response(500, "internal", "unexpected server error")
+        return response(500, "internal", localize(request, 500, "internal", "unexpected server error"))

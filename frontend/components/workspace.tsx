@@ -1,56 +1,26 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
-import {
-  api,
-  type AgentAnswer,
-  type Approval,
-  type BasketResult,
-  type Spending,
-  type State,
-  type Timeline,
-  type WeeklyCheck,
-  type PurchaseBrief,
-  type AdvisorContext,
-} from "@/lib/api";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { api, type WeeklyCheck } from "@/lib/api";
+import { purchasingApi, type PurchasingAnswer, type PurchasingData, type AdvisorContext } from "@/lib/purchasing";
 import { useI18n } from "@/lib/i18n";
+import { useBump, useView } from "@/components/live";
 
-const PROFILE_KEY = "japita.profile";
-const CACHE_KEY = "japita.cache.";
-export const PROFILES = ["kumo-authentic", "kumo-value"] as const;
-
-type Data = {
-  state: State;
-  baskets: BasketResult;
-  timeline: Timeline;
-  approval: Approval | null;
-  spending: Spending;
-  brief: PurchaseBrief;
-};
-
-function cached(pid: string): Data | null {
-  try {
-    const raw = localStorage.getItem(CACHE_KEY + pid);
-    return raw ? (JSON.parse(raw) as Data) : null;
-  } catch {
-    return null;
-  }
-}
+// Restaurant-only background work that outlives a page: the purchasing advisor's answer and the weekly check.
+// Both run as jobs on the API; when one finishes every view re-fetches.
 
 // `error` is the thrown ApiError (shown with errorText); null when there is none.
 type Job<T> = { running: boolean; startedAt: number | null; result: T | null; error: unknown; question?: string };
 
 type Ctx = {
-  profileId: string;
-  setProfileId: (id: string) => void;
-  data: Data | null;
-  live: boolean; // false while showing cached or build-time data and the API is still waking up
-  refresh: () => Promise<void>;
   advisorOpen: boolean;
   setAdvisorOpen: (open: boolean) => void;
-  advisor: Job<AgentAnswer>;
+  advisor: Job<PurchasingAnswer>;
   ask: (question: string, context?: AdvisorContext) => void;
-  conversation: { question: string; result: AgentAnswer }[];
+  data: PurchasingData | null;
+  profileId: string;
+  refresh: () => Promise<void>;
+  conversation: {question:string;result:PurchasingAnswer}[];
   weekly: Job<WeeklyCheck>;
   runWeekly: () => void;
 };
@@ -67,143 +37,51 @@ const idle = { running: false, startedAt: null, result: null, error: null };
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const { lang } = useI18n();
-  const [profileId, setProfileState] = useState<string>("kumo-authentic");
-  const [data, setData] = useState<Data | null>(null);
-  const [live, setLive] = useState(false);
+  const bump = useBump();
   const [advisorOpen, setAdvisorOpen] = useState(false);
-  const [advisor, setAdvisor] = useState<Job<AgentAnswer>>(idle);
+  const [advisor, setAdvisor] = useState<Job<PurchasingAnswer>>(idle);
   const [weekly, setWeekly] = useState<Job<WeeklyCheck>>(idle);
-  const [conversation, setConversation] = useState<{ question: string; result: AgentAnswer }[]>([]);
-  const conversationId = useRef<string | null>(null);
+  const { data, reload } = useView<PurchasingData>(`/views/purchasing?lang=${lang}`, null);
+  const profileId = data?.profile_id ?? "";
   const profileRef = useRef(profileId);
   profileRef.current = profileId;
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(PROFILE_KEY);
-      if (saved && (PROFILES as readonly string[]).includes(saved)) setProfileState(saved);
-    } catch {}
-  }, []);
-
-  // Show the last data this signed-in browser saw at once; live data replaces it. Nothing restaurant-specific
-  // is bundled into the public JavaScript, and the cache is cleared on sign-out and on 401.
-  useEffect(() => {
-    setLive(false);
-    setData(cached(profileId));
-  }, [profileId]);
-
-  const setProfileId = (id: string) => {
-    setAdvisor(idle);
-    setConversation([]);
-    conversationId.current = null;
-    setProfileState(id);
-    try {
-      localStorage.setItem(PROFILE_KEY, id);
-    } catch {}
-  };
-
-  const load = useCallback(async () => {
-    const pid = profileRef.current;
-    const [state, baskets, timeline, approval, spending, brief] = await Promise.all([
-      api.state(),
-      api.baskets(pid),
-      api.timeline(pid),
-      api.approval(pid),
-      api.spending(pid),
-      api.brief(pid),
-    ]);
-    if (pid !== profileRef.current) return;
-    const next = { state, baskets, timeline, approval, spending, brief };
-    setData(next);
-    setLive(true);
-    try {
-      localStorage.setItem(CACHE_KEY + pid, JSON.stringify(next));
-    } catch {}
-  }, []);
-
-  // First load: retry until the (possibly sleeping) server answers. Never show an error for this.
-  // (request() already retries quietly for about a minute; this keeps trying after that.)
-  useEffect(() => {
-    let cancelled = false;
-    let timer: ReturnType<typeof setTimeout>;
-    const attempt = async (n: number) => {
-      try {
-        await load();
-      } catch {
-        if (cancelled) return;
-        timer = setTimeout(() => attempt(n + 1), 4000);
-      }
-    };
-    attempt(0);
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
-  }, [load, profileId]);
-
-  // Keep in sync with the supplier portal (replies, confirmations, proposals) while the tab is visible.
-  useEffect(() => {
-    const id = setInterval(() => {
-      if (document.visibilityState === "visible") load().catch(() => {});
-    }, 12000);
-    return () => clearInterval(id);
-  }, [load]);
-
-  const refresh = useCallback(async () => {
-    await load();
-  }, [load]);
+  const conversationId = useRef<string | null>(null);
+  const [conversation,setConversation] = useState<{question:string;result:PurchasingAnswer}[]>([]);
+  useEffect(() => { setAdvisor(idle); setConversation([]); conversationId.current=null; }, [profileId]);
+  const refresh = async () => { await reload(); bump(); };
 
   const ask = (question: string, context: AdvisorContext = {}) => {
-    if (advisor.running || !question.trim()) return;
+    if (advisor.running || !question.trim() || !profileId) return;
     setAdvisorOpen(true);
-    const pid = profileRef.current;
     if (!conversationId.current) {
-      const key = "japita.advisor.conversation." + pid;
-      try { conversationId.current = sessionStorage.getItem(key); } catch {}
+      try { conversationId.current=sessionStorage.getItem(`japita.advisor.conversation.${profileId}`); } catch {}
       conversationId.current ??= crypto.randomUUID();
-      try { sessionStorage.setItem(key, conversationId.current); } catch {}
+      try { sessionStorage.setItem(`japita.advisor.conversation.${profileId}`,conversationId.current); } catch {}
     }
-    const cid = conversationId.current;
+    const pid=profileId, cid=conversationId.current;
     setAdvisor({ running: true, startedAt: Date.now(), result: null, error: null, question });
-    api
+    purchasingApi
       .ask(question, pid, cid, lang, context)
       .then((result) => {
-        if (profileRef.current !== pid || conversationId.current !== cid) return;
+        if (pid!==profileRef.current || cid!==conversationId.current) return;
         setAdvisor({ running: false, startedAt: null, result, error: null, question });
-        setConversation((previous) => [...previous, { question, result }].slice(-6));
-        load().catch(() => {});
+        setConversation(previous=>[...previous,{question,result}].slice(-6));
+        bump();
       })
-      .catch((e) => { if (profileRef.current === pid && conversationId.current === cid) setAdvisor({ running: false, startedAt: null, result: null, error: e ?? new Error("failed"), question }); });
+      .catch((e) => { if(pid===profileRef.current && cid===conversationId.current) setAdvisor({ running: false, startedAt: null, result: null, error: e ?? new Error("failed"), question }); });
   };
 
   const runWeekly = () => {
     if (weekly.running) return;
     setWeekly({ running: true, startedAt: Date.now(), result: null, error: null });
     api
-      .weeklyCheck(profileRef.current)
+      .weeklyCheck()
       .then((result) => setWeekly({ running: false, startedAt: null, result, error: null }))
       .catch((e) => setWeekly({ running: false, startedAt: null, result: null, error: e ?? new Error("failed") }));
   };
 
   return (
-    <WorkspaceCtx.Provider
-      value={{
-        profileId,
-        setProfileId,
-        data,
-        live,
-        refresh,
-        advisorOpen,
-        setAdvisorOpen,
-        advisor,
-        ask,
-        conversation,
-        weekly,
-        runWeekly,
-      }}
-    >
-      {children}
-    </WorkspaceCtx.Provider>
+    <WorkspaceCtx.Provider value={{ data, profileId, refresh, conversation, advisorOpen, setAdvisorOpen, advisor, ask, weekly, runWeekly }}>{children}</WorkspaceCtx.Provider>
   );
 }
 
@@ -216,23 +94,4 @@ export function useElapsed(startedAt: number | null) {
     return () => clearInterval(id);
   }, [startedAt]);
   return startedAt ? Math.max(0, Math.round((now - startedAt) / 1000)) : 0;
-}
-
-// A value remembered in this browser only (preview state for profile text, menu edits and links).
-export function useStored<T>(key: string, initial: T) {
-  const [value, setValue] = useState<T>(initial);
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(key);
-      if (raw) setValue({ ...initial, ...JSON.parse(raw) });
-    } catch {}
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key]);
-  const save = (v: T) => {
-    setValue(v);
-    try {
-      localStorage.setItem(key, JSON.stringify(v));
-    } catch {}
-  };
-  return [value, save] as const;
 }

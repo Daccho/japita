@@ -237,3 +237,33 @@ def test_confirmed_quantity_limit_is_checked_after_pack_rounding():
     result = calc.calculate_baskets(store)
     assert result["recommended_kind"] is None  # 77 whole packs exceed the confirmed 76.8 kg
     assert any("available quantity" in problem for combination in result["infeasible_combinations"] for problem in combination["problems"])
+
+
+def test_purchasing_view_formats_amounts_and_tracks_active_profile(client):
+    result = client.get("/views/purchasing?lang=en")
+    assert result.status_code == 200
+    view = result.json()
+    assert view["profile_id"] == "kumo-authentic"
+    assert view["brief"]["display"]["basket"] is None  # missing hydration blocks the timely backup
+    repo.save_state(unlocked().data)
+    view = client.get("/views/purchasing?lang=en").json()
+    assert view["brief"]["display"]["basket"]["total"].startswith("$")
+    assert all("portal_token" not in supplier for supplier in view["state"]["suppliers"].values())
+    previous = view["brief"]["input_version"]
+    assert client.put("/restaurant/settings", json={"active_profile_id": "kumo-value"}).status_code == 200
+    changed = client.get("/views/purchasing?lang=it").json()
+    assert changed["profile_id"] == "kumo-value" and changed["brief"]["input_version"] != previous
+
+
+def test_restaurant_context_participates_in_advisor_freshness():
+    store = unlocked()
+    version = input_version(store)
+    store.data["restaurant_profile"] = {"description": "Owner's updated kitchen notes"}
+    assert input_version(store) != version
+
+
+def test_catalog_job_uses_server_currency_text(client):
+    from japita.catalog import Search, run_search
+    result = run_search(Search(lang="en", criteria=Criteria(ingredient="noodles")))
+    assert result["offers"] and result["offers"][0]["delivered_text"].startswith("$")
+    assert "kg" in result["offers"][0]["basis_text"]

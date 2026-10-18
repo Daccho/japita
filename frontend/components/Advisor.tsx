@@ -5,32 +5,13 @@ import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Loader2, RotateCcw, Sparkles, X } from "lucide-react";
-import { errorText, money } from "@/lib/api";
-import { useI18n, useLabel, type Key } from "@/lib/i18n";
-import { useElapsed, useWorkspace } from "@/components/workspace";
+import { errorText } from "@/lib/api";
+import { useI18n, type Key } from "@/lib/i18n";
+import { useWorkspace } from "@/components/workspace";
 import PurchaseBrief from "@/components/PurchaseBrief";
 
 const POS_KEY = "japita.advisor.position";
-
-// The agent sometimes returns its final JSON envelope ({"action":"answer","text":...}) instead of plain text,
-// and may mention internal ids. Show only readable text: ids become product/supplier names.
-export function cleanAnswer(raw: string, names: Record<string, string>): string {
-  let text = raw.trim();
-  const fenced = text.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/);
-  const body = fenced ? fenced[1] : text;
-  if (body.startsWith("{")) {
-    try {
-      // Models sometimes emit invalid escapes such as \\le inside LaTeX: keep them as literal backslashes.
-      const parsed = JSON.parse(body.replace(/\\(?!["\\/bfnrtu])/g, "\\\\"));
-      if (typeof parsed.text === "string") text = parsed.text;
-      else if (typeof parsed.answer === "string") text = parsed.answer;
-    } catch {}
-  }
-  return text
-    .replace(/\s*\((?:ID|id)\s*`?C\d+`?\)/g, "")
-    .replace(/`?\b((?:O-[\w-]+)|S\d+)\b`?/g, (m, id) => names[id] ?? m)
-    .replace(/`(\w+_\w+)`/g, "$1");
-}
+const EXAMPLES: Key[] = ["adv.q1", "adv.q2", "adv.q3"];
 
 export function Markdown({ text }: { text: string }) {
   return (
@@ -41,13 +22,18 @@ export function Markdown({ text }: { text: string }) {
 }
 
 function AdvisorBody() {
-  const { t, lang } = useI18n();
-  const label = useLabel();
-  const { data, advisor, ask, conversation, setAdvisorOpen } = useWorkspace();
+  const { t } = useI18n();
+  const { advisor, ask, setAdvisorOpen, data, conversation } = useWorkspace();
   const [question, setQuestion] = useState("");
-  const elapsed = useElapsed(advisor.startedAt);
-  const offers = data?.state.offers ?? [];
-  const drafts = (data?.state.clarifications ?? []).filter((c) => c.state === "draft");
+  const [example, setExample] = useState(0);
+  const drafts = advisor.result?.drafts ?? [];
+
+  // The placeholder cycles through example questions; Tab on an empty box takes the one shown.
+  useEffect(() => {
+    if (question || advisor.running) return;
+    const id = setInterval(() => setExample((i) => (i + 1) % EXAMPLES.length), 5000);
+    return () => clearInterval(id);
+  }, [question, advisor.running]);
 
   const submit = (q: string) => {
     if (!q.trim()) return;
@@ -66,9 +52,7 @@ function AdvisorBody() {
             {advisor.question && <p style={{ color: "var(--jp-text)" }}>“{advisor.question}”</p>}
             <div className="jp-proof">
               <Loader2 className="jp-spinner" aria-hidden />
-              <span>
-                {t("adv.thinking")} · {t("adv.elapsed", { s: elapsed })}
-              </span>
+              <span>{t("adv.thinking")}</span>
             </div>
             <div className="jp-progress">
               <span />
@@ -82,20 +66,32 @@ function AdvisorBody() {
               submit(question);
             }}
           >
-            <textarea
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              placeholder={t("adv.ph")}
-              aria-label={t("adv.ask")}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
-                  e.preventDefault();
-                  submit(question);
-                }
-              }}
-            />
+            <div className="jp-ghost">
+              <textarea
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+                placeholder={t(EXAMPLES[example])}
+                aria-label={t("adv.ask")}
+                onKeyDown={(e) => {
+                  if (e.key === "Tab" && !e.shiftKey && !question) {
+                    e.preventDefault();
+                    setQuestion(t(EXAMPLES[example]));
+                    return;
+                  }
+                  if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+                    e.preventDefault();
+                    submit(question);
+                  }
+                }}
+              />
+              {!question && (
+                <kbd className="jp-ghost-hint" aria-hidden>
+                  {t("adv.tab")}
+                </kbd>
+              )}
+            </div>
             <div className="jp-suggestions">
-              {(["adv.q1", "adv.q2", "adv.q3"] as Key[]).map((k) => (
+              {EXAMPLES.map((k) => (
                 <button key={k} type="button" onClick={() => submit(t(k))}>
                   {t(k)}
                 </button>
@@ -123,27 +119,16 @@ function AdvisorBody() {
         {advisor.result && !advisor.running && (
           <div style={{ marginTop: 14 }}>
             {advisor.question && <p style={{ fontStyle: "italic" }}>“{advisor.question}”</p>}
-            {(advisor.result.stale || advisor.result.input_version !== data?.baskets.input_version) && <p className="jp-error">{t("adv.stale")}</p>}
-            {!advisor.result.explanation.validated ? <p>{t("adv.unverified")}</p> : <div>
-              <p className="jp-kicker">{t("adv.verified")}</p>
-              {advisor.result.explanation.evidence.map((e) => <div className="jp-quote" key={e.offer_id + e.field}>
-                <strong>{e.product} · {label("field", e.field)}</strong>
-                <p>{e.rule ?? e.preference} · {t("adv.outcome", { outcome: e.outcome })}</p>
-                {e.source_text && <p lang="ja">{t("adv.source", { source: e.source_text })}</p>}
-              </div>)}
-            </div>}
-            {advisor.result.explanation.focus === "prices" && Object.entries(advisor.result.brief.comparisons).map(([ingredient, comparison]) => <details key={ingredient}>
-              <summary>{t("adv.comparison")} · {label("ing", ingredient)}</summary>
-              {comparison.groups.map((group, i) => <div className="jp-quote" key={i}>{group.offers.map((offer) => <p key={offer.offer_id}>{offer.product} · {money(offer.unit_price_eur)} / {offer.per} · {offer.offer_date}</p>)}</div>)}
-            </details>)}
-            {advisor.result.explanation.focus === "orders" && advisor.result.brief.purchase_orders.map((po) => <p key={po.id}>{po.supplier_name} · {po.state} · {money(po.total_eur)}</p>)}
+            {(advisor.result.stale || advisor.result.input_version !== data?.brief.input_version) && <p className="jp-error">{t("adv.stale")}</p>}
+            {!advisor.result.explanation.validated && <p className="jp-section-note">{t("adv.unverified")}</p>}
+            {advisor.result.explanation.evidence.map((item, i) => <p key={i}>{item.product} · {item.field}: {String(item.value)} · {item.outcome}<br /><small>{item.source_text}</small></p>)}
+            {conversation.length > 1 && <details><summary>{t("adv.previous")}</summary>{conversation.slice(0,-1).map((turn,i)=><p key={i}>{turn.question}</p>)}</details>}
             {drafts.length > 0 && (
               <div className="jp-quote">
                 <h3>{t("adv.drafted")}</h3>
                 {drafts.map((c) => (
                   <p key={c.id} style={{ margin: "8px 0", color: "var(--jp-muted)" }}>
-                    {offers.find((o) => o.id === c.offer_id)?.product ?? c.offer_id} · {label("field", c.field)}
-                    {c.translations?.[lang] ? ` — ${c.translations[lang]}` : ""}
+                    {c.text}
                   </p>
                 ))}
                 <Link href="/restaurants/basket#questions" className="jp-action" onClick={() => setAdvisorOpen(false)}>
@@ -153,8 +138,6 @@ function AdvisorBody() {
             )}
           </div>
         )}
-        {conversation.length > 1 && <details><summary>{t("adv.previous")}</summary>{conversation.slice(0, -1).map((turn, i) => <p key={i}>{turn.question}</p>)}</details>}
-        <p style={{ fontSize: 11, marginBottom: 0 }}>{t("adv.note")}</p>
       </div>
     </div>
   );

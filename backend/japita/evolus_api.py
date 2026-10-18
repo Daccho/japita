@@ -9,7 +9,7 @@ from . import calc, jobs, repo
 from .errors import AppError
 from .evolus import EvolusWorkflow
 from .llm import CallRecord
-from .store import Store
+from .store import Store, active_profile_id
 
 router = APIRouter(prefix="/evolus", tags=["evolus"])
 
@@ -36,7 +36,7 @@ async def run_workflow(input: str = Form(...), file: UploadFile | None = File(No
 
 
 def _profile_id(data: dict, profile_id: str | None) -> str:
-    pid = profile_id or next(iter(data["profiles"]), None)
+    pid = profile_id or active_profile_id(data)
     if pid not in data["profiles"]:
         raise AppError(404, "not_found", "no restaurant profile")
     return pid

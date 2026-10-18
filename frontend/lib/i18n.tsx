@@ -3,6 +3,8 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { useInitialLang } from "@/lib/initial-lang";
 import { LANG_COOKIE, saveLangCookie } from "@/lib/lang-cookies";
+import { useRouter } from "next/navigation";
+import { LangSegment } from "@/components/AppShell";
 
 // Restaurant workspace strings. Italian is the default (the restaurant is in Milan); English is for judges.
 // The supplier portal is Japanese only and does not use this.
@@ -75,18 +77,16 @@ const EN = {
   workspace: "Restaurant workspace",
   "nav.week": "This week",
   "nav.suppliers": "Suppliers",
-  "nav.basket": "Basket",
+  "nav.basket": "Order plans",
   "nav.profile": "Restaurant profile",
   "side.place": "42 seats · Milan",
-  "side.demo": "Fictional demo workspace",
   "profile.switch": "Profile",
   "profile.kumo-authentic": "Authentic",
   "profile.kumo-value": "Value",
   "load.title": "Connecting to the server…",
-  "load.note": "The demo server may need up to a minute to wake up.",
+  "load.note": "The server may need up to a minute to start.",
   "load.retry": "Still waking up, retrying…",
   "load.sync": "Updating…",
-  "foot.sample": "Sample data · fictional suppliers and prices",
   "foot.week": "{dates} · {bowls} planned bowls",
   close: "Close",
   cancel: "Cancel",
@@ -115,7 +115,7 @@ const EN = {
   "err.owner_only_field": "This detail is decided by the restaurant, not asked of the supplier.",
   "err.retry": "Try again",
   "err.reapprove": "Go to approval",
-  "review.basket": "Review basket",
+  "review.basket": "Review order plans",
   // notifications
   "nt.title": "Notifications",
   "nt.close": "Close notifications",
@@ -171,7 +171,6 @@ const EN = {
   "wk.committed": "Committed",
   "wk.planned": "Approved basket: {v}",
   "wk.remaining": "{r} left of your {b} weekly budget.",
-  "wk.spendNote": "Simulated demo orders · nothing is paid.",
   "wk.suggested": "Suggested basket",
   "wk.allClear": "All ingredients are covered for this week.",
   "day.show": "Show details for {day}",
@@ -191,7 +190,7 @@ const EN = {
   "chk.intro": "The purchasing agent reads every offer for this week and flags inconsistencies and missing details.",
   "chk.run": "Run weekly check",
   "chk.again": "Run again",
-  "chk.running": "Checking every offer… this can take a couple of minutes.",
+  "chk.running": "Checking every offer…",
   "chk.failed": "The check did not finish. Try again later.",
   // suppliers
   "sup.kicker": "Your suppliers, together",
@@ -218,7 +217,7 @@ const EN = {
   "srch.help": "Tell us the product, origin or requirements you have in mind.",
   "srch.ph": "For example: frozen noodles made in Japan…",
   "srch.go": "Find suppliers",
-  "srch.note": "Interpret a request in the saved demo catalog",
+  "srch.note": "Search by name, product or keyword",
   "srch.clear": "Clear search",
   "srch.empty": "Your search starts here",
   "srch.emptyBody": "Describe what you need above, or search with an empty box to see every candidate.",
@@ -267,9 +266,28 @@ const EN = {
   "pp.pack": "Pack size",
   "pp.applied": "Proposal applied. Baskets recalculated.",
   "pp.rejected": "Proposal rejected.",
+  "pp.profile": "Profile changes",
+  "pp.profileApplied": "Supplier profile updated.",
+  "pf.name": "Company name",
+  "pf.country": "Country",
+  "pf.address": "Address",
+  "pf.city": "City",
+  "pf.contact_name": "Contact person",
+  "pf.email": "Email",
+  "pf.phone": "Phone",
+  "pf.delivery_days": "Delivery days",
+  "pf.min_order_eur": "Minimum order",
+  "pf.shipping_eur": "Shipping",
+  "pf.lead_time_days": "Lead time",
+  "nt.profileBody": "{supplier} proposed changes to its profile.",
+  "wk.sent": "Waiting for the supplier to accept: {v}",
+  "info.contains_kansui": "Alkaline salts that give ramen noodles firmness and a yellow colour",
+  "info.hydration_pct": "Water as % of flour weight. Hakata style ≈ 25–30%",
+  "info.label": "What is {term}?",
+  "bk.from": "from {supplier}",
   // basket
   "bk.kicker": "One basket · separate supplier orders",
-  "bk.title": "Your basket",
+  "bk.title": "Order plans",
   "bk.sub": "Compare the options, approve one, then send the supplier orders.",
   "bk.options": "Basket options",
   "bk.optionsNote": "Every option meets your required rules. Totals include packs, minimum orders and delivery.",
@@ -316,7 +334,6 @@ const EN = {
   "po.delivery": "Delivery {date}",
   "po.note": "Supplier note (translated)",
   "po.changed": "Delivery moved from {from} to {to}",
-  "po.simulated": "Demo orders · nothing is purchased or paid.",
   "ex.title": "Excluded offers, and why",
   "cl.title": "Questions to suppliers",
   "cl.none": "No questions yet. Ask the advisor to check what is missing.",
@@ -327,7 +344,7 @@ const EN = {
   "cl.question": "Message to the supplier (Japanese)",
   "cl.translation": "Translation",
   "cl.approve": "Approve and send",
-  "cl.approveNote": "Demo: the question appears on the supplier's portal. No real message is sent.",
+  "cl.approveNote": "The question appears on the supplier's portal.",
   "cl.link": "Supplier portal",
   "cl.copy": "Copy link",
   "cl.copied": "Copied",
@@ -343,11 +360,11 @@ const EN = {
   "adv.title": "Purchasing advisor",
   "adv.launcher": "Purchasing advisor · drag to move",
   "adv.suggested": "Suggested basket",
-  "adv.openBasket": "Open basket",
+  "adv.openBasket": "Open order plans",
   "adv.ask": "Ask the advisor",
-  "adv.ph": "Ask about this week's purchasing…",
+  "adv.tab": "Tab ⇥ to use",
   "adv.send": "Ask",
-  "adv.thinking": "The advisor is checking offers, stock and baskets. This usually takes 1–2 minutes.",
+  "adv.thinking": "The advisor is checking offers, stock and order plans…",
   "adv.elapsed": "{s} s",
   "adv.drafted": "Draft questions for suppliers",
   "adv.review": "Review in Basket",
@@ -368,7 +385,8 @@ const EN = {
   "ov.edit": "Edit profile",
   "ov.editTitle": "Edit restaurant profile",
   "ov.save": "Save profile",
-  "ov.saved": "Restaurant profile saved for the advisor.",
+  "ov.saved": "Restaurant profile saved.",
+  "ov.logo": "Logo image URL",
   "ov.description": "Restaurant description",
   "ov.concept": "Concept",
   "ov.guests": "Target guests",
@@ -378,9 +396,8 @@ const EN = {
   "ov.make": "Prepared in-house",
   "ov.buy": "Purchased components",
   "ov.notes": "Owner notes",
-  "ov.notesNote": "Example notes for the fictional restaurant.",
   "ov.quest": "Onboarding questionnaire",
-  "ov.questNote": "Demo answers drawn from the restaurant scenario. Edit them using Edit profile.",
+  "ov.questNote": "Answers from the onboarding questionnaire. Edit them using Edit profile.",
   "ov.q.concept": "What kind of restaurant do you run?",
   "ov.q.guests": "Who do you want to serve?",
   "ov.q.location": "Where is the restaurant?",
@@ -408,7 +425,7 @@ const EN = {
   "mn.extras": "Extras",
   "mn.sides": "Sides & drinks",
   "mn.various": "Various",
-  "mn.foot": "Prices in EUR · Fictional restaurant menu",
+  "mn.foot": "Prices in EUR",
   "mn.plan": "Ingredients & purchasing plan",
   "mn.planNote": "{bowls} planned bowls · {refills} refills this week, from the purchasing week.",
   "mn.planned": "{n} planned this week",
@@ -416,15 +433,22 @@ const EN = {
   "mn.perServing": "Purchased per serving: {list}",
   "mn.noPurchase": "No purchased ingredients tracked for this item.",
   "by.title": "Buying preferences",
-  "by.badge": "{name} profile",
+  "by.mode": "Purchasing priority",
+  "by.mode.kumo-authentic": "Quality first",
+  "by.mode.kumo-value": "Cost first",
+  "by.modeNote.kumo-authentic": "Authentic Hakata specs are required; price comes second.",
+  "by.modeNote.kumo-value": "Fewer required specs, so cheaper offers qualify; lower weekly budget.",
+  "by.modeImpact": "Suggested plan this week: {a} → {b}",
+  "by.modeLoading": "Recalculating this week's plan…",
+  "by.badge": "{name}",
   "by.note": "Required rules always apply. Preferences can be traded against price. Move a rule and save to see the baskets change.",
   "by.required": "Required",
   "by.preferred": "Preferred",
   "by.toPref": "Make preference",
   "by.toReq": "Make required",
   "by.none": "No rules.",
-  "by.budget": "Purchasing budget · EUR per week",
-  "by.budgetNote": "For the three active demo ingredients.",
+  "by.budget": "Purchasing budget · {c} per week",
+  "by.budgetNote": "For the three active ingredients.",
   "by.days": "Accepted delivery days",
   "by.priorities": "Purchasing priorities",
   "prio.quality": "Quality",
@@ -455,7 +479,7 @@ const EN = {
   "ln.remove": "Remove",
   "ln.url": "Page URL",
   "ln.error": "Enter a full http:// or https:// URL without account credentials.",
-  "ln.fictional": "Kumo is fictional, so no public listings are prefilled.",
+  "ln.fictional": "No public listings are prefilled.",
   "ln.saved": "Restaurant link saved.",
   "ln.removed": "Link removed.",
   // sign-in and account
@@ -473,8 +497,11 @@ const EN = {
   "au.invalid": "Login ID or password is not correct.",
   "au.throttled": "Too many attempts. Wait a few minutes and try again.",
   "au.offline": "Cannot reach the server. It may be waking up; try again in a minute.",
-  "au.noSignup": "Accounts are created by the Japita team. Fictional demo accounts only.",
   "au.logout": "Sign out",
+  "au.account": "Account",
+  "nav.main": "Main navigation",
+  "nav.menu": "Menu",
+  "nav.profileShort": "Profile",
 };
 
 export type Key = keyof typeof EN;
@@ -546,18 +573,16 @@ const IT: Record<Key, string> = {
   workspace: "Spazio di lavoro del ristorante",
   "nav.week": "Questa settimana",
   "nav.suppliers": "Fornitori",
-  "nav.basket": "Carrello",
+  "nav.basket": "Piani d'ordine",
   "nav.profile": "Profilo del ristorante",
   "side.place": "42 coperti · Milano",
-  "side.demo": "Spazio demo fittizio",
   "profile.switch": "Profilo",
   "profile.kumo-authentic": "Autentico",
   "profile.kumo-value": "Convenienza",
   "load.title": "Connessione al server…",
-  "load.note": "Il server demo può impiegare fino a un minuto per avviarsi.",
+  "load.note": "Il server può impiegare fino a un minuto per avviarsi.",
   "load.retry": "Ancora in avvio, nuovo tentativo…",
   "load.sync": "Aggiornamento…",
-  "foot.sample": "Dati di esempio · fornitori e prezzi fittizi",
   "foot.week": "{dates} · {bowls} ciotole previste",
   close: "Chiudi",
   cancel: "Annulla",
@@ -586,7 +611,7 @@ const IT: Record<Key, string> = {
   "err.owner_only_field": "Questo dettaglio lo decide il ristorante, non si chiede al fornitore.",
   "err.retry": "Riprova",
   "err.reapprove": "Vai all'approvazione",
-  "review.basket": "Rivedi il carrello",
+  "review.basket": "Rivedi i piani d'ordine",
   "nt.title": "Notifiche",
   "nt.close": "Chiudi le notifiche",
   "nt.none": "Nessuna nuova notifica.",
@@ -639,7 +664,6 @@ const IT: Record<Key, string> = {
   "wk.committed": "Impegnato",
   "wk.planned": "Carrello approvato: {v}",
   "wk.remaining": "Restano {r} del budget settimanale di {b}.",
-  "wk.spendNote": "Ordini demo simulati · nessun pagamento.",
   "wk.suggested": "Carrello consigliato",
   "wk.allClear": "Tutti gli ingredienti sono coperti per questa settimana.",
   "day.show": "Mostra i dettagli di {day}",
@@ -659,7 +683,7 @@ const IT: Record<Key, string> = {
   "chk.intro": "L'agente acquisti legge tutte le offerte della settimana e segnala incoerenze e dettagli mancanti.",
   "chk.run": "Avvia il controllo settimanale",
   "chk.again": "Ripeti",
-  "chk.running": "Controllo di tutte le offerte… può richiedere un paio di minuti.",
+  "chk.running": "Controllo di tutte le offerte…",
   "chk.failed": "Il controllo non è terminato. Riprova più tardi.",
   "sup.kicker": "I tuoi fornitori, insieme",
   "sup.title": "Fornitori",
@@ -685,7 +709,7 @@ const IT: Record<Key, string> = {
   "srch.help": "Indica il prodotto, l'origine o i requisiti che hai in mente.",
   "srch.ph": "Per esempio: noodles surgelati prodotti in Giappone…",
   "srch.go": "Trova fornitori",
-  "srch.note": "Interpreta una richiesta nel catalogo demo salvato",
+  "srch.note": "Cerca per nome, prodotto o parola chiave",
   "srch.clear": "Cancella la ricerca",
   "srch.empty": "La tua ricerca inizia qui",
   "srch.emptyBody": "Descrivi qui sopra ciò che ti serve, oppure cerca a casella vuota per vedere tutti i candidati.",
@@ -734,8 +758,27 @@ const IT: Record<Key, string> = {
   "pp.pack": "Confezione",
   "pp.applied": "Proposta applicata. Carrelli ricalcolati.",
   "pp.rejected": "Proposta rifiutata.",
+  "pp.profile": "Modifiche al profilo",
+  "pp.profileApplied": "Profilo del fornitore aggiornato.",
+  "pf.name": "Ragione sociale",
+  "pf.country": "Paese",
+  "pf.address": "Indirizzo",
+  "pf.city": "Città",
+  "pf.contact_name": "Referente",
+  "pf.email": "Email",
+  "pf.phone": "Telefono",
+  "pf.delivery_days": "Giorni di consegna",
+  "pf.min_order_eur": "Ordine minimo",
+  "pf.shipping_eur": "Spedizione",
+  "pf.lead_time_days": "Preavviso",
+  "nt.profileBody": "{supplier} ha proposto modifiche al proprio profilo.",
+  "wk.sent": "In attesa di conferma del fornitore: {v}",
+  "info.contains_kansui": "Sali alcalini (carbonato di sodio/potassio) che danno ai noodles ramen consistenza e colore giallo",
+  "info.hydration_pct": "Acqua in % sul peso della farina. Stile Hakata ≈ 25–30%",
+  "info.label": "Che cos'è {term}?",
+  "bk.from": "da {supplier}",
   "bk.kicker": "Un carrello · ordini separati per fornitore",
-  "bk.title": "Il tuo carrello",
+  "bk.title": "Piani d'ordine",
   "bk.sub": "Confronta le opzioni, approvane una, poi invia gli ordini ai fornitori.",
   "bk.options": "Opzioni di carrello",
   "bk.optionsNote": "Ogni opzione rispetta i requisiti obbligatori. I totali includono confezioni, ordini minimi e consegna.",
@@ -782,7 +825,6 @@ const IT: Record<Key, string> = {
   "po.delivery": "Consegna {date}",
   "po.note": "Nota del fornitore (tradotta)",
   "po.changed": "Consegna spostata dal {from} al {to}",
-  "po.simulated": "Ordini demo · nessun acquisto o pagamento reale.",
   "ex.title": "Offerte escluse, e perché",
   "cl.title": "Domande ai fornitori",
   "cl.none": "Nessuna domanda. Chiedi al consulente di verificare cosa manca.",
@@ -793,7 +835,7 @@ const IT: Record<Key, string> = {
   "cl.question": "Messaggio al fornitore (giapponese)",
   "cl.translation": "Traduzione",
   "cl.approve": "Approva e invia",
-  "cl.approveNote": "Demo: la domanda compare sul portale del fornitore. Nessun messaggio reale viene inviato.",
+  "cl.approveNote": "La domanda compare sul portale del fornitore.",
   "cl.link": "Portale del fornitore",
   "cl.copy": "Copia link",
   "cl.copied": "Copiato",
@@ -808,11 +850,11 @@ const IT: Record<Key, string> = {
   "adv.title": "Consulente acquisti",
   "adv.launcher": "Consulente acquisti · trascina per spostare",
   "adv.suggested": "Carrello consigliato",
-  "adv.openBasket": "Apri il carrello",
+  "adv.openBasket": "Apri i piani d'ordine",
   "adv.ask": "Chiedi al consulente",
-  "adv.ph": "Chiedi qualcosa sugli acquisti di questa settimana…",
+  "adv.tab": "Tab ⇥ per usarla",
   "adv.send": "Chiedi",
-  "adv.thinking": "Il consulente sta controllando offerte, scorte e carrelli. Di solito servono 1–2 minuti.",
+  "adv.thinking": "Il consulente sta controllando offerte, scorte e piani d'ordine…",
   "adv.elapsed": "{s} s",
   "adv.drafted": "Bozze di domande ai fornitori",
   "adv.review": "Rivedi nel carrello",
@@ -832,7 +874,8 @@ const IT: Record<Key, string> = {
   "ov.edit": "Modifica profilo",
   "ov.editTitle": "Modifica il profilo del ristorante",
   "ov.save": "Salva profilo",
-  "ov.saved": "Profilo del ristorante salvato per il consulente.",
+  "ov.saved": "Profilo del ristorante salvato.",
+  "ov.logo": "URL dell'immagine del logo",
   "ov.description": "Descrizione del ristorante",
   "ov.concept": "Concept",
   "ov.guests": "Clienti target",
@@ -842,9 +885,8 @@ const IT: Record<Key, string> = {
   "ov.make": "Preparato in casa",
   "ov.buy": "Componenti acquistati",
   "ov.notes": "Note del titolare",
-  "ov.notesNote": "Note di esempio per il ristorante fittizio.",
   "ov.quest": "Questionario iniziale",
-  "ov.questNote": "Risposte demo tratte dallo scenario del ristorante. Modificale con Modifica profilo.",
+  "ov.questNote": "Risposte dal questionario iniziale. Modificale con Modifica profilo.",
   "ov.q.concept": "Che tipo di ristorante gestisci?",
   "ov.q.guests": "A chi vuoi rivolgerti?",
   "ov.q.location": "Dove si trova il ristorante?",
@@ -872,7 +914,7 @@ const IT: Record<Key, string> = {
   "mn.extras": "Extra",
   "mn.sides": "Contorni e bevande",
   "mn.various": "Vari",
-  "mn.foot": "Prezzi in EUR · Menu di un ristorante fittizio",
+  "mn.foot": "Prezzi in EUR",
   "mn.plan": "Ingredienti e piano di acquisto",
   "mn.planNote": "{bowls} ciotole previste · {refills} kaedama questa settimana, dalla settimana di acquisto.",
   "mn.planned": "{n} previsti questa settimana",
@@ -880,15 +922,22 @@ const IT: Record<Key, string> = {
   "mn.perServing": "Acquistato per porzione: {list}",
   "mn.noPurchase": "Nessun ingrediente acquistato registrato per questa voce.",
   "by.title": "Preferenze di acquisto",
-  "by.badge": "Profilo {name}",
+  "by.mode": "Priorità di acquisto",
+  "by.mode.kumo-authentic": "Prima la qualità",
+  "by.mode.kumo-value": "Prima il costo",
+  "by.modeNote.kumo-authentic": "Specifiche Hakata autentiche obbligatorie; il prezzo viene dopo.",
+  "by.modeNote.kumo-value": "Meno specifiche obbligatorie, così rientrano offerte più economiche; budget settimanale più basso.",
+  "by.modeImpact": "Piano consigliato di questa settimana: {a} → {b}",
+  "by.modeLoading": "Ricalcolo del piano della settimana…",
+  "by.badge": "{name}",
   "by.note": "I requisiti obbligatori valgono sempre. Le preferenze si possono scambiare con il prezzo. Sposta una regola e salva per vedere cambiare i carrelli.",
   "by.required": "Obbligatorio",
   "by.preferred": "Preferito",
   "by.toPref": "Rendi preferenza",
   "by.toReq": "Rendi obbligatorio",
   "by.none": "Nessuna regola.",
-  "by.budget": "Budget di acquisto · EUR a settimana",
-  "by.budgetNote": "Per i tre ingredienti attivi della demo.",
+  "by.budget": "Budget di acquisto · {c} a settimana",
+  "by.budgetNote": "Per i tre ingredienti attivi.",
   "by.days": "Giorni di consegna accettati",
   "by.priorities": "Priorità di acquisto",
   "prio.quality": "Qualità",
@@ -919,7 +968,7 @@ const IT: Record<Key, string> = {
   "ln.remove": "Rimuovi",
   "ln.url": "URL della pagina",
   "ln.error": "Inserisci un URL completo http:// o https:// senza credenziali.",
-  "ln.fictional": "Kumo è fittizio, quindi nessuna scheda pubblica è precompilata.",
+  "ln.fictional": "Nessuna scheda pubblica è precompilata.",
   "ln.saved": "Link del ristorante salvato.",
   "ln.removed": "Link rimosso.",
   "au.title": "Accedi a Japita",
@@ -936,8 +985,11 @@ const IT: Record<Key, string> = {
   "au.invalid": "ID di accesso o password non corretti.",
   "au.throttled": "Troppi tentativi. Attendi qualche minuto e riprova.",
   "au.offline": "Server non raggiungibile. Potrebbe essere in avvio: riprova tra un minuto.",
-  "au.noSignup": "Gli account sono creati dal team Japita. Solo account demo fittizi.",
   "au.logout": "Esci",
+  "au.account": "Account",
+  "nav.main": "Navigazione principale",
+  "nav.menu": "Menu",
+  "nav.profileShort": "Profilo",
 };
 
 const STR: Record<Lang, Record<Key, string>> = { en: EN, it: IT };
@@ -952,8 +1004,11 @@ const Ctx = createContext<{ lang: Lang; setLang: (l: Lang) => void; t: T }>({
 
 const KEY = "japita.lang";
 
+// The language lives in a cookie so server-rendered views come in the chosen language; changing it re-renders
+// the server data.
 export function I18nProvider({ children }: { children: ReactNode }) {
   const initial = useInitialLang().restaurant;
+  const router = useRouter();
   const [lang, setLangState] = useState<Lang>(initial === "en" ? "en" : "it");
 
   // Without a cookie, fall back to a choice saved in localStorage and copy it into the cookie.
@@ -964,9 +1019,10 @@ export function I18nProvider({ children }: { children: ReactNode }) {
       if (saved === "it" || saved === "en") {
         setLangState(saved);
         saveLangCookie(LANG_COOKIE, saved);
+        if (saved !== "it") router.refresh();
       }
     } catch {}
-  }, [initial]);
+  }, [initial, router]);
 
   useEffect(() => {
     document.documentElement.lang = lang;
@@ -978,6 +1034,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     try {
       localStorage.setItem(KEY, l);
     } catch {}
+    router.refresh();
   };
 
   const t: T = (key, vars) => {
@@ -991,48 +1048,12 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
 export const useI18n = () => useContext(Ctx);
 
-// Label for a backend key that may not have a translation (e.g. a new ingredient): falls back to the key.
-export function useLabel() {
-  const { t } = useI18n();
-  return (prefix: "ing" | "field" | "route" | "kind" | "prio" | "lvl", key: string) => {
-    const full = `${prefix}.${key}` as Key;
-    const s = t(full);
-    return s === full ? key.replaceAll("_", " ") : s;
-  };
-}
-
-// Dates: "ven 23 ott" / "Fri 23 Oct". Parsed as local dates so the weekday never shifts.
-export function useDates() {
-  const { lang } = useI18n();
-  const locale = lang === "it" ? "it-IT" : "en-GB";
-  const parse = (iso: string) => {
-    const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
-    return new Date(y, m - 1, d);
-  };
-  return {
-    day: (iso: string | null | undefined) =>
-      iso ? parse(iso).toLocaleDateString(locale, { weekday: "short", day: "numeric", month: "short" }) : "—",
-    weekday: (iso: string) => parse(iso).toLocaleDateString(locale, { weekday: "long" }),
-    range: (a: string, b: string) =>
-      `${parse(a).toLocaleDateString(locale, { day: "numeric", month: "short" })} – ${parse(b).toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" })}`,
-    // 2026-10-19 is a Monday: used to name weekday codes.
-    weekdayName: (code: string) => {
-      const i = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"].indexOf(code);
-      return i < 0 ? code : new Date(2026, 9, 19 + i).toLocaleDateString(locale, { weekday: "long" });
-    },
-    time: (iso: string) => new Date(iso).toLocaleString(locale, { weekday: "short", hour: "2-digit", minute: "2-digit" }),
-  };
-}
-
 export function LangToggle() {
   const { lang, setLang } = useI18n();
-  return (
-    <div className="jp-segment" role="group" aria-label="Language">
-      {(["it", "en"] as const).map((l) => (
-        <button key={l} type="button" aria-pressed={lang === l} onClick={() => setLang(l)}>
-          {l.toUpperCase()}
-        </button>
-      ))}
-    </div>
-  );
+  return <LangSegment langs={["it", "en"] as const} value={lang} onChange={setLang} />;
+}
+
+export function useLabel() {
+  const { t } = useI18n();
+  return (group: string, id: string) => { const key = `${group}.${id}` as Key; const value=t(key); return value === key ? id.replaceAll("_", " ") : value; };
 }

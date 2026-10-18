@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { api, errorText, type State, type Week } from "@/lib/api";
+import { errorText } from "@/lib/api";
+import { purchasingApi as api, type State, type Week } from "@/lib/purchasing";
 import { useI18n, useLabel } from "@/lib/i18n";
 import { useWorkspace } from "@/components/workspace";
 

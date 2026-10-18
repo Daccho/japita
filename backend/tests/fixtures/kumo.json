@@ -375,11 +375,12 @@
         "tue",
         "fri"
       ],
-      "lead_time_days": 1
+      "lead_time_days": 1,
+      "dispatch_country": "IT"
     },
     "S2": {
       "id": "S2",
-      "name": "Pasta Fresca Ramen Milano",
+      "name": "Sakura Seimen Milano",
       "relationship": "existing",
       "account_status": "approved",
       "min_order_eur": 80,
@@ -388,11 +389,12 @@
         "tue",
         "fri"
       ],
-      "lead_time_days": 1
+      "lead_time_days": 1,
+      "dispatch_country": "IT"
     },
     "S3": {
       "id": "S3",
-      "name": "EuroAsia Foods B.V.",
+      "name": "Hokuto Shoji Europe B.V.",
       "relationship": "candidate",
       "account_status": "approved",
       "min_order_eur": 200,
@@ -403,11 +405,12 @@
         "fri"
       ],
       "lead_time_days": 2,
-      "_note": "Fictional EU importer holding Japanese frozen stock in the Netherlands; refrigerated courier to Milan."
+      "_note": "Fictional EU importer holding Japanese frozen stock in the Netherlands; refrigerated courier to Milan.",
+      "dispatch_country": "NL"
     },
     "S4": {
       "id": "S4",
-      "name": "Pastificio Lombardo Nord",
+      "name": "Fujimi Seimen Lombardia",
       "relationship": "candidate",
       "account_status": "approved",
       "min_order_eur": 100,
@@ -416,22 +419,24 @@
         "tue",
         "thu"
       ],
-      "lead_time_days": 1
+      "lead_time_days": 1,
+      "dispatch_country": "IT"
     },
     "S5": {
       "id": "S5",
-      "name": "Kyushu Direct Export",
+      "name": "Hakata Shokuhin Boeki",
       "relationship": "candidate",
       "account_status": "pending",
       "min_order_eur": 300,
       "shipping_eur": null,
       "delivery_days": [],
       "lead_time_days": 35,
-      "_note": "Fictional direct exporter in Japan; reefer sea freight takes weeks, so it cannot cover a same-week shortage."
+      "_note": "Fictional direct exporter in Japan; reefer sea freight takes weeks, so it cannot cover a same-week shortage.",
+      "dispatch_country": "JP"
     },
     "S6": {
       "id": "S6",
-      "name": "Nippon Ramen Supply Europe",
+      "name": "Daikoku Shoten Milano",
       "relationship": "existing",
       "account_status": "approved",
       "min_order_eur": 15,
@@ -440,7 +445,8 @@
         "thu"
       ],
       "lead_time_days": 1,
-      "_note": "Fictional existing supplier of Japanese dried goods in Milan."
+      "_note": "Fictional existing supplier of Japanese dried goods in Milan.",
+      "dispatch_country": "IT"
     }
   },
   "offers": [
@@ -458,12 +464,18 @@
       "attributes": {
         "fresh": true,
         "contains_kansui": true,
-        "hydration_pct": 28
+        "hydration_pct": 28,
+        "kansui_composition": "E 500",
+        "italian_label": true,
+        "animal_ingredients": false
       },
       "evidence": {
         "fresh": "Pasta fresca, conservare a 0-4 °C",
         "contains_kansui": "Ingredienti: farina di grano tenero, acqua, sale, carbonato di sodio (kansui)",
-        "hydration_pct": "Idratazione 28%"
+        "hydration_pct": "Idratazione 28%",
+        "kansui_composition": "carbonato di sodio (kansui)",
+        "italian_label": "Etichetta in italiano: \"Ingredienti: farina di grano tenero, acqua, sale, carbonato di sodio (kansui)\"",
+        "animal_ingredients": "Ingredienti: farina di grano tenero, acqua, sale, carbonato di sodio (kansui)"
       },
       "document": "doc-noo-1.pdf",
       "availability_status": "confirmed",
@@ -483,12 +495,16 @@
       "attributes": {
         "fresh": true,
         "contains_kansui": true,
-        "hydration_pct": 34
+        "hydration_pct": 34,
+        "kansui_composition": "E 501",
+        "italian_label": true
       },
       "evidence": {
         "fresh": "Prodotto fresco",
         "contains_kansui": "Contiene carbonato di potassio (kansui)",
-        "hydration_pct": "Idratazione 34%"
+        "hydration_pct": "Idratazione 34%",
+        "kansui_composition": "Contiene carbonato di potassio (kansui)",
+        "italian_label": "Etichetta in italiano: \"Contiene carbonato di potassio (kansui)\""
       },
       "document": "doc-noo-2.pdf",
       "availability_status": "confirmed",
@@ -508,12 +524,14 @@
       "attributes": {
         "fresh": false,
         "contains_kansui": true,
-        "hydration_pct": null
+        "hydration_pct": null,
+        "animal_ingredients": false
       },
       "evidence": {
         "fresh": "冷凍めん（-18℃以下で保存）",
         "contains_kansui": "原材料：小麦粉、食塩、かんすい",
-        "hydration_pct": "規格書に加水率の記載なし"
+        "hydration_pct": "規格書に加水率の記載なし",
+        "animal_ingredients": "原材料：小麦粉、食塩、かんすい"
       },
       "document": "doc-noo-3.jpg",
       "availability_status": "confirmed",
@@ -583,12 +601,14 @@
       "attributes": {
         "origin_country": "JP",
         "brewing_method": "honjozo",
-        "additive_free": true
+        "additive_free": true,
+        "animal_ingredients": false
       },
       "evidence": {
         "origin_country": "製造所：熊本県",
         "brewing_method": "本醸造",
-        "additive_free": "原材料：大豆、小麦、食塩（無添加）"
+        "additive_free": "原材料：大豆、小麦、食塩（無添加）",
+        "animal_ingredients": "原材料：大豆、小麦、食塩（無添加）"
       },
       "document": "doc-soy-3.jpg",
       "availability_status": "confirmed",

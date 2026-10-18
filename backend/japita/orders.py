@@ -1,6 +1,7 @@
 """Basket approval, supplier purchase orders, the simulated supplier, and spending. No LLM in this module.
 
-States: approval approved -> stale (basket changed since approval); purchase order approved -> submitted (sent to
+States: approval approved -> stale (basket changed since approval, or the restaurant switched its active purchasing
+profile); purchase order approved -> submitted (sent to
 the supplier portal) -> acknowledged (the supplier accepted it with a delivery date). Submitting needs an idempotency key, so a retried submit never creates a duplicate order.
 Planned and committed spending are not payments.
 """
@@ -12,7 +13,7 @@ from datetime import date
 
 from . import calc, stock
 from .errors import DomainError
-from .store import Store, _now
+from .store import Store, _now, active_profile_id
 
 
 def basket_version(basket: dict) -> str:
@@ -37,8 +38,10 @@ def approve_basket(store: Store, kind: str, approved_by: str = "owner") -> dict:
         raise DomainError("no_current_basket", f"no current basket of kind {kind!r}")
     if basket.get("coverage") != "covered":
         raise DomainError("basket_not_covered", "Verify daily inputs and resolve projected service shortages before approval")
+    # One current approval for the restaurant: approving replaces the previous one, whichever profile it used, and
+    # cancels its orders that were never sent.
     for a in store.data["approvals"]:
-        if a["state"] == "approved" and a["profile_id"] == store.profile_id:
+        if a["state"] == "approved":
             a["state"] = "superseded"
             for po in store.data["purchase_orders"]:
                 if po["approval_id"] == a["id"] and po["state"] == "approved":
@@ -64,11 +67,15 @@ def approve_basket(store: Store, kind: str, approved_by: str = "owner") -> dict:
 
 
 def approval_status(store: Store) -> dict | None:
-    """Latest approval for this profile, marked stale if the same kind of basket has changed since."""
-    current = [a for a in store.data["approvals"] if a["profile_id"] == store.profile_id and a["state"] != "superseded"]
+    """The restaurant's current approval, whichever profile made it. It is stale when it was made under another
+    purchasing profile than `store`'s (`stale_reason` "profile") or the same kind of plan has changed since
+    (`stale_reason` "changed")."""
+    current = [a for a in store.data["approvals"] if a["state"] != "superseded"]
     if not current:
         return None
     a = current[-1]
+    if a["profile_id"] != store.profile_id:
+        return {**a, "stale": True, "stale_reason": "profile", "current_version": None}
     # Deliveries created by this approval's own orders must not make it look stale.
     own = {po["id"] for po in store.data["purchase_orders"] if po["approval_id"] == a["id"]}
     view = store.clone()
@@ -76,7 +83,8 @@ def approval_status(store: Store) -> dict | None:
     view.data["purchase_orders"] = [po for po in view.data["purchase_orders"] if po["id"] not in own]
     basket = _current(view, a["kind"])
     now = basket_version(basket) if basket else None
-    return {**a, "stale": now != a["version"], "current_version": now}
+    stale = now != a["version"]
+    return {**a, "stale": stale, "stale_reason": "changed" if stale else None, "current_version": now}
 
 
 def submit_order(store: Store, po_id: str, idempotency_key: str) -> dict:
@@ -91,14 +99,38 @@ def submit_order(store: Store, po_id: str, idempotency_key: str) -> dict:
     po = _po(store, po_id)
     if po["state"] != "approved":
         raise DomainError("order_not_approved", f"purchase order is {po['state']}")
-    status = approval_status(Store(store.data, next(a["profile_id"] for a in store.data["approvals"]
-                                                     if a["id"] == po["approval_id"])))
+    status = approval_status(Store(store.data, active_profile_id(store.data)))
     if status is None or status["id"] != po["approval_id"] or status["stale"]:
         raise DomainError("basket_changed_reapprove", "the basket changed since approval; approve it again before submitting")
     po["idempotency_key"] = idempotency_key
     po["submitted_at"] = _now()
     po["state"] = "submitted"
     return po
+
+
+def send_key(store: Store, kind: str) -> str | None:
+    """Stable idempotency key for approving and sending the current plan of `kind` under this profile."""
+    basket = _current(store, kind)
+    if basket is None:
+        return None
+    raw = f"{store.profile_id}:{basket['kind']}:{basket_version(basket)}"
+    return "send-" + hashlib.sha256(raw.encode()).hexdigest()[:16]
+
+
+def approve_and_send(store: Store, kind: str, idempotency_key: str) -> dict:
+    """Human action in one step: approve the plan and send each supplier its order. Retrying with the same key
+    returns the same approval and orders, without duplicates."""
+    if not idempotency_key:
+        raise DomainError("invalid_input", "idempotency key required", 422)
+    done = next((a for a in store.data["approvals"] if a.get("send_key") == idempotency_key), None)
+    if done is None:
+        done = approve_basket(store, kind)
+        done["send_key"] = idempotency_key
+        for po in store.data["purchase_orders"]:
+            if po["approval_id"] == done["id"]:
+                submit_order(store, po["id"], f"{idempotency_key}:{po['id']}")
+    return {"approval": done,
+            "purchase_orders": [p for p in store.data["purchase_orders"] if p["approval_id"] == done["id"]]}
 
 
 def _po(store: Store, po_id: str) -> dict:
@@ -136,7 +168,7 @@ def supplier_accept(store: Store, supplier_id: str, po_id: str, delivery_date: s
     po["acknowledgment"] = {"ack_id": f"ACK-{secrets.token_hex(4).upper()}", "received_at": _now(),
                             "by": "supplier", "simulated": True, "note_ja": note_ja,
                             "note_translations": note_translations or {},
-                            "message": "Accepted on the test supplier portal (no real purchase)."}
+                            "message": "Accepted on the supplier portal."}
     po["state"] = "acknowledged"
     for ln in po["lines"]:
         if ln["purchase_qty"] > 0:
@@ -156,6 +188,8 @@ def supplier_change_delivery(store: Store, supplier_id: str, po_id: str, deliver
     if po["state"] != "acknowledged":
         raise DomainError("order_not_accepted", "only accepted orders have a delivery date to change")
     new = _check_date(store, delivery_date)
+    if new == po["delivery_date"]:
+        raise DomainError("same_delivery_date", "the order is already due on that date", 422)
     po.setdefault("delivery_changes", []).append({"from": po["delivery_date"], "to": new, "at": _now(),
                                                   "note_ja": note_ja, "note_translations": note_translations or {}})
     po["delivery_date"] = new
@@ -166,11 +200,14 @@ def supplier_change_delivery(store: Store, supplier_id: str, po_id: str, deliver
 
 
 def spending(store: Store) -> dict:
-    """Planned (latest approved basket) versus committed (acknowledged simulated orders). Not payments."""
-    committed = round(sum(po["total_eur"] for po in store.data["purchase_orders"]
-                          if po["state"] in ("submitted", "acknowledged")), 2)
+    """Planned (latest approved basket), committed (orders the supplier accepted) and sent (orders waiting for the
+    supplier). Not payments."""
+    def total(state: str) -> float:
+        return round(sum(po["total_eur"] for po in store.data["purchase_orders"] if po["state"] == state), 2)
+
+    committed, sent = total("acknowledged"), total("submitted")
     status = approval_status(store)
     budget = store.profile["weekly_budget_eur"]
     return {"budget_eur": budget, "planned_eur": status["delivered_total_eur"] if status else None,
-            "committed_eur": committed, "remaining_eur": round(budget - committed, 2),
-            "note": "Committed spending covers simulated demo orders only; nothing is paid."}
+            "committed_eur": committed, "sent_eur": sent, "remaining_eur": round(budget - committed, 2),
+            "note": "Committed spending covers orders the supplier accepted; payments are handled outside Japita."}

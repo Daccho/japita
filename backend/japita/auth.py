@@ -1,6 +1,7 @@
 """Owner sign-in: login ID + password (Argon2id), with server-side sessions.
 
-Every API route requires a restaurant session unless it is listed in PUBLIC_PATHS (see `require_session`).
+Every API route requires a restaurant session unless it is listed in PUBLIC_PATHS; supplier portal routes
+(SUPPLIER_PATHS) require the supplier's own session instead (see `require_session`).
 Accounts have a role: "restaurant" (the owner workspace) or "supplier" (a test supplier, linked to one supplier ID,
 which may only open its own portal). The role is checked on the server for every request.
 The session is an opaque random token in an HttpOnly cookie; only its SHA-256 is stored. The browser reaches
@@ -46,11 +47,16 @@ MIN_PASSWORD_LEN = 12
 # Reached without a session. Everything else is denied by default, so new routes are protected automatically.
 PUBLIC_PATHS = [
     re.compile(r"^/auth/(login|logout|me)$"),
-    re.compile(r"^/supplier/requests/[^/]+(/reply)?$"),  # test supplier page: secret link token
-    re.compile(r"^/portal/[^/]+(/.*)?$"),                # supplier portal: secret link token
     re.compile(r"^/state/seed$"),                        # guarded by X-Admin-Key instead
     re.compile(r"^/health(/.*)?$"),
+    re.compile(r"^/fx$"),                                # public ECB reference rates
     re.compile(r"^/(docs|redoc|openapi\.json)$"),
+]
+# Supplier routes: a signed-in supplier account; each handler also checks the link token belongs to that supplier
+# ("me" in place of the token means the signed-in supplier).
+SUPPLIER_PATHS = [
+    re.compile(r"^/portal/[^/]+(/.*)?$"),
+    re.compile(r"^/supplier/requests/[^/]+(/reply)?$"),
 ]
 ROLES = ("restaurant", "supplier")
 UNSAFE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
@@ -183,8 +189,12 @@ async def require_session(request: Request, call_next):
             user = session_user(s, request)
             if user is None:
                 return errors.response(401, "auth_required", "not signed in")
+            if any(p.match(request.url.path) for p in SUPPLIER_PATHS):
+                if user.role != "supplier" or not user.supplier_id:
+                    return errors.response(403, "forbidden", "supplier account required")
+                request.state.supplier_id = user.supplier_id
             # /auth/* routes check their own role; every other protected route is the restaurant workspace.
-            if user.role != "restaurant" and not request.url.path.startswith("/auth/"):
+            elif user.role != "restaurant" and not request.url.path.startswith("/auth/"):
                 return errors.response(403, "forbidden", "restaurant account required")
             request.state.user_id = user.id
     return await call_next(request)
@@ -216,6 +226,7 @@ def _me(s: Session, user: User) -> dict:
         "display_name": user.display_name,
         "role": user.role,
         "has_password": bool(user.password_hash),
+        **({"supplier_id": user.supplier_id} if user.role == "supplier" else {}),
     }
 
 
@@ -250,13 +261,51 @@ def logout(request: Request, response: Response):
     return {"ok": True}
 
 
+def _workspace_defaults(request: Request) -> dict:
+    """Restaurant accounts: the purchasing profiles with labels in the request's language, and the active one."""
+    from . import views
+    from .textfmt import lang_from_request
+
+    lang = request.query_params.get("lang")
+    if lang not in ("it", "en", "ja"):
+        lang = lang_from_request(request) or request.cookies.get("japita_login_lang")
+    lang = lang if lang in ("it", "en", "ja") else "it"
+    listing = views.profiles_list(repo.load_state(), lang)
+    return {**listing, "default_profile_id": listing["active_profile_id"], "lang": lang}
+
+
 @router.get("/me")
 def me(request: Request):
+    """The signed-in account; restaurant accounts also get `profiles`, `active_profile_id` and defaults."""
     with Session(repo.engine()) as s:
         user = session_user(s, request)
         if user is None:
             raise HTTPException(401, "not signed in")
-        return _me(s, user)
+        out = _me(s, user)
+    if out["role"] == "restaurant":
+        out.update(_workspace_defaults(request))
+    out.update(_account_display(request, out))
+    return out
+
+
+def _account_display(request: Request, me: dict) -> dict:
+    """Avatar and the second sidebar line: the restaurant's place (restaurant language) or, for a supplier,
+    "For <restaurant>" in the portal language."""
+    from .avatar import avatar
+    from .textfmt import lang_from_request, portal_lang, pt, restaurant_lang, t
+    from . import restaurant
+
+    data = repo.load_state()
+    if me["role"] == "restaurant":
+        pid = (data.get("restaurant_settings") or {}).get("active_profile_id")
+        name = data["profiles"].get(pid, next(iter(data["profiles"].values()), {})).get("name", me["display_name"])
+        lang = restaurant_lang(lang_from_request(request))
+        return {"avatar": avatar(restaurant.logo_url(data), name), "place_text": t(lang, "side.place")}
+    sup = data["suppliers"].get(me.get("supplier_id") or "", {})
+    restaurant_name = next(iter(data["profiles"].values()), {}).get("name", "")
+    lang = portal_lang(lang_from_request(request, portal=True))
+    return {"avatar": avatar(sup.get("logo_url"), sup.get("name") or me["display_name"]),
+            "place_text": pt(lang, "forRestaurant", r=restaurant_name)}
 
 
 @router.get("/supplier/portal")
@@ -287,8 +336,8 @@ def _read_password() -> str:
 # Public demo accounts for the fictional dataset: the login ID is also the password (shared with judges).
 # Created or reset on startup only when DEMO_ACCOUNTS=1, so real deployments never get them by accident.
 DEMO_ACCOUNTS = [("restaurant1", "restaurant", None), ("restaurant2", "restaurant", None),
-                 ("restaurant3", "restaurant", None), ("supplier1", "supplier", "S1"),
-                 ("supplier2", "supplier", "S2"), ("supplier3", "supplier", "S3")]
+                 ("restaurant3", "restaurant", None),
+                 *((f"supplier{i}", "supplier", f"S{i}") for i in range(1, 7))]
 
 
 def ensure_demo_accounts() -> list[str]:

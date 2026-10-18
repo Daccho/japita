@@ -64,7 +64,8 @@ def test_approve_creates_supplier_orders_and_submit_is_idempotent():
     again = orders.submit_order(store, s3["id"], "key-1")
     assert first is again and first["state"] == "submitted"  # waits for the supplier to accept
     assert not [d for d in store.week["deliveries"] if d.get("purchase_order_id") == s3["id"]]
-    assert orders.spending(store)["committed_eur"] == 327.60  # 292.60 + 35 shipping
+    spent = orders.spending(store)
+    assert spent["committed_eur"] == 0 and spent["sent_eur"] == 327.60  # 292.60 + 35 shipping, not accepted yet
 
 
 def _submitted(store, supplier_id):
@@ -123,6 +124,7 @@ def test_accepting_one_order_does_not_block_the_others():
         orders.supplier_accept(store, po["supplier_id"], po["id"])
     assert all(p["state"] == "acknowledged" for p in pos)
     assert orders.spending(store)["committed_eur"] == 444.10
+    assert orders.spending(store)["sent_eur"] == 0
     assert not orders.approval_status(store)["stale"]
 
 
