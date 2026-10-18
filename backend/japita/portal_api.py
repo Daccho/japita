@@ -89,22 +89,29 @@ def _profile_changes(body: ProfileUpdate) -> dict:
 
 
 def _load(token: str, request: Request) -> tuple[dict, Store, dict]:
-    """The signed-in supplier's data. `token` is "me" or that supplier's own link token; another supplier's token
-    is refused (403)."""
-    data = repo.load_state()
-    store = Store(data, next(iter(data["profiles"])))
+    """The signed-in supplier's data. `token` is "me" (the restaurant chosen for this session, see
+    auth.supplier_workspace) or that supplier's own link token, looked up in each restaurant that lists the
+    supplier; another supplier's token is refused (403). Later saves in the request go to that workspace."""
     sid = getattr(request.state, "supplier_id", None)
-    if sid not in store.suppliers:
-        raise AppError(403, "forbidden", "supplier account required")
     if token == "me":
-        return data, store, store.suppliers[sid]
-    try:
-        sup = portal.supplier_by_token(store, token)
-    except KeyError:
-        raise AppError(404, "link_not_found", "ページが見つかりません（リンクをご確認ください）")
-    if sup["id"] != sid:
-        raise AppError(403, "forbidden", "this portal belongs to another supplier")
-    return data, store, sup
+        data = repo.load_state()
+        if sid not in data["suppliers"] or not data["profiles"]:
+            raise AppError(403, "forbidden", "supplier account required")
+        return data, Store(data, next(iter(data["profiles"]))), data["suppliers"][sid]
+    for workspace in repo.supplier_workspaces(sid) or [repo.current_workspace()]:
+        data = repo.load_state(workspace)
+        if not data["profiles"]:
+            continue
+        store = Store(data, next(iter(data["profiles"])))
+        try:
+            sup = portal.supplier_by_token(store, token)
+        except KeyError:
+            continue
+        if sup["id"] != sid:
+            raise AppError(403, "forbidden", "this portal belongs to another supplier")
+        repo.enter_workspace(workspace)
+        return data, store, sup
+    raise AppError(404, "link_not_found", "ページが見つかりません（リンクをご確認ください）")
 
 
 def _priced(body: BaseModel) -> dict:

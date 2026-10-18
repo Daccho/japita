@@ -13,7 +13,7 @@ Status: deployed. Web app https://japita.vercel.app, API https://japita-api.onre
 
 - A free Render service sleeps after about 15 minutes without traffic. The first request then takes about 30–60 seconds. Open `https://<api>/docs` a minute before a demo or judging session.
 - The browser calls the API through the Vercel rewrite `/api/*` → Render, so the session cookie is first-party. Agent requests take one to three minutes, so `POST /agent/ask` and `POST /evolus/weekly-intake` return `202 {job_id}` at once and the browser polls `GET /jobs/{job_id}`; no request waits on the proxy timeout. Jobs live in the API process's memory: a restart or sleep loses running jobs and the UI asks the user to ask again (`job_not_found`). Every error response has the shape `{"error": {"code", "message"}}`; the frontends translate the code.
-- Every API route except sign-in, supplier link-token pages, `/health/*` and `/docs` requires a restaurant session, checked on the server. Accounts are created with the CLI below; there is no public sign-up. Resetting data needs `ADMIN_KEY`. Rotate keys and demo passwords after the event.
+- Every API route except sign-in, supplier link-token pages, `/health/*` and `/docs` requires a restaurant session, checked on the server. Anyone can create an account on the sign-in page (`POST /auth/signup`, at most 20 per address per hour); a restaurant gets its own workspace, separate from the demo data. The CLI below also creates accounts. Resetting data needs `ADMIN_KEY`. Rotate keys and demo passwords after the event.
 
 ## Human steps
 
@@ -34,7 +34,7 @@ Status: deployed. Web app https://japita.vercel.app, API https://japita-api.onre
    | `restaurant1`, `restaurant2`, `restaurant3` | Restaurant (Kumo Ramen Milano) | `/restaurants` |
    | `supplier1` … `supplier6` | Suppliers S1 … S6 (S1 Tokyo Shokuhin, S3 Hokuto Shoji Europe B.V., S6 Daikoku Shoten Milano, …) | `/suppliers` |
 
-   Real accounts are created with `DATABASE_URL='<neon>' uv run python -m japita.auth add-user <id> --name "<name>" [--role supplier --supplier S1]` (password at least 12 characters).
+   Real accounts are created with `DATABASE_URL='<neon>' uv run python -m japita.auth add-user <id> --name "<name>" [--role supplier --supplier S1]` (password at least 8 characters).
 4. **Vercel:**
    1. Choose Add New → Project and import `Daccho/japita`.
    2. Set the root directory to `frontend`. The framework is detected as Next.js.

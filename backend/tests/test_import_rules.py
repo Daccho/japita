@@ -203,6 +203,41 @@ def test_views_carry_import_check_summaries(store):
     assert {r["rule_id"] for r in v["rules"]} == {r["id"] for r in rules.load_rules()["rules"]}
 
 
+def test_view_import_checks_detail(store):
+    card = next(o for o in views.supplier_detail_view(store, "S5", "en", Money("en"))["offers"] if o["id"] == "O-soy-3")
+    ic = card["import_checks"]
+    assert ic["show"] and ic["tone"] == "warning" and ic["chip_text"] == "Import checks · Document missing"
+    assert "not legal, customs or food-safety clearance" in ic["note"] and "18 Oct 2026" in ic["note"]
+    assert [c["outcome"] for c in ic["checks"]][0] == "missing_document"  # worst first
+    epa = by_rule(ic["checks"])["eu-jp-epa-origin"]
+    assert epa["missing_text"] == "Not recorded: Statement on origin (EU–Japan EPA)"
+    assert epa["source"]["url"].startswith("https://") and epa["source"]["accessed_text"] == "accessed 18 Oct 2026"
+    assert epa["source"]["label"] == "Source" and epa["question_text"] is None
+    assert "Statement on origin (EU–Japan EPA)" in epa["ask"]["question"] and epa["ask"]["label"]
+    info = next(c for c in ic["checks"] if c["outcome"] == "info")
+    assert info["tone"] == "neutral" and info["missing_text"] is None and info["ask"] is None
+
+    # A question already open for the field replaces the ask with its state.
+    store.add_clarification("O-soy-3", "origin_statement", "原産地に関する申告をご提供いただけますか。", "EPA origin")
+    card = next(o for o in views.supplier_detail_view(store, "S5", "it", Money("it"))["offers"] if o["id"] == "O-soy-3")
+    epa = by_rule(card["import_checks"]["checks"])["eu-jp-epa-origin"]
+    assert epa["ask"] is None and epa["question_text"] == "Bozza · serve la tua approvazione"
+    assert epa["source"]["label"] == "Fonte" and epa["missing_text"].startswith("Non registrato: ")
+
+    noodles = next(o for o in views.supplier_detail_view(store, "S2", "en", Money("en"))["offers"]
+                   if o["id"] == "O-noo-1")["import_checks"]
+    assert noodles["tone"] == "ok" and all(c["ask"] is None for c in noodles["checks"])
+
+
+def test_import_check_view_texts_avoid_clearance_claims(store):
+    for lang in ("en", "it"):
+        for sid in store.suppliers:
+            for o in views.supplier_detail_view(store, sid, lang, Money(lang))["offers"]:
+                for c in o["import_checks"]["checks"]:
+                    text = " ".join(filter(None, [c["title"], c["outcome_text"], (c["ask"] or {}).get("question")]))
+                    assert not re.search(r"approved for import|cleared|sdoganat|legale", text, re.I), text
+
+
 def test_supplier_answer_resolves_the_missing_document(store):
     c = store.add_clarification("O-soy-3", "origin_statement", "原産地に関する申告をご提供いただけますか。", "EPA origin")
     store.approve(c["id"])

@@ -281,7 +281,7 @@ FIXTURES = Path(__file__).resolve().parent.parent / "tests" / "fixtures"
 
 @app.post("/state/seed")
 def seed_state(fixture: str = "kumo", x_admin_key: str | None = Header(default=None)):
-    """Replace all data with a fixture (existing Kumo Ramen Milano data by default).
+    """Replace the demo workspace's data with a fixture (existing Kumo Ramen Milano data by default).
 
     Requires X-Admin-Key when ADMIN_KEY is set (always on the public deployment).
     """
@@ -661,16 +661,23 @@ def _supplier_view(store: Store, c: dict) -> dict:
 
 
 def _by_token(token: str, request: Request) -> tuple[dict, Store, dict]:
-    """A question sent to the signed-in supplier; a question about another supplier's product is refused (403)."""
-    data = repo.load_state()
-    store = Store(data, next(iter(data["profiles"])))
-    try:
-        c = store.clarification_by_token(token)
-    except StopIteration:
-        raise AppError(404, "link_not_found", "依頼が見つかりません（リンクをご確認ください）")
-    if store.offer(c["offer_id"])["supplier_id"] != getattr(request.state, "supplier_id", None):
-        raise AppError(403, "forbidden", "this request belongs to another supplier")
-    return data, store, c
+    """A question sent to the signed-in supplier, looked up in each restaurant that lists the supplier; a question
+    about another supplier's product is refused (403). Later saves in the request go to that workspace."""
+    sid = getattr(request.state, "supplier_id", None)
+    for workspace in repo.supplier_workspaces(sid) or [repo.current_workspace()]:
+        data = repo.load_state(workspace)
+        if not data["profiles"]:
+            continue
+        store = Store(data, next(iter(data["profiles"])))
+        try:
+            c = store.clarification_by_token(token)
+        except StopIteration:
+            continue
+        if store.offer(c["offer_id"])["supplier_id"] != sid:
+            raise AppError(403, "forbidden", "this request belongs to another supplier")
+        repo.enter_workspace(workspace)
+        return data, store, c
+    raise AppError(404, "link_not_found", "依頼が見つかりません（リンクをご確認ください）")
 
 
 @app.get("/supplier/requests/{token}")
@@ -796,3 +803,7 @@ app.include_router(menu_views_router)
 from .views_api import router as views_router  # noqa: E402
 
 app.include_router(views_router)
+
+from .rules_api import router as rules_router  # noqa: E402
+
+app.include_router(rules_router)

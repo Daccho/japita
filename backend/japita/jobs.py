@@ -6,6 +6,7 @@ A thread cannot be killed, so a job past JOB_TIMEOUT_SECONDS is reported as mode
 returns later is discarded.
 """
 
+import contextvars
 import logging
 import threading
 import time
@@ -71,7 +72,7 @@ def start(kind: str, fn: Callable[[], dict], owner: str | None = None) -> dict:
         _expire(now)
         _jobs[job_id] = {"job_id": job_id, "kind": kind, "owner": owner, "status": "running", "started": now,
                          "finished": None, "result": None, "error": None}
-    _pool.submit(_run, job_id, fn)
+    _pool.submit(contextvars.copy_context().run, _run, job_id, fn)  # keeps the request's workspace
     return {"job_id": job_id, "kind": kind, "status": "running"}
 
 

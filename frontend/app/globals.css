@@ -1543,6 +1543,10 @@
 .jp .jp-login-submit { width:100%; padding:12px; font-size:14px; }
 .jp .jp-login-note { font-size:12px; margin:0; }
 .jp .jp-login-card .jp-error { margin:0 0 14px; }
+.jp .jp-login-switch { padding:0; border:0; background:none; color:inherit; font:inherit; font-weight:600; text-decoration:underline; text-underline-offset:2px; cursor:pointer; }
+.jp .jp-login-card .jp-field small { display:block; margin-top:4px; font-size:12px; }
+.jp .jp-portal-switch { display:flex; align-items:center; min-width:0; font-size:13px; }
+.jp .jp-portal-switch select { font:inherit; padding:4px 8px; max-width:100%; }
 .jp .jp-account { display:flex; align-items:center; gap:8px; font-size:12px; }
 
 /* Sign-in page in the Ajitama style: yolk band, ink-bordered card, pressed-edge role choices. */
@@ -1667,3 +1671,27 @@
 .jp .jp-app .jp-portal-product-head { display:flex; align-items:flex-start; gap:12px; min-width:0; }
 .jp .jp-app .jp-portal-product-drawing { display:grid; place-items:center; flex-shrink:0; width:64px; height:64px; border:var(--aj-border-strong); border-radius:var(--aj-radius-card); background:var(--aj-yolk-tint); }
 .jp .jp-app .jp-top-controls-always { display:flex; align-items:center; gap:10px; }
+/* Import checks on offer cards and plan lines: a chip that expands to each check with its source. */
+.jp .jp-app .jp-import-checks { grid-column:1/-1; min-width:0; margin:4px 0 2px; }
+.jp .jp-app .jp-import-chip { display:inline-flex; align-items:center; gap:6px; max-width:100%; min-height:32px; padding:3px 8px; border:1.5px solid var(--aj-ink); border-radius:var(--aj-radius-badge); background:var(--aj-yolk-tint); color:var(--aj-ink); font-family:var(--aj-font-ui); font-size:var(--aj-type-small); font-weight:var(--aj-weight-bold); line-height:1.3; text-align:left; cursor:pointer; }
+.jp .jp-app .jp-import-chip[data-tone="warning"] { background:var(--aj-chili-tint); color:var(--aj-chili-text); border-color:var(--aj-chili-text); }
+.jp .jp-app .jp-import-chip[data-tone="neutral"] { background:var(--aj-line); color:var(--aj-muted); border-color:var(--aj-muted); }
+.jp .jp-app .jp-import-chip svg { width:14px; height:14px; flex-shrink:0; }
+.jp .jp-app .jp-import-chip span { min-width:0; overflow-wrap:anywhere; }
+.jp .jp-app .jp-import-chip[aria-expanded="true"] .jp-import-chevron { transform:rotate(180deg); }
+.jp .jp-app .jp-import-detail { margin-top:8px; padding:4px 12px; border:var(--aj-border-detail); border-radius:var(--aj-radius-control); background:var(--aj-detail-bg); font-size:var(--aj-type-small); }
+.jp .jp-app .jp-import-detail ul { margin:0; padding:0; list-style:none; }
+.jp .jp-app .jp-import-detail li { display:flex; flex-direction:column; align-items:flex-start; gap:6px; padding:10px 0; border-top:var(--aj-border-light); }
+.jp .jp-app .jp-import-detail li:first-child { border-top:0; }
+.jp .jp-app .jp-import-detail p { margin:0; color:var(--aj-ink); font-size:var(--aj-type-small); overflow-wrap:anywhere; }
+.jp .jp-app .jp-import-head { display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 8px; min-width:0; }
+.jp .jp-app .jp-import-head strong { min-width:0; font-weight:var(--aj-weight-bold); overflow-wrap:anywhere; }
+.jp .jp-app .jp-import-missing { display:flex; gap:6px; align-items:flex-start; font-weight:var(--aj-weight-bold); }
+.jp .jp-app .jp-import-missing svg { width:14px; height:14px; flex-shrink:0; margin-top:1px; color:var(--aj-chili-text); }
+.jp .jp-app .jp-import-detail .jp-import-source { color:var(--aj-muted); }
+.jp .jp-app .jp-import-source a { color:var(--aj-ink); font-weight:var(--aj-weight-bold); text-decoration:underline; text-underline-offset:3px; }
+.jp .jp-app .jp-import-source a svg { display:inline; width:12px; height:12px; margin-left:3px; vertical-align:-1px; }
+.jp .jp-app .jp-import-detail .jp-import-note { padding:10px 0 8px; border-top:var(--aj-border-light); color:var(--aj-muted); }
+/* Not-found page (app/not-found.tsx): the sign-in card with a large display-font code. */
+.jp .jp-app .jp-not-found .jp-not-found-code { font-family:var(--aj-font-display); font-size:72px; line-height:1; color:var(--aj-ink); margin:0; }
+.jp .jp-app .jp-not-found a.jp-action { text-decoration:none; }

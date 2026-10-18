@@ -157,24 +157,32 @@ Products for ingredients the restaurant does not buy stay listed with status `no
 
 ## GET /views/import-checks
 
-EU import and labelling rule checks for every offer, from the sourced ruleset in
-`backend/japita/data/import_rules.json` (judged in `japita/rules.py`, no LLM). Decision support, not clearance. Texts in
+EU import and labelling rule checks for every offer, from the active version of the sourced ruleset (judged in
+`japita/rules.py`, no LLM; operators replace it by import, see `compliance.md`). Decision support, not clearance. Texts in
 `it` / `en` (rule texts also exist in `ja`).
 
 ```jsonc
 { "lang", "accessed": "2026-10-18", "disclaimer", "outcome_texts": { "ok", "info", "needs_review", "missing_document" },
-  "rules": [{ "rule_id", "title", "source": { "title", "url", "accessed" } }],
+  "rules": [{ "rule_id", "title", "source": { "title", "url", "accessed" }, "accessed", "stale" }],
   "offers": [{ "offer_id", "product", "ingredient", "supplier_id", "supplier", "is_restaurant_ingredient",
-               "checks": [ImportCheck], "summary": ImportSummary }] }
+               "checks": [ImportCheck], "summary": ImportSummary }],
+  "rule_set_version": 1, "stale_days": 90, "stale" /* any rule stale */ }
 ```
 
 `ImportCheck`: `{ "rule_id", "outcome": "ok" | "info" | "needs_review" | "missing_document", "outcome_text", "title",
-"explanation", "source": { "title", "url", "accessed" }, "blocks_order", "missing_field"?, "missing_field_label"? }`.
+"explanation", "source": { "title", "url", "accessed" }, "blocks_order", "missing_field"?, "missing_field_label"?,
+"rule_set_version", "accessed", "stale" }`. `stale` is true when the rule's source was last checked more than 90 days
+before the server's date ("Needs re-check").
 `missing_field` is the offer attribute a supplier question can fill (`draft_clarification` / the clarification flow).
 
 `ImportSummary`: `{ "counts": { "ok", "info", "needs_review", "missing_document" }, "worst" | null, "worst_text" | null,
 "attention" (needs_review + missing_document), "blocks_order" }`. Each offer in `/views/suppliers/{id}` and each
-selected plan line in `/views/basket` carries `import_checks: ImportSummary`. The checks do not change plan
+selected plan line in `/views/basket` carries `import_checks: ImportSummary & { "show", "label", "chip_text", "tone":
+"ok" | "warning" | "neutral" | null, "note", "checks": [{ "rule_id", "outcome", "outcome_text", "tone", "title",
+"explanation", "missing_text" | null, "source": { "label", "title", "url", "accessed_text" }, "question_text" | null,
+"ask": null | { "label", "question" } }] }`, checks worst first. `ask.question` goes to the advisor, which drafts the
+supplier clarification for a field the supplier portal can answer; when a question for that offer and field is already
+open, `question_text` gives its state instead. The checks do not change plan
 feasibility, except that a `missing_document` for a rule marked `blocks_order` makes the offer not orderable (reason code
 `import_document_missing`); no rule in the current ruleset is marked `blocks_order`.
 

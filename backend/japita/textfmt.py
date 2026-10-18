@@ -156,6 +156,11 @@ def day(iso: str | None, lang: str) -> str:
     return format_date(d, "EEE d MMM", locale="it" if lang == "it" else "en_GB")
 
 
+def long_day(iso: str, lang: str) -> str:
+    """A date with its year: "18 ott 2026" / "18 Oct 2026"."""
+    return format_date(_d(iso), "d MMM y", locale="it" if lang == "it" else "en_GB")
+
+
 def portal_day(iso: str | None, lang: str) -> str:
     """Supplier portal dates: "10月27日(火)" / "Tue, Oct 27"."""
     if not iso:
