@@ -96,8 +96,12 @@ def test_explanation_rejects_wrong_basket_false_outcome_and_free_prose():
     assert validate_explanation(json.dumps(answer), store, decision)["validated"]
     wrapped = json.dumps({"action": "answer", "text": json.dumps(answer)})
     assert validate_explanation("```json\n" + wrapped + "\n```", store, decision)["validated"]
-    answer["evidence"][0]["outcome"] = "fail"
-    assert not validate_explanation(json.dumps(answer), store, decision)["validated"]
+    answer["evidence"][0]["outcome"] = "fail"  # not the recorded outcome: dropped, never shown
+    shown = validate_explanation(json.dumps(answer), store, decision)
+    assert shown["evidence_selected_by"] == "app"
+    assert not any(r["offer_id"] == "O-noo-3" and r["outcome"] == "fail" for r in shown["evidence"])
+    answer["evidence"][0].update(field="Low hydration (30% or less), Hakata style", outcome="ok")  # rule label
+    assert validate_explanation(json.dumps(answer), store, decision)["evidence"][0]["field"] == "hydration_pct"
     answer["recommended_kind"] = "invented"
     assert not validate_explanation(json.dumps(answer), store, decision)["validated"]
     assert not validate_explanation("Total 0 euros; supplier quality 5 stars", store, decision)["validated"]
@@ -291,8 +295,26 @@ def test_empty_evidence_is_filled_from_recorded_outcomes():
     assert result["validated"] and result["evidence_selected_by"] == "app"
     assert result["evidence"] and len(result["evidence"]) <= 6
     for ref in result["evidence"]:
+        if ref["field"] == "orderability":
+            assert ref["codes"] == calc.orderability(store, ref["offer_id"])["codes"]
+            continue
         recorded = calc.check_evidence(store, ref["offer_id"])["mandatory"]
         assert any(r["field"] == ref["field"] and r["outcome"] == ref["outcome"] for r in recorded)
+
+
+def test_orderability_evidence_explains_why_the_cheapest_soy_sauce_is_excluded():
+    from japita import views
+    store = Store.load(FIXTURE)
+    for q in calc.open_questions(store):
+        if q["resolved_by"] == "supplier":
+            store.add_clarification(q["offer_id"], q["field"], "ご確認ください。", "missing", {}, {})
+    decision = brief(store)
+    answer = {"recommended_kind": (decision["recommended"] or {}).get("kind"), "focus": "prices",
+              "evidence": [{"offer_id": "O-soy-3", "field": "orderability", "outcome": "fail"}]}
+    result = validate_explanation(json.dumps(answer), store, decision)
+    assert result["evidence"][0]["codes"] == calc.orderability(store, "O-soy-3")["codes"]
+    text = views.evidence_view(store, result["evidence"], "it")[0]["text"]
+    assert "Account fornitore in attesa" in text
 
 
 def test_no_draft_and_failing_rule_shown_for_an_offer_that_fails_another_rule():

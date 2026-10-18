@@ -55,26 +55,57 @@ def brief(store: Store) -> dict:
             "comparisons": {ing: calc.compare_prices(store, ing) for ing in store.profile["ingredients"]}}
 
 
+def _orderability_ref(store: Store, offer_id: str) -> dict | None:
+    """Why an offer cannot be ordered (account, shipping, delivery days, availability), as an evidence entry."""
+    od = calc.orderability(store, offer_id)
+    if od["orderable"]:
+        return None
+    return {"field": "orderability", "outcome": "fail", "codes": od["codes"], "rule": None, "value": None,
+            "source_text": None, "offer_id": offer_id, "product": store.offer(offer_id)["product"]}
+
+
+def _resolve(store: Store, ref: EvidenceRef) -> dict | None:
+    """The recorded outcome a model reference points to, or None. The field may be given by its rule label."""
+    if not any(o["id"] == ref.offer_id for o in store.offers):
+        return None
+    if ref.field == "orderability":
+        return _orderability_ref(store, ref.offer_id) if ref.outcome == "fail" else None
+    ev = calc.check_evidence(store, ref.offer_id)
+    key = ref.field.strip().lower()
+    match = next((r for r in [*ev["mandatory"], *ev["negotiable"]] if r["outcome"] == ref.outcome and key in (
+        r["field"].lower(), (r.get("rule") or r.get("preference") or "").lower())), None)
+    return match and {**match, "offer_id": ref.offer_id, "product": store.offer(ref.offer_id)["product"]}
+
+
+def _add(refs: list[dict], ref: dict | None) -> None:
+    if ref and not any(r["offer_id"] == ref["offer_id"] and r["field"] == ref["field"] for r in refs):
+        refs.append(ref)
+
+
+def _blockers(store: Store, offer_id: str) -> list[dict]:
+    """Mandatory rules the offer fails, then its ordering blockers: each makes the offer unusable on its own."""
+    product = store.offer(offer_id)["product"]
+    out = [{**m, "offer_id": offer_id, "product": product}
+           for m in calc.check_evidence(store, offer_id)["mandatory"] if m["outcome"] == "fail"]
+    return out + [r for r in [_orderability_ref(store, offer_id)] if r]
+
+
 def default_evidence(store: Store, decision: dict, limit: int = 6) -> list[dict]:
-    """Recorded rule outcomes behind the decision, used when the model selects none: open questions first, then
-    mandatory rules that excluded offers fail, both ordered by the earliest stockout of their ingredient."""
+    """Recorded outcomes behind the decision, used when the model selects none usable: open questions first, then
+    what blocks excluded offers, both ordered by the earliest stockout of their ingredient."""
     deadline = {r["ingredient"]: r["date"] for r in decision["risks"]}
-    picks = [(q["offer_id"], q["field"]) for q in decision["questions"]]
-    failing = sorted(((deadline.get(store.offer(x["offer_id"])["ingredient"], "9999"), x["offer_id"], m["field"])
-                      for x in decision["excluded"]
-                      for m in calc.check_evidence(store, x["offer_id"])["mandatory"] if m["outcome"] == "fail"))
-    picks += [(offer_id, field) for _, offer_id, field in failing]
-    refs = []
-    for offer_id, field in picks:
-        ev = calc.check_evidence(store, offer_id)
-        rule = next((r for r in ev["mandatory"] if r["field"] == field), None)
-        if rule and not any(r["offer_id"] == offer_id and r["field"] == field for r in refs):
-            refs.append({**rule, "offer_id": offer_id, "product": store.offer(offer_id)["product"]})
+    refs: list[dict] = []
+    for q in decision["questions"]:
+        _add(refs, _resolve(store, EvidenceRef(offer_id=q["offer_id"], field=q["field"], outcome=q["status"])))
+    for x in sorted(decision["excluded"], key=lambda x: (
+            deadline.get(store.offer(x["offer_id"])["ingredient"], "9999"), x["offer_id"])):
+        for ref in _blockers(store, x["offer_id"]):
+            _add(refs, ref)
     return refs[:limit]
 
 
 def validate_explanation(raw: str, store: Store, decision: dict) -> dict:
-    """Reject invented references, outcomes, or a conflicting recommended basket.
+    """Reject an unreadable answer or a conflicting recommended basket; drop references that match no record.
 
     Arbitrary model prose is never used as a supplier claim or a source of numbers.
     """
@@ -90,23 +121,19 @@ def validate_explanation(raw: str, store: Store, decision: dict) -> dict:
             raise ValueError("recommendation does not match the calculated decision")
         if any(q["resolved_by"] == "supplier" and not q["drafted"] for q in decision["questions"]):
             raise ValueError("supplier questions still need drafts")
-        if not parsed.evidence:
+        refs: list[dict] = []
+        for ref in parsed.evidence:
+            resolved = _resolve(store, ref)
+            if resolved is None:
+                log.warning("advisor evidence dropped: %s", ref.model_dump())
+            _add(refs, resolved)
+        if not refs:
             return {"validated": True, "focus": parsed.focus, "evidence": default_evidence(store, decision),
                     "evidence_selected_by": "app"}
-        refs = []
-        for ref in parsed.evidence:
-            ev = calc.check_evidence(store, ref.offer_id)
-            match = next((r for r in [*ev["mandatory"], *ev["negotiable"]]
-                          if r["field"] == ref.field and r["outcome"] == ref.outcome), None)
-            if match is None:
-                raise ValueError("evidence does not match the recorded rule outcome")
-            refs.append({**match, "offer_id": ref.offer_id, "product": store.offer(ref.offer_id)["product"]})
-        # A cited offer that fails a mandatory rule is unusable whatever else is missing: show that rule too.
+        # A cited offer that is unusable for another reason shows that reason too.
         for ref in list(refs):
-            for m in calc.check_evidence(store, ref["offer_id"])["mandatory"]:
-                if m["outcome"] == "fail" and not any(r["offer_id"] == ref["offer_id"] and r["field"] == m["field"]
-                                                      for r in refs):
-                    refs.append({**m, "offer_id": ref["offer_id"], "product": ref["product"]})
+            for blocker in _blockers(store, ref["offer_id"]):
+                _add(refs, blocker)
         return {"validated": True, "focus": parsed.focus, "evidence": refs}
     except (ValidationError, ValueError, KeyError, TypeError, StopIteration) as e:
         log.warning("advisor explanation rejected: %s: %s | %s", type(e).__name__, str(e)[:200], raw[:300])

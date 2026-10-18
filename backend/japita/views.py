@@ -135,6 +135,22 @@ def exclusion_reasons(store: Store, offer_id: str, lang: str) -> list[str]:
     return out
 
 
+def evidence_view(store: Store, refs: list[dict], lang: str) -> list[dict]:
+    """Advisor evidence with owner-readable sentences in the page language (`text`)."""
+    key = {"missing_evidence": "why.notStated", "fail": "why.fails", "needs_review": "why.review"}
+    out = []
+    for r in refs:
+        if r["field"] == "orderability":
+            text = [t(lang, f"why.{_why(c)}") for c in r.get("codes", [])]
+        else:
+            rule = rule_text(lang, r.get("rule") or r.get("preference") or r["field"])
+            ing = store.offer(r["offer_id"])["ingredient"]
+            text = [(r["outcome"] == "fail" and failure_phrase(lang, ing, r["field"]))
+                    or (t(lang, key[r["outcome"]], rule=rule) if r["outcome"] in key else rule)]
+        out.append({**r, "text": text})
+    return out
+
+
 def _why(code: str) -> str:
     return {"shipping_unknown": "shipping", "no_delivery_day": "days",
             "import_document_missing": "importDocument"}.get(code, code)

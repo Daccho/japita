@@ -44,7 +44,8 @@ only this JSON object, with no prose, Markdown, or code fence before or after it
  "evidence": [{"offer_id": "<offer id>", "field": "<rule field>", "outcome": "ok|fail|missing_evidence|needs_review"}]}
 Select one to six recorded rule outcomes that explain the decision and answer the question (for example, why an
 alternative cannot be ordered yet), never an empty list when the brief has risks, exclusions or questions: only an offer's rule field and outcome exactly as
-they appear in the brief's questions or a check_evidence result (orderability and exclusion reasons are not rule fields). The app validates them and displays their original
+they appear in the brief's questions or a check_evidence result. For an offer that cannot be ordered (supplier account,
+shipping cost, delivery days, availability), cite {"offer_id": "<id>", "field": "orderability", "outcome": "fail"}. The app validates them and displays their original
 evidence, calculations and translated labels. Do not add numbers or other fields to this final object.
 The owner still reviews all drafts and orders."""
 

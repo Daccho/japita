@@ -38,7 +38,8 @@ function EvidenceList({ explanation }: { explanation: Explanation }) {
   const groups = new Map<string, Explanation["evidence"]>();
   for (const item of explanation.evidence) groups.set(item.offer_id, [...(groups.get(item.offer_id) ?? []), item]);
   const next = (item: Explanation["evidence"][number]) =>
-    item.outcome === "fail" ? t("adv.cannotUse")
+    item.field === "orderability" ? null
+      : item.outcome === "fail" ? t("adv.cannotUse")
       : item.outcome === "ok" ? t("adv.meets")
       : item.resolved_by === "owner" ? t("adv.nextOwner")
       : item.outcome === "needs_review" ? t("adv.nextVerify")
@@ -51,16 +52,14 @@ function EvidenceList({ explanation }: { explanation: Explanation }) {
         <div key={items[0].offer_id} style={{ marginTop: 12 }}>
           <strong style={{ color: "var(--jp-text)" }}>{items[0].product}</strong>
           {items.map((item) => {
-            const badge = OUTCOME_BADGE[item.outcome];
+            const badge = item.field === "orderability" ? { key: "of.notOrderable" as Key, tone: "jp-danger" } : OUTCOME_BADGE[item.outcome];
+            const step = next(item);
             return (
               <div key={item.field} style={{ marginTop: 8 }}>
                 <span className={`jp-badge ${badge.tone}`}>{t(badge.key)}</span>{" "}
-                <span style={{ color: "var(--jp-text)" }}>{label("field", item.field)}</span>
-                {item.rule && <small style={{ display: "block", color: "var(--jp-muted)" }}>{item.rule}</small>}
-                <p style={{ margin: "4px 0" }}>
-                  {item.value === null || item.value === undefined ? t("adv.notStated") : t("adv.recorded", { value: String(item.value) })}
-                  {" · "}{next(item)}
-                </p>
+                {item.field !== "orderability" && <span style={{ color: "var(--jp-text)" }}>{label("field", item.field)}</span>}
+                {(item.text ?? []).map((line) => <p key={line} style={{ margin: "4px 0" }}>{line}</p>)}
+                {step && <p style={{ margin: "4px 0" }}>{step}</p>}
                 {item.source_text && (
                   <details>
                     <summary>{t("adv.original")}</summary>

@@ -244,8 +244,9 @@ def eligible_offers(store: Store) -> tuple[dict[str, list[dict]], list[dict]]:
         if reasons:
             missing = [{"field": m["field"], "rule": m["rule"], "resolved_by": m["resolved_by"]}
                        for m in ev["mandatory"] if m["outcome"] in ("missing_evidence", "needs_review")]
+            failing = [{"field": m["field"], "rule": m["rule"]} for m in ev["mandatory"] if m["outcome"] == "fail"]
             excluded.append({"offer_id": offer["id"], "product": offer["product"], "reasons": reasons,
-                             "missing_fields": missing})
+                             "missing_fields": missing, "failing_fields": failing, "orderability_codes": od["codes"]})
         else:
             eligible[offer["ingredient"]].append(offer)
     return eligible, excluded
