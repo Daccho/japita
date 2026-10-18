@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
-import { ArrowLeft, Loader2, Store, Truck } from "lucide-react";
+import { ArrowLeft, ChefHat, Factory, Loader2, PackageOpen } from "lucide-react";
 import { useInitialLang } from "@/lib/initial-lang";
 import { LANG_COOKIE, LOGIN_LANG_COOKIE, PORTAL_LANG_COOKIE, saveLangCookie } from "@/lib/lang-cookies";
 import { AuthError, login, me, safeNext, type Me, type Role } from "@/lib/auth";
@@ -118,12 +118,21 @@ function LoginForm() {
             <div className="jp-login-roles">
               {(
                 [
-                  ["restaurant", Store, "restaurant", "restaurantNote"],
-                  ["supplier", Truck, "supplier", "supplierNote"],
+                  ["restaurant", "restaurant", "restaurantNote"],
+                  ["supplier", "supplier", "supplierNote"],
                 ] as const
-              ).map(([r, Icon, label, note]) => (
+              ).map(([r, label, note]) => (
                 <button key={r} type="button" className="jp-login-role" onClick={() => setRole(r)}>
-                  <Icon aria-hidden />
+                  <span className="jp-login-tile" aria-hidden>
+                    {r === "restaurant" ? (
+                      <ChefHat />
+                    ) : (
+                      <>
+                        <Factory />
+                        <PackageOpen className="jp-login-tile-badge" />
+                      </>
+                    )}
+                  </span>
                   <span>
                     <strong>{t(label)}</strong>
                     <small className="jp-muted">{t(note)}</small>
