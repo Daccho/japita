@@ -13,6 +13,7 @@ from japita.api import app
 
 @pytest.fixture
 def client(monkeypatch):
+    monkeypatch.setenv("DRAWINGS_BACKGROUND", "0")
     engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
     repo.Base.metadata.create_all(engine)
     monkeypatch.setattr(repo, "_engine", engine)

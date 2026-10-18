@@ -6,7 +6,7 @@ Read [Current design scope](../README.md#current-design-scope) for the boundary 
 
 - `japita-workspace.html`: editable HTML/CSS/JavaScript fragment; the source of truth for the interface.
 - `index.html`: ready-to-open standalone preview with its runtime, sandboxed iframe, and Content Security Policies included.
-- `refresh-preview.py`: Python 3 standard-library script that updates the preview from the fragment while preserving the sandbox and both CSPs. No package installation is needed.
+- `refresh-preview.py`: Python 3 standard-library script that embeds canonical product SVGs and updates the preview from the fragment while preserving the sandbox and both CSPs. No package installation is needed.
 - `assets/`: supplied Japita branding, the temporary Kumo logo, and illustrative supplier photos. Provenance and image prompts are in `assets/README.md`. The refresh script embeds the WebP assets into the fragment and preview.
 - `drawings-preview.html`: separate product illustration review, regenerated with `python mockup/refresh-drawings-preview.py`; status and canonical library location are in [product drawings](../docs/product-drawings.md).
 

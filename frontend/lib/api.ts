@@ -1,4 +1,5 @@
 // Thin client for the FastAPI backend. Types mirror backend/japita (api.py, calc.py, stock.py, orders.py, portal.py).
+import type { DrawingReference } from "@/lib/drawings";
 
 export const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000";
 
@@ -67,6 +68,7 @@ export type PendingUpdate = {
   submitted_at: string;
 };
 export type Offer = {
+  drawing: DrawingReference;
   id: string;
   supplier_id: string;
   ingredient: string;
@@ -143,7 +145,7 @@ export type MenuDish = {
   id: string; name: string; description: string; price_eur: number | null;
   group: "ramen" | "extras" | "sides"; ingredients: string[]; ingredient_keys: string[];
 };
-export type RestaurantIngredient = { id: string; name: string };
+export type RestaurantIngredient = { id: string; name: string; drawing: DrawingReference };
 export type RestaurantMenu = { items: MenuDish[]; ingredients: RestaurantIngredient[] };
 
 export type State = {

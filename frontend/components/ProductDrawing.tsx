@@ -1,11 +1,6 @@
 import { createElement, type CSSProperties, type ReactNode } from "react";
-
-export type DrawingNode = { tag: string; attrs: Record<string, string>; children: DrawingNode[] };
-export type LibraryDrawing = {
-  key: string; name: string; ingredient: string; form: string; state: string;
-  aliases: string[]; group: string; source: "library"; reference: boolean; revised?: boolean; tree: DrawingNode;
-};
-export type DrawingLibrary = { version: number; drawings: LibraryDrawing[] };
+import type { DrawingNode, DrawingReference } from "@/lib/drawings";
+export type { DrawingNode, LibraryDrawing, DrawingLibrary } from "@/lib/drawings";
 
 const COLORS: Record<string, string> = {
   "#F4BC2B": "var(--aj-yolk)", "#3A332B": "var(--aj-container)",
@@ -28,7 +23,7 @@ function node(el: DrawingNode, index: number): ReactNode {
   return createElement(el.tag, attrs, el.children.map(node));
 }
 
-export default function ProductDrawing({ drawing, size = 48, alt, style }: { drawing: LibraryDrawing; size?: number; alt?: string; style?: CSSProperties }) {
+export default function ProductDrawing({ drawing, size = 48, alt, style }: { drawing: DrawingReference; size?: number; alt?: string; style?: CSSProperties }) {
   return <svg className="jp-product-drawing" viewBox="0 0 64 64" width={size} height={size} style={style} role={alt ? "img" : undefined} aria-label={alt} aria-hidden={alt ? undefined : true}>
     {drawing.tree.children.map(node)}
   </svg>;

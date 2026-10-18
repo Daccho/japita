@@ -34,7 +34,7 @@ css += '.revised{display:inline-block;margin-left:8px;padding:1px 5px;border:1px
 logo = (ROOT / 'mockup/assets/japita-logo-ajitama-flat.svg').read_text(encoding="utf-8")
 logo = logo.replace('<svg ', '<svg role="img" aria-label="Japita" ')
 revised_count = sum(bool(d.get('revised')) for d in manifest['drawings'])
-document = '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'unsafe-inline\'"><title>Japita product drawings review</title><style>' + css + '</style><main><header>' + logo + '<p>Japita · illustration review</p><h1>Product drawing library</h1><p>' + str(len(manifest["drawings"])) + ' drawings · ' + str(revised_count) + ' revised · 48px and 128px. Product photos remain unchanged pending approval.</p></header>' + ''.join(sections) + '</main></html>\n'
+document = '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'unsafe-inline\'"><title>Japita product drawings review</title><style>' + css + '</style><main><header>' + logo + '<p>Japita · illustration review</p><h1>Product drawing library</h1><p>' + str(len(manifest["drawings"])) + ' drawings · ' + str(revised_count) + ' revised · 48px and 128px. Approved product drawings are active in the workspace.</p></header>' + ''.join(sections) + '</main></html>\n'
 target = ROOT / 'mockup/drawings-preview.html'
 target.write_text(document, encoding="utf-8")
 print(target)

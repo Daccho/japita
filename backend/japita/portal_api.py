@@ -135,6 +135,8 @@ def portal_new_product(token: str, body: NewProduct):
         raise HTTPException(422, str(e))
     repo.save_state(data)
     repo.log_calls(calls, "portal_note:new_product")
+    from .drawings import register_state
+    register_state(data)
     return portal.view(store, sup)
 
 
@@ -150,7 +152,9 @@ def apply_supplier_update(offer_id: str):
     except ValueError as e:
         raise HTTPException(409, str(e))
     repo.save_state(data)
-    return offer
+    from .drawings import offer_view, register
+    register(offer["product"], offer["ingredient"], offer["attributes"])
+    return offer_view(offer)
 
 
 @router.post("/offers/{offer_id}/supplier-update/reject")

@@ -46,7 +46,7 @@ Code: `frontend/app/globals.css` (`--aj-*` tokens on `:root`, the Ajitama layer 
 
 - Styling only: structure, text, data and behavior stay as implemented; no invented features or numbers.
 - Keep the current layout geometry, breakpoints (900/700/480px) and wrapping; control heights are minimums.
-- Keep Lucide icons and Kumo artwork. The user's subsequent logo redesign is implemented; the product drawing library awaits review before replacing photos. See [product drawings](product-drawings.md).
+- Keep Lucide icons and Kumo artwork. The user's subsequent logo redesign and approved product drawing library are active. See [product drawings](product-drawings.md).
 - Light Ajitama palette regardless of OS appearance (G2). No red selection markers in navigation (G6).
 - Actions stay beside page titles (not in the header). Advisor keeps its position logic and icons; no unread badge or chat icon is added.
 - Pending tint/red bar only for a real "candidate with pending terms" state; never relabel suppliers.

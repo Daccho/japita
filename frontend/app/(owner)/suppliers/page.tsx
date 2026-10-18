@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, CircleHelp, Copy, Filter, Leaf, Link2, MapPin, Search, X } from "lucide-react";
+import { Check, CircleHelp, Copy, Filter, Link2, MapPin, Search, X } from "lucide-react";
 import { api, errorDetail, money, qty, unitPrice, type Evidence, type Offer, type Supplier } from "@/lib/api";
 import { useDates, useI18n, useLabel, type Key } from "@/lib/i18n";
 import { useWorkspace } from "@/components/workspace";
-import { copyText, fmtValue, offerImage } from "@/components/helpers";
+import { copyText, fmtValue } from "@/components/helpers";
 import PageHeader from "@/components/PageHeader";
+import ProductDrawing from "@/components/ProductDrawing";
 
 type View = "existing" | "candidate";
 type Sort = "name-asc" | "name-desc" | "price-asc" | "price-desc";
@@ -47,7 +48,6 @@ function OfferCard({ offer, evidence }: { offer: Offer; evidence?: Evidence }) {
   const { refresh } = useWorkspace();
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
-  const img = offerImage(offer);
   const status = evidence ? (evidence.status === "ok" && !evidence.orderability.orderable ? "notOrderable" : evidence.status) : null;
   const statusKey = status === "ok" ? "of.eligible" : status === "notOrderable" ? "of.notOrderable" : status ? (`of.${status}` as Key) : null;
   const p = offer.pending_update;
@@ -94,14 +94,7 @@ function OfferCard({ offer, evidence }: { offer: Offer; evidence?: Evidence }) {
       </div>
       <div className="jp-offer-identity">
         <figure className="jp-offer-photo">
-          {img ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={img} alt={`${t("of.illustrative")}: ${label("ing", offer.ingredient)}`} width={144} height={108} loading="lazy" />
-          ) : (
-            <div className="jp-thumb-icon">
-              <Leaf aria-hidden />
-            </div>
-          )}
+          <div className="jp-product-photo-slot"><ProductDrawing drawing={offer.drawing} alt={`${t("of.illustrative")}: ${label("ing", offer.ingredient)}`} /></div>
           <figcaption>{t("of.illustrative")}</figcaption>
         </figure>
         <div>
@@ -450,19 +443,13 @@ export default function SuppliersPage() {
               const open = expanded === s.id;
               const first = offers[0];
               const best = cheapest(offers);
-              const img = first ? offerImage(offers.find((o) => offerImage(o)) ?? first) : null;
               const pending = offers.some((o) => o.pending_update);
               return (
                 <article key={s.id} className="jp-supplier-row">
                   <div className="jp-supplier-summary">
-                    {img ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img className="jp-supplier-thumb" src={img} alt={t("of.illustrative")} width={60} height={60} loading="lazy" />
-                    ) : (
-                      <div className="jp-supplier-thumb jp-thumb-icon">
-                        <Leaf aria-hidden />
-                      </div>
-                    )}
+                    <div className="jp-supplier-thumb jp-product-drawing-slot">
+                      {first && <ProductDrawing drawing={first.drawing} alt={t("of.illustrative")} />}
+                    </div>
                     <div>
                       <h3>{s.name}</h3>
                       <p>

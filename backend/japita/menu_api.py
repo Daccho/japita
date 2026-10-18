@@ -79,7 +79,9 @@ def restaurant_ingredients(data: dict) -> list[dict]:
 
 
 def menu_view(data: dict) -> dict:
-    return {"items": menu_items(data), "ingredients": restaurant_ingredients(data)}
+    from .drawings import reference
+    return {"items": menu_items(data), "ingredients": [{**item, "drawing": reference(item["name"], item["id"])}
+                                                       for item in restaurant_ingredients(data)]}
 
 
 @router.get("")
@@ -95,4 +97,6 @@ def save_menu(body: MenuInput):
     data = repo.load_state()
     data.setdefault("recipe", {"lines": []})["menu_items"] = [with_keys(item.model_dump()) for item in body.items]
     repo.save_state(data)
+    from .drawings import register_state
+    register_state(data)
     return menu_view(data)

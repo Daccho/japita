@@ -14,10 +14,10 @@ These assets belong to the local, fictional demo. The restaurant logo and food p
 - `japita-logo-original.png`: the earlier user-supplied logo, retained as a historical asset.
 - `japita-logo-simplified.png`: the earlier generated logo edit, retained as a historical asset. It has the chef hat, fork and knife, cart, wordmark, and tagline; removed groceries and the checklist; and aligned a wheel as the i's dot.
 - `kumo-demo-logo.webp`: temporary logo for the fictional Kumo Ramen Milano restaurant. Used beside Japita in the header and in Restaurant profile.
-- `fresh-noodles.webp`: illustrative fresh ramen noodles, used by the fresh offer and the unconfirmed candidate.
-- `frozen-noodles.webp`: illustrative frozen noodles in unbranded bags, used by the frozen offer.
-- `soy-sauce.webp`: illustrative unbranded soy sauce, used by Umami Trade Italia in the supplier directory.
-- `mayu-oil.webp`: illustrative unbranded black garlic oil, used by Ramen Pantry in the supplier directory.
+- `fresh-noodles.webp`: illustrative fresh ramen noodles, preserved as a historical source; current product slots use native SVG drawings.
+- `frozen-noodles.webp`: illustrative frozen noodles in unbranded bags, preserved as a historical source.
+- `soy-sauce.webp`: illustrative unbranded soy sauce, preserved as a historical source.
+- `mayu-oil.webp`: illustrative unbranded black garlic oil, preserved as a historical source.
 
 `python mockup/refresh-preview.py` embeds the WebP files into the marked image block in `japita-workspace.html`, then regenerates `index.html`. The fragment and standalone preview use the same embedded images without changing the sandbox or CSP. `--check` verifies that the embedded assets and preview match their source files.
 
