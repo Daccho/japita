@@ -3,7 +3,7 @@ from pathlib import Path
 import json
 from typing import Literal
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field, field_validator
 
 from . import repo
@@ -100,3 +100,62 @@ def save_menu(body: MenuInput):
     from .drawings import register_state
     register_state(data)
     return menu_view(data)
+
+
+# --- ready-to-render menu page -------------------------------------------------------------------------
+
+views_router = APIRouter(tags=["views"])
+BOWLS = ("tonkotsu", "set_full", "set_kaedama", "veggie_miso")
+
+
+def menu_price(eur: float, lang: str) -> str:
+    """Menu prices are the restaurant's own selling prices in Italy and always stay in EUR."""
+    if lang == "it":
+        return f"{eur:,.2f}".replace(",", " ").replace(".", ",").replace(" ", ".") + " €"
+    return f"€{eur:,.2f}"
+
+
+def menu_page_view(data: dict, lang: str) -> dict:
+    from . import restaurant
+    from .textfmt import label, qty, t
+
+    items = menu_items(data)
+    texts = restaurant.profile_text(data)
+    servings = data.get("week", {}).get("servings", {})
+    lines = data.get("recipe", {}).get("lines", [])
+    fmt = lambda n: f"{n:,}"  # noqa: E731
+    rows = []
+    for item in items:
+        n = servings.get(item["id"])
+        uses = [f"{qty(ln['per_item'][item['id']], ln['unit'])} {label(lang, 'ing', ln['ingredient']).lower()}"
+                for ln in lines if item["id"] in ln.get("per_item", {})]
+        rows.append({
+            "id": item["id"],
+            "summary": f"{item['name']} · " + (t(lang, "mn.notPlanned") if n is None else t(lang, "mn.planned", n=fmt(n))),
+            "ingredients": item.get("ingredients", []),
+            "uses_text": t(lang, "mn.perServing", list=" + ".join(uses)) if uses else t(lang, "mn.noPurchase"),
+        })
+    name = next(iter(data.get("profiles", {}).values()), {}).get("name", "")
+    return {
+        "lang": lang,
+        "items": items,
+        "masthead": {"name": name, "subtitle": f"{texts['concept']} · {texts['location']}",
+                     "logo_url": restaurant.logo_url(data)},
+        "groups": [{"key": g, "title": t(lang, f"mn.{g}")} for g in ("ramen", "extras", "sides")],
+        "prices": {item["id"]: (menu_price(item["price_eur"], lang) if item.get("price_eur") is not None
+                                else t(lang, "mn.various")) for item in items},
+        "planning": {"title": t(lang, "mn.plan"),
+                     "note": t(lang, "mn.planNote", bowls=fmt(sum(servings.get(k, 0) for k in BOWLS)),
+                               refills=fmt(servings.get("kaedama", 0))),
+                     "rows": rows},
+        "labels": {k: t(lang, k) for k in ("mn.edit", "mn.editing", "mn.editHelp", "mn.save", "mn.saving", "mn.saved",
+                                            "mn.addDish", "mn.dishName", "mn.ingredients", "mn.ingredientsHint",
+                                            "mn.ingredientsEmpty", "mn.label", "mn.various", "mn.foot",
+                                            "mn.errorName", "cancel")},
+    }
+
+
+@views_router.get("/views/menu")
+def get_menu_view(request: Request):
+    from .textfmt import lang_from_request, restaurant_lang
+    return menu_page_view(repo.load_state(), restaurant_lang(lang_from_request(request)))

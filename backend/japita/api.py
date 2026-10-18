@@ -616,9 +616,10 @@ from .drawings_api import router as drawings_router  # noqa: E402
 
 app.include_router(drawings_router)
 
-from .menu_api import router as menu_router  # noqa: E402
+from .menu_api import router as menu_router, views_router as menu_views_router  # noqa: E402
 
 app.include_router(menu_router)
+app.include_router(menu_views_router)
 
 from .views_api import router as views_router  # noqa: E402
 
