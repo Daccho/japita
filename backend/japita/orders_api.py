@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 from . import orders, repo, stock
 from .errors import from_value_error
-from .store import Store
+from .store import Store, active_profile_id
 
 router = APIRouter(tags=["week and orders"])
 
@@ -17,7 +17,7 @@ class ApproveBasket(BaseModel):
 
 def _store(profile_id: str | None) -> Store:
     data = repo.load_state()
-    pid = profile_id or next(iter(data["profiles"]), None)
+    pid = profile_id or active_profile_id(data)
     if pid not in data["profiles"]:
         raise HTTPException(404, f"profile {pid!r} not found")
     return Store(data, pid)

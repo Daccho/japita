@@ -251,13 +251,30 @@ def logout(request: Request, response: Response):
     return {"ok": True}
 
 
+def _workspace_defaults(request: Request) -> dict:
+    """Restaurant accounts: the purchasing profiles with labels in the request's language, and the active one."""
+    from . import views
+    from .textfmt import lang_from_request
+
+    lang = request.query_params.get("lang")
+    if lang not in ("it", "en", "ja"):
+        lang = lang_from_request(request) or request.cookies.get("japita_login_lang")
+    lang = lang if lang in ("it", "en", "ja") else "it"
+    listing = views.profiles_list(repo.load_state(), lang)
+    return {**listing, "default_profile_id": listing["active_profile_id"], "lang": lang}
+
+
 @router.get("/me")
 def me(request: Request):
+    """The signed-in account; restaurant accounts also get `profiles`, `active_profile_id` and defaults."""
     with Session(repo.engine()) as s:
         user = session_user(s, request)
         if user is None:
             raise HTTPException(401, "not signed in")
-        return _me(s, user)
+        out = _me(s, user)
+    if out["role"] == "restaurant":
+        out.update(_workspace_defaults(request))
+    return out
 
 
 @router.get("/supplier/portal")

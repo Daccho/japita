@@ -19,6 +19,12 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
+def active_profile_id(data: dict) -> str | None:
+    """The restaurant's active purchasing profile (restaurant setting), else the first profile."""
+    pid = (data.get("restaurant_settings") or {}).get("active_profile_id")
+    return pid if pid in data["profiles"] else next(iter(data["profiles"]), None)
+
+
 class Store:
     def __init__(self, data: dict, profile_id: str = "kumo-authentic"):
         self.data = data

@@ -2,14 +2,16 @@
 
 from typing import Any, Literal
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from . import fx, orders, portal, repo
 from .extract import translate
 from .llm import LLM
 from .errors import AppError, DomainError, from_value_error
+from .forms import INGREDIENT_EN, INGREDIENT_JA
 from .store import Store
+from .textfmt import Money, lang_from_request, portal_lang
 
 router = APIRouter(tags=["supplier portal"])
 
@@ -131,14 +133,31 @@ def portal_link(supplier_id: str):
     return {"supplier_id": supplier_id, "token": token, "path": f"/supplier/portal/{token}"}
 
 
+def _view(store: Store, sup: dict, request: Request) -> dict:
+    lang = portal_lang(lang_from_request(request, portal=True))
+    return portal.view(store, sup, lang, Money(lang))
+
+
+@router.get("/portal/{token}/forms")
+def portal_forms(token: str, ingredient: str = ""):
+    """Spec fields for a new product: free-text ingredient -> the restaurant's ingredient (or null), its usual unit
+    and the form fields a supplier can fill in."""
+    _, store, _ = _load(token)
+    key = portal.match_ingredient(store, ingredient[:60]) if ingredient.strip() else None
+    unit = next((ln["unit"] for ln in store.recipe.get("lines", []) if ln["ingredient"] == key), "g")
+    return {"ingredient": key, "ingredient_ja": INGREDIENT_JA.get(key) if key else None,
+            "ingredient_en": INGREDIENT_EN.get(key) if key else None,
+            "default_unit": unit, "form": portal.product_form(store, key) if key else []}
+
+
 @router.get("/portal/{token}")
-def portal_view(token: str):
+def portal_view(token: str, request: Request):
     _, store, sup = _load(token)
-    return portal.view(store, sup)
+    return _view(store, sup, request)
 
 
 @router.post("/portal/{token}/orders/{po_id}/accept")
-def portal_accept(token: str, po_id: str, body: Accept):
+def portal_accept(token: str, po_id: str, body: Accept, request: Request):
     data, store, sup = _load(token)
     tr, calls = _translations(body.note_ja)
     try:
@@ -149,11 +168,11 @@ def portal_accept(token: str, po_id: str, body: Accept):
         raise from_value_error(e, 409)
     repo.save_state(data)
     repo.log_calls(calls, f"portal_note:{po_id}")
-    return portal.view(store, sup)
+    return _view(store, sup, request)
 
 
 @router.post("/portal/{token}/orders/{po_id}/delivery")
-def portal_change_delivery(token: str, po_id: str, body: ChangeDelivery):
+def portal_change_delivery(token: str, po_id: str, body: ChangeDelivery, request: Request):
     data, store, sup = _load(token)
     tr, calls = _translations(body.note_ja)
     try:
@@ -164,11 +183,11 @@ def portal_change_delivery(token: str, po_id: str, body: ChangeDelivery):
         raise from_value_error(e, 409)
     repo.save_state(data)
     repo.log_calls(calls, f"portal_note:{po_id}")
-    return portal.view(store, sup)
+    return _view(store, sup, request)
 
 
 @router.post("/portal/{token}/products/{offer_id}")
-def portal_update_product(token: str, offer_id: str, body: ProductUpdate):
+def portal_update_product(token: str, offer_id: str, body: ProductUpdate, request: Request):
     data, store, sup = _load(token)
     try:
         changes = _priced(body)
@@ -183,11 +202,11 @@ def portal_update_product(token: str, offer_id: str, body: ProductUpdate):
         raise from_value_error(e, 422)
     repo.save_state(data)
     repo.log_calls(calls, f"portal_note:{offer_id}")
-    return portal.view(store, sup)
+    return _view(store, sup, request)
 
 
 @router.post("/portal/{token}/products")
-def portal_new_product(token: str, body: NewProduct):
+def portal_new_product(token: str, body: NewProduct, request: Request):
     data, store, sup = _load(token)
     try:
         product = _priced(body)
@@ -202,11 +221,11 @@ def portal_new_product(token: str, body: NewProduct):
         raise from_value_error(e, 422)
     repo.save_state(data)
     repo.log_calls(calls, "portal_note:new_product")
-    return portal.view(store, sup)
+    return _view(store, sup, request)
 
 
 @router.post("/portal/{token}/profile")
-def portal_update_profile(token: str, body: ProfileUpdate):
+def portal_update_profile(token: str, body: ProfileUpdate, request: Request):
     data, store, sup = _load(token)
     try:
         changes = _profile_changes(body)
@@ -219,7 +238,7 @@ def portal_update_profile(token: str, body: ProfileUpdate):
         raise from_value_error(e, 422)
     repo.save_state(data)
     repo.log_calls(calls, f"portal_note:profile:{sup['id']}")
-    return portal.view(store, sup)
+    return _view(store, sup, request)
 
 
 def _profile_decision(supplier_id: str, decide) -> dict:
