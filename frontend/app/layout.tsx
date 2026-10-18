@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { Archivo, Bodoni_Moda, Dela_Gothic_One, Inter, Noto_Sans_JP, Zen_Kaku_Gothic_New } from "next/font/google";
 import "./globals.css";
 import { InitialLangProvider } from "@/lib/initial-lang";
-import { LANG_COOKIE, PORTAL_LANG_COOKIE } from "@/lib/lang-cookies";
+import { LANG_COOKIE, LOGIN_LANG_COOKIE, PORTAL_LANG_COOKIE } from "@/lib/lang-cookies";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const noto = Noto_Sans_JP({ subsets: ["latin"], weight: ["400", "700"], variable: "--font-noto" });
@@ -21,7 +21,11 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const jar = await cookies();
-  const lang = { restaurant: jar.get(LANG_COOKIE)?.value, portal: jar.get(PORTAL_LANG_COOKIE)?.value };
+  const lang = {
+    restaurant: jar.get(LANG_COOKIE)?.value,
+    portal: jar.get(PORTAL_LANG_COOKIE)?.value,
+    login: jar.get(LOGIN_LANG_COOKIE)?.value,
+  };
   return (
     <html lang={lang.restaurant === "en" ? "en" : "it"} className={`${inter.variable} ${noto.variable} ${zenKaku.variable} ${dela.variable} ${bodoni.variable} ${archivo.variable}`}>
       <body className="font-[family-name:var(--font-zen-kaku),var(--font-noto)] antialiased">

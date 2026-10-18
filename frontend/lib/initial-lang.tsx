@@ -2,7 +2,7 @@
 
 import { createContext, useContext, type ReactNode } from "react";
 
-type Initial = { restaurant?: string; portal?: string };
+type Initial = { restaurant?: string; portal?: string; login?: string };
 const InitialLangCtx = createContext<Initial>({});
 
 export function InitialLangProvider({ value, children }: { value: Initial; children: ReactNode }) {
