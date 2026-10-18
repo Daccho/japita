@@ -1,38 +1,32 @@
-"use client";
+import type { Metadata } from "next";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { isTab, PortalApp, type PortalMe } from "@/components/portal/PortalApp";
+import type { NotificationFeed } from "@/components/Notifications";
+import { PORTAL_LANG_COOKIE } from "@/lib/lang-cookies";
+import type { PortalView } from "@/lib/portal";
+import { serverGet, serverView } from "@/lib/server-api";
 
-import { useEffect, useState } from "react";
-import { PortalApp } from "@/components/portal/PortalApp";
-import { AuthError, logout, me, supplierPortal } from "@/lib/auth";
+export const metadata: Metadata = {
+  title: "サプライヤーポータル",
+  robots: { index: false, follow: false },
+};
 
-// Signed-in supplier: their own portal. Shared link-token pages stay at /supplier/portal/[token] without sign-in.
-export default function SupplierHome() {
-  const [token, setToken] = useState<string | null>(null);
-  const [name, setName] = useState("");
-
-  useEffect(() => {
-    let cancelled = false;
-    const load = (attempt: number) =>
-      supplierPortal()
-        .then((p) => !cancelled && setToken(p.path.split("/").pop() ?? null))
-        .catch((e) => {
-          if (cancelled) return;
-          if (e instanceof AuthError && e.status === 403) {
-            window.location.replace("/restaurants"); // signed in as a restaurant
-          } else if (e instanceof AuthError && e.status === 401) {
-            window.location.replace("/login?role=supplier&next=/suppliers");
-          } else if (attempt < 20) {
-            setTimeout(() => load(attempt + 1), 3000); // the API may be waking up
-          }
-        });
-    load(0);
-    me()
-      .then((u) => !cancelled && u && setName(u.display_name))
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const signOut = () => logout().finally(() => window.location.replace("/"));
-  return token ? <PortalApp token={token} homeHref="/suppliers" account={{ name, onSignOut: signOut }} /> : null;
+// The signed-in supplier's portal (/suppliers?tab=requests|orders|products|profile), rendered on the server with its data. When the API is slow the page renders
+// at once and the browser fetches the same views.
+export default async function SupplierHome({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
+  const { tab } = await searchParams;
+  const lang = (await cookies()).get(PORTAL_LANG_COOKIE)?.value === "en" ? "en" : "ja";
+  const me = await serverGet<PortalMe>(`/auth/me?lang=${lang}`);
+  if (!me.ok && me.status === 401) redirect("/login?role=supplier&next=/suppliers");
+  if (me.ok && me.data.role === "restaurant") redirect("/restaurants");
+  const [view, feed] = me.ok
+    ? await Promise.all([
+        serverView<PortalView>(`/portal/me?lang=${lang}`),
+        serverView<NotificationFeed>(`/portal/me/notifications?lang=${lang}`),
+      ])
+    : [null, null];
+  // The open section is always in the URL, so reload, back and forward keep it.
+  if (!isTab(tab) && view) redirect(`/suppliers?tab=${view.default_tab}`);
+  return <PortalApp lang={lang} me={me.ok ? me.data : null} view={view} feed={feed} tab={isTab(tab) ? tab : null} />;
 }

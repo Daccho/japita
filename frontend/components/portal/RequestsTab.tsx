@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { CheckCircle2, Inbox, MessageSquareText, Send } from "lucide-react";
-import { portalApi, PortalError, type PortalProduct, type PortalRequest } from "@/lib/portal";
-import { errorMessage, formatDateTime, ingredientName } from "./format";
+import { portalApi, type PortalProduct, type PortalRequest } from "@/lib/portal";
+import { Badge, EmptyState, useBump } from "@/components/live";
+import { errorMessage } from "./format";
 import { useLang } from "./i18n";
-import { Button, Card, Chip, EmptyState, ErrorBox, FieldBlock, NoteInput, fieldError, fieldPayload } from "./ui";
+import { Button, Card, ErrorBox, FieldBlock, NoteInput, fieldError, fieldPayload } from "./ui";
 import type { TabProps } from "./types";
 
 /** The backend stores form replies as "[仕入先フォーム入力] label: value"; show them as plain "label: value". */
@@ -16,44 +17,28 @@ function prettyReply(reply: string, yes: string, no: string): string {
     .replace(/: False(?=\n|$)/, `: ${no}`);
 }
 
-export function RequestsTab({ view, reload, notify }: TabProps) {
-  const { t } = useLang();
+export function RequestsTab({ view, onView, notify }: TabProps) {
   const products = new Map(view.products.map((p) => [p.id, p]));
-  const sorted = [...view.requests].sort(
-    (a, b) => Number(a.state === "replied") - Number(b.state === "replied") || (b.sent_at ?? "").localeCompare(a.sent_at ?? ""),
-  );
-  if (!sorted.length) {
-    return (
-      <EmptyState icon={<Inbox aria-hidden />} title={t.noRequests} body={t.noRequestsBody(view.restaurant)} />
-    );
+  if (!view.requests.length) {
+    return <EmptyState icon={<Inbox aria-hidden />} title={view.empty.requests.title} body={view.empty.requests.body} />;
   }
   return (
     <>
-      {sorted.map((r) => (
-        <RequestCard key={r.id} req={r} product={products.get(r.offer_id)} reload={reload} notify={notify} />
+      {view.requests.map((r) => (
+        <RequestCard key={r.id} req={r} product={products.get(r.offer_id)} onView={onView} notify={notify} />
       ))}
     </>
   );
 }
 
-function RequestCard({
-  req,
-  product,
-  reload,
-  notify,
-}: {
-  req: PortalRequest;
-  product?: PortalProduct;
-  reload: TabProps["reload"];
-  notify: TabProps["notify"];
-}) {
+function RequestCard({ req, product, onView, notify }: { req: PortalRequest; product?: PortalProduct } & Pick<TabProps, "onView" | "notify">) {
   const { t, lang } = useLang();
+  const bump = useBump();
   const [value, setValue] = useState<string | boolean | null>(null);
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const replied = req.state === "replied";
-  const question = lang === "en" && req.question_en ? req.question_en : req.question_ja;
+  const replied = req.state !== "awaiting_reply";
 
   const submit = async () => {
     setError(null);
@@ -71,12 +56,11 @@ function RequestCard({
     setBusy(true);
     try {
       // Notes are always sent as note_ja: the backend translates them for the restaurant.
-      await portalApi.reply(req.token, { ...(payload !== undefined && { value: payload }), ...(noteJa && { note_ja: noteJa }) });
+      onView(await portalApi.reply(req.id, { ...(payload !== undefined && { value: payload }), ...(noteJa && { note_ja: noteJa }) }));
       notify(t.replySent);
-      await reload();
     } catch (e) {
       setError(errorMessage(e, lang, t.genericError));
-      if (e instanceof PortalError && e.status === 409) await reload();
+      bump();
     } finally {
       setBusy(false);
     }
@@ -86,47 +70,39 @@ function RequestCard({
     <Card>
       <div className="jp-line-head" style={{ alignItems: "flex-start", marginBottom: 12 }}>
         <div style={{ minWidth: 0 }}>
-          {product && (
-            <span className="jp-kicker">
-              {ingredientName(product.ingredient, lang, { ja: product.ingredient_ja, en: product.ingredient_en })}
-            </span>
-          )}
+          {product && <span className="jp-kicker">{product.ingredient_name}</span>}
           <h2 style={{ marginTop: 4 }}>{product?.product ?? t.product}</h2>
         </div>
-        {replied ? (
-          <Chip tone="ok" icon={<CheckCircle2 size={12} aria-hidden />}>
-            {t.replied}
-          </Chip>
-        ) : (
-          <Chip tone="warn">{t.awaitingReply}</Chip>
-        )}
+        <Badge tone={req.badge} style={{ flexShrink: 0 }}>
+          {req.badge === "ok" && <CheckCircle2 size={12} aria-hidden />}
+          {req.state_text}
+        </Badge>
       </div>
 
       <div className="jp-message">
         <span className="jp-message-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <MessageSquareText size={13} aria-hidden />
-          {t.questionFrom(formatDateTime(req.sent_at, lang))}
+          {req.sent_text}
         </span>
-        {question}
+        {req.question}
       </div>
 
       {replied ? (
         <div className="jp-toast">
           <strong>{t.yourReply}</strong>
           <div style={{ whiteSpace: "pre-wrap", marginTop: 4 }}>{req.reply_ja ? prettyReply(req.reply_ja, t.yes, t.no) : t.sent}</div>
+          {req.next_step_text && (
+            <p className="jp-muted" style={{ fontSize: 12, marginTop: 6 }}>
+              {req.next_step_text}
+            </p>
+          )}
         </div>
       ) : (
         <div className="jp-portal-form">
           <FieldBlock field={req.form} value={value} onChange={setValue} />
           <NoteInput value={note} onChange={setNote} />
           <ErrorBox message={error} />
-          <Button
-            onClick={submit}
-            busy={busy}
-            busyLabel={note.trim() ? t.sendingTranslating : t.sending}
-            icon={<Send aria-hidden />}
-            style={{ width: "100%" }}
-          >
+          <Button onClick={submit} busy={busy} busyLabel={note.trim() ? t.sendingTranslating : t.sending} icon={<Send aria-hidden />} style={{ width: "100%" }}>
             {t.sendReply}
           </Button>
         </div>

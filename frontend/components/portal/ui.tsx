@@ -210,13 +210,3 @@ export function fieldPayload(field: FormField, value: string | boolean | null): 
   if (field.input === "number") return Number(value);
   return value.trim() || undefined;
 }
-
-export function EmptyState({ icon, title, body }: { icon: ReactNode; title: string; body: string }) {
-  return (
-    <section className="jp-panel jp-portal-empty">
-      <span className="jp-thumb-icon">{icon}</span>
-      <h3>{title}</h3>
-      <p className="jp-muted">{body}</p>
-    </section>
-  );
-}

@@ -3,14 +3,15 @@
 import { useState } from "react";
 import { Pencil } from "lucide-react";
 import { portalApi, type Day, type ProfileUpdate, type SupplierProfile } from "@/lib/portal";
-import { errorMessage, formatDateTime } from "./format";
+import { Avatar } from "@/components/AppShell";
+import { errorMessage } from "./format";
 import { useLang } from "./i18n";
-import { ChangeList, EurHint, PendingPanel } from "./ProductsTab";
+import { PendingPanel } from "./ProductsTab";
 import { Button, Card, ErrorBox, Field, NoteInput, UnitInput } from "./ui";
 import type { TabProps } from "./types";
 
 const DAYS: Day[] = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
-const TEXT_FIELDS = ["name", "country", "address", "city", "contact_name", "email", "phone"] as const;
+const TEXT_FIELDS = ["name", "country", "address", "city", "contact_name", "email", "phone", "logo_url"] as const;
 type TextField = (typeof TEXT_FIELDS)[number];
 
 function useLabels() {
@@ -23,58 +24,58 @@ function useLabels() {
     contact_name: t.contactName,
     email: t.email,
     phone: t.phone,
+    logo_url: t.logoUrl,
   };
   return { ...text, delivery_days: t.deliveryDays, min_order_eur: t.minOrder, shipping_eur: t.shippingFee, lead_time_days: t.leadTime };
 }
 
-export function ProfileTab({ view, token, onView, notify }: TabProps) {
-  const { t, lang, fx } = useLang();
+export function ProfileTab({ view, onView, notify }: TabProps) {
+  const { t } = useLang();
   const labels = useLabels();
   const [editing, setEditing] = useState(false);
   const p = view.profile;
-  const pending = view.pending_profile;
-
-  const show = (k: keyof SupplierProfile, v: unknown): string => {
-    if (v === null || v === undefined || v === "" || (Array.isArray(v) && !v.length)) return t.notSet;
-    if (k === "delivery_days") return (v as string[]).map((d) => t.dayNames[d]).join(lang === "ja" ? "・" : ", ");
-    if (k === "min_order_eur" || k === "shipping_eur") return fx.money(v as number);
-    if (k === "lead_time_days") return `${v} ${t.days}`;
-    return String(v);
-  };
-  const row = (k: keyof SupplierProfile) => (
+  const pv = view.profile_view;
+  const pending = view.pending_profile_view;
+  const text = (k: TextField) => (
     <div key={k} style={{ display: "contents" }}>
       <dt>{labels[k]}</dt>
-      <dd style={{ overflowWrap: "anywhere" }}>{show(k, p[k])}</dd>
+      <dd style={{ overflowWrap: "anywhere" }}>{p[k] || t.notSet}</dd>
+    </div>
+  );
+  const row = (label: string, value: string) => (
+    <div key={label} style={{ display: "contents" }}>
+      <dt>{label}</dt>
+      <dd>{value}</dd>
     </div>
   );
 
   return (
     <>
       <Card>
-        <h2>{t.profileCompany}</h2>
+        <div className="jp-line-head" style={{ marginBottom: 0 }}>
+          <h2>{t.profileCompany}</h2>
+          <Avatar avatar={view.supplier_avatar} name={p.name} size={40} />
+        </div>
         <dl className="jp-kv" style={{ marginTop: 12 }}>
-          {TEXT_FIELDS.map(row)}
+          {TEXT_FIELDS.map(text)}
         </dl>
       </Card>
       <Card>
         <h2>{t.profileDelivery}</h2>
         <dl className="jp-kv" style={{ marginTop: 12 }}>
-          {(["delivery_days", "min_order_eur", "shipping_eur", "lead_time_days"] as const).map(row)}
+          {row(labels.delivery_days, pv.delivery_days_text || t.notSet)}
+          {row(labels.min_order_eur, pv.min_order_text)}
+          {row(labels.shipping_eur, pv.shipping_text)}
+          {row(labels.lead_time_days, pv.lead_time_text)}
         </dl>
       </Card>
-      {pending && (
-        <PendingPanel title={t.pendingReview} when={t.sentAt(formatDateTime(pending.submitted_at, lang))} note={pending.note_ja} commentPrefix={t.commentPrefix}>
-          <ChangeList
-            changes={Object.entries(pending.changes).map(([k, v]) => [labels[k as keyof SupplierProfile], show(k as keyof SupplierProfile, v)])}
-          />
-        </PendingPanel>
-      )}
+      {pending && <PendingPanel pending={pending} />}
       {editing ? (
-        <ProfileForm view={view} token={token} onView={onView} notify={notify} onClose={() => setEditing(false)} />
+        <ProfileForm view={view} onView={onView} notify={notify} onClose={() => setEditing(false)} />
       ) : (
         <div>
           <Button variant="secondary" onClick={() => setEditing(true)} icon={<Pencil aria-hidden />}>
-            {pending ? t.fixProfile : t.editProfile}
+            {view.pending_profile ? t.fixProfile : t.editProfile}
           </Button>
         </div>
       )}
@@ -82,20 +83,24 @@ export function ProfileTab({ view, token, onView, notify }: TabProps) {
   );
 }
 
-function ProfileForm({ view, token, onView, notify, onClose }: Pick<TabProps, "view" | "token" | "onView" | "notify"> & { onClose: () => void }) {
-  const { t, lang, fx: liveFx } = useLang();
+function ProfileForm({ view, onView, notify, onClose }: Pick<TabProps, "view" | "onView" | "notify"> & { onClose: () => void }) {
+  const { t, lang } = useLang();
   const labels = useLabels();
-  // Currency and rate stay fixed while the form is open, so the shown amounts and the submitted ones match.
-  const [fx] = useState(liveFx);
-  // Start from the pending proposal when there is one, so the supplier edits what they sent.
+  // Amounts are shown and entered in the view's currency; the API converts them.
+  const [money] = useState({
+    currency: view.currency,
+    min: view.profile_view.min_order_amount,
+    ship: view.profile_view.shipping_amount,
+  });
+  // Text fields and days start from the pending proposal when there is one, so the supplier edits what they sent.
   const base: SupplierProfile = { ...view.profile, ...(view.pending_profile?.changes ?? {}) };
-  const money = (eur: number | null) => (eur == null ? "" : String(fx.fromEur(eur)));
+  const asText = (n: number | null) => (n == null ? "" : String(n));
   const [text, setText] = useState<Record<TextField, string>>(
     () => Object.fromEntries(TEXT_FIELDS.map((k) => [k, base[k] ?? ""])) as Record<TextField, string>,
   );
   const [days, setDays] = useState<Day[]>(base.delivery_days ?? []);
-  const [minOrder, setMinOrder] = useState(money(base.min_order_eur));
-  const [shipping, setShipping] = useState(money(base.shipping_eur));
+  const [minOrder, setMinOrder] = useState(asText(money.min));
+  const [shipping, setShipping] = useState(asText(money.ship));
   const [lead, setLead] = useState(base.lead_time_days == null ? "" : String(base.lead_time_days));
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
@@ -117,9 +122,9 @@ function ProfileForm({ view, token, onView, notify, onClose }: Pick<TabProps, "v
     const min = amount(minOrder);
     const ship = amount(shipping);
     if (min === null || ship === null) return setError(t.invalidAmount);
-    if (min !== undefined && minOrder !== money(p.min_order_eur)) body.min_order = min;
-    if (ship !== undefined && shipping !== money(p.shipping_eur)) body.shipping = ship;
-    if (body.min_order !== undefined || body.shipping !== undefined) body.currency = fx.currency;
+    if (min !== undefined && minOrder !== asText(money.min)) body.min_order = min;
+    if (ship !== undefined && shipping !== asText(money.ship)) body.shipping = ship;
+    if (body.min_order !== undefined || body.shipping !== undefined) body.currency = money.currency;
     if (lead.trim() !== "") {
       const n = Number(lead);
       if (!Number.isInteger(n) || n < 0) return setError(t.invalidLeadTime);
@@ -130,7 +135,7 @@ function ProfileForm({ view, token, onView, notify, onClose }: Pick<TabProps, "v
     if (!changed) return setError(t.nothingChanged);
     setBusy(true);
     try {
-      onView(await portalApi.updateProfile(token, body));
+      onView(await portalApi.updateProfile(body));
       notify(t.profileSent);
       onClose();
     } catch (e) {
@@ -140,9 +145,9 @@ function ProfileForm({ view, token, onView, notify, onClose }: Pick<TabProps, "v
     }
   };
 
-  const input = (k: TextField, type = "text") => (
-    <Field key={k} label={labels[k]}>
-      <input type={type} value={text[k]} maxLength={200} onChange={(e) => setText({ ...text, [k]: e.target.value })} />
+  const input = (k: TextField, type = "text", note?: string) => (
+    <Field key={k} label={labels[k]} note={note}>
+      <input type={type} value={text[k]} maxLength={k === "logo_url" ? 400 : 200} onChange={(e) => setText({ ...text, [k]: e.target.value })} />
     </Field>
   );
 
@@ -161,27 +166,24 @@ function ProfileForm({ view, token, onView, notify, onClose }: Pick<TabProps, "v
           {input("email", "email")}
           {input("phone", "tel")}
         </div>
+        {input("logo_url", "url", t.logoUrlHint)}
         <div className="jp-field">
           <span>{labels.delivery_days}</span>
           <div className="jp-portal-days">
             {DAYS.map((d) => (
               <label key={d}>
-                <input
-                  type="checkbox"
-                  checked={days.includes(d)}
-                  onChange={(e) => setDays(e.target.checked ? [...days, d] : days.filter((x) => x !== d))}
-                />
+                <input type="checkbox" checked={days.includes(d)} onChange={(e) => setDays(e.target.checked ? [...days, d] : days.filter((x) => x !== d))} />
                 {t.dayNames[d]}
               </label>
             ))}
           </div>
         </div>
         <div className="jp-field-grid">
-          <Field label={labels.min_order_eur} note={<EurHint value={minOrder} fx={fx} lang={lang} />}>
-            <UnitInput value={minOrder} onChange={setMinOrder} unit={fx.symbol} />
+          <Field label={labels.min_order_eur}>
+            <UnitInput value={minOrder} onChange={setMinOrder} unit={money.currency} />
           </Field>
-          <Field label={labels.shipping_eur} note={<EurHint value={shipping} fx={fx} lang={lang} />}>
-            <UnitInput value={shipping} onChange={setShipping} unit={fx.symbol} />
+          <Field label={labels.shipping_eur}>
+            <UnitInput value={shipping} onChange={setShipping} unit={money.currency} />
           </Field>
         </div>
         <Field label={labels.lead_time_days}>

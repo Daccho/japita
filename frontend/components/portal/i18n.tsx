@@ -1,11 +1,9 @@
 "use client";
 
-// Supplier portal language toggle (日本語 default / English). Self-contained: does not use lib/i18n.tsx.
+// Supplier portal static labels (日本語 default / English). Data texts come from the portal view.
 
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
-import { useInitialLang } from "@/lib/initial-lang";
+import { createContext, useContext, useEffect, type ReactNode } from "react";
 import { PORTAL_LANG_COOKIE, saveLangCookie } from "@/lib/lang-cookies";
-import { moneyTools, useRates, type MoneyTools } from "@/lib/money";
 
 export type Lang = "ja" | "en";
 
@@ -15,6 +13,8 @@ const ja = {
   tabProducts: "商品",
   tabProfile: "プロフィール",
   navLabel: "ポータルメニュー",
+  menu: "メニュー",
+  account: "アカウント",
   signOut: "ログアウト",
   introRequests: "店舗からの商品に関する質問に回答します。",
   introOrders: "届いた注文を受注し、納品日を確定します。",
@@ -37,6 +37,8 @@ const ja = {
   leadTime: "リードタイム",
   days: "日",
   editProfile: "プロフィールを編集",
+  logoUrl: "ロゴ画像URL",
+  logoUrlHint: "任意・https:// で始まる画像のURL",
   fixProfile: "変更内容を修正",
   sendProfile: "変更を店舗に送信",
   profileSent: "プロフィールの変更を店舗に送信しました。店舗の確認後に反映されます。",
@@ -160,6 +162,8 @@ const en: Dict = {
   tabProducts: "Products",
   tabProfile: "Profile",
   navLabel: "Portal menu",
+  menu: "Menu",
+  account: "Account",
   signOut: "Sign out",
   introRequests: "Answer the restaurant's questions about your products.",
   introOrders: "Accept incoming orders and confirm the delivery date.",
@@ -181,6 +185,8 @@ const en: Dict = {
   leadTime: "Lead time",
   days: "days",
   editProfile: "Edit profile",
+  logoUrl: "Logo image URL",
+  logoUrlHint: "optional · an image URL starting with https://",
   fixProfile: "Edit proposed change",
   sendProfile: "Send changes to the restaurant",
   profileSent: "Profile changes sent. They take effect after the restaurant reviews them.",
@@ -293,45 +299,18 @@ const en: Dict = {
 };
 
 const DICTS: Record<Lang, Dict> = { ja, en };
-const STORAGE_KEY = "japita.portal.lang";
 
-// Japanese shows JPY; English shows USD. Both are converted from EUR with the ECB reference rate.
-const fxFor = (lang: Lang, rates: ReturnType<typeof useRates>) =>
-  lang === "ja" ? moneyTools("JPY", "ja-JP", rates, "欧州中央銀行") : moneyTools("USD", "en-US", rates, "ECB");
+type Ctx = { lang: Lang; t: Dict; setLang: (l: Lang) => void };
+const LangContext = createContext<Ctx>({ lang: "ja", t: ja, setLang: () => {} });
 
-type Ctx = { lang: Lang; t: Dict; setLang: (l: Lang) => void; fx: MoneyTools };
-const LangContext = createContext<Ctx>({ lang: "ja", t: ja, setLang: () => {}, fx: fxFor("ja", null) });
-
-export function PortalLangProvider({ children }: { children: ReactNode }) {
-  const initial = useInitialLang().portal;
-  const [lang, setLangState] = useState<Lang>(initial === "en" ? "en" : "ja");
-  // Without a cookie, fall back to a choice saved in localStorage and copy it into the cookie.
-  useEffect(() => {
-    if (initial) return;
-    try {
-      const saved = window.localStorage.getItem(STORAGE_KEY);
-      if (saved === "en" || saved === "ja") {
-        setLangState(saved);
-        saveLangCookie(PORTAL_LANG_COOKIE, saved);
-      }
-    } catch {
-      // storage unavailable: keep Japanese
-    }
-  }, [initial]);
+/** The portal language comes from the server render (cookie); changing it saves the cookie for the next render. */
+export function PortalLangProvider({ lang, setLang, children }: { lang: Lang; setLang: (l: Lang) => void; children: ReactNode }) {
   useEffect(() => {
     document.documentElement.lang = lang;
   }, [lang]);
-  const setLang = useCallback((l: Lang) => {
-    setLangState(l);
-    saveLangCookie(PORTAL_LANG_COOKIE, l);
-    try {
-      window.localStorage.setItem(STORAGE_KEY, l);
-    } catch {
-      // storage unavailable: choice lasts for this visit only
-    }
-  }, []);
-  const rates = useRates();
-  return <LangContext.Provider value={{ lang, t: DICTS[lang], setLang, fx: fxFor(lang, rates) }}>{children}</LangContext.Provider>;
+  return <LangContext.Provider value={{ lang, t: DICTS[lang], setLang }}>{children}</LangContext.Provider>;
 }
+
+export const saveLang = (l: Lang) => saveLangCookie(PORTAL_LANG_COOKIE, l);
 
 export const useLang = () => useContext(LangContext);

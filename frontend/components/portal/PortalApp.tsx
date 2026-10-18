@@ -1,185 +1,169 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Building2, CheckCircle2, ClipboardList, LinkIcon, Loader2, MessageSquareText, Package, RefreshCw, WifiOff } from "lucide-react";
-import AppShell, { type NavItem } from "@/components/AppShell";
-import { portalApi, PortalError, type PortalView } from "@/lib/portal";
-import { PortalLangProvider, useLang, type Lang } from "./i18n";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Building2, ClipboardList, Loader2, MessageSquareText, Package, RefreshCw, WifiOff } from "lucide-react";
+import AppShell, { LangSegment, type AvatarData, type NavItem } from "@/components/AppShell";
+import { LiveProvider, EmptyState, useToast, useView } from "@/components/live";
+import { NotificationsProvider, type NotificationFeed } from "@/components/Notifications";
+import PageHeader from "@/components/PageHeader";
+import { logout } from "@/lib/auth";
+import type { PortalTab, PortalView } from "@/lib/portal";
+import { PortalLangProvider, saveLang, useLang, type Lang } from "./i18n";
 import { OrdersTab } from "./OrdersTab";
 import { ProductsTab } from "./ProductsTab";
 import { ProfileTab } from "./ProfileTab";
 import { RequestsTab } from "./RequestsTab";
 import type { TabProps } from "./types";
 
-type Tab = "requests" | "orders" | "products" | "profile";
+/** The signed-in account (GET /auth/me). */
+export type PortalMe = {
+  display_name: string;
+  role: "restaurant" | "supplier";
+  avatar?: AvatarData | null;
+  place_text?: string | null;
+};
 
-/** Signed-in supplier account shown in the header; absent on shared-link pages. */
-export type PortalAccount = { name: string; onSignOut: () => void };
+const TABS: PortalTab[] = ["requests", "orders", "products", "profile"];
+const ICONS: Record<PortalTab, NavItem["icon"]> = {
+  requests: MessageSquareText,
+  orders: ClipboardList,
+  products: Package,
+  profile: Building2,
+};
 
-export function PortalApp({ token, account, homeHref }: { token: string; account?: PortalAccount | null; homeHref?: string }) {
+export const isTab = (v: string | null | undefined): v is PortalTab => !!v && (TABS as string[]).includes(v);
+
+/** The signed-in supplier's portal: server-rendered view data, kept fresh by polling and after each action. */
+export function PortalApp({
+  lang: initialLang,
+  me,
+  view,
+  feed,
+  tab,
+}: {
+  lang: Lang;
+  me: PortalMe | null;
+  view: PortalView | null;
+  feed: NotificationFeed | null;
+  tab: PortalTab | null;
+}) {
+  const router = useRouter();
+  const [lang, setLangState] = useState<Lang>(initialLang);
+  useEffect(() => setLangState(initialLang), [initialLang]);
+  const setLang = (l: Lang) => {
+    setLangState(l);
+    saveLang(l);
+    router.refresh();
+  };
+  // The open section lives in the URL (/suppliers?tab=…); switching shows it at once and updates the URL.
+  const [current, setCurrent] = useState<PortalTab | null>(tab);
+  useEffect(() => setCurrent(tab), [tab]);
+  const select = (id: PortalTab) => {
+    setCurrent(id);
+    router.replace(`/suppliers?tab=${id}`, { scroll: false });
+    window.scrollTo({ top: 0 });
+  };
   return (
-    <PortalLangProvider>
-      <Portal token={token} account={account ?? null} homeHref={homeHref} />
+    <PortalLangProvider lang={lang} setLang={setLang}>
+      <LiveProvider>
+        <NotificationsProvider
+          path={`/portal/me/notifications?lang=${lang}`}
+          seenPath={`/portal/me/notifications/seen?lang=${lang}`}
+          initial={feed}
+          onNavigate={(item) => isTab(item.tab) && select(item.tab)}
+        >
+          <Portal me={me} initialView={view} tab={current} select={select} />
+        </NotificationsProvider>
+      </LiveProvider>
     </PortalLangProvider>
   );
 }
 
-function Portal({ token, account, homeHref }: { token: string; account: PortalAccount | null; homeHref?: string }) {
-  const { t, fx } = useLang();
-  const [view, setView] = useState<PortalView | null>(null);
-  const [failure, setFailure] = useState<"notfound" | "offline" | null>(null);
-  const [tab, setTab] = useState<Tab | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
-  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const reload = useCallback(async () => {
-    try {
-      const v = await portalApi.view(token);
-      setView(v);
-      setFailure(null);
-      // Open the section that needs attention first, only on the first load.
-      setTab(
-        (cur) =>
-          cur ??
-          (v.requests.some((r) => r.state === "awaiting_reply")
-            ? "requests"
-            : v.orders.some((o) => o.state === "submitted")
-              ? "orders"
-              : v.requests.length
-                ? "requests"
-                : v.orders.length
-                  ? "orders"
-                  : "products"),
-      );
-    } catch (e) {
-      setFailure(e instanceof PortalError && e.status === 404 ? "notfound" : "offline");
-    }
-  }, [token]);
-
+function Portal({
+  me: initialMe,
+  initialView,
+  tab: chosen,
+  select,
+}: {
+  me: PortalMe | null;
+  initialView: PortalView | null;
+  tab: PortalTab | null;
+  select: (id: PortalTab) => void;
+}) {
+  const { t, lang, setLang } = useLang();
+  const notify = useToast();
+  const { data: me } = useView<PortalMe>(initialMe ? null : `/auth/me?lang=${lang}`, initialMe);
+  const { data: view, setData: setView, error, reload } = useView<PortalView>(`/portal/me?lang=${lang}`, initialView);
+  const [firstTab, setFirstTab] = useState<PortalTab | null>(initialView?.default_tab ?? null);
   useEffect(() => {
-    reload();
-  }, [reload]);
+    if (!firstTab && view) setFirstTab(view.default_tab);
+  }, [firstTab, view]);
+  useEffect(() => {
+    if (me?.role === "restaurant") window.location.replace("/restaurants");
+  }, [me?.role]);
+  const tab = chosen ?? firstTab;
 
-  const notify = useCallback((message: string) => {
-    setToast(message);
-    if (toastTimer.current) clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToast(null), 3500);
-  }, []);
+  const nav: NavItem[] = (view?.tabs ?? TABS.map((id) => ({ id, label: "", intro: "", count: 0 })))
+    .filter((s) => s.label && s.id !== "profile")
+    .map((s) => ({ id: s.id, label: s.label, icon: ICONS[s.id], current: tab === s.id, onSelect: () => select(s.id), count: s.count }));
+  // The tab chosen on first load stays open while the data refreshes.
 
-  const select = (id: Tab) => {
-    setTab(id);
-    window.scrollTo({ top: 0 });
-  };
-  const counts: Record<Tab, number> = {
-    requests: view?.requests.filter((r) => r.state === "awaiting_reply").length ?? 0,
-    orders: view?.orders.filter((o) => o.state === "submitted").length ?? 0,
-    products: 0,
-    profile: 0,
-  };
-  const sections: { id: Tab; label: string; intro: string; icon: NavItem["icon"] }[] = [
-    { id: "requests", label: t.tabRequests, intro: t.introRequests, icon: MessageSquareText },
-    { id: "orders", label: t.tabOrders, intro: t.introOrders, icon: ClipboardList },
-    { id: "products", label: t.tabProducts, intro: t.introProducts, icon: Package },
-    { id: "profile", label: t.tabProfile, intro: t.introProfile, icon: Building2 },
-  ];
-  const nav: NavItem[] = view
-    ? sections.map(({ id, label, icon }) => ({ id, label, icon, current: tab === id, onSelect: () => select(id), count: counts[id] }))
-    : [];
+  const name = me?.display_name ?? view?.supplier.name ?? "";
+  const signOut = () => logout().finally(() => window.location.replace("/"));
 
-  const frame = (body: React.ReactNode) => (
-    <AppShell
-      homeHref={homeHref}
-      controls={<LangToggle />}
-      account={account && { name: account.name, signOutLabel: t.signOut, onSignOut: account.onSignOut }}
-      navLabel={t.navLabel}
-      nav={nav}
-      sidebarFoot={
-        view && (
-          <>
-            {view.supplier.name}
-            <br />
-            {t.forRestaurant(view.restaurant)}
-          </>
-        )
-      }
-      after={
-        toast && (
-          <div className="jp-floating-toast" role="status">
-            <p className="jp-toast" style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <CheckCircle2 aria-hidden style={{ width: 16, height: 16, flexShrink: 0 }} />
-              {toast}
-            </p>
-          </div>
-        )
-      }
-    >
-      {body}
-    </AppShell>
-  );
+  const profileLabel = view?.tabs.find((s) => s.id === "profile")?.label ?? t.tabProfile;
+  const section = view?.tabs.find((s) => s.id === tab);
+  const props: TabProps | null = view ? { view, onView: setView, notify } : null;
 
-  if (failure === "notfound" || (failure === "offline" && !view)) {
-    const notFound = failure === "notfound";
-    return frame(
-      <section className="jp-panel jp-portal-empty" style={{ maxWidth: 520 }}>
-        <span className="jp-thumb-icon">{notFound ? <LinkIcon aria-hidden /> : <WifiOff aria-hidden />}</span>
-        <h2>{notFound ? t.notFoundTitle : t.offlineTitle}</h2>
-        <p className="jp-muted">{notFound ? t.notFoundBody : t.offlineBody}</p>
-        {!notFound && (
-          <button type="button" className="jp-action jp-primary" onClick={reload}>
-            <RefreshCw aria-hidden />
-            {t.retry}
-          </button>
-        )}
-      </section>,
-    );
-  }
-
-  if (!view || !tab) {
-    return frame(
-      <section className="jp-panel" role="status" style={{ maxWidth: 520 }}>
-        <p className="jp-muted" style={{ display: "flex", alignItems: "center", gap: 8, margin: 0, fontSize: 13 }}>
-          <Loader2 className="jp-spinner" aria-hidden style={{ width: 16, height: 16 }} />
-          {t.loading}
-        </p>
-      </section>,
-    );
-  }
-
-  const section = sections.find((s) => s.id === tab)!;
-  const props: TabProps = { view, token, onView: setView, reload, notify };
-  return frame(
-    <>
-      <div className="jp-header">
-        <div>
-          <span className="jp-kicker">{view.supplier.name}</span>
-          <h1 style={{ marginTop: 8 }}>{section.label}</h1>
-          <p className="jp-muted">{section.intro}</p>
-        </div>
-      </div>
-      <div className="jp-portal-body">
-        {tab === "requests" && <RequestsTab {...props} />}
-        {tab === "orders" && <OrdersTab {...props} />}
-        {tab === "products" && <ProductsTab {...props} />}
-        {tab === "profile" && <ProfileTab {...props} />}
-      </div>
-      {fx.note && tab !== "requests" && (
-        <footer className="jp-footer">
-          <span>{fx.note}</span>
-        </footer>
-      )}
-    </>,
-  );
-}
-
-function LangToggle() {
-  const { lang, setLang } = useLang();
   return (
-    <div className="jp-segment" role="group" aria-label="Language">
-      {(["ja", "en"] as Lang[]).map((l) => (
-        <button key={l} type="button" aria-pressed={lang === l} onClick={() => setLang(l)}>
-          {l.toUpperCase()}
-        </button>
-      ))}
-    </div>
+    <AppShell
+      homeHref="/suppliers"
+      controls={<LangSegment langs={["ja", "en"] as const} value={lang} onChange={setLang} />}
+      account={
+        name
+          ? {
+              name,
+              avatar: me?.avatar ?? view?.supplier_avatar,
+              place: me?.place_text ?? view?.for_restaurant_text,
+              signOutLabel: t.signOut,
+              menuLabel: t.account,
+              onSignOut: signOut,
+              profile: { label: profileLabel, onSelect: () => select("profile"), current: tab === "profile" },
+            }
+          : null
+      }
+      navLabel={t.navLabel}
+      menuLabel={t.menu}
+      nav={nav}
+      sidebarFoot={name ? { name, place: me?.place_text ?? view?.for_restaurant_text, avatar: me?.avatar ?? view?.supplier_avatar } : null}
+    >
+      {!view || !section || !props ? (
+        error ? (
+          <div style={{ maxWidth: 520 }}>
+            <EmptyState icon={<WifiOff aria-hidden />} title={t.offlineTitle} body={t.offlineBody} />
+            <button type="button" className="jp-action jp-primary" style={{ marginTop: 12 }} onClick={reload}>
+              <RefreshCw aria-hidden />
+              {t.retry}
+            </button>
+          </div>
+        ) : (
+          <p className="jp-muted" role="status" style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
+            <Loader2 className="jp-spinner" aria-hidden style={{ width: 16, height: 16 }} />
+            {t.loading}
+          </p>
+        )
+      ) : (
+        <>
+          <PageHeader kicker={view.supplier.name} title={section.label} sub={section.intro} />
+          <div className="jp-portal-body">
+            {tab === "requests" && <RequestsTab {...props} />}
+            {tab === "orders" && <OrdersTab {...props} />}
+            {tab === "products" && <ProductsTab {...props} />}
+            {tab === "profile" && <ProfileTab {...props} />}
+          </div>
+        </>
+      )}
+    </AppShell>
   );
 }
