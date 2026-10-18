@@ -65,7 +65,7 @@ export default function Shell({ children }: { children: ReactNode }) {
         <header className="jp-top">
           <div className="jp-workspace-brands">
             <Link href="/" className="jp-brand">
-              <Image className="jp-brand-logo" src="/japita-logo-ajitama-flat.svg" alt="Japita" width={128} height={80} priority />
+              <Image className="jp-brand-logo" src="/japita-logo-ajitama-flat.svg" alt="Japita" width={128} height={92} priority />
             </Link>
             <span className="jp-brand-divider" aria-hidden />
             <div className="jp-restaurant">

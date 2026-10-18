@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 10 128 80" width="128" height="80" role="img" aria-labelledby="title description">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 10 128 92" width="128" height="92" role="img" aria-labelledby="title description">
   <title id="title">Japita</title>
   <desc id="description">Flat illustrated shopping cart and chef hat above Japita. The right wheel is the dot of the i.</desc>
   <!-- Shared center: word i = 4 + 50 * 1.55 = 81.5;
@@ -12,7 +12,7 @@
     <circle cx="28" cy="55" r="3.5" fill="#3A332B"/>
     <circle cx="47" cy="55" r="3.5" fill="#E0482B"/>
   </g>
-  <g transform="translate(4 55) scale(1.55)" fill="none" stroke="#1E1B18" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+  <g transform="translate(4 65) scale(1.55)" fill="none" stroke="#1E1B18" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
     <path d="M12 0v10c0 7-11 7-11 1"/>
     <path d="M29 5v10M29 10a5 5 0 1 1 0-.01"/>
     <path d="M34 5v16M34 10a5 5 0 1 0 0-.01"/>
