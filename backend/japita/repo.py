@@ -6,11 +6,12 @@ Run `uv run python -m japita.repo seed <file>` to load existing data (e.g. tests
 import json
 import os
 import re
+import threading
 from datetime import datetime, timezone
 from pathlib import Path
 
 from dotenv import load_dotenv
-from sqlalchemy import JSON, Column, DateTime, Integer, String, create_engine, delete, select
+from sqlalchemy import JSON, Column, DateTime, Integer, String, UniqueConstraint, create_engine, delete, select
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Session
 
@@ -52,24 +53,51 @@ class LLMCallLog(Base):
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
+class DrawingAsset(Base):
+    """Reusable ingredient/form artwork; never replaced by restaurant state saves."""
+    __tablename__ = "product_drawings"
+    key = Column(String, primary_key=True)
+    ingredient = Column(String, nullable=False)
+    form = Column(String, nullable=False)
+    status = Column(String, nullable=False, index=True, default="pending")
+    version = Column(Integer, nullable=False, default=0)
+    data = Column(JsonType, nullable=False)
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    __table_args__ = (UniqueConstraint("ingredient", "form"),)
+
+
+class DrawingMatch(Base):
+    """Normalized names and durable jobs; states share an ingredient/form asset."""
+    __tablename__ = "drawing_matches"
+    key = Column(String, primary_key=True)
+    status = Column(String, nullable=False, index=True, default="pending")
+    version = Column(Integer, nullable=False, default=0)
+    data = Column(JsonType, nullable=False)
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+
+
 _engine = None
+_engine_lock = threading.Lock()
 
 
 def engine():
     global _engine
     if _engine is None:
-        url = os.environ.get("DATABASE_URL")
-        if not url:
-            raise RuntimeError("DATABASE_URL is not set (see .env.example)")
-        # Hosted Postgres (e.g. Neon) hands out postgres:// or postgresql:// URLs; we use the psycopg 3 driver.
-        url = re.sub(r"^postgres(ql)?://", "postgresql+psycopg://", url)
-        _engine = create_engine(url, pool_pre_ping=True)
-        Base.metadata.create_all(_engine)
-        if _engine.dialect.name == "postgresql":
-            with _engine.begin() as conn:
-                conn.exec_driver_sql("ALTER TABLE llm_calls ADD COLUMN IF NOT EXISTS evolus_conversation_id VARCHAR")
-                conn.exec_driver_sql("DROP TABLE IF EXISTS webauthn_challenges, passkeys CASCADE")
-                conn.exec_driver_sql("ALTER TABLE IF EXISTS users DROP COLUMN IF EXISTS webauthn_user_id")
+        with _engine_lock:
+            if _engine is None:
+                url = os.environ.get("DATABASE_URL")
+                if not url:
+                    raise RuntimeError("DATABASE_URL is not set (see .env.example)")
+                # Hosted Postgres hands out postgres:// or postgresql://; use the psycopg 3 driver.
+                url = re.sub(r"^postgres(ql)?://", "postgresql+psycopg://", url)
+                initialized = create_engine(url, pool_pre_ping=True)
+                Base.metadata.create_all(initialized)
+                if initialized.dialect.name == "postgresql":  # column added after the table first shipped
+                    with initialized.begin() as conn:
+                        conn.exec_driver_sql("ALTER TABLE llm_calls ADD COLUMN IF NOT EXISTS evolus_conversation_id VARCHAR")
+                        conn.exec_driver_sql("DROP TABLE IF EXISTS webauthn_challenges, passkeys CASCADE")
+                        conn.exec_driver_sql("ALTER TABLE IF EXISTS users DROP COLUMN IF EXISTS webauthn_user_id")
+                _engine = initialized
     return _engine
 
 

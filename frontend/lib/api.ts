@@ -1,4 +1,5 @@
 // Thin client for the FastAPI backend. Types mirror backend/japita (api.py, calc.py, stock.py, orders.py, portal.py).
+import type { DrawingReference } from "@/lib/drawings";
 
 // Same-origin proxy to the backend (next.config.ts), so the session cookie travels with every request.
 export const API_BASE = "/api";
@@ -173,6 +174,7 @@ export type PendingUpdate = {
   submitted_at: string;
 };
 export type Offer = {
+  drawing: DrawingReference;
   id: string;
   supplier_id: string;
   ingredient: string;
@@ -245,13 +247,21 @@ export type Week = {
   stock: Record<string, { usable: number; confirmed_arrivals: number; unit: string; usable_until?: string | null }>;
 };
 export type RecipeLine = { ingredient: string; unit: "g" | "ml"; per_item: Record<string, number> };
+export type MenuDish = {
+  id: string; name: string; description: string; price_eur: number | null;
+  group: "ramen" | "extras" | "sides"; ingredients: string[]; ingredient_keys: string[];
+};
+export type RestaurantIngredient = { id: string; name: string; drawing: DrawingReference };
+export type RestaurantMenu = { items: MenuDish[]; ingredients: RestaurantIngredient[] };
+
 export type State = {
   profiles: Record<string, Profile>;
   suppliers: Record<string, Supplier>;
   offers: Offer[];
   clarifications: Clarification[];
   review_flags: Record<string, Record<string, { read_1: unknown; read_2: unknown }>>;
-  recipe: { name?: string; lines: RecipeLine[] };
+  recipe: { name?: string; lines: RecipeLine[]; menu_items?: MenuDish[] };
+  menu?: RestaurantMenu;
   week: Week;
   purchase_orders?: PurchaseOrder[];
 };
@@ -387,6 +397,7 @@ const q = (profileId: string) => `profile_id=${encodeURIComponent(profileId)}`;
 
 export const api = {
   state: () => request<State>("/state"),
+  saveMenu: (items: MenuDish[]) => request<RestaurantMenu>("/menu", json("PUT", { items })),
   baskets: (profileId: string) => request<BasketResult>(`/baskets?${q(profileId)}`),
   timeline: (profileId: string) => request<Timeline>(`/stock/timeline?${q(profileId)}`),
   evidence: (offerId: string, profileId: string) => request<Evidence>(`/offers/${offerId}/evidence?${q(profileId)}`),

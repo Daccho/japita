@@ -9,6 +9,7 @@ Code: `frontend/app/globals.css` (`--aj-*` tokens on `:root`, the Ajitama layer 
 | --- | --- | --- |
 | Header, advisor bubble, popup head | `--aj-yolk` | `#F4BC2B` |
 | Text, borders, primary buttons, selected tabs | `--aj-ink` | `#1E1B18` |
+| Illustrated containers | `--aj-container` | `#3A332B` |
 | Header subtitle | `--aj-ink-soft` | `#5A4512` |
 | Secondary text | `--aj-muted` | `#625B52` |
 | Light dividers, neutral badges | `--aj-line` | `#ECE8DF` |
@@ -33,7 +34,7 @@ Code: `frontend/app/globals.css` (`--aj-*` tokens on `:root`, the Ajitama layer 
 - **Inputs:** 2px ink border, radius 10, white, 500 weight; selects add the `0 2px 0` edge and bold text; placeholders muted; 16px text on touch. Focus everywhere: `2px solid chili`, offset 2px.
 - **Badges:** radius 6, 12px bold. Default yolk-tint/ink; warning chili-tint/chili-text; neutral line/muted; Required preference badges ink/white; counts are ink chips; the unread bell count is a chili circle with a 2px ink ring.
 - **Cards and lists:** white, 2px ink border, radius 12 (supplier list 14) and light internal dividers. Expanded supplier rows use detail-bg and a dashed top line; nested offer cards stay white. Draft/proposal panels yolk-tint; missing terms chili.
-- **Header:** yolk background, 2px ink bottom border, restaurant artwork unchanged, Japita logo on a white 6px-radius plate.
+- **Header:** yolk background, 2px ink bottom border, restaurant artwork unchanged. The small native flat Japita logo sits directly on yellow, before the divider and restaurant identity; see `mockup/assets/README.md`.
 - **Navigation:** white rail with a 2px ink divider; items 42px high, bold 15px, 19px Lucide icons; active item = yolk-tint surface only (no red marker).
 - **Advisor:** 56px yolk bubble with 2.5px ink border and `0 4px 0` edge; popup white with 2px ink border, 16px radius, `7px 7px 0` shadow, yolk header; suggested-basket block is yolk-tint.
 - **Notifications popover / toasts:** same popup treatment (flat on ≤700px); toasts yolk-tint with a 3px ink left bar; errors chili-text bold.
@@ -45,7 +46,7 @@ Code: `frontend/app/globals.css` (`--aj-*` tokens on `:root`, the Ajitama layer 
 
 - Styling only: structure, text, data and behavior stay as implemented; no invented features or numbers.
 - Keep the current layout geometry, breakpoints (900/700/480px) and wrapping; control heights are minimums.
-- Keep Lucide icons, the Kumo and Japita artwork, and product photos (only corners change to 12px).
+- Keep Lucide icons and Kumo artwork. The user's subsequent logo redesign and approved product drawing library are active. See [product drawings](product-drawings.md).
 - Light Ajitama palette regardless of OS appearance (G2). No red selection markers in navigation (G6).
 - Actions stay beside page titles (not in the header). Advisor keeps its position logic and icons; no unread badge or chat icon is added.
 - Pending tint/red bar only for a real "candidate with pending terms" state; never relabel suppliers.

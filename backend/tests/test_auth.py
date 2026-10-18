@@ -37,6 +37,8 @@ def login(c, username="kumo-milano", password=PW, role="restaurant"):
 
 def test_owner_routes_need_a_session(client):
     assert client.get("/state").status_code == 401
+    assert client.get("/menu").status_code == 401
+    assert client.get("/drawings").status_code == 401
     assert client.get("/llm-calls").status_code == 401
     assert client.put("/week", json={}).status_code == 401
     assert client.get("/auth/me").status_code == 401
@@ -74,6 +76,8 @@ def test_repeated_failures_are_throttled(client):
 def test_supplier_account_cannot_use_the_restaurant_workspace(client):
     assert login(client, "tokyo-shokuhin", role="supplier").status_code == 200
     assert client.get("/state").status_code == 403
+    assert client.get("/menu").status_code == 403
+    assert client.get("/drawings").status_code == 403
     assert client.post("/baskets/approve", json={}, headers={"origin": APP}).status_code == 403
     r = client.get("/auth/supplier/portal")
     assert r.status_code == 200 and r.json()["supplier_id"] == "S1"
@@ -116,3 +120,21 @@ def test_demo_accounts_only_with_flag(client, monkeypatch):
     assert r.status_code == 200
     assert client.get("/state").status_code == 403  # suppliers never see restaurant data
     assert client.get("/auth/supplier/portal").json()["supplier_id"] == "S3"
+
+
+def test_startup_prepares_demo_accounts_and_runs_drawing_lifecycle(tmp_path, monkeypatch):
+    from japita import drawings
+    from japita.api import app
+
+    monkeypatch.setenv("DATABASE_URL", f"sqlite:///{tmp_path / 'startup.db'}")
+    monkeypatch.setenv("DEMO_ACCOUNTS", "1")
+    monkeypatch.setattr(repo, "_engine", None)
+    repo.seed(FIXTURE)
+    lifecycle = []
+    monkeypatch.setattr(drawings, "start", lambda **kwargs: lifecycle.append(("start", kwargs)))
+    monkeypatch.setattr(drawings, "stop", lambda: lifecycle.append(("stop", {})))
+    with TestClient(app) as client:
+        assert login(client, "restaurant1", "restaurant1").status_code == 200
+        assert client.get("/menu").status_code == 200
+        assert lifecycle == [("start", {"scan_catalog": True})]
+    assert lifecycle[-1] == ("stop", {})
