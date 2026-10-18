@@ -50,6 +50,7 @@ PUBLIC_PATHS = [
     re.compile(r"^/portal/[^/]+(/.*)?$"),                # supplier portal: secret link token
     re.compile(r"^/state/seed$"),                        # guarded by X-Admin-Key instead
     re.compile(r"^/health(/.*)?$"),
+    re.compile(r"^/fx$"),                                # public ECB reference rates
     re.compile(r"^/(docs|redoc|openapi\.json)$"),
 ]
 ROLES = ("restaurant", "supplier")

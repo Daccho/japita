@@ -16,7 +16,7 @@ from fastapi import FastAPI, File, Header, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field
 
-from . import auth, calc, jobs, repo
+from . import auth, calc, fx, jobs, repo
 from .agent import run_agent
 from .errors import AppError, from_value_error, install as install_error_handlers
 from .evolus import EvolusAgent, run_agent_evolus
@@ -503,7 +503,16 @@ def supplier_reply(token: str, body: SupplierReply):
     return _supplier_view(store, c)
 
 
+# --- Currency ----------------------------------------------------------------------------------------
+
+@app.get("/fx")
+def fx_rates():
+    """Latest ECB reference rates from EUR, for showing EUR prices in the UI language's currency."""
+    return fx.rates()
+
+
 # --- AMD evidence ------------------------------------------------------------------------------------
+
 
 @app.get("/health/model")
 def health_model():

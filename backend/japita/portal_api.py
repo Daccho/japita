@@ -5,10 +5,10 @@ from typing import Any, Literal
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from . import orders, portal, repo
+from . import fx, orders, portal, repo
 from .extract import translate
 from .llm import LLM
-from .errors import AppError, from_value_error
+from .errors import AppError, DomainError, from_value_error
 from .store import Store
 
 router = APIRouter(tags=["supplier portal"])
@@ -27,6 +27,8 @@ class ChangeDelivery(BaseModel):
 class ProductUpdate(BaseModel):
     product: str | None = None
     price_eur: float | None = Field(default=None, ge=0)
+    price: float | None = Field(default=None, ge=0, description="Price in `currency`; converted to EUR on submission")
+    currency: str | None = Field(default=None, description="EUR, JPY or USD")
     pack_size: float | None = Field(default=None, gt=0)
     attributes: dict[str, Any] = {}
     note_ja: str | None = Field(default=None, max_length=1000)
@@ -37,7 +39,9 @@ class NewProduct(BaseModel):
     product: str = Field(min_length=1)
     unit: Literal["g", "ml"]
     pack_size: float = Field(gt=0)
-    price_eur: float = Field(ge=0)
+    price_eur: float | None = Field(default=None, ge=0)
+    price: float | None = Field(default=None, ge=0, description="Price in `currency`; converted to EUR on submission")
+    currency: str | None = Field(default=None, description="EUR, JPY or USD")
     origin_route: Literal["japan", "europe", "italy"] = "japan"
     attributes: dict[str, Any] = {}
     note_ja: str | None = Field(default=None, max_length=1000)
@@ -50,6 +54,20 @@ def _load(token: str) -> tuple[dict, Store, dict]:
         return data, store, portal.supplier_by_token(store, token)
     except KeyError:
         raise AppError(404, "link_not_found", "ページが見つかりません（リンクをご確認ください）")
+
+
+def _priced(body: BaseModel) -> dict:
+    """The request as a dict with `price_eur` set: a `price` + `currency` pair is converted with the current
+    ECB rate and recorded as `price_input`."""
+    d = body.model_dump()
+    price, currency = d.pop("price"), d.pop("currency")
+    if price is None and currency is None:
+        return d
+    if price is None or currency is None:
+        raise DomainError("invalid_input", "price and currency go together", 422)
+    eur, rate, rate_date = fx.to_eur(price, currency.upper())
+    return {**d, "price_eur": eur,
+            "price_input": {"amount": price, "currency": currency.upper(), "rate": rate, "rate_date": rate_date}}
 
 
 def _translations(note_ja: str | None) -> tuple[dict, list]:
@@ -114,9 +132,13 @@ def portal_change_delivery(token: str, po_id: str, body: ChangeDelivery):
 @router.post("/portal/{token}/products/{offer_id}")
 def portal_update_product(token: str, offer_id: str, body: ProductUpdate):
     data, store, sup = _load(token)
+    try:
+        changes = _priced(body)
+    except ValueError as e:
+        raise from_value_error(e, 422)
     tr, calls = _translations(body.note_ja)
     try:
-        portal.propose_update(store, sup["id"], offer_id, {**body.model_dump(), "note_translations": tr})
+        portal.propose_update(store, sup["id"], offer_id, {**changes, "note_translations": tr})
     except KeyError:
         raise AppError(404, "product_not_found", "商品が見つかりません")
     except ValueError as e:
@@ -129,9 +151,15 @@ def portal_update_product(token: str, offer_id: str, body: ProductUpdate):
 @router.post("/portal/{token}/products")
 def portal_new_product(token: str, body: NewProduct):
     data, store, sup = _load(token)
+    try:
+        product = _priced(body)
+        if product.get("price_eur") is None:
+            raise DomainError("invalid_input", "price is required", 422)
+    except ValueError as e:
+        raise from_value_error(e, 422)
     tr, calls = _translations(body.note_ja)
     try:
-        portal.propose_new(store, sup["id"], {**body.model_dump(), "note_translations": tr})
+        portal.propose_new(store, sup["id"], {**product, "note_translations": tr})
     except ValueError as e:
         raise from_value_error(e, 422)
     repo.save_state(data)

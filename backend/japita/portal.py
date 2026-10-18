@@ -54,6 +54,8 @@ def propose_update(store: Store, supplier_id: str, offer_id: str, changes: dict)
         raise KeyError(offer_id)
     values, evidence = _typed_attributes(store, offer["ingredient"], changes.get("attributes") or {})
     proposal = {k: changes[k] for k in ("product", "price_eur", "pack_size") if changes.get(k) is not None}
+    if changes.get("price_input") and "price_eur" in proposal:
+        proposal["price_input"] = changes["price_input"]
     if values:
         proposal["attributes"], proposal["evidence"] = values, evidence
     if not proposal:
@@ -88,6 +90,7 @@ def propose_new(store: Store, supplier_id: str, data: dict) -> dict:
     offer = {
         "id": f"O-new-{n}", "supplier_id": supplier_id, "ingredient": data["ingredient"], "product": data["product"],
         "unit": data["unit"], "pack_size": data["pack_size"], "price_eur": data["price_eur"],
+        **({"price_input": data["price_input"]} if data.get("price_input") else {}),
         "offer_date": _now()[:10], "origin_route": data["origin_route"],
         "comparison_group": data.get("comparison_group") or f"{data['ingredient']}:supplier_proposed",
         "attributes": values, "evidence": evidence, "document": None,
@@ -105,7 +108,9 @@ def apply_update(store: Store, offer_id: str) -> dict:
     proposal = offer.pop("pending_update", None)
     if proposal is None:
         raise DomainError("no_pending_update", "no pending supplier update")
-    for k in ("product", "price_eur", "pack_size"):
+    if "price_eur" in proposal:
+        offer.pop("price_input", None)
+    for k in ("product", "price_eur", "pack_size", "price_input"):
         if k in proposal:
             offer[k] = proposal[k]
     offer["attributes"].update(proposal.get("attributes", {}))
