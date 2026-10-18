@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Check, Sparkles, Store, TriangleAlert } from "lucide-react";
+import { Check, ChevronDown, SlidersHorizontal } from "lucide-react";
 import { api, errorText, type BasketView, type ClarificationsView } from "@/lib/api";
 import { useI18n, type Key } from "@/lib/i18n";
 import { useWorkspace } from "@/components/workspace";
@@ -13,13 +13,13 @@ import Clarifications from "@/components/Clarifications";
 import { InfoTip } from "@/components/InfoTip";
 import ProductDrawing from "@/components/ProductDrawing";
 import ImportChecks from "@/components/ImportChecks";
-import PurchaseBrief from "@/components/PurchaseBrief";
+import OrderPlanOverview from "@/components/OrderPlanOverview";
 import Loading from "@/components/pages/Loading";
 
 // Order plans: compare the plans the server calculated, approve one, then send the supplier orders.
 export default function Basket({ initial, initialPlan, questions }: { initial: BasketView | null; initialPlan: string | null; questions: ClarificationsView | null }) {
   const { t, lang } = useI18n();
-  const { ask, advisor } = useWorkspace();
+  const { data } = useWorkspace();
   const bump = useBump();
   const toast = useToast();
   const [kind, setKindState] = useState<string | null>(initialPlan);
@@ -36,6 +36,18 @@ export default function Basket({ initial, initialPlan, questions }: { initial: B
   if (!v) return <Loading title={t("bk.title")} />;
   const L = (k: string) => v.labels[k] ?? t(k as Key);
   const s = v.selected;
+  const supplierHref = (offerId: string) => {
+    const supplierId = data?.state.offers.find((offer) => offer.id === offerId)?.supplier_id;
+    return `/restaurants/suppliers${supplierId ? `?supplier=${encodeURIComponent(supplierId)}` : ""}`;
+  };
+  const excluded = [...v.excluded];
+  // Preserve brief-only exclusions, while showing each product once on this page.
+  for (const offer of data?.brief.excluded ?? []) {
+    if (!excluded.some((item) => item.offer_id === offer.offer_id)) {
+      const supplierId = data?.state.offers.find((item) => item.id === offer.offer_id)?.supplier_id;
+      excluded.push({ ...offer, supplier: data?.state.suppliers[supplierId ?? ""]?.name ?? "" });
+    }
+  }
 
   const approve = async () => {
     if (!s) return;
@@ -63,56 +75,25 @@ export default function Basket({ initial, initialPlan, questions }: { initial: B
   );
 
   return (
-    <>
-      <PurchaseBrief />
+    <div className="jp-order-plans">
       <PageHeader
-        kicker={L("bk.kicker")}
         title={L("bk.title")}
-        sub={L("bk.sub")}
+        sub={t("op.subtitle")}
         actions={
-          <Link href="/restaurants/suppliers" className="jp-action">
-            <Store aria-hidden />
-            {L("nav.suppliers")}
+          <Link href="/restaurants?edit=week#planning" className="jp-action jp-plan-edit">
+            <SlidersHorizontal aria-hidden />
+            {t("op.editInputs")}
           </Link>
         }
       />
       <div className="jp-stack">
-        {v.no_on_time && (
-          <div className="jp-alert" role="status">
-            <TriangleAlert aria-hidden />
-            <div style={{ minWidth: 0 }}>
-              <h3>{v.no_on_time.title}</h3>
-              <p>{v.no_on_time.body}</p>
-              {v.no_on_time.questions.map((q) => (
-                <p key={`${q.offer_id}-${q.field}`} style={{ margin: "4px 0", color: "var(--jp-text)" }}>
-                  {q.text}
-                  <InfoTip hint={q.hint} />
-                  {q.drafted_text && (
-                    <Badge style={{ marginLeft: 6 }}>{q.drafted_text}</Badge>
-                  )}
-                </p>
-              ))}
-              <button
-                type="button"
-                className="jp-action jp-primary"
-                style={{ marginTop: 10 }}
-                disabled={advisor.running}
-                onClick={() => ask(v.no_on_time!.ask_question)}
-              >
-                <Sparkles aria-hidden />
-                {v.no_on_time.ask_label}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {v.conflict_text && <div className="jp-alert">{v.conflict_text}</div>}
+        <OrderPlanOverview view={v} />
 
         {v.mode === "choose" && s && (
           <>
             <section className="jp-panel">
               <div className="jp-line-head" style={{ marginBottom: 4 }}>
-                <h2>{L("bk.options")}</h2>
+                <h2>{t("op.options")}</h2>
               </div>
               <p className="jp-section-note">{L("bk.optionsNote")}</p>
               <div className="jp-basket-options">
@@ -279,31 +260,32 @@ export default function Basket({ initial, initialPlan, questions }: { initial: B
           </>
         )}
 
-        {v.mode === "none" && <section className="jp-panel">{L("bk.planNone")}</section>}
-
         <section className="jp-panel" id="questions">
-          <div className="jp-line-head">
-            <h2>{L("cl.title")}</h2>
-          </div>
           <Clarifications initial={questions} />
         </section>
 
-        {v.excluded.length > 0 && (
+        {excluded.length > 0 && (
           <section className="jp-panel">
-            <details className="jp-source">
-              <summary style={{ cursor: "pointer" }}>{L("ex.title")}</summary>
+            <details className="jp-plan-excluded">
+              <summary>
+                <span>{t("op.excluded")} <span className="jp-plan-count">{excluded.length}</span></span>
+                <ChevronDown aria-hidden />
+              </summary>
               <div className="jp-source-body">
-                {v.excluded.map((x) => (
+                {excluded.map((x) => (
                   <div key={x.offer_id} className="jp-row">
                     <div>
                       <h3>
                         {x.product}
-                        <span className="jp-muted" style={{ fontWeight: 400 }}> · {x.supplier}</span>
+                        {x.supplier && <span className="jp-muted" style={{ fontWeight: 400 }}> · {x.supplier}</span>}
                       </h3>
                       {x.reasons.map((r) => (
                         <p key={r}>{r}</p>
                       ))}
                     </div>
+                    <Link className="jp-action" href={supplierHref(x.offer_id)}>
+                      {t("op.reviewProduct")}
+                    </Link>
                   </div>
                 ))}
               </div>
@@ -311,6 +293,6 @@ export default function Basket({ initial, initialPlan, questions }: { initial: B
           </section>
         )}
       </div>
-    </>
+    </div>
   );
 }

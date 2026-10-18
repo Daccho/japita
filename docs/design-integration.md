@@ -59,6 +59,14 @@ Keyword filtering, natural-language interpretation of a bounded catalog, and dis
 - **Decision ownership:** flag capability gaps and leave the build/adapt/defer decision to Diego and his teammate together.
 - **Supplier-search priority:** natural-language search is important. Assess the work needed; do not assume that keyword search and filters alone satisfy the intended experience. First-release coverage remains a joint implementation decision.
 
+### Connected Order plans screen, 18 October 2026
+
+The user approved reorganizing the connected `/restaurants/basket` screen without changing infrastructure or purchasing behavior. `OrderPlanOverview.tsx` uses the existing basket view and shared purchasing brief: one coverage warning, a shortage table that becomes stacked ingredient rows on mobile, and a complete list of unresolved restaurant decisions and supplier information. Chef approval is labeled as a pending review, not as an approved outcome. Product reviews use the existing supplier screen; supplier questions use the existing advisor and message actions.
+
+The page title comes first, with a link to the existing purchasing-input editor. The page no longer includes the advisor's full `PurchaseBrief` or its self-link. Plan comparisons, delivery warnings, trade-offs, approval confirmation and supplier orders retain their existing data and actions. Supplier messages and excluded products are expandable; exclusions from the two existing responses appear once per product. The supplier-message empty state describes the message view without contradicting a separately reported draft status. English and Italian labels are included. The floating advisor and standalone mockup are unchanged.
+
+Local verification uses an isolated fictional SQLite database, not the deployed workspace. Browser checks cover desktop and mobile layout, blocked and available plans, supplier drafts/replies and disclosure controls. TypeScript, focused ESLint and a production frontend build check the implementation. Google Fonts were preloaded for local checks because Node's font downloads timed out; the app's font configuration is unchanged. Deployment remains separate.
+
 ## Natural-language supplier search: implementation assessment
 
 This is a source-level assessment and a proposed approach for team review, not an implemented or runtime-verified feature.

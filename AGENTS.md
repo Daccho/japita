@@ -104,6 +104,8 @@ Full awards table and checklist: `docs/hackathon.md`.
 
 Record important decisions here (date — decision — reason) so every agent shares the same context.
 
+- 2026-10-18 — User approved a frontend-only cleanup of the connected Order plans screen: one coverage warning, a responsive shortage table, separate restaurant/supplier review rows, and expandable messages and exclusions. Behavior and verification are recorded in `docs/design-integration.md`.
+
 - 2026-10-18 — User approved expanding both ingredient illustrations and the fictional supplier catalog across cuisines, then reviewed and approved all 119 additions and requested pulling and pushing the repo. No new browsing interface was requested. Multilingual matching, additive import and evidence limits are documented in `docs/product-drawings.md`.
 
 - 2026-10-18 — User selected their attached JP seal combined with option 04's lettering and authorized applying it to the app. Current assets, responsive sizing, generation prompt and preserved earlier variants are documented in `mockup/assets/README.md`.
