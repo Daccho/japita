@@ -1,5 +1,7 @@
-"""Shared test setup: fixed ECB rates, so no test reaches the network for currency conversion."""
+"""Shared test setup: fixed ECB rates and no default database, so offline tests reach neither the network nor the
+database named in .env."""
 
+import os
 import time
 
 import pytest
@@ -8,6 +10,21 @@ from japita import fx
 
 RATES = {"JPY": 177.81, "USD": 1.1253}
 RATE_DATE = "2026-10-16"
+
+
+@pytest.fixture(autouse=True)
+def no_default_database(request):
+    """Offline tests never reach the database named in .env; tests that need one set DATABASE_URL themselves.
+
+    Not done with monkeypatch, so a test's monkeypatch.undo() cannot bring the .env value back."""
+    if request.node.get_closest_marker("live") is not None:
+        yield
+        return
+    saved = os.environ.pop("DATABASE_URL", None)
+    yield
+    os.environ.pop("DATABASE_URL", None)
+    if saved is not None:
+        os.environ["DATABASE_URL"] = saved
 
 
 @pytest.fixture(autouse=True)

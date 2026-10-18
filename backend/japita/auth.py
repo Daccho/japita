@@ -48,6 +48,7 @@ MIN_PASSWORD_LEN = 12
 PUBLIC_PATHS = [
     re.compile(r"^/auth/(login|logout|me)$"),
     re.compile(r"^/state/seed$"),                        # guarded by X-Admin-Key instead
+    re.compile(r"^/admin/import-rules(/.*)?$"),          # guarded by X-Admin-Key instead
     re.compile(r"^/health(/.*)?$"),
     re.compile(r"^/fx$"),                                # public ECB reference rates
     re.compile(r"^/(docs|redoc|openapi\.json)$"),
