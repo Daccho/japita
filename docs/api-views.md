@@ -164,6 +164,13 @@ Products for ingredients the restaurant does not buy stay listed with status `no
               "applied_text" | null }] }
 ```
 
+A draft question about an offer that already fails another required rule becomes `not_needed`: it is left out of
+this view and of the agent's `drafts`, and `POST /clarifications/{id}/approve` answers 409 `clarification_not_needed`.
+A failed required rule reads in plain words where the catalog has a phrase (`fail.<ingredient>.<field>`), e.g. "No
+kansui — not usable for Hakata ramen noodles", in offer card statuses and plan `excluded` reasons. Profile rule labels
+are translated where the catalog has them (`rl.<English label>`), e.g. IT "Bassa idratazione (30% o meno), stile
+Hakata".
+
 ## GET /views/profile · PATCH /profiles/{id}/rules/move · PATCH /profiles/{id} · PUT /profiles/{id}
 
 ```jsonc

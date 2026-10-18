@@ -52,7 +52,7 @@ def _days_text(days, lang: str) -> str:
 
 
 def _lead_text(n, lang: str) -> str:
-    return f"{n}{pt(lang, 'days')}" if lang == "ja" else f"{n} {pt(lang, 'days')}"
+    return f"{n}{pt(lang, 'days')}" if lang == "ja" else f"{n} {pt(lang, 'day' if n == 1 else 'days')}"
 
 
 def _profile_change_text(field: str, value, lang: str, money: Money) -> str:
@@ -197,8 +197,8 @@ def decorate(store, view: dict, lang: str = "ja", money: Money | None = None) ->
             "min_order_amount": money.amount(prof["min_order_eur"]) if prof.get("min_order_eur") is not None else None,
             "shipping_amount": money.amount(prof["shipping_eur"]) if prof.get("shipping_eur") is not None else None,
             "delivery_days_text": _days_text(prof.get("delivery_days"), lang),
-            "lead_time_text": f"{prof['lead_time_days']}{pt(lang, 'days')}" if lang == "ja" and prof.get("lead_time_days") is not None
-            else f"{prof['lead_time_days']} {pt(lang, 'days')}" if prof.get("lead_time_days") is not None else pt(lang, "notSet"),
+            "lead_time_text": _lead_text(prof["lead_time_days"], lang) if prof.get("lead_time_days") is not None
+            else pt(lang, "notSet"),
         },
     )
     return view

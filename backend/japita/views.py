@@ -19,6 +19,24 @@ KIND_ORDER = ["baseline", "on_time", "lowest_cost", "best_fit", "fewest_supplier
 DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
 
 
+def lead_text(n: int, lang: str) -> str:
+    return t(lang, "sup.lead1") if n == 1 else t(lang, "sup.lead", n=n)
+
+
+def rule_text(lang: str, text: str) -> str:
+    """A profile rule label in the page language when the catalog has it (rules are written in English)."""
+    key = f"rl.{text}"
+    s = t(lang, key)
+    return text if s == key else s
+
+
+def failure_phrase(lang: str, ingredient: str, field: str) -> str | None:
+    """Plain words for a failed required rule ("No kansui — not usable for Hakata ramen noodles"), if any."""
+    key = f"fail.{ingredient}.{field}"
+    s = t(lang, key)
+    return None if s == key else s
+
+
 def labels(lang: str, *keys: str) -> dict:
     return {k: t(lang, k) for k in keys}
 
@@ -91,8 +109,9 @@ def tradeoffs(store: Store, basket: dict, lang: str) -> list[dict]:
         for n in calc.check_evidence(store, ln["offer_id"])["negotiable"]:
             if n["outcome"] != "ok":
                 ing = _ing(lang, ln["ingredient"])
-                out.append({"ingredient": ln["ingredient"], "ingredient_label": ing, "preference": n["preference"],
-                            "field": n["field"], "outcome": n["outcome"], "text": f"{ing}: {n['preference']}",
+                pref = rule_text(lang, n["preference"])
+                out.append({"ingredient": ln["ingredient"], "ingredient_label": ing, "preference": pref,
+                            "field": n["field"], "outcome": n["outcome"], "text": f"{ing}: {pref}",
                             "hint": _hint(lang, n["field"])})
     return out
 
@@ -107,7 +126,10 @@ def exclusion_reasons(store: Store, offer_id: str, lang: str) -> list[str]:
     """Why an offer cannot be part of a plan, as owner-readable sentences."""
     ev = calc.check_evidence(store, offer_id)
     key = {"missing_evidence": "why.notStated", "fail": "why.fails", "needs_review": "why.review"}
-    out = [t(lang, key[m["outcome"]], rule=m["rule"]) for m in ev["mandatory"] if m["outcome"] in key]
+    ing = store.offer(offer_id)["ingredient"]
+    out = [(m["outcome"] == "fail" and failure_phrase(lang, ing, m["field"]))
+           or t(lang, key[m["outcome"]], rule=rule_text(lang, m["rule"]))
+           for m in ev["mandatory"] if m["outcome"] in key]
     out += [t(lang, f"why.{_why(c)}") for c in calc.orderability(store, offer_id)["codes"]]
     return out
 
@@ -267,7 +289,7 @@ def basket_view(store: Store, lang: str, money: Money, kind: str | None = None) 
         no_on_time = {
             "title": t(lang, "bk.noOnTime"), "body": t(lang, "bk.noOnTimeBody"),
             "questions": [{"offer_id": q["offer_id"], "field": q["field"],
-                           "text": f"{q['product']} · {q['supplier']}: {q['rule']}", "drafted": q["drafted"],
+                           "text": f"{q['product']} · {q['supplier']}: {rule_text(lang, q['rule'])}", "drafted": q["drafted"],
                            "drafted_text": t(lang, "bk.drafted") if q["drafted"] else None, "hint": _hint(lang, q["field"])}
                           for q in res.get("open_questions", []) if q["resolved_by"] == "supplier"],
             "ask_label": t(lang, "bk.askAdvisor"),
@@ -651,7 +673,7 @@ def _profile_value(store_sup: dict, field: str, v, lang: str, money: Money) -> s
     if field in ("min_order_eur", "shipping_eur"):
         return money(v)
     if field == "lead_time_days":
-        return t(lang, "sup.lead", n=v)
+        return lead_text(v, lang)
     return str(v)
 
 
@@ -672,7 +694,9 @@ def offer_card(store: Store, o: dict, lang: str, money: Money, new: set[str]) ->
         if status is None:
             key = "notOrderable" if ev["status"] == "ok" and not od["orderable"] else ev["status"]
             text_key = {"ok": "of.eligible", "notOrderable": "of.notOrderable"}.get(key, f"of.{key}")
-            status = {"key": key, "text": t(lang, text_key), "warn": key != "ok"}
+            failed = [r["field"] for r in ev["mandatory"] if r["outcome"] == "fail"]
+            phrase = failure_phrase(lang, o["ingredient"], failed[0]) if failed else None
+            status = {"key": key, "text": phrase or t(lang, text_key), "warn": key != "ok"}
         for kind, rows, name_key in (("required", ev["mandatory"], "by.required"),
                                      ("preferred", ev["negotiable"], "by.preferred")):
             for r in rows:
@@ -726,7 +750,7 @@ def supplier_detail_view(store: Store, sid: str, lang: str, money: Money) -> dic
               s=t(lang, "sup.shipUnknown") if s["shipping_eur"] is None else money(s["shipping_eur"]),
               days=", ".join(weekday_name(d, lang) for d in s["delivery_days"]) if s["delivery_days"] else t(lang, "sup.noDays"))
     if s.get("lead_time_days") is not None:
-        terms += " · " + t(lang, "sup.lead", n=s["lead_time_days"])
+        terms += " · " + lead_text(s["lead_time_days"], lang)
     pp = s.get("pending_profile")
     profile_proposal = None
     if pp:
@@ -751,11 +775,30 @@ def supplier_detail_view(store: Store, sid: str, lang: str, money: Money) -> dic
 
 # --- clarifications ---------------------------------------------------------------------------------
 
+def mark_not_needed(store: Store) -> list[str]:
+    """Draft questions about an offer that already fails another required rule are not needed: the offer cannot be
+    used whatever the answer. Marks them "not_needed" and returns their ids."""
+    offers = {o["id"] for o in store.offers}
+    changed = []
+    for c in store.clarifications:
+        if c["state"] != "draft" or c["offer_id"] not in offers:
+            continue
+        ev = calc.check_evidence(store, c["offer_id"])
+        if any(m["outcome"] == "fail" and m["field"] != c["field"] for m in ev["mandatory"]):
+            c["state"] = "not_needed"
+            changed.append(c["id"])
+    return changed
+
+
 def clarifications_view(store: Store, lang: str) -> dict:
+    """Questions to suppliers, newest first; questions that are not needed are left out."""
+    mark_not_needed(store)
     offers = {o["id"]: o for o in store.offers}
     badge = {"draft": "warning", "sent": "neutral", "supplier_replied": "warning", "replied": "ok"}
     items = []
     for c in reversed(store.clarifications):
+        if c["state"] == "not_needed":
+            continue
         o = offers.get(c["offer_id"])
         sid = o["supplier_id"] if o else None
         reply = c.get("reply")
@@ -835,7 +878,7 @@ def profile_view(store: Store, lang: str, money: Money) -> dict:
         rows = []
         for kind in ("mandatory", "negotiable"):
             for r in rules[kind]:
-                rows.append({"field": r["field"], "label": r["label"], "kind": kind, "hint": _hint(lang, r["field"]),
+                rows.append({"field": r["field"], "label": rule_text(lang, r["label"]), "kind": kind, "hint": _hint(lang, r["field"]),
                              "kind_text": t(lang, "by.required" if kind == "mandatory" else "by.preferred"),
                              "move_to": "negotiable" if kind == "mandatory" else "mandatory",
                              "move_text": t(lang, "by.toPref" if kind == "mandatory" else "by.toReq")})
@@ -949,6 +992,7 @@ def answer_names(store: Store) -> dict[str, str]:
 
 
 def drafts_view(store: Store, clarifications: list[dict], lang: str) -> list[dict]:
+    mark_not_needed(store)
     offers = {o["id"]: o for o in store.offers}
     out = []
     for c in clarifications:

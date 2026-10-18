@@ -229,7 +229,7 @@
    "bk.lateSome": "{n} late",
    "bk.allOnTime": "all on time",
    "bk.noOnTime": "No option arrives before every stockout",
-   "bk.noOnTimeBody": "Every eligible basket leaves a gap this week. These offers are excluded because a detail is missing:",
+   "bk.noOnTimeBody": "Every eligible plan leaves a gap this week. These offers are excluded because a detail is missing:",
    "bk.askAdvisor": "Ask the advisor to draft the question",
    "bk.askQuestion": "The {ingredient} delivery for Friday is at risk. Which offers are missing a required detail, and can you draft a question to the supplier?",
    "bk.drafted": "question drafted",
@@ -434,7 +434,14 @@
    "bk.confirmText1": "Send 1 order: {list}?",
    "bk.confirmSend": "Send orders",
    "po.resend": "Send again",
-   "wk.reapprove": "Open order plans"
+   "wk.reapprove": "Open order plans",
+   "fail.noodles.contains_kansui": "No kansui — not usable for Hakata ramen noodles",
+   "fail.noodles.hydration_pct": "Hydration above 30% — too soft for Hakata ramen noodles",
+   "fail.soy_sauce.origin_country": "Not brewed in Japan — the tare needs Japanese soy sauce",
+   "fail.soy_sauce.brewing_method": "Not naturally brewed (honjozo) — required for the tare",
+   "fail.kikurage.chef_approved": "Texture not approved by the chef",
+   "sup.lead1": "1 day lead time",
+   "err.clarification_not_needed": "This question is no longer needed: the offer already fails another requirement."
   },
   "it": {
    "workspace": "Spazio di lavoro del ristorante",
@@ -665,7 +672,7 @@
    "bk.lateSome": "{n} in ritardo",
    "bk.allOnTime": "tutto in tempo",
    "bk.noOnTime": "Nessuna opzione arriva prima di ogni esaurimento",
-   "bk.noOnTimeBody": "Ogni carrello idoneo lascia un buco questa settimana. Queste offerte sono escluse perché manca un dettaglio:",
+   "bk.noOnTimeBody": "Ogni piano idoneo lascia un buco questa settimana. Queste offerte sono escluse perché manca un dettaglio:",
    "bk.askAdvisor": "Chiedi al consulente di preparare la domanda",
    "bk.askQuestion": "La consegna di {ingredient} di venerdì è a rischio. Quali offerte non hanno un dettaglio obbligatorio? Prepara una domanda al fornitore.",
    "bk.drafted": "domanda preparata",
@@ -870,7 +877,26 @@
    "bk.confirmText1": "Inviare 1 ordine: {list}?",
    "bk.confirmSend": "Invia ordini",
    "po.resend": "Invia di nuovo",
-   "wk.reapprove": "Apri i piani d'ordine"
+   "wk.reapprove": "Apri i piani d'ordine",
+   "rl.Chef-approved preferred": "Approvazione dello chef preferita",
+   "rl.Chef-approved texture after rehydration": "Consistenza approvata dallo chef dopo la reidratazione",
+   "rl.Pre-cut strips (saves prep)": "Già tagliati a strisce (meno preparazione)",
+   "rl.Japanese-grown preferred": "Coltivati in Giappone preferibilmente",
+   "rl.Alkaline (kansui) noodles": "Noodles alcalini (kansui)",
+   "rl.Fresh preferred": "Freschi preferibilmente",
+   "rl.Low hydration (30% or less), Hakata style": "Bassa idratazione (30% o meno), stile Hakata",
+   "rl.Low hydration preferred": "Bassa idratazione preferibilmente",
+   "rl.No additives": "Senza additivi",
+   "rl.Naturally brewed (honjozo)": "Fermentazione naturale (honjozo)",
+   "rl.Brewed in Japan": "Prodotta in Giappone",
+   "rl.Brewed in Japan preferred": "Prodotta in Giappone preferibilmente",
+   "fail.noodles.contains_kansui": "Senza kansui — non adatti ai noodles ramen Hakata",
+   "fail.noodles.hydration_pct": "Idratazione oltre il 30% — troppo morbidi per i noodles ramen Hakata",
+   "fail.soy_sauce.origin_country": "Non prodotta in Giappone — la tare richiede salsa di soia giapponese",
+   "fail.soy_sauce.brewing_method": "Non a fermentazione naturale (honjozo) — necessaria per la tare",
+   "fail.kikurage.chef_approved": "Consistenza non approvata dallo chef",
+   "sup.lead1": "1 giorno di preavviso",
+   "err.clarification_not_needed": "Questa domanda non serve più: l'offerta non rispetta già un altro requisito."
   }
  },
  "portal": {
@@ -1254,7 +1280,8 @@
    "nextStep": "After the restaurant reviews it, any order will appear under Orders.",
    "nt.orderTitle": "A new order arrived",
    "nt.applied.answer": "{r} applied your {target} answer.",
-   "nt.rejected.answer": "{r} used a different value than your {target} answer."
+   "nt.rejected.answer": "{r} used a different value than your {target} answer.",
+   "day": "day"
   }
  },
  "profiles": {

@@ -87,6 +87,8 @@ def supplier_detail(supplier_id: str, request: Request, profile_id: str | None =
 @router.get("/views/clarifications")
 def clarifications(request: Request, profile_id: str | None = None):
     store, lang, _ = _ctx(request, profile_id)
+    if views.mark_not_needed(store):
+        repo.save_state(store.data)
     return views.clarifications_view(store, lang)
 
 

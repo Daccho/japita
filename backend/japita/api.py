@@ -409,6 +409,7 @@ def answer_question(body: Question) -> dict:
         llm = LLM()
         result = run_agent(llm, store, body.question)
         calls = llm.calls
+    views.mark_not_needed(store)
     repo.save_state(store.data)  # the agent may have saved clarification drafts
     repo.log_calls(calls, f"agent:{body.via}")
     return {"via": body.via, "answer": views.clean_answer(result.answer, views.answer_names(store)),
@@ -435,7 +436,11 @@ def approve_clarification(clarification_id: str):
     The response carries `token`; the supplier page lives at /supplier/{token}.
     """
     data = repo.load_state()
-    store = Store(data, next(iter(data["profiles"])))
+    store = Store(data, active_profile_id(data))
+    views.mark_not_needed(store)
+    if any(c["id"] == clarification_id and c["state"] == "not_needed" for c in store.clarifications):
+        repo.save_state(data)
+        raise AppError(409, "clarification_not_needed", "the offer already fails another required rule")
     try:
         c = store.approve(clarification_id)
     except StopIteration:
@@ -459,6 +464,7 @@ def apply_clarification(clarification_id: str, body: ApplyReply, profile_id: str
         raise from_value_error(e, 409)
     portal.record_decision(store, store.offer(c["offer_id"])["supplier_id"], "answer", c["field"],
                            "applied" if portal.answer_used(c) else "rejected")
+    views.mark_not_needed(Store(data, active_profile_id(data)))
     repo.save_state(data)
     return {"clarification": c, "baskets": calc.calculate_baskets(_store(profile_id))}
 

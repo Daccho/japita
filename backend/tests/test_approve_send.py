@@ -57,3 +57,24 @@ def test_unsent_order_can_be_sent_again(store):
     orders.approve_basket(store, "baseline")
     po = views.basket_view(store, "en", Money("en"))["orders"][0]
     assert po["can_submit"] and po["submit_text"] == "Send again"
+
+
+def test_questions_about_an_offer_that_already_fails_are_not_needed(store):
+    o = store.offer("O-noo-2")
+    o["attributes"]["contains_kansui"] = False
+    c = store.add_clarification("O-noo-2", "fresh", "生麺ですか？", "missing")
+    v = views.clarifications_view(store, "en")
+    assert c["state"] == "not_needed" and all(i["id"] != c["id"] for i in v["items"])
+    assert views.drafts_view(store, store.clarifications, "en") == []
+    excluded = next(x for x in views.basket_view(store, "it", Money("it"))["excluded"] if x["offer_id"] == "O-noo-2")
+    assert "Senza kansui — non adatti ai noodles ramen Hakata" in excluded["reasons"]
+    card = next(x for x in views.supplier_detail_view(store, o["supplier_id"], "en", Money("en"))["offers"]
+                if x["id"] == "O-noo-2")
+    assert card["status"]["text"] == "No kansui — not usable for Hakata ramen noodles"
+
+
+def test_rule_labels_and_lead_time_are_localized(store):
+    q = views.basket_view(store, "it", Money("it"))["no_on_time"]["questions"][0]
+    assert "Bassa idratazione (30% o meno), stile Hakata" in q["text"]
+    store.suppliers["S3"]["lead_time_days"] = 1
+    assert views.supplier_detail_view(store, "S3", "en", Money("en"))["terms_text"].endswith("1 day lead time")
