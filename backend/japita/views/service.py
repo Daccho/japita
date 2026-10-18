@@ -477,7 +477,7 @@ def _answer_view(store: Store, explanation: dict, lang: str, money: Money) -> di
     res = calc.calculate_baskets(store)
     if not explanation.get("validated"):
         # The calculated recommendation still answers; the owner is invited to rephrase.
-        plan = _plan_answer(store, res, res["recommended_kind"], lang, money) if res.get("recommended_kind") else None
+        plan = _plan_answer(store, res, "recommended", lang, money) if res.get("recommended_kind") else None
         return {"focus": "recommendation", "fallback": True, "note": t(lang, "ans.rephrase"),
                 "headline": plan.pop("sentence") if plan else t(lang, "ans.noPlan"), "items": [], "plan": plan,
                 "link": None if plan else {"href": "/restaurants/basket", "text": t(lang, "adv.openBasket")},

@@ -378,7 +378,7 @@ def test_plan_kind_not_calculated_is_rejected_and_falls_back_to_the_recommendati
     explanation, view = _answer(store, "on_time")
     assert not explanation["validated"]
     assert view["fallback"] and view["note"]
-    assert view["plan"] is None or view["plan"]["kind"] == calc.calculate_baskets(store)["recommended_kind"]
+    assert view["plan"] is None or view["plan"]["kind"] == "recommended"
     explanation, _ = _answer(unlocked(), "cheapest_ever")
     assert not explanation["validated"]
 
