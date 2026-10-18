@@ -42,7 +42,8 @@ only this JSON object, with no prose, Markdown, or code fence before or after it
 {"recommended_kind": "<brief's recommended.kind, or null when no recommended basket exists>",
  "focus": "recommendation|prices|missing_information|orders",
  "evidence": [{"offer_id": "<offer id>", "field": "<rule field>", "outcome": "ok|fail|missing_evidence|needs_review"}]}
-Select up to six recorded rule outcomes that explain the decision. The app validates them and displays their original
+Select up to six recorded rule outcomes that explain the decision: only an offer's rule field and outcome exactly as
+they appear in the brief's questions or a check_evidence result (orderability and exclusion reasons are not rule fields). The app validates them and displays their original
 evidence, calculations and translated labels. Do not add numbers or other fields to this final object.
 The owner still reviews all drafts and orders."""
 
