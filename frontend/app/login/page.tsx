@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { ArrowLeft, ChefHat, Factory, Loader2, PackageOpen } from "lucide-react";
+import { AppHeader } from "@/components/AppShell";
 import { useInitialLang } from "@/lib/initial-lang";
 import { LANG_COOKIE, LOGIN_LANG_COOKIE, PORTAL_LANG_COOKIE, saveLangCookie } from "@/lib/lang-cookies";
 import { AuthError, login, me, safeNext, type Me, type Role } from "@/lib/auth";
@@ -100,8 +100,9 @@ function LoginForm() {
   }
 
   return (
-    <main className="jp-login">
-      <div className="jp-login-top">
+    <>
+    <AppHeader
+      controls={
         <div className="jp-segment" role="group" aria-label="Language">
           {LANGS.map((l) => (
             <button key={l} type="button" aria-pressed={lang === l} onClick={() => setLang(l)}>
@@ -109,9 +110,10 @@ function LoginForm() {
             </button>
           ))}
         </div>
-      </div>
+      }
+    />
+    <main className="jp-login">
       <section className="jp-panel jp-login-card">
-        <Image className="jp-brand-logo" src="/japita-logo.png" alt="Japita" width={112} height={56} priority />
         {!role ? (
           <>
             <h1>{t("who")}</h1>
@@ -176,6 +178,7 @@ function LoginForm() {
         )}
       </section>
     </main>
+    </>
   );
 }
 
