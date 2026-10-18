@@ -151,6 +151,8 @@ def supplier_change_delivery(store: Store, supplier_id: str, po_id: str, deliver
     if po["state"] != "acknowledged":
         raise DomainError("order_not_accepted", "only accepted orders have a delivery date to change")
     new = _check_date(store, delivery_date)
+    if new == po["delivery_date"]:
+        raise DomainError("same_delivery_date", "the order is already due on that date", 422)
     po.setdefault("delivery_changes", []).append({"from": po["delivery_date"], "to": new, "at": _now(),
                                                   "note_ja": note_ja, "note_translations": note_translations or {}})
     po["delivery_date"] = new
