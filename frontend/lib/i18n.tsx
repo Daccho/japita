@@ -3,7 +3,8 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { useInitialLang } from "@/lib/initial-lang";
 import { LANG_COOKIE, saveLangCookie } from "@/lib/lang-cookies";
-import { moneyTools, useRates, type MoneyTools } from "@/lib/money";
+import { useRouter } from "next/navigation";
+import { LangSegment } from "@/components/AppShell";
 
 // Restaurant workspace strings. Italian is the default (the restaurant is in Milan); English is for judges.
 // The supplier portal is Japanese only and does not use this.
@@ -13,7 +14,7 @@ const EN = {
   workspace: "Restaurant workspace",
   "nav.week": "This week",
   "nav.suppliers": "Suppliers",
-  "nav.basket": "Basket",
+  "nav.basket": "Order plans",
   "nav.profile": "Restaurant profile",
   "side.place": "42 seats · Milan",
   "profile.switch": "Profile",
@@ -51,7 +52,7 @@ const EN = {
   "err.owner_only_field": "This detail is decided by the restaurant, not asked of the supplier.",
   "err.retry": "Try again",
   "err.reapprove": "Go to approval",
-  "review.basket": "Review basket",
+  "review.basket": "Review order plans",
   // notifications
   "nt.title": "Notifications",
   "nt.close": "Close notifications",
@@ -126,7 +127,7 @@ const EN = {
   "chk.intro": "The purchasing agent reads every offer for this week and flags inconsistencies and missing details.",
   "chk.run": "Run weekly check",
   "chk.again": "Run again",
-  "chk.running": "Checking every offer… this can take a couple of minutes.",
+  "chk.running": "Checking every offer…",
   "chk.failed": "The check did not finish. Try again later.",
   // suppliers
   "sup.kicker": "Your suppliers, together",
@@ -223,7 +224,7 @@ const EN = {
   "bk.from": "from {supplier}",
   // basket
   "bk.kicker": "One basket · separate supplier orders",
-  "bk.title": "Your basket",
+  "bk.title": "Order plans",
   "bk.sub": "Compare the options, approve one, then send the supplier orders.",
   "bk.options": "Basket options",
   "bk.optionsNote": "Every option meets your required rules. Totals include packs, minimum orders and delivery.",
@@ -296,11 +297,11 @@ const EN = {
   "adv.title": "Purchasing advisor",
   "adv.launcher": "Purchasing advisor · drag to move",
   "adv.suggested": "Suggested basket",
-  "adv.openBasket": "Open basket",
+  "adv.openBasket": "Open order plans",
   "adv.ask": "Ask the advisor",
   "adv.tab": "Tab ⇥ to use",
   "adv.send": "Ask",
-  "adv.thinking": "The advisor is checking offers, stock and baskets. This usually takes 1–2 minutes.",
+  "adv.thinking": "The advisor is checking offers, stock and order plans…",
   "adv.elapsed": "{s} s",
   "adv.drafted": "Draft questions for suppliers",
   "adv.review": "Review in Basket",
@@ -321,7 +322,8 @@ const EN = {
   "ov.edit": "Edit profile",
   "ov.editTitle": "Edit restaurant profile",
   "ov.save": "Save profile",
-  "ov.saved": "Restaurant profile saved in this browser.",
+  "ov.saved": "Restaurant profile saved.",
+  "ov.logo": "Logo image URL",
   "ov.description": "Restaurant description",
   "ov.concept": "Concept",
   "ov.guests": "Target guests",
@@ -415,7 +417,7 @@ const EN = {
   "ln.url": "Page URL",
   "ln.error": "Enter a full http:// or https:// URL without account credentials.",
   "ln.fictional": "No public listings are prefilled.",
-  "ln.saved": "Restaurant link saved in this browser.",
+  "ln.saved": "Restaurant link saved.",
   "ln.removed": "Link removed.",
   // sign-in and account
   "au.title": "Sign in to Japita",
@@ -433,6 +435,10 @@ const EN = {
   "au.throttled": "Too many attempts. Wait a few minutes and try again.",
   "au.offline": "Cannot reach the server. It may be waking up; try again in a minute.",
   "au.logout": "Sign out",
+  "au.account": "Account",
+  "nav.main": "Main navigation",
+  "nav.menu": "Menu",
+  "nav.profileShort": "Profile",
 };
 
 export type Key = keyof typeof EN;
@@ -441,7 +447,7 @@ const IT: Record<Key, string> = {
   workspace: "Spazio di lavoro del ristorante",
   "nav.week": "Questa settimana",
   "nav.suppliers": "Fornitori",
-  "nav.basket": "Carrello",
+  "nav.basket": "Piani d'ordine",
   "nav.profile": "Profilo del ristorante",
   "side.place": "42 coperti · Milano",
   "profile.switch": "Profilo",
@@ -479,7 +485,7 @@ const IT: Record<Key, string> = {
   "err.owner_only_field": "Questo dettaglio lo decide il ristorante, non si chiede al fornitore.",
   "err.retry": "Riprova",
   "err.reapprove": "Vai all'approvazione",
-  "review.basket": "Rivedi il carrello",
+  "review.basket": "Rivedi i piani d'ordine",
   "nt.title": "Notifiche",
   "nt.close": "Chiudi le notifiche",
   "nt.none": "Nessuna nuova notifica.",
@@ -551,7 +557,7 @@ const IT: Record<Key, string> = {
   "chk.intro": "L'agente acquisti legge tutte le offerte della settimana e segnala incoerenze e dettagli mancanti.",
   "chk.run": "Avvia il controllo settimanale",
   "chk.again": "Ripeti",
-  "chk.running": "Controllo di tutte le offerte… può richiedere un paio di minuti.",
+  "chk.running": "Controllo di tutte le offerte…",
   "chk.failed": "Il controllo non è terminato. Riprova più tardi.",
   "sup.kicker": "I tuoi fornitori, insieme",
   "sup.title": "Fornitori",
@@ -646,7 +652,7 @@ const IT: Record<Key, string> = {
   "info.label": "Che cos'è {term}?",
   "bk.from": "da {supplier}",
   "bk.kicker": "Un carrello · ordini separati per fornitore",
-  "bk.title": "Il tuo carrello",
+  "bk.title": "Piani d'ordine",
   "bk.sub": "Confronta le opzioni, approvane una, poi invia gli ordini ai fornitori.",
   "bk.options": "Opzioni di carrello",
   "bk.optionsNote": "Ogni opzione rispetta i requisiti obbligatori. I totali includono confezioni, ordini minimi e consegna.",
@@ -718,11 +724,11 @@ const IT: Record<Key, string> = {
   "adv.title": "Consulente acquisti",
   "adv.launcher": "Consulente acquisti · trascina per spostare",
   "adv.suggested": "Carrello consigliato",
-  "adv.openBasket": "Apri il carrello",
+  "adv.openBasket": "Apri i piani d'ordine",
   "adv.ask": "Chiedi al consulente",
   "adv.tab": "Tab ⇥ per usarla",
   "adv.send": "Chiedi",
-  "adv.thinking": "Il consulente sta controllando offerte, scorte e carrelli. Di solito servono 1–2 minuti.",
+  "adv.thinking": "Il consulente sta controllando offerte, scorte e piani d'ordine…",
   "adv.elapsed": "{s} s",
   "adv.drafted": "Bozze di domande ai fornitori",
   "adv.review": "Rivedi nel carrello",
@@ -742,7 +748,8 @@ const IT: Record<Key, string> = {
   "ov.edit": "Modifica profilo",
   "ov.editTitle": "Modifica il profilo del ristorante",
   "ov.save": "Salva profilo",
-  "ov.saved": "Profilo del ristorante salvato in questo browser.",
+  "ov.saved": "Profilo del ristorante salvato.",
+  "ov.logo": "URL dell'immagine del logo",
   "ov.description": "Descrizione del ristorante",
   "ov.concept": "Concept",
   "ov.guests": "Clienti target",
@@ -836,7 +843,7 @@ const IT: Record<Key, string> = {
   "ln.url": "URL della pagina",
   "ln.error": "Inserisci un URL completo http:// o https:// senza credenziali.",
   "ln.fictional": "Nessuna scheda pubblica è precompilata.",
-  "ln.saved": "Link del ristorante salvato in questo browser.",
+  "ln.saved": "Link del ristorante salvato.",
   "ln.removed": "Link rimosso.",
   "au.title": "Accedi a Japita",
   "au.who": "Chi sta accedendo?",
@@ -853,28 +860,29 @@ const IT: Record<Key, string> = {
   "au.throttled": "Troppi tentativi. Attendi qualche minuto e riprova.",
   "au.offline": "Server non raggiungibile. Potrebbe essere in avvio: riprova tra un minuto.",
   "au.logout": "Esci",
+  "au.account": "Account",
+  "nav.main": "Navigazione principale",
+  "nav.menu": "Menu",
+  "nav.profileShort": "Profilo",
 };
 
 const STR: Record<Lang, Record<Key, string>> = { en: EN, it: IT };
 
 export type T = (key: Key, vars?: Record<string, string | number>) => string;
 
-// Italian shows EUR; English shows USD converted with the ECB reference rate.
-const fxFor = (lang: Lang, rates: ReturnType<typeof useRates>) =>
-  lang === "it" ? moneyTools("EUR", "it-IT", rates) : moneyTools("USD", "en-US", rates);
-
-const Ctx = createContext<{ lang: Lang; setLang: (l: Lang) => void; t: T; fx: MoneyTools; money: MoneyTools["money"] }>({
+const Ctx = createContext<{ lang: Lang; setLang: (l: Lang) => void; t: T }>({
   lang: "it",
   setLang: () => {},
   t: (k) => k,
-  fx: fxFor("it", null),
-  money: fxFor("it", null).money,
 });
 
 const KEY = "japita.lang";
 
+// The language lives in a cookie so server-rendered views come in the chosen language; changing it re-renders
+// the server data.
 export function I18nProvider({ children }: { children: ReactNode }) {
   const initial = useInitialLang().restaurant;
+  const router = useRouter();
   const [lang, setLangState] = useState<Lang>(initial === "en" ? "en" : "it");
 
   // Without a cookie, fall back to a choice saved in localStorage and copy it into the cookie.
@@ -885,9 +893,10 @@ export function I18nProvider({ children }: { children: ReactNode }) {
       if (saved === "it" || saved === "en") {
         setLangState(saved);
         saveLangCookie(LANG_COOKIE, saved);
+        if (saved !== "it") router.refresh();
       }
     } catch {}
-  }, [initial]);
+  }, [initial, router]);
 
   useEffect(() => {
     document.documentElement.lang = lang;
@@ -899,6 +908,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     try {
       localStorage.setItem(KEY, l);
     } catch {}
+    router.refresh();
   };
 
   const t: T = (key, vars) => {
@@ -907,56 +917,12 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     return s;
   };
 
-  const rates = useRates();
-  const fx = fxFor(lang, rates);
-
-  return <Ctx.Provider value={{ lang, setLang, t, fx, money: fx.money }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ lang, setLang, t }}>{children}</Ctx.Provider>;
 }
 
 export const useI18n = () => useContext(Ctx);
 
-// Label for a backend key that may not have a translation (e.g. a new ingredient): falls back to the key.
-export function useLabel() {
-  const { t } = useI18n();
-  return (prefix: "ing" | "field" | "route" | "kind" | "prio" | "lvl", key: string) => {
-    const full = `${prefix}.${key}` as Key;
-    const s = t(full);
-    return s === full ? key.replaceAll("_", " ") : s;
-  };
-}
-
-// Dates: "ven 23 ott" / "Fri 23 Oct". Parsed as local dates so the weekday never shifts.
-export function useDates() {
-  const { lang } = useI18n();
-  const locale = lang === "it" ? "it-IT" : "en-GB";
-  const parse = (iso: string) => {
-    const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
-    return new Date(y, m - 1, d);
-  };
-  return {
-    day: (iso: string | null | undefined) =>
-      iso ? parse(iso).toLocaleDateString(locale, { weekday: "short", day: "numeric", month: "short" }) : "—",
-    weekday: (iso: string) => parse(iso).toLocaleDateString(locale, { weekday: "long" }),
-    range: (a: string, b: string) =>
-      `${parse(a).toLocaleDateString(locale, { day: "numeric", month: "short" })} – ${parse(b).toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" })}`,
-    // 2026-10-19 is a Monday: used to name weekday codes.
-    weekdayName: (code: string) => {
-      const i = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"].indexOf(code);
-      return i < 0 ? code : new Date(2026, 9, 19 + i).toLocaleDateString(locale, { weekday: "long" });
-    },
-    time: (iso: string) => new Date(iso).toLocaleString(locale, { weekday: "short", hour: "2-digit", minute: "2-digit" }),
-  };
-}
-
 export function LangToggle() {
   const { lang, setLang } = useI18n();
-  return (
-    <div className="jp-segment" role="group" aria-label="Language">
-      {(["it", "en"] as const).map((l) => (
-        <button key={l} type="button" aria-pressed={lang === l} onClick={() => setLang(l)}>
-          {l.toUpperCase()}
-        </button>
-      ))}
-    </div>
-  );
+  return <LangSegment langs={["it", "en"] as const} value={lang} onChange={setLang} />;
 }

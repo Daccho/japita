@@ -1,4 +1,5 @@
-// Thin client for the FastAPI backend. Types mirror backend/japita (api.py, calc.py, stock.py, orders.py, portal.py).
+// Thin client for the FastAPI backend. Pages render the server's ready-made view data (docs/api-views.md); this
+// module only fetches views and posts actions.
 import type { DrawingReference } from "@/lib/drawings";
 
 // Same-origin proxy to the backend (next.config.ts), so the session cookie travels with every request.
@@ -17,7 +18,6 @@ export class ApiError extends Error {
 // Retry quietly for about a minute before showing anything.
 const RETRY_DELAYS_MS = [1000, 2000, 4000, 8000, 15000, 15000, 15000];
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-const SESSION_HINT = "japita.session";
 
 async function errorCode(res: Response): Promise<string> {
   try {
@@ -52,32 +52,23 @@ async function request<R>(path: string, init?: RequestInit): Promise<R> {
 }
 
 export function loginUrl() {
-  const next = window.location.pathname + window.location.search;
-  return `/login?role=restaurant&next=${encodeURIComponent(next)}`;
+  const path = window.location.pathname;
+  const role = path.startsWith("/supplier") ? "supplier" : "restaurant";
+  const next = role === "supplier" ? "/suppliers" : path + window.location.search;
+  return `/login?role=${role}&next=${encodeURIComponent(next)}`;
 }
 
-// Remembered after /auth/me confirms a restaurant session, so the next visit can paint the cached workspace while
-// the session check runs. The API still refuses every request without a valid session.
-export function rememberSession(user: unknown) {
-  try {
-    localStorage.setItem(SESSION_HINT, JSON.stringify({ user, at: Date.now() }));
-  } catch {}
-}
+/** GET a JSON view from the API (same-origin proxy, session cookie included). */
+export const getJson = <R,>(path: string) => request<R>(path);
 
-export function rememberedSession<U>(maxAgeMs: number): U | null {
-  try {
-    const raw = localStorage.getItem(SESSION_HINT);
-    const hint = raw ? (JSON.parse(raw) as { user: U; at: number }) : null;
-    return hint && Date.now() - hint.at < maxAgeMs ? hint.user : null;
-  } catch {
-    return null;
-  }
-}
+/** POST/PUT/PATCH JSON to the API; resolves with the response body. */
+export const sendJson = <R,>(method: "POST" | "PUT" | "PATCH", path: string, body?: unknown, headers: Record<string, string> = {}) =>
+  request<R>(path, body === undefined ? { method, headers } : json(method, body, headers));
 
-// On sign-out or an expired session: forget the hint and the cached restaurant data in this browser.
+// On sign-out or an expired session: forget anything older versions of the app kept in this browser.
 export function forgetSession() {
   try {
-    for (const k of Object.keys(localStorage)) if (k === SESSION_HINT || k.startsWith("japita.cache.")) localStorage.removeItem(k);
+    for (const k of Object.keys(localStorage)) if (k.startsWith("japita.")) localStorage.removeItem(k);
   } catch {}
 }
 
@@ -139,339 +130,332 @@ export function errorText(e: unknown, t: T): string {
   return t(key);
 }
 
-export type Translations = { it?: string; en?: string };
-export type Day = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
+export type Badge = "ok" | "warning" | "neutral";
 
-export type Rule = { field: string; op: "eq" | "in" | "gte" | "lte"; value: unknown; label: string };
-export type Profile = {
-  id: string;
-  name: string;
-  concept: string;
-  menu_price_eur: number[];
-  weekly_budget_eur: number;
-  priorities: Record<string, "low" | "medium" | "high">;
-  accepted_delivery_days: Day[];
-  ingredients: Record<string, { mandatory: Rule[]; negotiable: Rule[] }>;
-};
-export type Supplier = {
-  id: string;
-  name: string;
-  relationship: "existing" | "candidate";
-  account_status: "approved" | "pending" | "none";
-  min_order_eur: number;
-  shipping_eur: number | null;
-  delivery_days: Day[];
-  lead_time_days?: number;
-  country?: string | null;
-  address?: string | null;
-  city?: string | null;
-  contact_name?: string | null;
-  email?: string | null;
-  phone?: string | null;
-  pending_profile?: PendingProfile;
-};
-export type ProfileField =
-  | "name"
-  | "country"
-  | "address"
-  | "city"
-  | "contact_name"
-  | "email"
-  | "phone"
-  | "delivery_days"
-  | "min_order_eur"
-  | "shipping_eur"
-  | "lead_time_days";
-export type PendingProfile = {
-  changes: Partial<Record<ProfileField, string | number | Day[] | null>>;
-  note_ja?: string | null;
-  note_translations?: Translations;
-  submitted_at: string;
-};
-export type PendingUpdate = {
-  product?: string;
-  price_eur?: number;
-  pack_size?: number;
-  attributes?: Record<string, unknown>;
-  evidence?: Record<string, string>;
-  note_ja?: string | null;
-  note_translations?: Translations;
-  submitted_at: string;
-};
-export type Offer = {
-  drawing: DrawingReference;
-  id: string;
-  supplier_id: string;
-  ingredient: string;
-  product: string;
-  unit: "g" | "ml";
-  pack_size: number;
-  price_eur: number;
-  offer_date: string;
-  origin_route: "japan" | "europe" | "italy";
-  comparison_group: string;
-  attributes: Record<string, unknown>;
-  evidence: Record<string, string | null>;
-  document: string | null;
-  pending_update?: PendingUpdate;
-  pending_new?: boolean;
-};
-export type Extraction = {
-  status: "ok" | "needs_review" | "unknown";
-  value: unknown;
-  read_1: unknown;
-  read_2: unknown;
-  source_text: string | null;
-};
-export type Clarification = {
-  id: string;
-  offer_id: string;
-  field: string;
-  text_ja: string;
-  translations?: Translations;
-  reason: string;
-  reason_translations?: Translations;
-  // draft -> sent (owner approved, token issued) -> supplier_replied -> replied (owner applied)
-  state: "draft" | "sent" | "supplier_replied" | "replied";
-  token?: string;
-  sent_at?: string;
-  reply?: { text_ja: string; translations?: Translations; extraction: Extraction; received_at: string };
-  applied_value?: unknown;
-};
-export type SupplierRequest = {
-  restaurant: string;
-  supplier: string;
-  product: string;
-  question_ja: string;
-  sent_at: string | null;
-  state: "awaiting_reply" | "replied";
-  reply_ja: string | null;
-  replied_at: string | null;
-};
-export type Delivery = {
-  id: string;
-  supplier_id: string;
-  ingredient: string;
-  qty: number;
-  unit: string;
-  date: string;
-  status: "confirmed" | "delayed" | "cancelled";
-  revised_date?: string | null;
-  usable_until?: string | null;
-  note?: string;
-  purchase_order_id?: string;
-};
-export type Week = {
-  id: string;
-  dates: string[];
-  as_of?: string | null;
-  servings: Record<string, number>;
-  days?: { date: string; servings: Record<string, number> }[];
-  deliveries?: Delivery[];
-  stock: Record<string, { usable: number; confirmed_arrivals: number; unit: string; usable_until?: string | null }>;
-};
-export type RecipeLine = { ingredient: string; unit: "g" | "ml"; per_item: Record<string, number> };
-export type MenuDish = {
-  id: string; name: string; description: string; price_eur: number | null;
-  group: "ramen" | "extras" | "sides"; ingredients: string[]; ingredient_keys: string[];
-};
-export type RestaurantIngredient = { id: string; name: string; drawing: DrawingReference };
-export type RestaurantMenu = { items: MenuDish[]; ingredients: RestaurantIngredient[] };
+// --- view shapes (docs/api-views.md) ------------------------------------------------------------------
 
-export type State = {
-  profiles: Record<string, Profile>;
-  suppliers: Record<string, Supplier>;
-  offers: Offer[];
-  clarifications: Clarification[];
-  review_flags: Record<string, Record<string, { read_1: unknown; read_2: unknown }>>;
-  recipe: { name?: string; lines: RecipeLine[]; menu_items?: MenuDish[] };
-  menu?: RestaurantMenu;
-  week: Week;
-  purchase_orders?: PurchaseOrder[];
+export type Avatar = { url: string | null; initials: string };
+export type Labels = Record<string, string>;
+type Money = { lang: string; currency: string; fx_note: string | null; labels: Labels };
+
+export type ShellView = {
+  lang: string;
+  account: { name: string; avatar: Avatar | null; place_text: string | null };
+  footer: { week_text: string | null; fx_note: string | null };
+  nav_counts: { basket?: number };
+  labels: Labels;
 };
-export type Need = {
-  ingredient: string;
-  unit: string;
-  gross: number;
-  usable_stock: number;
-  confirmed_arrivals: number;
-  required: number;
-  servings: number;
-  menu_items: string[];
-};
-export type RuleOutcome = {
-  rule?: string;
-  preference?: string;
-  field: string;
-  outcome: "ok" | "fail" | "needs_review" | "missing_evidence";
-  value: unknown;
-  source_text: string | null;
-  resolved_by?: "owner" | "supplier";
-};
-export type Evidence = {
-  offer_id: string;
-  status: "ok" | "fails_mandatory" | "needs_review" | "missing_evidence";
-  mandatory: RuleOutcome[];
-  negotiable: RuleOutcome[];
-  preferences_met: number;
-  preferences_total: number;
-  orderability: { orderable: boolean; reasons: string[] };
-};
-export type BasketLine = {
-  ingredient: string;
-  offer_id: string;
-  product: string;
-  supplier_id: string;
-  required: number;
-  pack_size: number;
-  unit: string;
-  packs: number;
-  purchase_qty: number;
-  cost_eur: number;
-  earliest_delivery: string | null;
-  needed_by: string | null;
-  arrives_in_time: boolean | null;
-};
-export type BasketKind = "baseline" | "lowest_cost" | "best_fit" | "fewest_suppliers" | "on_time";
-export type Basket = {
-  kind: BasketKind;
-  rule: string;
-  also: BasketKind[];
-  lines: BasketLine[];
-  suppliers: { supplier_id: string; name: string; relationship: string; subtotal_eur: number; shipping_eur: number | null; min_order_eur: number }[];
-  goods_eur: number;
-  shipping_eur: number | null;
-  delivered_total_eur: number;
-  supplier_count: number;
-  preferences_met: number;
-  preferences_total: number;
-  unmet_preferences: string[];
-  late_lines: string[];
-  within_budget: boolean;
-  vs_baseline_eur?: number;
-};
-export type OpenQuestion = {
-  offer_id: string;
-  product: string;
-  supplier: string;
-  field: string;
-  rule: string;
-  resolved_by: "owner" | "supplier";
-  drafted: boolean;
-};
-export type BasketResult = {
-  budget_eur?: number;
-  needs?: Record<string, Need>;
-  stockouts?: Record<string, string>;
-  no_on_time_option?: boolean;
-  baskets: Basket[];
-  excluded: { offer_id: string; product: string; reasons: string[]; missing_fields?: { field: string; rule: string; resolved_by: string }[] }[];
-  open_questions?: OpenQuestion[];
-  conflict?: string;
-};
-export type TimelineDay = {
-  date: string;
-  weekday: Day;
-  demand: number;
-  arrived: number;
-  expired: number;
-  available_start: number;
-  used: number;
-  shortfall: number;
-  end_stock: number;
-};
-export type Timeline = {
-  available: boolean;
-  as_of?: string | null;
-  ingredients?: Record<string, { ingredient: string; unit: string; days: TimelineDay[]; first_stockout: string | null; total_shortfall: number }>;
-};
-export type Approval = {
+
+export type PurchaseOrderView = {
   id: string;
-  profile_id: string;
-  kind: BasketKind;
-  version: string;
+  supplier: string;
   state: string;
-  approved_at: string;
-  delivered_total_eur: number;
-  lines: BasketLine[];
-  late_lines: string[];
-  stale: boolean;
-};
-export type DeliveryChange = { from: string; to: string; at: string; note_ja?: string | null; note_translations?: Translations };
-export type PurchaseOrder = {
-  id: string;
-  approval_id: string;
-  supplier_id: string;
-  supplier_name: string;
-  lines: BasketLine[];
-  goods_eur: number;
-  shipping_eur: number | null;
-  total_eur: number;
+  state_text: string;
+  badge: Badge;
+  lines: { offer_id: string; text: string }[];
   delivery_date: string | null;
-  state: "approved" | "submitted" | "acknowledged" | "cancelled";
-  submitted_at?: string;
-  acknowledgment: { received_at: string; note_ja?: string | null; note_translations?: Translations } | null;
-  delivery_changes?: DeliveryChange[];
+  delivery_text: string;
+  total_text: string;
+  changes: { text: string; note: string | null }[];
+  note: string | null;
+  note_label: string;
+  can_submit: boolean;
+  submit_text: string;
+  sending_text: string;
+  submit_key?: string;
 };
-export type Spending = {
-  budget_eur: number;
-  planned_eur: number | null;
-  committed_eur: number;
-  sent_eur: number;
-  remaining_eur: number;
+
+export type DayView = {
+  date: string;
+  label: string;
+  short_label: string;
+  status: "short" | "arrival" | "ok";
+  value_text: string;
+  aria: string;
+  title: string;
+  detail: { label: string; value: string; warn: boolean; sub?: boolean }[];
 };
-export type AgentAnswer = { answer: string; clarifications: Clarification[] };
+
+export type WeekView = Money & {
+  kicker: string;
+  sub: string;
+  alerts: { id: string; ingredient: string; title: string; body: string; action: string; href: string }[];
+  needs: {
+    ingredient: string;
+    label: string;
+    need_text: string;
+    to_buy_text: string;
+    from_text: string | null;
+    status: "runs_out" | "covered";
+    status_text: string;
+    days: DayView[];
+  }[];
+  orders: PurchaseOrderView[];
+  orders_empty_text: string | null;
+  spending: { committed_text: string; used_pct: number; sent_text: string | null; remaining_text: string; planned_text: string | null };
+  suggested: null | {
+    kind: string;
+    title: string;
+    total_text: string;
+    timing_text: string;
+    lines: { ingredient_label: string; supplier: string }[];
+    action: { label: string; href: string };
+  };
+};
+
+export type PlanLine = {
+  offer_id: string;
+  product: string;
+  ingredient_label: string;
+  supplier: string;
+  detail_text: string;
+  timing_text: string;
+  cost_text: string;
+  badge: { text: string; warn: boolean } | null;
+  is_new: boolean;
+  new_text: string | null;
+  drawing?: DrawingReference | null;
+};
+
+export type BasketView = Money & {
+  mode: "choose" | "settled" | "none";
+  no_on_time: null | {
+    title: string;
+    body: string;
+    ask_label: string;
+    ask_question: string;
+    questions: { offer_id: string; field: string; text: string; drafted: boolean; drafted_text: string | null; hint: string | null }[];
+  };
+  conflict_text: string | null;
+  plans: {
+    kind: string;
+    title: string;
+    total_text: string;
+    vs_text: string;
+    timing: { text: string; warn: boolean };
+    also_text: string | null;
+    selected: boolean;
+    approved: boolean;
+    has_new: boolean;
+    savings_text: string | null;
+  }[];
+  selected: null | {
+    kind: string;
+    title: string;
+    prefs_text: string;
+    lines: PlanLine[];
+    tradeoffs: { ingredient: string; field: string; text: string; hint: string | null }[];
+    total_text: string;
+    goods_shipping_text: string;
+    budget_pct: number;
+    within_budget: boolean;
+    budget_text: string;
+    savings_text: string | null;
+    approval: { state: "approved" | "stale" | "other" | "none"; text: string | null };
+    can_approve: boolean;
+    approve_text: string;
+    approving_text: string;
+  };
+  settled: null | {
+    title: string;
+    approved_text: string;
+    note: string;
+    lines: { offer_id: string; product: string; detail_text: string; cost_text: string }[];
+    total_text: string;
+  };
+  orders: PurchaseOrderView[];
+  excluded: { offer_id: string; product: string; supplier: string; reasons: string[] }[];
+};
+
+export type ClarificationsView = {
+  lang: string;
+  labels: Labels;
+  empty_text: string | null;
+  items: {
+    id: string;
+    product: string;
+    supplier: string;
+    state: string;
+    state_text: string;
+    badge: Badge;
+    field_label: string;
+    reason: string;
+    question_ja: string;
+    translation: string | null;
+    can_approve: boolean;
+    waiting_text: string | null;
+    reply: null | { translation: string | null; text_ja: string };
+    value_text: string | null;
+    choose_text: string | null;
+    choices: { value: unknown; label: string }[];
+    applied_text: string | null;
+  }[];
+};
+
+export type SupplierRow = {
+  id: string;
+  name: string;
+  avatar?: Avatar | null;
+  status_text: string;
+  pending: boolean;
+  pending_text: string | null;
+  drawing?: DrawingReference | null;
+  image_alt: string;
+  product: string;
+  product_count_text: string;
+  price_text: string;
+  price_pack_text: string | null;
+};
+
+export type SuppliersView = Money & {
+  view: "existing" | "candidate";
+  sub: string;
+  filters: {
+    q: string | null;
+    ingredient: string;
+    name: string;
+    sort: string;
+    active_count: number;
+    active_text: string;
+    note: string;
+    ingredients: { value: string; label: string }[];
+    sorts: { value: string; label: string }[];
+    show_name: boolean;
+    show_search: boolean;
+  };
+  show_results: boolean;
+  count_text: string | null;
+  empty: null | { title: string; body: string };
+  search_empty: null | { title: string; body: string };
+  rows: SupplierRow[];
+};
+
+export type Change = { label: string; from: string; to: string; hint?: string | null };
+export type Proposal = {
+  title: string;
+  changes: Change[];
+  note: string | null;
+  note_label: string;
+  note_ja: string | null;
+  note_ja_label: string;
+  apply_text: string;
+  reject_text: string;
+};
+
+export type OfferCardView = {
+  id: string;
+  ingredient_label: string;
+  product: string;
+  origin_text: string;
+  date_text: string;
+  pack_text: string;
+  unit_price_text: string;
+  drawing?: DrawingReference | null;
+  image_alt: string;
+  image_caption: string;
+  status: { key: string; text: string; warn: boolean } | null;
+  checks: { kind: string; ok: boolean; missing: boolean; text: string; hint: string | null; who_text: string | null }[];
+  proposal: (Proposal & { is_new: boolean }) | null;
+  is_new: boolean;
+  new_text: string | null;
+};
+
+export type SupplierDetailView = Money & {
+  id: string;
+  name: string;
+  avatar?: Avatar | null;
+  terms_text: string;
+  profile_proposal: Proposal | null;
+  offers: OfferCardView[];
+};
+
+export type ProfileView = Money & {
+  profile_id: string;
+  active_profile_id: string;
+  profiles: { id: string; label: string; description: string; active: boolean; suggested_total_text: string; switch_effect?: { text: string } }[];
+  badge_text: string;
+  ingredients: {
+    ingredient: string;
+    label: string;
+    empty_text: string | null;
+    rules: { field: string; label: string; kind: string; kind_text: string; move_to: string; move_text: string; hint: string | null }[];
+  }[];
+  budget: { label: string; currency: string; amount: number; min: number; max: number; text: string; note: string };
+  days: { day: string; label: string; on: boolean }[];
+  impact?: { text: string };
+};
+
+export type RestaurantProfileView = {
+  lang: string;
+  values: Record<string, string>;
+  name: string;
+  subtitle: string;
+  logo_url?: string | null;
+  avatar?: Avatar | null;
+  facts: { label: string; value: string }[];
+  questionnaire: { label: string; value: string }[];
+  fields: { key: string; label: string; multiline: boolean; max_length: number }[];
+  labels: Labels;
+};
+
+export type LinksView = {
+  lang: string;
+  links: Record<string, string>;
+  max_length: number;
+  labels: Labels;
+  groups: { key: string; title: string; items: { id: string; label: string; url: string | null; text: string; placeholder: string; action_text: string }[] }[];
+};
+
+export type MenuDish = {
+  id: string;
+  name: string;
+  description: string;
+  price_eur: number | null;
+  group: "ramen" | "extras" | "sides";
+  ingredients: string[];
+  ingredient_keys: string[];
+};
+
+export type MenuView = {
+  lang: string;
+  items: MenuDish[];
+  masthead: { name: string; subtitle: string; logo_url: string };
+  groups: { key: MenuDish["group"]; title: string }[];
+  prices: Record<string, string>;
+  planning: { title: string; note: string; rows: { id: string; summary: string; ingredients: string[]; uses_text: string }[] };
+  labels: Labels;
+};
+
+export type AgentAnswer = {
+  answer: string;
+  drafts: { id: string; product: string; field_label: string; translation: string | null; text: string }[];
+};
 export type WeeklyCheck = { status: string; output_text: string | null };
 
-const q = (profileId: string) => `profile_id=${encodeURIComponent(profileId)}`;
+const enc = encodeURIComponent;
 
+// Actions. Each returns the API response; pages then re-fetch their views.
 export const api = {
-  state: () => request<State>("/state"),
-  saveMenu: (items: MenuDish[]) => request<RestaurantMenu>("/menu", json("PUT", { items })),
-  baskets: (profileId: string) => request<BasketResult>(`/baskets?${q(profileId)}`),
-  timeline: (profileId: string) => request<Timeline>(`/stock/timeline?${q(profileId)}`),
-  evidence: (offerId: string, profileId: string) => request<Evidence>(`/offers/${offerId}/evidence?${q(profileId)}`),
-  putProfile: (p: Profile) => request<Profile>(`/profiles/${p.id}`, json("PUT", p)),
-  ask: (question: string, profileId: string) =>
-    runJob<AgentAnswer>(request("/agent/ask", json("POST", { question, profile_id: profileId }))),
-  approveClarification: (id: string) => request<Clarification>(`/clarifications/${id}/approve`, { method: "POST" }),
-  applyClarification: (id: string, profileId: string, value?: unknown) =>
-    request<{ clarification: Clarification; baskets: BasketResult }>(
-      `/clarifications/${id}/apply?${q(profileId)}`,
-      json("POST", value === undefined ? {} : { value }),
-    ),
-  approveBasket: (kind: string, profileId: string) =>
-    request<{ approval: Approval; purchase_orders: PurchaseOrder[] }>("/baskets/approve", json("POST", { kind, profile_id: profileId })),
-  approval: (profileId: string) => request<Approval | null>(`/baskets/approval?${q(profileId)}`),
-  purchaseOrders: () => request<PurchaseOrder[]>("/purchase-orders"),
-  submitOrder: (poId: string, idempotencyKey: string) =>
-    request<PurchaseOrder>(`/purchase-orders/${poId}/submit`, { method: "POST", headers: { "Idempotency-Key": idempotencyKey } }),
-  spending: (profileId: string) => request<Spending>(`/spending?${q(profileId)}`),
-  portalLink: (supplierId: string) => request<{ token: string; path: string }>(`/suppliers/${supplierId}/portal-link`),
-  applySupplierUpdate: (offerId: string) => request<Offer>(`/offers/${offerId}/supplier-update/apply`, { method: "POST" }),
-  applyProfileUpdate: (supplierId: string) => request<Supplier>(`/suppliers/${supplierId}/profile-update/apply`, { method: "POST" }),
-  rejectProfileUpdate: (supplierId: string) => request<Supplier>(`/suppliers/${supplierId}/profile-update/reject`, { method: "POST" }),
-  rejectSupplierUpdate: (offerId: string) => request<Offer>(`/offers/${offerId}/supplier-update/reject`, { method: "POST" }),
-  weeklyCheck: (profileId: string) =>
-    runJob<WeeklyCheck>(request(`/evolus/weekly-intake?${q(profileId)}`, { method: "POST" })),
-  // Legacy single-request supplier page (app/supplier/[token]).
-  supplierRequest: (token: string) => request<SupplierRequest>(`/supplier/requests/${encodeURIComponent(token)}`),
-  supplierReply: (token: string, textJa: string) =>
-    request<SupplierRequest>(`/supplier/requests/${encodeURIComponent(token)}/reply`, json("POST", { text_ja: textJa })),
+  ask: (question: string, lang: string) => runJob<AgentAnswer>(request("/agent/ask", json("POST", { question, lang }))),
+  weeklyCheck: () => runJob<WeeklyCheck>(request("/evolus/weekly-intake", { method: "POST" })),
+  approveClarification: (id: string) => request(`/clarifications/${enc(id)}/approve`, { method: "POST" }),
+  applyClarification: (id: string, value?: unknown) =>
+    request(`/clarifications/${enc(id)}/apply`, json("POST", value === undefined ? {} : { value })),
+  approveBasket: (kind: string) => request("/baskets/approve", json("POST", { kind })),
+  submitOrder: (poId: string, key: string) =>
+    request(`/purchase-orders/${enc(poId)}/submit`, { method: "POST", headers: { "Idempotency-Key": key } }),
+  applySupplierUpdate: (offerId: string) => request(`/offers/${enc(offerId)}/supplier-update/apply`, { method: "POST" }),
+  rejectSupplierUpdate: (offerId: string) => request(`/offers/${enc(offerId)}/supplier-update/reject`, { method: "POST" }),
+  applyProfileUpdate: (supplierId: string) => request(`/suppliers/${enc(supplierId)}/profile-update/apply`, { method: "POST" }),
+  rejectProfileUpdate: (supplierId: string) => request(`/suppliers/${enc(supplierId)}/profile-update/reject`, { method: "POST" }),
+  moveRule: (profileId: string, ingredient: string, field: string, lang: string) =>
+    request<ProfileView>(`/profiles/${enc(profileId)}/rules/move?lang=${lang}`, json("PATCH", { ingredient, field })),
+  patchProfile: (profileId: string, body: { budget?: { amount: number; currency: string }; accepted_delivery_days?: string[] }, lang: string) =>
+    request<ProfileView>(`/profiles/${enc(profileId)}?lang=${lang}`, json("PATCH", body)),
+  setActiveProfile: (id: string) => request("/restaurant/settings", json("PUT", { active_profile_id: id })),
+  saveRestaurantProfile: (values: Record<string, string>, lang: string) =>
+    request<RestaurantProfileView>(`/restaurant/profile?lang=${lang}`, json("PUT", { values })),
+  saveLinks: (links: Record<string, string | null>, lang: string) =>
+    request<LinksView>(`/restaurant/links?lang=${lang}`, json("PUT", { links })),
+  saveMenu: (items: MenuDish[]) => request("/menu", json("PUT", { items })),
 };
-
-// Menu prices are the restaurant's own selling prices in Italy and always stay in EUR.
-export const menuEur = (n: number) =>
-  `€${n.toLocaleString("en-IE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-
-// 76800 g -> "76.8 kg"; 9000 ml -> "9 L".
-export const qty = (n: number, unit: string) =>
-  unit === "g" || unit === "ml"
-    ? n >= 1000 || n === 0
-      ? `${(n / 1000).toLocaleString("en-IE", { maximumFractionDigits: 1 })} ${unit === "g" ? "kg" : "L"}`
-      : `${n.toLocaleString("en-IE")} ${unit}`
-    : `${n} ${unit}`;
-
-// Price per kg or per L.
-export const unitPrice = (o: Pick<Offer, "price_eur" | "pack_size" | "unit">, money: (eur: number) => string) =>
-  `${money((o.price_eur / o.pack_size) * 1000)} / ${o.unit === "g" ? "kg" : "L"}`;

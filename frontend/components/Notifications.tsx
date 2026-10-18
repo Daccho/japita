@@ -1,148 +1,68 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { Bell, X } from "lucide-react";
-import { qty } from "@/lib/api";
-import { useDates, useI18n, useLabel } from "@/lib/i18n";
-import { useWorkspace } from "@/components/workspace";
+import { sendJson } from "@/lib/api";
+import { useView } from "@/components/live";
 
-type Item = { id: string; badge: string; warn: boolean; title: string; body: string; href: string; action: string };
+// The notification bell shared by the restaurant workspace and the supplier portal. The server builds the feed
+// (texts, links, read state per account); opening the bell marks the shown items as read on the server.
 
-const SEEN_KEY = "japita.notifications.seen";
+export type NotificationItem = {
+  id: string;
+  kind: string;
+  badge: string;
+  warn: boolean;
+  title: string;
+  body: string;
+  href: string;
+  action: string;
+  unread: boolean;
+  tab?: string;
+};
+export type NotificationFeed = {
+  title: string;
+  close_label: string;
+  empty_text: string | null;
+  aria: string;
+  unread: number;
+  items: NotificationItem[];
+};
 
-// Everything that needs the owner's attention, derived from backend data (stock timeline, supplier activity).
-function useItems(): Item[] {
-  const { data } = useWorkspace();
-  const { t } = useI18n();
-  const label = useLabel();
-  const d = useDates();
-  {
-    if (!data) return [];
-    const { state, timeline } = data;
-    const items: Item[] = [];
-    const sup = (id: string) => state.suppliers[id]?.name ?? id;
-    const stockouts = timeline.ingredients ?? {};
-    const alerted = new Set<string>();
-    for (const dl of state.week.deliveries ?? []) {
-      const tl = stockouts[dl.ingredient];
-      if (dl.status !== "delayed" || !tl?.first_stockout) continue;
-      alerted.add(dl.ingredient);
-      items.push({
-        id: `delay-${dl.id}-${tl.first_stockout}`,
-        badge: t("nt.delivery"),
-        warn: true,
-        title: t("nt.delayed", { weekday: d.weekday(dl.date), ingredient: label("ing", dl.ingredient) }),
-        body: t("nt.delayedBody", {
-          supplier: sup(dl.supplier_id),
-          date: d.day(dl.date),
-          qty: qty(dl.qty, dl.unit),
-          revised: d.day(dl.revised_date),
-          ingredient: label("ing", dl.ingredient),
-          stockout: d.day(tl.first_stockout),
-        }),
-        href: "/restaurants/basket",
-        action: t("nt.compare"),
-      });
-    }
-    for (const tl of Object.values(stockouts)) {
-      if (!tl.first_stockout || alerted.has(tl.ingredient)) continue;
-      items.push({
-        id: `stockout-${tl.ingredient}-${tl.first_stockout}`,
-        badge: t("nt.stockout"),
-        warn: true,
-        title: t("nt.stockoutTitle", { ingredient: label("ing", tl.ingredient), date: d.day(tl.first_stockout) }),
-        body: t("nt.stockoutBody", { qty: qty(tl.total_shortfall, tl.unit) }),
-        href: "/restaurants/basket",
-        action: t("nt.compare"),
-      });
-    }
-    for (const c of state.clarifications) {
-      if (c.state !== "supplier_replied") continue;
-      const offer = state.offers.find((o) => o.id === c.offer_id);
-      items.push({
-        id: `reply-${c.id}`,
-        badge: t("nt.reply"),
-        warn: false,
-        title: offer?.product ?? c.offer_id,
-        body: t("nt.replyBody", { supplier: offer ? sup(offer.supplier_id) : "", product: offer?.product ?? "" }),
-        href: "/restaurants/basket",
-        action: t("nt.open"),
-      });
-    }
-    for (const o of state.offers) {
-      if (!o.pending_update) continue;
-      items.push({
-        id: `proposal-${o.id}-${o.pending_update.submitted_at}`,
-        badge: t("nt.proposal"),
-        warn: false,
-        title: o.product,
-        body: t(o.pending_new ? "nt.newProduct" : "nt.proposalBody", { supplier: sup(o.supplier_id), product: o.product }),
-        href: `/restaurants/suppliers?supplier=${o.supplier_id}`,
-        action: t("nt.open"),
-      });
-    }
-    for (const s of Object.values(state.suppliers)) {
-      if (!s.pending_profile) continue;
-      items.push({
-        id: `profile-${s.id}-${s.pending_profile.submitted_at}`,
-        badge: t("nt.proposal"),
-        warn: false,
-        title: s.name,
-        body: t("nt.profileBody", { supplier: s.name }),
-        href: `/restaurants/suppliers?supplier=${s.id}`,
-        action: t("nt.open"),
-      });
-    }
-    for (const po of state.purchase_orders ?? []) {
-      (po.delivery_changes ?? []).forEach((ch, i) =>
-        items.push({
-          id: `change-${po.id}-${i}`,
-          badge: t("nt.change"),
-          warn: true,
-          title: po.supplier_name,
-          body: t("nt.changeBody", { supplier: po.supplier_name, from: d.day(ch.from), to: d.day(ch.to) }),
-          href: "/restaurants",
-          action: t("nt.open"),
-        }),
-      );
-      if (po.state === "acknowledged")
-        items.push({
-          id: `ack-${po.id}`,
-          badge: t("nt.ack"),
-          warn: false,
-          title: po.supplier_name,
-          body: t("nt.ackBody", { supplier: po.supplier_name, date: d.day(po.delivery_date) }),
-          href: "/restaurants",
-          action: t("nt.open"),
-        });
-    }
-    return items;
-  }
+type Ctx = { feed: NotificationFeed | null; markSeen: () => void; onNavigate?: (item: NotificationItem) => void };
+const FeedCtx = createContext<Ctx | null>(null);
+
+/** Loads a feed (`path`, `seenPath` take the same query) and offers it to the bell in the page header. */
+export function NotificationsProvider({
+  path,
+  seenPath,
+  initial,
+  onNavigate,
+  children,
+}: {
+  path: string;
+  seenPath: string;
+  initial: NotificationFeed | null;
+  onNavigate?: (item: NotificationItem) => void;
+  children: ReactNode;
+}) {
+  const { data, setData } = useView<NotificationFeed>(path, initial);
+  const markSeen = () => {
+    const ids = (data?.items ?? []).filter((i) => i.unread).map((i) => i.id);
+    if (!ids.length) return;
+    sendJson<NotificationFeed>("POST", seenPath, { ids })
+      .then((f) => setData(f))
+      .catch(() => {});
+  };
+  return <FeedCtx.Provider value={{ feed: data, markSeen, onNavigate }}>{children}</FeedCtx.Provider>;
 }
 
 export default function Notifications() {
-  const { t } = useI18n();
-  const items = useItems();
+  const ctx = useContext(FeedCtx);
   const [open, setOpen] = useState(false);
-  const [seen, setSeen] = useState<string[]>([]);
   const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    try {
-      setSeen(JSON.parse(localStorage.getItem(SEEN_KEY) ?? "[]"));
-    } catch {}
-  }, []);
-
-  const idsKey = items.map((i) => i.id).join("|");
-  useEffect(() => {
-    if (!open) return;
-    const ids = idsKey ? idsKey.split("|") : [];
-    setSeen(ids);
-    try {
-      localStorage.setItem(SEEN_KEY, JSON.stringify(ids));
-    } catch {}
-  }, [open, idsKey]);
+  const feed = ctx?.feed ?? null;
 
   useEffect(() => {
     if (!open) return;
@@ -156,17 +76,22 @@ export default function Notifications() {
     };
   }, [open]);
 
-  const unread = items.filter((i) => !seen.includes(i.id)).length;
+  if (!ctx || !feed) return null;
+  const toggle = () => {
+    if (!open) ctx.markSeen();
+    setOpen(!open);
+  };
+  const unread = feed.unread;
 
   return (
     <div ref={ref} style={{ display: "contents" }}>
       <button
         type="button"
         className="jp-notification-bell"
-        aria-label={unread ? t("nt.aria", { n: unread }) : t("nt.title")}
+        aria-label={unread ? feed.aria : feed.title}
         aria-expanded={open}
         aria-controls="jp-notifications"
-        onClick={() => setOpen(!open)}
+        onClick={toggle}
       >
         <Bell aria-hidden />
         {unread > 0 && (
@@ -175,22 +100,35 @@ export default function Notifications() {
           </span>
         )}
       </button>
-      <section className="jp-notifications" id="jp-notifications" aria-label={t("nt.title")} hidden={!open}>
+      <section className="jp-notifications" id="jp-notifications" aria-label={feed.title} hidden={!open}>
         <div className="jp-line-head">
-          <h3>{t("nt.title")}</h3>
-          <button type="button" className="jp-close" aria-label={t("nt.close")} onClick={() => setOpen(false)}>
+          <h3>{feed.title}</h3>
+          <button type="button" className="jp-close" aria-label={feed.close_label} onClick={() => setOpen(false)}>
             <X aria-hidden />
           </button>
         </div>
-        {items.length === 0 && <p>{t("nt.none")}</p>}
-        {items.map((i) => (
+        {feed.items.length === 0 && feed.empty_text && <p>{feed.empty_text}</p>}
+        {feed.items.map((i) => (
           <div key={i.id} className="jp-notification-item">
             <span className={`jp-badge ${i.warn ? "jp-warning" : ""}`}>{i.badge}</span>
             <h3 style={{ marginTop: 10 }}>{i.title}</h3>
             <p>{i.body}</p>
-            <Link href={i.href} className="jp-action" onClick={() => setOpen(false)}>
-              {i.action}
-            </Link>
+            {ctx.onNavigate ? (
+              <button
+                type="button"
+                className="jp-action"
+                onClick={() => {
+                  setOpen(false);
+                  ctx.onNavigate!(i);
+                }}
+              >
+                {i.action}
+              </button>
+            ) : (
+              <Link href={i.href} className="jp-action" onClick={() => setOpen(false)}>
+                {i.action}
+              </Link>
+            )}
           </div>
         ))}
       </section>

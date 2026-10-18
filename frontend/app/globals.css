@@ -1591,3 +1591,74 @@
   .jp .jp-app .jp-rule-actions { justify-content:space-between; }
 }
 .jp .jp-app .jp-login { min-height:auto; place-items:start center; padding:48px 16px 64px; }
+
+/* Shared by the restaurant workspace and the supplier portal: account avatar, empty states, floating toasts. */
+.jp .jp-avatar { display:inline-grid; place-items:center; flex-shrink:0; overflow:hidden; border:var(--aj-border-strong); border-radius:50%; background:var(--aj-yolk); color:var(--aj-ink); font-family:var(--aj-font-ui); font-weight:var(--aj-weight-bold); line-height:1; letter-spacing:0; }
+.jp .jp-avatar img { width:100%; height:100%; object-fit:cover; background:var(--aj-surface); }
+.jp .jp-account { min-width:0; }
+.jp .jp-account-name { display:inline-flex; align-items:center; gap:8px; min-width:0; color:var(--aj-ink); font-weight:var(--aj-weight-bold); }
+.jp .jp-account-name > span:last-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:220px; }
+.jp .jp-sidebar-account { display:flex; align-items:center; gap:10px; min-width:0; }
+.jp .jp-sidebar-account > div { min-width:0; overflow-wrap:anywhere; }
+.jp .jp-sidebar-account strong { display:block; color:var(--aj-ink); font-weight:var(--aj-weight-bold); }
+.jp .jp-name-with-avatar { display:inline-flex; align-items:center; gap:8px; min-width:0; }
+.jp .jp-app .jp-empty-state { display:grid; justify-items:center; gap:6px; padding:28px 20px; text-align:center; border:var(--aj-border-strong); border-radius:var(--aj-radius-card); background:var(--aj-surface); color:var(--aj-ink); }
+.jp .jp-app .jp-empty-state p { color:var(--aj-muted); margin:0; }
+.jp .jp-app .jp-empty-state .jp-thumb-icon { width:48px; height:48px; }
+.jp .jp-app .jp-panel .jp-empty-state, .jp .jp-app .jp-directory-list .jp-empty-state { border:0; padding:16px 8px; }
+.jp .jp-floating-toast .jp-toast { background:var(--aj-yolk-tint); color:var(--aj-ink); font-size:13px; line-height:1.45; padding:10px 14px; }
+.jp .jp-floating-toast .jp-toast.jp-toast-error { background:var(--aj-chili-tint); color:var(--aj-chili-text); font-weight:var(--aj-weight-bold); }
+@media (max-width:700px) {
+  .jp .jp-account-name > span:last-child { display:none; }
+}
+
+/* Header navigation (both sides): no side rail; the sections open from the menu button at the right of the header
+   as a dropdown panel. The page body uses the full width with a readable maximum. */
+.jp .jp-app .jp-top { position:relative; z-index:25; flex-wrap:nowrap; gap:12px; }
+.jp .jp-app .jp-workspace-brands { flex-shrink:0; }
+.jp .jp-app .jp-top-controls { flex-wrap:nowrap; justify-content:flex-end; min-width:0; gap:10px; }
+.jp .jp-app .jp-top-wide { display:flex; align-items:center; gap:10px; min-width:0; }
+.jp .jp-app .jp-header-bell { width:auto; flex-wrap:nowrap; }
+.jp .jp-app .jp-header-bell:empty { display:none; }
+.jp .jp-app .jp-top .jp-notifications { position:absolute; top:calc(100% + 10px); right:0; width:360px; max-width:calc(100vw - 32px); }
+.jp .jp-menu { position:relative; }
+.jp .jp-app .jp-menu-button { display:inline-flex; align-items:center; gap:8px; min-height:var(--aj-header-control-height); padding:0 12px; border:var(--aj-border-strong); border-radius:var(--aj-radius-control); background:var(--aj-surface); color:var(--aj-ink); font-family:var(--aj-font-ui); font-weight:var(--aj-weight-bold); font-size:14px; box-shadow:var(--aj-shadow-control); cursor:pointer; }
+.jp .jp-app .jp-menu-button:active { transform:translateY(2px); box-shadow:var(--aj-shadow-pressed); }
+.jp .jp-app .jp-menu-button svg { width:19px; height:19px; }
+.jp .jp-app .jp-menu-button .jp-nav-count { margin-left:0; }
+.jp .jp-app .jp-menu-panel { position:absolute; top:calc(100% + 10px); right:0; z-index:40; width:300px; max-width:calc(100vw - 32px); max-height:calc(100vh - 100px); overflow-y:auto; padding:12px; border:var(--aj-border-strong); border-radius:var(--aj-radius-popup); background:var(--aj-surface); color:var(--aj-ink); box-shadow:var(--aj-shadow-popup); text-align:left; }
+.jp .jp-app .jp-menu-panel[hidden] { display:none; }
+.jp .jp-app .jp-menu-account { display:flex; align-items:center; gap:10px; padding:4px 4px 12px; margin-bottom:8px; border-bottom:var(--aj-border-light); min-width:0; }
+.jp .jp-app .jp-menu-account > div { display:grid; min-width:0; overflow-wrap:anywhere; }
+.jp .jp-app .jp-menu-account strong { font-weight:var(--aj-weight-bold); font-size:14px; }
+.jp .jp-app .jp-menu-account span:not(.jp-avatar) { color:var(--aj-muted); font-size:12px; }
+.jp .jp-app .jp-menu-panel .jp-nav { display:flex; flex-direction:column; gap:4px; }
+.jp .jp-app .jp-menu-panel .jp-nav :is(a,button) { display:flex; align-items:center; gap:10px; width:100%; min-height:var(--aj-nav-height); padding:0 10px; border-radius:var(--aj-radius-control); background:transparent; color:var(--aj-ink); font-family:var(--aj-font-ui); font-size:var(--aj-type-nav); font-weight:var(--aj-weight-bold); text-align:left; text-decoration:none; }
+.jp .jp-app .jp-menu-panel .jp-nav :is(a,button):hover { background:var(--aj-page); }
+.jp .jp-app .jp-menu-panel .jp-nav :is(a,button)[aria-current="page"] { background:var(--aj-yolk-tint); }
+.jp .jp-app .jp-menu-panel .jp-nav svg { width:19px; height:19px; flex-shrink:0; }
+.jp .jp-app .jp-menu-panel .jp-nav .jp-nav-label { flex:1; min-width:0; }
+.jp .jp-app .jp-menu-compact { display:none; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; margin-top:10px; padding-top:12px; border-top:var(--aj-border-light); }
+.jp .jp-app .jp-body.jp-body-wide { width:100%; max-width:1240px; margin:0 auto; }
+@media (max-width:700px) {
+  .jp .jp-app .jp-top { padding:10px 16px; }
+  .jp .jp-app .jp-top-wide { display:none; }
+  .jp .jp-app .jp-menu-compact { display:flex; }
+  .jp .jp-app .jp-menu-button-label { display:none; }
+  .jp .jp-app .jp-top .jp-notifications { position:fixed; top:72px; left:16px; right:16px; width:auto; max-width:none; }
+  .jp .jp-app .jp-menu-panel { position:fixed; top:72px; left:16px; right:16px; width:auto; max-width:none; }
+  .jp .jp-app .jp-body.jp-body-wide { padding:20px 16px 90px; }
+}
+.jp .jp-app .jp-account-button { display:inline-flex; align-items:center; gap:8px; min-width:0; max-width:240px; min-height:var(--aj-header-control-height); padding:0 10px 0 4px; border:var(--aj-border-strong); border-radius:999px; background:var(--aj-surface); color:var(--aj-ink); font-family:var(--aj-font-ui); font-weight:var(--aj-weight-bold); font-size:13px; box-shadow:var(--aj-shadow-control); cursor:pointer; }
+.jp .jp-app .jp-account-button:active { transform:translateY(2px); box-shadow:var(--aj-shadow-pressed); }
+.jp .jp-app .jp-account-button .jp-avatar { border-width:1.5px; }
+.jp .jp-app .jp-account-button-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+.jp .jp-app .jp-menu-signout { margin-top:10px; padding-top:12px; border-top:var(--aj-border-light); }
+.jp .jp-app .jp-menu-signout .jp-action { width:100%; justify-content:center; }
+@media (max-width:900px) {
+  .jp .jp-app .jp-account-button-name { display:none; }
+  .jp .jp-app .jp-account-button { padding:0 4px; }
+}
+/* Supplier portal product card: drawing beside the name and price. */
+.jp .jp-app .jp-portal-product-head { display:flex; align-items:flex-start; gap:12px; min-width:0; }
+.jp .jp-app .jp-portal-product-drawing { display:grid; place-items:center; flex-shrink:0; width:64px; height:64px; border:var(--aj-border-strong); border-radius:var(--aj-radius-card); background:var(--aj-yolk-tint); }

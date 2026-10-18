@@ -2,90 +2,90 @@
 
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { CalendarDays, Loader2, ShoppingBasket, SlidersHorizontal, Store } from "lucide-react";
+import { CalendarDays, ShoppingBasket, Store } from "lucide-react";
 import AppShell from "@/components/AppShell";
-import { LangToggle, useDates, useI18n, type Key } from "@/lib/i18n";
-import { useWorkspace } from "@/components/workspace";
-import { suggestedBasket } from "@/components/helpers";
+import { I18nProvider, LangToggle, useI18n, type Key } from "@/lib/i18n";
+import { WorkspaceProvider } from "@/components/workspace";
 import AdvisorDock from "@/components/Advisor";
-import { useAccount } from "@/components/AuthGate";
-import { forgetSession } from "@/lib/api";
+import { LiveProvider, useView } from "@/components/live";
+import { NotificationsProvider, type NotificationFeed } from "@/components/Notifications";
+import { forgetSession, type ShellView } from "@/lib/api";
 import { logout } from "@/lib/auth";
 
-const NAV: { href: string; key: Key; icon: typeof Store }[] = [
+const NAV: { href: string; key: Key; icon: typeof Store; count?: "basket" }[] = [
   { href: "/restaurants", key: "nav.week", icon: CalendarDays },
   { href: "/restaurants/suppliers", key: "nav.suppliers", icon: Store },
-  { href: "/restaurants/basket", key: "nav.basket", icon: ShoppingBasket },
-  { href: "/restaurants/profile", key: "nav.profile", icon: SlidersHorizontal },
+  { href: "/restaurants/basket", key: "nav.basket", icon: ShoppingBasket, count: "basket" },
 ];
 
-const BOWLS = ["tonkotsu", "set_full", "set_kaedama", "veggie_miso"];
-
-export function Footer() {
-  const { t, fx } = useI18n();
-  const d = useDates();
-  const { data } = useWorkspace();
-  const week = data?.state.week;
-  const bowls = BOWLS.reduce((s, k) => s + (week?.servings[k] ?? 0), 0);
-  return (
-    <footer className="jp-footer">
-      {week?.dates?.length === 2 && (
-        <span>{t("foot.week", { dates: d.range(week.dates[0], week.dates[1]), bowls: bowls.toLocaleString("en-IE") })}</span>
-      )}
-      {fx.note && <span>{fx.note}</span>}
-    </footer>
-  );
-}
-
-// First visit in this browser: the header and navigation are already usable; only the page body waits.
-function FirstLoad() {
-  const { t } = useI18n();
-  return (
-    <section className="jp-panel" role="status" style={{ maxWidth: 520 }}>
-      <p className="jp-muted" style={{ display: "flex", alignItems: "center", gap: 8, margin: 0, fontSize: 13 }}>
-        <Loader2 className="jp-spinner" aria-hidden style={{ width: 16, height: 16 }} />
-        {t("load.sync")}
-      </p>
-    </section>
-  );
-}
-
-export default function Shell({ children }: { children: ReactNode }) {
-  const { t } = useI18n();
+function Frame({ shell: initial, children }: { shell: ShellView | null; children: ReactNode }) {
+  const { t, lang } = useI18n();
   const path = usePathname();
-  const { data } = useWorkspace();
-  const lines = suggestedBasket(data?.baskets)?.lines.length;
-  const { user } = useAccount();
+  const { data: shell } = useView<ShellView>(`/views/shell?lang=${lang}`, initial);
   const signOut = () =>
     logout().finally(() => {
       forgetSession();
       window.location.replace("/");
     });
+  const name = shell?.account.name ?? "";
   return (
     <AppShell
       homeHref="/restaurants"
       controls={<LangToggle />}
-      account={{ name: user.display_name, signOutLabel: t("au.logout"), onSignOut: signOut }}
-      navLabel="Main navigation"
-      nav={NAV.map(({ href, key, icon }) => ({
+      account={
+        shell
+          ? {
+              name,
+              avatar: shell.account.avatar,
+              place: shell.account.place_text,
+              signOutLabel: t("au.logout"),
+              onSignOut: signOut,
+              menuLabel: t("au.account"),
+              profile: { label: t("nav.profile"), href: "/restaurants/profile", current: path.startsWith("/restaurants/profile") },
+            }
+          : null
+      }
+      navLabel={t("nav.main")}
+      menuLabel={t("nav.menu")}
+      nav={NAV.map(({ href, key, icon, count }) => ({
         id: href,
         href,
         icon,
         label: t(key),
         current: href === "/restaurants" ? path === "/restaurants" : path.startsWith(href),
-        count: href === "/restaurants/basket" ? lines : undefined,
+        count: count ? shell?.nav_counts[count] : undefined,
       }))}
-      sidebarFoot={
-        <>
-          {user.display_name}
-          <br />
-          {t("side.place")}
-        </>
-      }
       after={<AdvisorDock />}
     >
-      {data ? children : <FirstLoad />}
-      <Footer />
+      {children}
+      {shell?.footer.week_text && (
+        <footer className="jp-footer">
+          <span>{shell.footer.week_text}</span>
+        </footer>
+      )}
     </AppShell>
+  );
+}
+
+function Feed({ feed, children }: { feed: NotificationFeed | null; children: ReactNode }) {
+  const { lang } = useI18n();
+  return (
+    <NotificationsProvider path={`/notifications?lang=${lang}`} seenPath={`/notifications/seen?lang=${lang}`} initial={feed}>
+      {children}
+    </NotificationsProvider>
+  );
+}
+
+export default function Shell({ shell, feed, children }: { shell: ShellView | null; feed: NotificationFeed | null; children: ReactNode }) {
+  return (
+    <I18nProvider>
+      <LiveProvider>
+        <WorkspaceProvider>
+          <Feed feed={feed}>
+            <Frame shell={shell}>{children}</Frame>
+          </Feed>
+        </WorkspaceProvider>
+      </LiveProvider>
+    </I18nProvider>
   );
 }

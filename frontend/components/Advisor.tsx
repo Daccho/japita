@@ -4,34 +4,14 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Check, Loader2, RotateCcw, Sparkles, Store, Truck, X } from "lucide-react";
-import { errorText } from "@/lib/api";
-import { useI18n, useLabel, type Key } from "@/lib/i18n";
-import { useElapsed, useWorkspace } from "@/components/workspace";
-import { suggestedBasket } from "@/components/helpers";
+import { Loader2, RotateCcw, Sparkles, Store, Truck, X } from "lucide-react";
+import { errorText, type WeekView } from "@/lib/api";
+import { useI18n, type Key } from "@/lib/i18n";
+import { useWorkspace } from "@/components/workspace";
+import { useView } from "@/components/live";
 
 const POS_KEY = "japita.advisor.position";
 const EXAMPLES: Key[] = ["adv.q1", "adv.q2", "adv.q3"];
-
-// The agent sometimes returns its final JSON envelope ({"action":"answer","text":...}) instead of plain text,
-// and may mention internal ids. Show only readable text: ids become product/supplier names.
-export function cleanAnswer(raw: string, names: Record<string, string>): string {
-  let text = raw.trim();
-  const fenced = text.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/);
-  const body = fenced ? fenced[1] : text;
-  if (body.startsWith("{")) {
-    try {
-      // Models sometimes emit invalid escapes such as \\le inside LaTeX: keep them as literal backslashes.
-      const parsed = JSON.parse(body.replace(/\\(?!["\\/bfnrtu])/g, "\\\\"));
-      if (typeof parsed.text === "string") text = parsed.text;
-      else if (typeof parsed.answer === "string") text = parsed.answer;
-    } catch {}
-  }
-  return text
-    .replace(/\s*\((?:ID|id)\s*`?C\d+`?\)/g, "")
-    .replace(/`?\b((?:O-[\w-]+)|S\d+)\b`?/g, (m, id) => names[id] ?? m)
-    .replace(/`(\w+_\w+)`/g, "$1");
-}
 
 export function Markdown({ text }: { text: string }) {
   return (
@@ -42,15 +22,13 @@ export function Markdown({ text }: { text: string }) {
 }
 
 function AdvisorBody() {
-  const { t, lang, money } = useI18n();
-  const label = useLabel();
-  const { data, advisor, ask, setAdvisorOpen } = useWorkspace();
+  const { t, lang } = useI18n();
+  const { advisor, ask, setAdvisorOpen } = useWorkspace();
   const [question, setQuestion] = useState("");
   const [example, setExample] = useState(0);
-  const elapsed = useElapsed(advisor.startedAt);
-  const b = suggestedBasket(data?.baskets);
-  const offers = data?.state.offers ?? [];
-  const drafts = (advisor.result?.clarifications ?? []).filter((c) => c.state === "draft");
+  const { data: week } = useView<WeekView>(`/views/week?lang=${lang}`, null);
+  const b = week?.suggested;
+  const drafts = advisor.result?.drafts ?? [];
 
   // The placeholder cycles through example questions; Tab on an empty box takes the one shown.
   useEffect(() => {
@@ -70,26 +48,18 @@ function AdvisorBody() {
       {b && (
         <div className="jp-recommendation" style={{ borderTop: 0, paddingTop: 0 }}>
           <span className="jp-kicker">{t("adv.suggested")}</span>
-          <h3 style={{ marginTop: 8 }}>{label("kind", b.kind)}</h3>
-          {b.vs_baseline_eur !== undefined && b.kind !== "baseline" && (
-            <p>{t("bk.vsBaseline", { d: `${b.vs_baseline_eur > 0 ? "+" : ""}${money(b.vs_baseline_eur)}` })}</p>
-          )}
-          <div className="jp-price jp-number">{money(b.delivered_total_eur)}</div>
-          <small className="jp-muted">{t("bk.goodsShipping", { g: money(b.goods_eur), s: money(b.shipping_eur) })}</small>
+          <h3 style={{ marginTop: 8 }}>{b.title}</h3>
+          <div className="jp-price jp-number">{b.total_text}</div>
           <div className="jp-proof">
             <Truck aria-hidden />
-            <span>{b.late_lines.length ? t("adv.someLate") : t("adv.inTime")}</span>
-          </div>
-          <div className="jp-proof">
-            <Check aria-hidden />
-            <span>{t("bk.prefs", { m: b.preferences_met, t: b.preferences_total })}</span>
+            <span>{b.timing_text}</span>
           </div>
           <div className="jp-proof">
             <Store aria-hidden />
-            <span>{b.suppliers.map((s) => s.name).join(" · ")}</span>
+            <span>{[...new Set(b.lines.map((l) => l.supplier))].join(" · ")}</span>
           </div>
-          <Link href="/restaurants/basket" className="jp-action jp-primary" style={{ width: "100%", marginTop: 13 }} onClick={() => setAdvisorOpen(false)}>
-            {t("adv.openBasket")}
+          <Link href={b.action.href} className="jp-action jp-primary" style={{ width: "100%", marginTop: 13 }} onClick={() => setAdvisorOpen(false)}>
+            {b.action.label}
           </Link>
         </div>
       )}
@@ -101,9 +71,7 @@ function AdvisorBody() {
             {advisor.question && <p style={{ color: "var(--jp-text)" }}>“{advisor.question}”</p>}
             <div className="jp-proof">
               <Loader2 className="jp-spinner" aria-hidden />
-              <span>
-                {t("adv.thinking")} · {t("adv.elapsed", { s: elapsed })}
-              </span>
+              <span>{t("adv.thinking")}</span>
             </div>
             <div className="jp-progress">
               <span />
@@ -170,22 +138,13 @@ function AdvisorBody() {
         {advisor.result && !advisor.running && (
           <div style={{ marginTop: 14 }}>
             {advisor.question && <p style={{ fontStyle: "italic" }}>“{advisor.question}”</p>}
-            <Markdown
-              text={cleanAnswer(
-                advisor.result.answer,
-                Object.fromEntries([
-                  ...offers.map((o) => [o.id, o.product]),
-                  ...Object.values(data?.state.suppliers ?? {}).map((s) => [s.id, s.name]),
-                ]),
-              )}
-            />
+            <Markdown text={advisor.result.answer} />
             {drafts.length > 0 && (
               <div className="jp-quote">
                 <h3>{t("adv.drafted")}</h3>
                 {drafts.map((c) => (
                   <p key={c.id} style={{ margin: "8px 0", color: "var(--jp-muted)" }}>
-                    {offers.find((o) => o.id === c.offer_id)?.product ?? c.offer_id} · {label("field", c.field)}
-                    {c.translations?.[lang] ? ` — ${c.translations[lang]}` : ""}
+                    {c.text}
                   </p>
                 ))}
                 <Link href="/restaurants/basket#questions" className="jp-action" onClick={() => setAdvisorOpen(false)}>
@@ -195,7 +154,6 @@ function AdvisorBody() {
             )}
           </div>
         )}
-        <p style={{ fontSize: 11, marginBottom: 0 }}>{t("adv.note")}</p>
       </div>
     </div>
   );
