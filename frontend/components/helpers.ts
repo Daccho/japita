@@ -6,11 +6,11 @@ export function findBasket(r: BasketResult | undefined, kind: string): Basket | 
 
 // What the advisor suggests: on time if possible, otherwise the cheapest feasible basket.
 export function suggestedBasket(r: BasketResult | undefined): Basket | undefined {
-  const b = findBasket(r, "on_time") ?? findBasket(r, "lowest_cost") ?? r?.baskets[0];
+  const b = r?.recommended_kind ? findBasket(r, r.recommended_kind) : undefined;
   return b && b.lines.length ? b : undefined; // nothing to buy: every need is covered
 }
 
-export const KIND_ORDER: BasketKind[] = ["baseline", "on_time", "lowest_cost", "best_fit", "fewest_suppliers"];
+export const KIND_ORDER: BasketKind[] = ["recommended", "baseline", "on_time", "lowest_cost", "best_fit", "fewest_suppliers"];
 
 export function fmtValue(v: unknown, yes: string, no: string): string {
   if (v === null || v === undefined) return "—";

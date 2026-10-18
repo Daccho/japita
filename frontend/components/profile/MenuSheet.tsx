@@ -23,9 +23,10 @@ function AutoText({ value, onChange, label, required, id }: { value: string; onC
 export default function MenuSheet() {
   const { t } = useI18n();
   const label = useLabel();
-  const { data, refresh } = useWorkspace();
+  const { data, refresh, profileId } = useWorkspace();
   const [legacy] = useStored<Edits>("japita.menu", {});
-  const [profileText] = useStored("japita.profileText", PROFILE_DEFAULTS);
+  const [legacyProfile] = useStored("japita.profileText", PROFILE_DEFAULTS);
+  const profileText = { ...legacyProfile, ...data?.state.profiles[profileId]?.restaurant_details };
   const [draft, setDraft] = useState<DraftDish[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);

@@ -31,6 +31,7 @@ def per_item(line: dict) -> dict[str, float]:
 
 def week_needs(store: Store) -> dict[str, dict]:
     servings = week_servings(store)
+    timeline = stock_mod.timeline(store)
     needs = {}
     for line in store.recipe["lines"]:
         ing = line["ingredient"]
@@ -40,7 +41,10 @@ def week_needs(store: Store) -> dict[str, dict]:
         qty = per_item(line)
         count = sum(servings.get(item, 0) for item in qty)
         gross = sum(servings.get(item, 0) * q for item, q in qty.items())
-        net = max(0, gross - stock["usable"] - stock["confirmed_arrivals"])
+        aggregate_net = max(0, gross - stock["usable"] - stock["confirmed_arrivals"])
+        # A late arrival or expiring lot cannot cover demand that precedes it.
+        daily = timeline.get("ingredients", {}).get(ing)
+        net = max(aggregate_net, daily["total_shortfall"]) if daily else aggregate_net
         needs[ing] = {
             "ingredient": ing,
             "unit": line["unit"],
@@ -48,6 +52,8 @@ def week_needs(store: Store) -> dict[str, dict]:
             "usable_stock": stock["usable"],
             "confirmed_arrivals": stock["confirmed_arrivals"],
             "required": net,
+            "aggregate_required": aggregate_net,
+            "timing_adjustment": round(net - aggregate_net, 3),
             "servings": count,
             "menu_items": list(qty),
             "formula": " + ".join(f"{servings.get(item, 0)} {item} x {q} {line['unit']}" for item, q in qty.items())
@@ -70,7 +76,7 @@ def _matches(value, op: str, target) -> bool:
 
 def evaluate_rule(offer: dict, rule: dict) -> str:
     value = offer["attributes"].get(rule["field"])
-    if value is None:
+    if value is None or not offer.get("evidence", {}).get(rule["field"]):
         return "missing_evidence"
     return "ok" if _matches(value, rule["op"], rule["value"]) else "fail"
 
@@ -121,6 +127,13 @@ def orderability(store: Store, offer_id: str) -> dict:
     offer = store.offer(offer_id)
     sup = store.suppliers[offer["supplier_id"]]
     reasons = []
+    need = next((line for line in store.recipe["lines"] if line["ingredient"] == offer["ingredient"]), None)
+    if need and offer["unit"] != need["unit"]:
+        reasons.append("offer unit does not match the purchasing recipe")
+    if offer.get("availability_status") != "confirmed" or not offer.get("availability_source"):
+        reasons.append("availability not confirmed with a source")
+    if offer.get("valid_until") and offer["valid_until"] < (store.week.get("as_of") or store.week["dates"][0]):
+        reasons.append("offer has expired")
     if sup["account_status"] != "approved":
         reasons.append(f"supplier account is {sup['account_status']}")
     if sup["shipping_eur"] is None:
@@ -163,6 +176,10 @@ def _price_basket(store: Store, choice: dict[str, dict], needs: dict, stockouts:
         s = by_supplier.setdefault(ln["supplier_id"], {"supplier_id": ln["supplier_id"], "subtotal_eur": 0.0})
         s["subtotal_eur"] = round(s["subtotal_eur"] + ln["cost_eur"], 2)
     problems = []
+    for ln in lines:
+        limit = choice[ln["ingredient"]].get("available_qty")
+        if limit is not None and ln["purchase_qty"] > limit:
+            problems.append(f"{ln['product']}: rounded purchase quantity exceeds confirmed available quantity")
     for sid, s in by_supplier.items():
         sup = store.suppliers[sid]
         s["name"] = sup["name"]
@@ -175,6 +192,7 @@ def _price_basket(store: Store, choice: dict[str, dict], needs: dict, stockouts:
     goods = round(sum(ln["cost_eur"] for ln in lines), 2)
     total = None if any(x is None for x in shipping) else round(goods + sum(shipping), 2)
     fit = {ing: check_evidence(store, o["id"]) for ing, o in choice.items()}
+    projection = stock_mod.project(store, lines)
     return {
         "lines": lines,
         "suppliers": list(by_supplier.values()),
@@ -190,6 +208,10 @@ def _price_basket(store: Store, choice: dict[str, dict], needs: dict, stockouts:
         ],
         "feasible": not problems and total is not None,
         "problems": problems,
+        "coverage": projection["status"],
+        "projected_shortfalls": projection["shortfalls"],
+        "assumptions": ["Proposed arrival dates are estimates, not supplier acknowledgments.",
+                        "New purchases must remain usable through their planned service dates; confirm shelf life."],
         "late_lines": [f"{ln['ingredient']}: earliest delivery {ln['earliest_delivery'] or 'unknown'}, "
                        f"stock runs out {ln['needed_by']}" for ln in lines if ln["arrives_in_time"] is False],
     }
@@ -230,10 +252,11 @@ def open_questions(store: Store) -> list[dict]:
         if offer["ingredient"] not in store.profile["ingredients"]:
             continue
         for m in check_evidence(store, offer["id"])["mandatory"]:
-            if m["outcome"] == "missing_evidence":
+            if m["outcome"] in ("missing_evidence", "needs_review"):
                 out.append({"offer_id": offer["id"], "product": offer["product"],
                             "supplier": store.suppliers[offer["supplier_id"]]["name"],
                             "field": m["field"], "rule": m["rule"], "resolved_by": m["resolved_by"],
+                            "status": m["outcome"],
                             "drafted": (offer["id"], m["field"]) in open_})
     return out
 
@@ -242,22 +265,20 @@ def calculate_baskets(store: Store) -> dict:
     needs = week_needs(store)
     eligible, excluded = eligible_offers(store)
     budget = store.profile["weekly_budget_eur"]
+    committed = round(sum(po["total_eur"] for po in store.data.get("purchase_orders", [])
+                          if po["state"] in ("submitted", "acknowledged")), 2)
+    remaining_budget = round(budget - committed, 2)
 
     # Ingredients already covered (nothing to buy) stay out of the combinations: a 0-pack line must not
     # count against a supplier's minimum order.
     to_buy = [ing for ing in eligible if needs.get(ing, {}).get("required", 0) > 0]
     missing = [ing for ing in to_buy if not eligible[ing]]
-    if missing:
-        return {"baskets": [], "excluded": excluded, "infeasible_combinations": 0,
-                "open_questions": open_questions(store),
-                "conflict": f"No eligible offer for: {', '.join(missing)}. Ask which constraint may change."}
-
     tl = stock_mod.timeline(store)
     stockouts = {ing: t["first_stockout"] for ing, t in tl.get("ingredients", {}).items() if t["first_stockout"]}
     ingredients = to_buy
     priced = []
     infeasible = []
-    for combo in itertools.product(*(eligible[i] for i in ingredients)):
+    for combo in (() if missing else itertools.product(*(eligible[i] for i in ingredients))):
         b = _price_basket(store, dict(zip(ingredients, combo)), needs, stockouts)
         (priced if b["feasible"] else infeasible).append(b)
 
@@ -275,10 +296,26 @@ def calculate_baskets(store: Store) -> dict:
                       min(priced, key=lambda b: (-b["preferences_met"], b["delivered_total_eur"]))))
         picks.append(("fewest_suppliers", "Fewest suppliers/deliveries (then lowest cost)",
                       min(priced, key=lambda b: (b["supplier_count"], b["delivered_total_eur"]))))
-        on_time = [b for b in priced if not b["late_lines"]]
+        on_time = [b for b in priced if b["coverage"] == "covered"]
         if stockouts and on_time:
             picks.append(("on_time", "Lowest cost that arrives before every stockout",
                           min(on_time, key=lambda b: b["delivered_total_eur"])))
+
+    # Priorities select an explicit lexicographic order, never a combined score.
+    safe = [b for b in priced if b["coverage"] == "covered"]
+    pool = safe or ([b for b in priced if b["coverage"] == "unknown"] if not tl.get("available") else [])
+    affordable = [b for b in pool if b["delivered_total_eur"] <= remaining_budget]
+    priorities = store.profile.get("priorities", {})
+    levels = {"high": 2, "medium": 1, "low": 0}
+    dimensions = sorted(["quality", "cost", "convenience"],
+                        key=lambda k: -levels.get(priorities.get(k, "medium"), 1))
+    def preference_key(b):
+        values = {"quality": -b["preferences_met"], "cost": b["delivered_total_eur"],
+                  "convenience": b["supplier_count"]}
+        return tuple(values[k] for k in dimensions) + (b["delivered_total_eur"],)
+    recommended = min((b for b in affordable or pool if b["lines"]), key=preference_key, default=None)
+    if recommended is not None:
+        picks.append(("recommended", " → ".join(dimensions), recommended))
 
     baskets = []
     seen: dict[tuple, dict] = {}
@@ -288,17 +325,27 @@ def calculate_baskets(store: Store) -> dict:
             seen[key]["also"].append(kind)
             continue
         entry = {"kind": kind, "rule": why, "also": [], **b,
-                 "within_budget": b["delivered_total_eur"] <= budget}
+                 "within_budget": b["delivered_total_eur"] <= remaining_budget}
         if baseline:
             entry["vs_baseline_eur"] = round(b["delivered_total_eur"] - baseline["delivered_total_eur"], 2)
         seen[key] = entry
         baskets.append(entry)
 
+    from .context import input_version
+    recommended_kind = next((b["kind"] for b in baskets if b["kind"] == "recommended" or "recommended" in b["also"]), None)
+
     return {
         "budget_eur": budget,
+        "remaining_budget_eur": remaining_budget,
+        "input_version": input_version(store),
+        "recommended_kind": recommended_kind,
+        "priority_order": dimensions,
+        "timing_known": bool(tl.get("available")),
+        "budget_conflict": bool(pool) and not affordable,
+        "conflict": f"No eligible offer for: {', '.join(missing)}. Resolve the missing facts or review requirements." if missing else None,
         "needs": needs,
         "stockouts": stockouts,
-        "no_on_time_option": bool(stockouts) and not any(not b["late_lines"] for b in priced),
+        "no_on_time_option": bool(stockouts) and not any(b["coverage"] == "covered" for b in priced),
         "baskets": baskets,
         "excluded": excluded,
         "open_questions": open_questions(store),
@@ -314,11 +361,16 @@ def compare_prices(store: Store, ingredient: str) -> dict:
         if o["ingredient"] != ingredient or o.get("pending_new"):
             continue
         per = 1000  # price per litre or per kilogram
-        groups.setdefault(o["comparison_group"], []).append({
+        # Same broad category does not establish equivalent origin, method or format.
+        attributes = o.get("attributes", {})
+        cohort = (o["comparison_group"], o["unit"], attributes.get("origin_country"),
+                  attributes.get("brewing_method"), attributes.get("fresh"), attributes.get("cut"))
+        groups.setdefault(cohort, []).append({
             "offer_id": o["id"],
             "product": o["product"],
             "supplier_id": o["supplier_id"],
             "offer_date": o["offer_date"],
+            "orderability": orderability(store, o["id"]),
             "unit_price_eur": round(o["price_eur"] / o["pack_size"] * per, 2),
             "per": "L" if o["unit"] == "ml" else "kg",
         })
@@ -326,7 +378,8 @@ def compare_prices(store: Store, ingredient: str) -> dict:
     for g, items in groups.items():
         prices = [i["unit_price_eur"] for i in items]
         out.append({
-            "comparison_group": g,
+            "comparison_group": g[0],
+            "cohort": {"unit": g[1], "origin_country": g[2], "brewing_method": g[3], "fresh": g[4], "cut": g[5]},
             "count": len(items),
             "offers": sorted(items, key=lambda i: i["unit_price_eur"]),
             "median_eur": round(statistics.median(prices), 2) if len(prices) >= 3 else None,

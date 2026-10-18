@@ -4,11 +4,11 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Check, Loader2, RotateCcw, Sparkles, Store, Truck, X } from "lucide-react";
+import { Loader2, RotateCcw, Sparkles, X } from "lucide-react";
 import { errorText, money } from "@/lib/api";
 import { useI18n, useLabel, type Key } from "@/lib/i18n";
 import { useElapsed, useWorkspace } from "@/components/workspace";
-import { suggestedBasket } from "@/components/helpers";
+import PurchaseBrief from "@/components/PurchaseBrief";
 
 const POS_KEY = "japita.advisor.position";
 
@@ -43,12 +43,11 @@ export function Markdown({ text }: { text: string }) {
 function AdvisorBody() {
   const { t, lang } = useI18n();
   const label = useLabel();
-  const { data, advisor, ask, setAdvisorOpen } = useWorkspace();
+  const { data, advisor, ask, conversation, setAdvisorOpen } = useWorkspace();
   const [question, setQuestion] = useState("");
   const elapsed = useElapsed(advisor.startedAt);
-  const b = suggestedBasket(data?.baskets);
   const offers = data?.state.offers ?? [];
-  const drafts = (advisor.result?.clarifications ?? []).filter((c) => c.state === "draft");
+  const drafts = (data?.state.clarifications ?? []).filter((c) => c.state === "draft");
 
   const submit = (q: string) => {
     if (!q.trim()) return;
@@ -58,32 +57,7 @@ function AdvisorBody() {
 
   return (
     <div className="jp-advisor" aria-label={t("adv.title")}>
-      {b && (
-        <div className="jp-recommendation" style={{ borderTop: 0, paddingTop: 0 }}>
-          <span className="jp-kicker">{t("adv.suggested")}</span>
-          <h3 style={{ marginTop: 8 }}>{label("kind", b.kind)}</h3>
-          {b.vs_baseline_eur !== undefined && b.kind !== "baseline" && (
-            <p>{t("bk.vsBaseline", { d: `${b.vs_baseline_eur > 0 ? "+" : ""}${money(b.vs_baseline_eur)}` })}</p>
-          )}
-          <div className="jp-price jp-number">{money(b.delivered_total_eur)}</div>
-          <small className="jp-muted">{t("bk.goodsShipping", { g: money(b.goods_eur), s: money(b.shipping_eur) })}</small>
-          <div className="jp-proof">
-            <Truck aria-hidden />
-            <span>{b.late_lines.length ? t("adv.someLate") : t("adv.inTime")}</span>
-          </div>
-          <div className="jp-proof">
-            <Check aria-hidden />
-            <span>{t("bk.prefs", { m: b.preferences_met, t: b.preferences_total })}</span>
-          </div>
-          <div className="jp-proof">
-            <Store aria-hidden />
-            <span>{b.suppliers.map((s) => s.name).join(" · ")}</span>
-          </div>
-          <Link href="/restaurants/basket" className="jp-action jp-primary" style={{ width: "100%", marginTop: 13 }} onClick={() => setAdvisorOpen(false)}>
-            {t("adv.openBasket")}
-          </Link>
-        </div>
-      )}
+      <PurchaseBrief />
 
       <div className="jp-recommendation jp-advisor-ask" style={{ marginTop: 16 }}>
         <span className="jp-kicker">{t("adv.ask")}</span>
@@ -149,15 +123,20 @@ function AdvisorBody() {
         {advisor.result && !advisor.running && (
           <div style={{ marginTop: 14 }}>
             {advisor.question && <p style={{ fontStyle: "italic" }}>“{advisor.question}”</p>}
-            <Markdown
-              text={cleanAnswer(
-                advisor.result.answer,
-                Object.fromEntries([
-                  ...offers.map((o) => [o.id, o.product]),
-                  ...Object.values(data?.state.suppliers ?? {}).map((s) => [s.id, s.name]),
-                ]),
-              )}
-            />
+            {(advisor.result.stale || advisor.result.input_version !== data?.baskets.input_version) && <p className="jp-error">{t("adv.stale")}</p>}
+            {!advisor.result.explanation.validated ? <p>{t("adv.unverified")}</p> : <div>
+              <p className="jp-kicker">{t("adv.verified")}</p>
+              {advisor.result.explanation.evidence.map((e) => <div className="jp-quote" key={e.offer_id + e.field}>
+                <strong>{e.product} · {label("field", e.field)}</strong>
+                <p>{e.rule ?? e.preference} · {t("adv.outcome", { outcome: e.outcome })}</p>
+                {e.source_text && <p lang="ja">{t("adv.source", { source: e.source_text })}</p>}
+              </div>)}
+            </div>}
+            {advisor.result.explanation.focus === "prices" && Object.entries(advisor.result.brief.comparisons).map(([ingredient, comparison]) => <details key={ingredient}>
+              <summary>{t("adv.comparison")} · {label("ing", ingredient)}</summary>
+              {comparison.groups.map((group, i) => <div className="jp-quote" key={i}>{group.offers.map((offer) => <p key={offer.offer_id}>{offer.product} · {money(offer.unit_price_eur)} / {offer.per} · {offer.offer_date}</p>)}</div>)}
+            </details>)}
+            {advisor.result.explanation.focus === "orders" && advisor.result.brief.purchase_orders.map((po) => <p key={po.id}>{po.supplier_name} · {po.state} · {money(po.total_eur)}</p>)}
             {drafts.length > 0 && (
               <div className="jp-quote">
                 <h3>{t("adv.drafted")}</h3>
@@ -174,6 +153,7 @@ function AdvisorBody() {
             )}
           </div>
         )}
+        {conversation.length > 1 && <details><summary>{t("adv.previous")}</summary>{conversation.slice(0, -1).map((turn, i) => <p key={i}>{turn.question}</p>)}</details>}
         <p style={{ fontSize: 11, marginBottom: 0 }}>{t("adv.note")}</p>
       </div>
     </div>

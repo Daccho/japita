@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { BookOpen, CalendarDays, Globe, Instagram, MapPin, MessageSquare, Plus } from "lucide-react";
 import { useI18n, type Key } from "@/lib/i18n";
-import { useStored } from "@/components/workspace";
+import { api, errorText } from "@/lib/api";
+import { useStored, useWorkspace } from "@/components/workspace";
 
 const TYPES = [
   { id: "website", group: "ln.owned", icon: Globe, placeholder: "https://your-restaurant.com" },
@@ -23,10 +24,18 @@ function validUrl(url: string) {
   }
 }
 
-// Restaurant links, saved in this browser only. No listings are prefilled or imported.
+// Owner-entered restaurant links are context only; no pages or reviews are fetched.
 export default function Links() {
   const { t } = useI18n();
-  const [links, save] = useStored<Record<string, string>>("japita.links", {});
+  const [legacy] = useStored<Record<string, string>>("japita.links", {});
+  const { data, profileId, refresh } = useWorkspace();
+  const profile = data?.state.profiles[profileId];
+  const links = profile?.links ?? legacy;
+  const save = async (next: Record<string, string>) => {
+    if (!profile) return false;
+    try { await api.putContext(profileId, { links: next }); await refresh(); return true; }
+    catch (err) { setError(errorText(err, t)); return false; }
+  };
   const [editing, setEditing] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -69,11 +78,11 @@ export default function Links() {
                 {open && (
                   <form
                     className="jp-link-editor"
-                    onSubmit={(e) => {
+                    onSubmit={async (e) => {
                       e.preventDefault();
                       const value = String(new FormData(e.currentTarget).get("url") ?? "").trim();
                       if (!validUrl(value)) return setError(t("ln.error"));
-                      save({ ...links, [id]: value });
+                      if (!await save({ ...links, [id]: value })) return;
                       setEditing(null);
                       setToast(t("ln.saved"));
                     }}
@@ -98,10 +107,10 @@ export default function Links() {
                         <button
                           type="button"
                           className="jp-action"
-                          onClick={() => {
+                          onClick={async () => {
                             const next = { ...links };
                             delete next[id];
-                            save(next);
+                            if (!await save(next)) return;
                             setEditing(null);
                             setToast(t("ln.removed"));
                           }}

@@ -6,6 +6,7 @@ import { errorText, money, qty } from "@/lib/api";
 import { useDates, useI18n, useLabel } from "@/lib/i18n";
 import { useElapsed, useWorkspace } from "@/components/workspace";
 import { suggestedBasket } from "@/components/helpers";
+import WeekInputs from "@/components/WeekInputs";
 import PageHeader from "@/components/PageHeader";
 import Orders from "@/components/Orders";
 import DayStrip from "@/components/DayStrip";
@@ -130,6 +131,7 @@ export default function WeekPage() {
             {orders.length ? <Orders orders={orders} canSubmit={!data.approval?.stale} /> : <p className="jp-muted" style={{ fontSize: 13 }}>{t("wk.noOrders")}</p>}
           </section>
 
+          <WeekInputs />
           <WeeklyCheck />
         </div>
 

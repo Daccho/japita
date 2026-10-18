@@ -4,7 +4,8 @@ import { useState } from "react";
 import Image from "next/image";
 import { Pencil } from "lucide-react";
 import { useI18n, type Key } from "@/lib/i18n";
-import { useStored } from "@/components/workspace";
+import { api, errorText } from "@/lib/api";
+import { useStored, useWorkspace } from "@/components/workspace";
 import { PROFILE_DEFAULTS, type ProfileText } from "@/components/menuData";
 
 const FIELDS: { key: keyof ProfileText; label: Key; multiline?: boolean }[] = [
@@ -21,7 +22,11 @@ const FIELDS: { key: keyof ProfileText; label: Key; multiline?: boolean }[] = [
 
 export default function Overview() {
   const { t } = useI18n();
-  const [p, save] = useStored<ProfileText>("japita.profileText", PROFILE_DEFAULTS);
+  const [legacy] = useStored<ProfileText>("japita.profileText", PROFILE_DEFAULTS);
+  const { data, profileId, refresh } = useWorkspace();
+  const profile = data?.state.profiles[profileId];
+  const p = { ...legacy, ...profile?.restaurant_details } as ProfileText;
+  const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -33,14 +38,17 @@ export default function Overview() {
           <span className="jp-badge">{t("side.demo")}</span>
         </div>
         <form
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
             const form = new FormData(e.currentTarget);
             const next = { ...p };
             for (const f of FIELDS) next[f.key] = String(form.get(f.key) ?? "").trim();
-            save(next);
-            setEditing(false);
-            setToast(t("ov.saved"));
+            if (!profile) return;
+            setBusy(true);
+            try {
+              await api.putContext(profileId, { restaurant_details: next });
+              await refresh(); setEditing(false); setToast(t("ov.saved"));
+            } catch (err) { setToast(errorText(err, t)); } finally { setBusy(false); }
           }}
         >
           {FIELDS.map((f) => (
@@ -50,7 +58,7 @@ export default function Overview() {
             </label>
           ))}
           <div className="jp-form-actions">
-            <button type="submit" className="jp-action jp-primary">
+            <button type="submit" disabled={busy} className="jp-action jp-primary">
               {t("ov.save")}
             </button>
             <button type="button" className="jp-action" onClick={() => setEditing(false)}>
@@ -58,6 +66,7 @@ export default function Overview() {
             </button>
           </div>
         </form>
+        {toast && <p role="status">{toast}</p>}
       </section>
     );
 

@@ -1,5 +1,7 @@
 # Technical requirements
 
+Implementation note, 18 October 2026: the current connected advisor uses the smaller evidence-reference response contract documented in [advisor.md](advisor.md), with deterministic briefs and validated rule outcomes. The larger T39 proposal below is not its current wire format; its old deployment/model examples also predate the current architecture documentation.
+
 Status: proposed, 17 October 2026. Behavior comes from [mvp.md](mvp.md) and [compliance.md](compliance.md); this file says how to build it for the hackathon. Requirements are numbered so commits and tests can refer to them.
 
 ## 1. Constraints

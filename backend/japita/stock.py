@@ -86,6 +86,25 @@ def timeline(store: Store) -> dict:
     return {"available": True, "as_of": store.week.get("as_of"), "ingredients": out}
 
 
+def project(store: Store, lines: list[dict]) -> dict:
+    """Replay proposed purchases without recording them as confirmed deliveries."""
+    if not store.week.get("days"):
+        return {"status": "unknown", "shortfalls": {}}
+    view = store.clone()
+    unknown = False
+    for i, line in enumerate(lines):
+        if not line.get("earliest_delivery"):
+            unknown = True
+            continue
+        view.week.setdefault("deliveries", []).append({
+            "id": f"projection-{i}", "supplier_id": line["supplier_id"], "ingredient": line["ingredient"],
+            "qty": line["purchase_qty"], "date": line["earliest_delivery"], "status": "confirmed",
+        })
+    shortfalls = {ing: {"first_stockout": t["first_stockout"], "qty": t["total_shortfall"], "unit": t["unit"]}
+                  for ing, t in timeline(view)["ingredients"].items() if t["total_shortfall"] > 0}
+    return {"status": "unknown" if unknown else "shortfall" if shortfalls else "covered", "shortfalls": shortfalls}
+
+
 def earliest_delivery(store: Store, supplier_id: str) -> str | None:
     """First date the supplier can deliver, counting from the week's as-of date plus lead time.
 

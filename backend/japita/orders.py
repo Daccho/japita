@@ -17,8 +17,10 @@ from .store import Store, _now
 
 def basket_version(basket: dict) -> str:
     """Fingerprint of what would be ordered: any change to lines or totals needs a new approval."""
-    key = [(ln["offer_id"], ln["packs"]) for ln in basket["lines"]] + [basket["delivered_total_eur"]]
-    return hashlib.sha256(json.dumps(key).encode()).hexdigest()[:12]
+    key = {"lines": basket["lines"], "suppliers": basket["suppliers"],
+           "total": basket["delivered_total_eur"], "coverage": basket.get("coverage"),
+           "tradeoffs": basket.get("unmet_preferences"), "within_budget": basket.get("within_budget")}
+    return hashlib.sha256(json.dumps(key, sort_keys=True).encode()).hexdigest()[:12]
 
 
 def _current(store: Store, kind: str) -> dict | None:
@@ -33,6 +35,8 @@ def approve_basket(store: Store, kind: str, approved_by: str = "owner") -> dict:
     basket = _current(store, kind)
     if basket is None:
         raise DomainError("no_current_basket", f"no current basket of kind {kind!r}")
+    if basket.get("coverage") != "covered":
+        raise DomainError("basket_not_covered", "Verify daily inputs and resolve projected service shortages before approval")
     for a in store.data["approvals"]:
         if a["state"] == "approved" and a["profile_id"] == store.profile_id:
             a["state"] = "superseded"
@@ -69,6 +73,7 @@ def approval_status(store: Store) -> dict | None:
     own = {po["id"] for po in store.data["purchase_orders"] if po["approval_id"] == a["id"]}
     view = store.clone()
     view.week["deliveries"] = [d for d in view.week.get("deliveries", []) if d.get("purchase_order_id") not in own]
+    view.data["purchase_orders"] = [po for po in view.data["purchase_orders"] if po["id"] not in own]
     basket = _current(view, a["kind"])
     now = basket_version(basket) if basket else None
     return {**a, "stale": now != a["version"], "current_version": now}

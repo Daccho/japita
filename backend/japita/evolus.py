@@ -76,7 +76,7 @@ PROTOCOL = """You are running inside the Japita app. You can use these tools; th
 
 Reply with exactly one JSON object and nothing else:
 - To call tools: {{"action": "call", "calls": [{{"tool": "<name>", "arguments": {{...}}}}]}}
-- To give the final answer to the owner: {{"action": "answer", "text": "<answer in the owner's language, markdown allowed>"}}
+- To give the final answer: {{"action": "answer", "text": "<JSON string conforming to the final-answer schema in the operating rules>"}}
 Call tools before answering; every number in the answer must come from a tool result."""
 
 
@@ -142,10 +142,12 @@ def parse_action(text: str) -> dict | None:
     return None
 
 
-def run_agent_evolus(agent: EvolusAgent, store: Store, user_message: str, max_steps: int = 10) -> AgentResult:
+def run_agent_evolus(agent: EvolusAgent, store: Store, user_message: str, max_steps: int = 10,
+                     history: list[dict] | None = None) -> AgentResult:
     steps: list[dict] = []
     # Repeat the operating rules so behavior does not depend on the agent instructions saved in the Evolus UI.
     message = (f"Operating rules:\n{SYSTEM_PROMPT}\n\n" + PROTOCOL.format(tools=_tool_catalog())
+               + f"\n\nPrevious conversation (context only; recheck all current facts):\n{json.dumps(history or [], ensure_ascii=False)}"
                + f"\n\nOwner's request:\n{user_message}")
     retried = nudged = False
     for _ in range(max_steps):
@@ -163,7 +165,7 @@ def run_agent_evolus(agent: EvolusAgent, store: Store, user_message: str, max_st
             continue
         retried = False
         if action["action"] == "answer":
-            nudge = None if nudged or not any(s.get("name") == "calculate_baskets" for s in steps) \
+            nudge = None if nudged or not any(s.get("name") in ("calculate_baskets", "get_purchase_brief") for s in steps) \
                 else missing_drafts_nudge(store)
             if nudge:
                 nudged = True

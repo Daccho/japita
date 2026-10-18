@@ -19,7 +19,7 @@ load_dotenv()
 
 # Kinds stored one document per id; "recipe" and "week" are singletons stored under id "current".
 COLLECTIONS = {"profile": "profiles", "supplier": "suppliers", "offer": "offers", "clarification": "clarifications",
-               "approval": "approvals", "purchase_order": "purchase_orders"}
+               "approval": "approvals", "purchase_order": "purchase_orders", "advisor_turn": "advisor_turns"}
 SINGLETONS = {"recipe": "recipe", "week": "week"}
 
 JsonType = JSON().with_variant(JSONB(), "postgresql")
@@ -103,7 +103,7 @@ def engine():
 
 def load_state() -> dict:
     data: dict = {"profiles": {}, "suppliers": {}, "offers": [], "clarifications": [], "review_flags": {},
-                  "approvals": [], "purchase_orders": [],
+                  "approvals": [], "purchase_orders": [], "advisor_turns": [],
                   "recipe": {"lines": []}, "week": {"servings": {}, "stock": {}}}
     with Session(engine()) as s:
         for r in s.scalars(select(Record).order_by(Record.kind, Record.id)):
@@ -140,6 +140,44 @@ def save_state(data: dict) -> None:
     with Session(engine()) as s, s.begin():
         s.execute(delete(Record))
         s.add_all(_records(data))
+
+
+_agent_write_lock = threading.Lock()
+
+
+def save_advisor_run(new_drafts: list[dict], turn: dict) -> None:
+    """Insert only new drafts and the turn; never write the agent's old restaurant snapshot.
+
+    One API process is used for this MVP. PostgreSQL also serializes concurrent agent merges.
+    """
+    import uuid
+    with _agent_write_lock, Session(engine()) as s, s.begin():
+        if s.bind.dialect.name == "postgresql":
+            s.connection().exec_driver_sql("SELECT pg_advisory_xact_lock(742391)")
+        rows = list(s.scalars(select(Record).where(Record.kind == "clarification").with_for_update()))
+        existing = [row.data for row in rows]
+        keys = {(c["offer_id"], c["field"]) for c in existing if c["state"] != "replied"}
+        n = max((int(c["id"][1:]) for c in existing), default=0)
+        for draft in new_drafts:
+            key = (draft["offer_id"], draft["field"])
+            if key in keys:
+                continue
+            offer = s.get(Record, ("offer", draft["offer_id"]))
+            flags = s.get(Record, ("review_flag", draft["offer_id"]))
+            if offer is None or (offer.data.get("attributes", {}).get(draft["field"]) is not None
+                                 and draft["field"] not in (flags.data if flags else {})):
+                continue  # another person may have resolved this while the model was running
+            n += 1
+            data = {**draft, "id": f"C{n}"}
+            s.add(Record(kind="clarification", id=data["id"], data=data))
+            keys.add(key)
+        turn_id = uuid.uuid4().hex
+        older = [r for r in s.scalars(select(Record).where(Record.kind == "advisor_turn"))
+                 if turn.get("conversation_id") and r.data.get("conversation_id") == turn["conversation_id"]
+                 and r.data.get("profile_id") == turn["profile_id"]]
+        for row in sorted(older, key=lambda r: r.data["created_at"])[:-7]:
+            s.delete(row)
+        s.add(Record(kind="advisor_turn", id=turn_id, data={**turn, "id": turn_id}))
 
 
 def is_empty() -> bool:

@@ -78,6 +78,7 @@ export function rememberedSession<U>(maxAgeMs: number): U | null {
 export function forgetSession() {
   try {
     for (const k of Object.keys(localStorage)) if (k === SESSION_HINT || k.startsWith("japita.cache.")) localStorage.removeItem(k);
+    for (const k of Object.keys(sessionStorage)) if (k.startsWith("japita.advisor.conversation.")) sessionStorage.removeItem(k);
   } catch {}
 }
 
@@ -126,6 +127,8 @@ const ERROR_KEYS: Record<string, Key> = {
   clarification_not_sent: "err.clarification_not_sent",
   no_pending_update: "err.no_pending_update",
   owner_only_field: "err.owner_only_field",
+  search_not_understood: "err.search_not_understood",
+  basket_not_covered: "adv.noSafe",
 };
 
 export function errorCodeOf(e: unknown): string {
@@ -152,6 +155,8 @@ export type Profile = {
   priorities: Record<string, "low" | "medium" | "high">;
   accepted_delivery_days: Day[];
   ingredients: Record<string, { mandatory: Rule[]; negotiable: Rule[] }>;
+  restaurant_details?: Record<string, string>;
+  links?: Record<string, string>;
 };
 export type Supplier = {
   id: string;
@@ -162,6 +167,9 @@ export type Supplier = {
   shipping_eur: number | null;
   delivery_days: Day[];
   lead_time_days?: number;
+  supplier_country?: string | null;
+  dispatch_country?: string | null;
+  geography_source?: string | null;
 };
 export type PendingUpdate = {
   product?: string;
@@ -190,6 +198,10 @@ export type Offer = {
   document: string | null;
   pending_update?: PendingUpdate;
   pending_new?: boolean;
+  availability_status?: "unknown" | "confirmed" | "unavailable";
+  availability_source?: string | null;
+  available_qty?: number | null;
+  valid_until?: string | null;
 };
 export type Extraction = {
   status: "ok" | "needs_review" | "unknown";
@@ -308,7 +320,7 @@ export type BasketLine = {
   needed_by: string | null;
   arrives_in_time: boolean | null;
 };
-export type BasketKind = "baseline" | "lowest_cost" | "best_fit" | "fewest_suppliers" | "on_time";
+export type BasketKind = "baseline" | "lowest_cost" | "best_fit" | "fewest_suppliers" | "on_time" | "recommended";
 export type Basket = {
   kind: BasketKind;
   rule: string;
@@ -325,6 +337,9 @@ export type Basket = {
   late_lines: string[];
   within_budget: boolean;
   vs_baseline_eur?: number;
+  coverage: "covered" | "shortfall" | "unknown";
+  projected_shortfalls: Record<string, { first_stockout: string; qty: number; unit: string }>;
+  assumptions: string[];
 };
 export type OpenQuestion = {
   offer_id: string;
@@ -334,8 +349,15 @@ export type OpenQuestion = {
   rule: string;
   resolved_by: "owner" | "supplier";
   drafted: boolean;
+  status?: string;
 };
 export type BasketResult = {
+  input_version: string;
+  recommended_kind: BasketKind | null;
+  remaining_budget_eur: number;
+  priority_order: string[];
+  timing_known: boolean;
+  budget_conflict: boolean;
   budget_eur?: number;
   needs?: Record<string, Need>;
   stockouts?: Record<string, string>;
@@ -390,7 +412,24 @@ export type PurchaseOrder = {
   delivery_changes?: DeliveryChange[];
 };
 export type Spending = { budget_eur: number; planned_eur: number | null; committed_eur: number; remaining_eur: number };
-export type AgentAnswer = { answer: string; clarifications: Clarification[] };
+export type PurchaseBrief = {
+  nothing_to_buy: boolean;
+  excluded: BasketResult["excluded"];
+  input_version: string; week_id: string; timing_known: boolean; recommended: Basket | null;
+  priority_order: string[]; budget_conflict: boolean; remaining_budget_eur: number;
+  risks: { ingredient: string; unit: string; date: string; first_shortfall: number; total_shortfall: number }[];
+  questions: OpenQuestion[]; purchase_orders: PurchaseOrder[]; clarifications: Clarification[];
+  comparisons: Record<string, { groups: { comparison_group: string; count: number; median_eur: number | null; offers: { offer_id: string; product: string; unit_price_eur: number; per: string; offer_date: string }[] }[] }>;
+};
+export type AdvisorContext = { offer_id?: string; basket_kind?: string };
+export type AgentAnswer = { answer: string; clarifications: Clarification[]; brief: PurchaseBrief; input_version: string; stale: boolean;
+  explanation: { validated: boolean; focus: string; evidence: (RuleOutcome & { offer_id: string; product: string })[] } };
+export type CatalogCriteria = { ingredient?: string | null; relationship?: "existing" | "candidate"; supplier_country?: string | null; dispatch_country?: string | null; product_origin?: string | null; fresh?: boolean | null; needed_by?: string | null; name?: string | null };
+export type CatalogQuote = { offer_id: string; supplier_id: string; product: string; ingredient: string; comparison_key: string;
+  basis_qty: number; unit: string; packs: number; purchase_qty: number; goods_eur: number; shipping_eur: number | null;
+  delivered_total_eur: number | null; minimum_met: boolean; earliest_delivery: string | null; evidence: Evidence;
+  orderability: { orderable: boolean; reasons: string[] } };
+export type CatalogResult = { criteria: CatalogCriteria; unsupported: string[]; unchecked: { offer_id: string; product: string; fields: string[] }[]; offers: CatalogQuote[] };
 export type WeeklyCheck = { status: string; output_text: string | null };
 
 const q = (profileId: string) => `profile_id=${encodeURIComponent(profileId)}`;
@@ -402,8 +441,16 @@ export const api = {
   timeline: (profileId: string) => request<Timeline>(`/stock/timeline?${q(profileId)}`),
   evidence: (offerId: string, profileId: string) => request<Evidence>(`/offers/${offerId}/evidence?${q(profileId)}`),
   putProfile: (p: Profile) => request<Profile>(`/profiles/${p.id}`, json("PUT", p)),
-  ask: (question: string, profileId: string) =>
-    runJob<AgentAnswer>(request("/agent/ask", json("POST", { question, profile_id: profileId }))),
+  putWeek: (week: Week, profileId: string, version: string) => request<Week>(`/week?${q(profileId)}`, json("PUT", week, { "If-Match": version })),
+  putRecipe: (recipe: State["recipe"], profileId: string, version: string) => request<State["recipe"]>(`/recipe?${q(profileId)}`, json("PUT", recipe, { "If-Match": version })),
+  putOffer: (offer: Offer) => request<Offer>(`/offers/${offer.id}/purchasing-terms`, json("PUT", { availability_status: offer.availability_status, availability_source: offer.availability_source, available_qty: offer.available_qty, valid_until: offer.valid_until })),
+  putSupplier: (supplier: Supplier) => request<Supplier>(`/suppliers/${supplier.id}/geography`, json("PUT", { supplier_country: supplier.supplier_country, dispatch_country: supplier.dispatch_country, geography_source: supplier.geography_source })),
+  putContext: (profileId: string, body: { restaurant_details?: Record<string, string>; links?: Record<string, string> }) => request<Profile>(`/profiles/${profileId}/context`, json("PATCH", body)),
+  chefAssessment: (offerId: string, approved: boolean, note: string) => request<Offer>(`/offers/${offerId}/chef-assessment`, json("PUT", { approved, note })),
+  brief: (profileId: string) => request<PurchaseBrief>(`/advisor/brief?${q(profileId)}`),
+  catalog: (query: string, profileId: string, criteria: CatalogCriteria) => runJob<CatalogResult>(request("/catalog/search", json("POST", { query, profile_id: profileId, criteria }))),
+  ask: (question: string, profileId: string, conversationId: string, lang: string, context: AdvisorContext = {}) =>
+    runJob<AgentAnswer>(request("/agent/ask", json("POST", { question, profile_id: profileId, conversation_id: conversationId, lang, ...context }))),
   approveClarification: (id: string) => request<Clarification>(`/clarifications/${id}/approve`, { method: "POST" }),
   applyClarification: (id: string, profileId: string, value?: unknown) =>
     request<{ clarification: Clarification; baskets: BasketResult }>(
@@ -437,7 +484,7 @@ export const money = (n: number | null | undefined, unknown = "?") =>
 export const qty = (n: number, unit: string) =>
   unit === "g" || unit === "ml"
     ? n >= 1000 || n === 0
-      ? `${(n / 1000).toLocaleString("en-IE", { maximumFractionDigits: 1 })} ${unit === "g" ? "kg" : "L"}`
+      ? `${(n / 1000).toLocaleString("en-IE", { maximumFractionDigits: 2 })} ${unit === "g" ? "kg" : "L"}`
       : `${n.toLocaleString("en-IE")} ${unit}`
     : `${n} ${unit}`;
 

@@ -10,7 +10,10 @@ import {
   type State,
   type Timeline,
   type WeeklyCheck,
+  type PurchaseBrief,
+  type AdvisorContext,
 } from "@/lib/api";
+import { useI18n } from "@/lib/i18n";
 
 const PROFILE_KEY = "japita.profile";
 const CACHE_KEY = "japita.cache.";
@@ -22,6 +25,7 @@ type Data = {
   timeline: Timeline;
   approval: Approval | null;
   spending: Spending;
+  brief: PurchaseBrief;
 };
 
 function cached(pid: string): Data | null {
@@ -45,7 +49,8 @@ type Ctx = {
   advisorOpen: boolean;
   setAdvisorOpen: (open: boolean) => void;
   advisor: Job<AgentAnswer>;
-  ask: (question: string) => void;
+  ask: (question: string, context?: AdvisorContext) => void;
+  conversation: { question: string; result: AgentAnswer }[];
   weekly: Job<WeeklyCheck>;
   runWeekly: () => void;
 };
@@ -61,12 +66,15 @@ export function useWorkspace() {
 const idle = { running: false, startedAt: null, result: null, error: null };
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
+  const { lang } = useI18n();
   const [profileId, setProfileState] = useState<string>("kumo-authentic");
   const [data, setData] = useState<Data | null>(null);
   const [live, setLive] = useState(false);
   const [advisorOpen, setAdvisorOpen] = useState(false);
   const [advisor, setAdvisor] = useState<Job<AgentAnswer>>(idle);
   const [weekly, setWeekly] = useState<Job<WeeklyCheck>>(idle);
+  const [conversation, setConversation] = useState<{ question: string; result: AgentAnswer }[]>([]);
+  const conversationId = useRef<string | null>(null);
   const profileRef = useRef(profileId);
   profileRef.current = profileId;
 
@@ -85,6 +93,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   }, [profileId]);
 
   const setProfileId = (id: string) => {
+    setAdvisor(idle);
+    setConversation([]);
+    conversationId.current = null;
     setProfileState(id);
     try {
       localStorage.setItem(PROFILE_KEY, id);
@@ -93,15 +104,16 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   const load = useCallback(async () => {
     const pid = profileRef.current;
-    const [state, baskets, timeline, approval, spending] = await Promise.all([
+    const [state, baskets, timeline, approval, spending, brief] = await Promise.all([
       api.state(),
       api.baskets(pid),
       api.timeline(pid),
       api.approval(pid),
       api.spending(pid),
+      api.brief(pid),
     ]);
     if (pid !== profileRef.current) return;
-    const next = { state, baskets, timeline, approval, spending };
+    const next = { state, baskets, timeline, approval, spending, brief };
     setData(next);
     setLive(true);
     try {
@@ -141,17 +153,27 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     await load();
   }, [load]);
 
-  const ask = (question: string) => {
+  const ask = (question: string, context: AdvisorContext = {}) => {
     if (advisor.running || !question.trim()) return;
     setAdvisorOpen(true);
+    const pid = profileRef.current;
+    if (!conversationId.current) {
+      const key = "japita.advisor.conversation." + pid;
+      try { conversationId.current = sessionStorage.getItem(key); } catch {}
+      conversationId.current ??= crypto.randomUUID();
+      try { sessionStorage.setItem(key, conversationId.current); } catch {}
+    }
+    const cid = conversationId.current;
     setAdvisor({ running: true, startedAt: Date.now(), result: null, error: null, question });
     api
-      .ask(question, profileRef.current)
+      .ask(question, pid, cid, lang, context)
       .then((result) => {
+        if (profileRef.current !== pid || conversationId.current !== cid) return;
         setAdvisor({ running: false, startedAt: null, result, error: null, question });
+        setConversation((previous) => [...previous, { question, result }].slice(-6));
         load().catch(() => {});
       })
-      .catch((e) => setAdvisor({ running: false, startedAt: null, result: null, error: e ?? new Error("failed"), question }));
+      .catch((e) => { if (profileRef.current === pid && conversationId.current === cid) setAdvisor({ running: false, startedAt: null, result: null, error: e ?? new Error("failed"), question }); });
   };
 
   const runWeekly = () => {
@@ -175,6 +197,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         setAdvisorOpen,
         advisor,
         ask,
+        conversation,
         weekly,
         runWeekly,
       }}

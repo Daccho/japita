@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Check, CircleHelp, Copy, Filter, Link2, MapPin, Search, X } from "lucide-react";
-import { api, errorText, money, qty, unitPrice, type Evidence, type Offer, type Supplier } from "@/lib/api";
+import { api, errorText, money, qty, unitPrice, type Evidence, type Offer, type Supplier, type CatalogResult } from "@/lib/api";
 import { useDates, useI18n, useLabel, type Key } from "@/lib/i18n";
 import { useWorkspace } from "@/components/workspace";
 import { copyText, fmtValue } from "@/components/helpers";
 import PageHeader from "@/components/PageHeader";
 import ProductDrawing from "@/components/ProductDrawing";
+import OfferTerms from "@/components/OfferTerms";
 
 type View = "existing" | "candidate";
 type Sort = "name-asc" | "name-desc" | "price-asc" | "price-desc";
@@ -16,36 +17,11 @@ const NO_FILTERS: Filters = { name: "", ingredient: "all", sort: "name-asc" };
 
 const perUnit = (o: Offer) => o.price_eur / o.pack_size;
 
-// Words a restaurant might type, mapped onto catalog facts (local demo search; no AI, no live discovery).
-function haystack(s: Supplier, offers: Offer[], label: (p: "ing" | "route", k: string) => string) {
-  const parts = [s.name];
-  for (const o of offers) {
-    parts.push(o.product, o.ingredient.replace("_", " "), label("ing", o.ingredient), label("route", o.origin_route));
-    if (o.ingredient === "noodles") parts.push("ramen noodle noodles");
-    if (o.ingredient === "soy_sauce") parts.push("soy sauce shoyu salsa soia");
-    if (o.attributes.fresh === true) parts.push("fresh fresco freschi");
-    if (o.attributes.fresh === false) parts.push("frozen surgelato surgelati congelati");
-    if (o.origin_route === "japan" || o.attributes.origin_country === "JP") parts.push("japan japanese giappone giapponese");
-    if (o.origin_route === "italy") parts.push("italy italian italia italiano");
-    if (o.origin_route === "europe") parts.push("europe eu europa netherlands olanda");
-  }
-  return parts.join(" ").toLowerCase();
-}
-
-const STOP = new Set(
-  "find show me i want would like looking for need search suppliers supplier products product some a an the in from with and or that which sell please can you get to of made trova cerco voglio un una uno il lo la i gli le di da con e o per fornitore fornitori prodotti prodotto che del della dei delle in".split(" "),
-);
-
-function matches(query: string, text: string) {
-  const words = query.toLowerCase().normalize("NFKC").replace(/[.,!?;:"'()]/g, " ").split(/\s+/).filter((w) => w && !STOP.has(w));
-  return words.every((w) => text.includes(w.length > 5 ? w.slice(0, 5) : w));
-}
-
 function OfferCard({ offer, evidence }: { offer: Offer; evidence?: Evidence }) {
   const { t, lang } = useI18n();
   const label = useLabel();
   const d = useDates();
-  const { refresh } = useWorkspace();
+  const { refresh, ask, data } = useWorkspace();
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const status = evidence ? (evidence.status === "ok" && !evidence.orderability.orderable ? "notOrderable" : evidence.status) : null;
@@ -188,6 +164,8 @@ function OfferCard({ offer, evidence }: { offer: Offer; evidence?: Evidence }) {
           </div>
         </div>
       )}
+      {data?.state.suppliers[offer.supplier_id] && <OfferTerms offer={offer} supplier={data.state.suppliers[offer.supplier_id]} />}
+      <button className="jp-action" type="button" onClick={() => ask(t("adv.askOffer"), { offer_id: offer.id })}>{t("adv.aboutOffer")}</button>
       {msg && <p className="jp-toast">{msg}</p>}
     </article>
   );
@@ -199,7 +177,9 @@ function SupplierDetail({ supplier, offers }: { supplier: Supplier; offers: Offe
   const { profileId } = useWorkspace();
   const [evidence, setEvidence] = useState<Record<string, Evidence>>({});
   const [copied, setCopied] = useState(false);
-  const version = JSON.stringify(offers.map((o) => [o.id, o.attributes, o.price_eur, o.pending_update?.submitted_at]));
+  const version = JSON.stringify(offers.map((o) => [o.id, o.attributes, o.evidence, o.price_eur, o.pack_size, o.unit,
+    o.availability_status, o.availability_source, o.available_qty, o.valid_until, o.pending_update?.submitted_at]));
+  const termsVersion = JSON.stringify([supplier.account_status, supplier.shipping_eur, supplier.delivery_days]);
 
   useEffect(() => {
     let live = true;
@@ -210,7 +190,7 @@ function SupplierDetail({ supplier, offers }: { supplier: Supplier; offers: Offe
     return () => {
       live = false;
     };
-  }, [version, profileId]);
+  }, [version, termsVersion, profileId]);
 
   const copyLink = async () => {
     try {
@@ -248,13 +228,23 @@ function SupplierDetail({ supplier, offers }: { supplier: Supplier; offers: Offe
 export default function SuppliersPage() {
   const { t } = useI18n();
   const label = useLabel();
-  const { data } = useWorkspace();
+  const { data, profileId } = useWorkspace();
   const [view, setView] = useState<View>("existing");
   const [filters, setFilters] = useState<Record<View, Filters>>({ existing: NO_FILTERS, candidate: NO_FILTERS });
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [draft, setDraft] = useState("");
   const [query, setQuery] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [result, setResult] = useState<CatalogResult | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState("");
+  const [country, setCountry] = useState("");
+  const [origin, setOrigin] = useState("");
+  const [group, setGroup] = useState("");
+  const searchSequence = useRef(0);
+  useEffect(() => {
+    searchSequence.current++; setResult(null); setQuery(null); setSearching(false);
+  }, [profileId, data?.baskets.input_version, country, origin, filters.candidate.ingredient]);
 
   // Opened from a notification: /suppliers?supplier=S3
   useEffect(() => {
@@ -280,21 +270,22 @@ export default function SuppliersPage() {
 
   let rows = Object.values(state.suppliers)
     .filter((s) => s.relationship === view)
-    .map((s) => ({ s, offers: offersOf(s.id) }))
+    .map((s) => ({ s, offers: offersOf(s.id).filter((o) => !discovering || !result || result.offers.some((q) => q.offer_id === o.id)) }))
     .filter(({ s, offers }) => {
       if (f.ingredient !== "all" && !offers.some((o) => o.ingredient === f.ingredient)) return false;
       if (!discovering && f.name && !s.name.toLowerCase().includes(f.name.toLowerCase().trim())) return false;
-      if (discovering && query) return matches(query, haystack(s, offers, label));
+      if (discovering && result) return result.offers.some((o) => o.supplier_id === s.id);
       return true;
     });
   const cheapest = (offers: Offer[]) => offers.reduce<Offer | null>((m, o) => (m === null || perUnit(o) < perUnit(m) ? o : m), null);
-  rows = rows.sort((a, b) => {
-    if (f.sort.startsWith("price")) {
-      const pa = cheapest(a.offers);
-      const pb = cheapest(b.offers);
-      if (pa && pb && perUnit(pa) !== perUnit(pb)) return (perUnit(pa) - perUnit(pb)) * (f.sort === "price-desc" ? -1 : 1);
-    }
-    return a.s.name.localeCompare(b.s.name) * (f.sort === "name-desc" ? -1 : 1);
+  // Supplier rows sort by name. Delivered-price sorting happens only inside a comparable offer group below.
+  rows = rows.sort((a, b) => a.s.name.localeCompare(b.s.name) * (f.sort === "name-desc" ? -1 : 1));
+  const groups = [...new Map((result?.offers ?? []).map((o) => [o.comparison_key, o])).values()];
+  const selectedGroup = groups.some((o) => o.comparison_key === group) ? group : groups[0]?.comparison_key;
+  const quotes = (result?.offers ?? []).filter((o) => o.comparison_key === selectedGroup).sort((a, b) => {
+    if (a.delivered_total_eur === null) return b.delivered_total_eur === null ? 0 : 1;
+    if (b.delivered_total_eur === null) return -1;
+    return (a.delivered_total_eur - b.delivered_total_eur) * (f.sort === "price-desc" ? -1 : 1);
   });
   const activeCount = [f.ingredient !== "all", f.sort !== "name-asc", !discovering && !!f.name].filter(Boolean).length;
   const sorts: Sort[] = discovering ? ["name-asc", "name-desc", "price-asc", "price-desc"] : ["name-asc", "name-desc"];
@@ -355,14 +346,17 @@ export default function SuppliersPage() {
       {discovering && (
         <form
           className="jp-discovery-search"
-          onSubmit={(e) => {
-            e.preventDefault();
-            setQuery(draft.trim());
-            setExpanded(null);
+          onSubmit={async (e) => {
+            e.preventDefault(); const sequence = ++searchSequence.current; setSearching(true); setSearchError(""); setResult(null); setQuery(null);
+            try {
+              const next = await api.catalog(draft.trim(), profileId, { relationship: "candidate", ingredient: f.ingredient === "all" ? null : f.ingredient, supplier_country: country || null, product_origin: origin || null });
+              if (sequence === searchSequence.current) { setResult(next); setQuery(draft.trim()); setExpanded(null); }
+            } catch (err) { if (sequence === searchSequence.current) setSearchError(errorText(err, t)); } finally { if (sequence === searchSequence.current) setSearching(false); }
           }}
         >
           <label htmlFor="jp-directory-query">{t("srch.label")}</label>
-          <p>{t("srch.help")}</p>
+          <p>{t("catalog.note")}</p>
+          <div className="jp-field-grid"><label className="jp-field">{t("catalog.country")}<input maxLength={2} pattern="[A-Za-z]{2}" value={country} onChange={(e) => setCountry(e.target.value.toUpperCase())} /></label><label className="jp-field">{t("catalog.origin")}<input maxLength={2} pattern="[A-Za-z]{2}" value={origin} onChange={(e) => setOrigin(e.target.value.toUpperCase())} /></label></div>
           <div className="jp-directory-search">
             <textarea
               id="jp-directory-query"
@@ -378,7 +372,7 @@ export default function SuppliersPage() {
                 }
               }}
             />
-            <button type="submit" className="jp-action jp-primary">
+            <button type="submit" className="jp-action jp-primary" disabled={searching}>
               <Search aria-hidden />
               {t("srch.go")}
             </button>
@@ -392,7 +386,7 @@ export default function SuppliersPage() {
                   type="button"
                   className="jp-action"
                   onClick={() => {
-                    setQuery(null);
+                    setQuery(null); setResult(null);
                     setDraft("");
                     setExpanded(null);
                   }}
@@ -424,6 +418,20 @@ export default function SuppliersPage() {
         </div>
       </section>
 
+      {searching && <p role="status">{t("catalog.searching")}</p>}
+      {searchError && <p className="jp-error">{searchError}</p>}
+      {discovering && result && <section className="jp-panel">
+        <h3>{t("catalog.criteria")}</h3><p>{Object.entries(result.criteria).filter(([, v]) => v !== null && v !== undefined).map(([k, v]) => `${k.replaceAll("_", " ")}: ${v}`).join(" · ") || "—"}</p>
+        {!!result.unsupported.length && <p className="jp-error">{t("catalog.unsupported", { conditions: result.unsupported.join(" · ") })}</p>}
+        {!!result.unchecked.length && <p>{t("catalog.unchecked", { fields: result.unchecked.map((o) => `${o.product}: ${o.fields.join(", ")}`).join(" · ") })}</p>}
+        {groups.length > 0 && <label className="jp-field">{t("adv.comparison")}<select value={selectedGroup} onChange={(e) => setGroup(e.target.value)}>{groups.map((o) => <option key={o.comparison_key} value={o.comparison_key}>{label("ing", o.ingredient)} · {o.product}</option>)}</select></label>}
+        {quotes.map((o) => <div className="jp-quote" key={o.offer_id}><strong>{o.product} · {state.suppliers[o.supplier_id]?.name}</strong>
+          <p>{t("catalog.quote", { total: money(o.delivered_total_eur), qty: qty(o.basis_qty, o.unit), packs: o.packs })}</p>
+          {!o.minimum_met && <p className="jp-error">{t("catalog.minimum")}</p>}
+          {o.orderability.reasons.map((reason) => <p key={reason}>{reason}</p>)}
+          <button className="jp-action" type="button" onClick={() => setExpanded(o.supplier_id)}>{t("sup.view")}</button>
+        </div>)}
+      </section>}
       {showResults ? (
         <>
           <div className="jp-directory-count">
@@ -442,7 +450,7 @@ export default function SuppliersPage() {
             {rows.map(({ s, offers }) => {
               const open = expanded === s.id;
               const first = offers[0];
-              const best = cheapest(offers);
+              const best = offers.length === 1 ? cheapest(offers) : null;
               const pending = offers.some((o) => o.pending_update);
               return (
                 <article key={s.id} className="jp-supplier-row">
@@ -466,7 +474,7 @@ export default function SuppliersPage() {
                       <small>{offers.length === 1 ? t("sup.product1") : t("sup.products", { n: offers.length })}</small>
                     </div>
                     <div className="jp-supplier-price">
-                      {best ? (offers.length > 1 ? t("sup.fromPrice", { p: unitPrice(best) }) : unitPrice(best)) : "—"}
+                      {best ? (offers.length > 1 ? t("sup.fromPrice", { p: unitPrice(best) }) : unitPrice(best)) : t("catalog.multiple")}
                       {best && <small>{t("of.pack", { size: qty(best.pack_size, best.unit), price: money(best.price_eur) })}</small>}
                     </div>
                     <button type="button" className="jp-action" aria-expanded={open} onClick={() => setExpanded(open ? null : s.id)}>

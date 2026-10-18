@@ -41,6 +41,8 @@ Useful progress descriptions are **design only**, **backend present but not conn
 
 ## First concrete example: supplier search
 
+Update, 18 October 2026: the user subsequently authorized the five advisor improvements. The connected implementation now has a read-only structured catalog-search job and comparable delivered quotes; current behavior and remaining verification limits are in [the advisor guide](advisor.md). The dated assessment below is historical and must not be treated as the current implementation inventory.
+
 Source assessment on 17 October 2026, based on `3864202` and the current local mockup. Recheck this against later commits before implementation.
 
 - **Intended experience:** one search field that helps the owner find suitable suppliers/products, with supplier, supplier-country, and product filters. An example request is "Japanese soy sauce from a supplier in Italy." Product origin and supplier country must remain separate facts.

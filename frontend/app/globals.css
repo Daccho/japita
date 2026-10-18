@@ -458,8 +458,8 @@
   --aj-underline-offset:3px;
   --aj-header-control-height:40px;
   --aj-header-alert-offset:-9px;
-  --aj-brand-width:96px;
-  --aj-brand-height:64px;
+  --aj-brand-width:160px;
+  --aj-brand-height:48px;
   --aj-type-nav:15px;
   --aj-type-nav-note:11.5px;
   --aj-nav-height:42px;
@@ -1519,12 +1519,13 @@
 .jp .jp-menu-ingredient-editor textarea { display:block; width:100%; margin:6px 0; }
 .jp .jp-menu-ingredient-editor small { display:block; color:var(--aj-menu-muted); }
 .jp .jp-menu-add { margin-top:14px; }
-@media(max-width:480px) { .jp-drawings-review { padding:20px; } .jp-drawing-review-grid { grid-template-columns:1fr; } .jp { --aj-brand-width:84px; --aj-brand-height:56px; } }
+@media(max-width:480px) { .jp-drawings-review { padding:20px; } .jp-drawing-review-grid { grid-template-columns:1fr; } .jp { --aj-brand-width:144px; --aj-brand-height:44px; } }
 
 /* Sign-in (app/login) and account controls */
 .jp .jp-login { min-height:100vh; background:var(--jp-bg); display:grid; place-items:center; padding:56px 16px 32px; position:relative; }
 .jp .jp-login-top { position:absolute; top:16px; right:16px; }
 .jp .jp-login-card { width:100%; max-width:420px; padding:28px; display:grid; gap:18px; }
+.jp .jp-app .jp-login-card .jp-brand-logo { width:204px; max-width:100%; height:auto; }
 .jp .jp-login-card h1 { font-size:22px; line-height:1.25; font-weight:500; letter-spacing:-.4px; margin:0; }
 .jp .jp-login-card form { display:grid; }
 .jp .jp-login-card .jp-field input { font-size:16px; }
@@ -1554,3 +1555,6 @@
 .jp .jp-app .jp-login-role svg { color:var(--aj-ink); }
 .jp .jp-app .jp-login-role strong { font-weight:var(--aj-weight-bold); }
 .jp .jp-app .jp-login-note { color:var(--aj-muted); }
+.jp-input-table { border-collapse: collapse; min-width: 640px; width: 100%; font-size: 12px; }
+.jp-input-table th, .jp-input-table td { text-align: left; padding: 6px; border-bottom: 1px solid var(--jp-line); }
+.jp-input-table input { width: 78px; padding: 6px; border: 1px solid var(--jp-line); background: var(--jp-paper, #fffdf3); color: var(--jp-text); }

@@ -32,7 +32,7 @@ function Options({ baskets, selected, onSelect }: { baskets: Basket[]; selected:
           </small>
           <span style={{ display: "flex", gap: 5, flexWrap: "wrap", marginTop: 8 }}>
             <span className={`jp-badge ${b.late_lines.length ? "jp-warning" : ""}`}>
-              {b.late_lines.length ? t("bk.lateSome", { n: b.late_lines.length }) : t("bk.allOnTime")}
+              {b.coverage === "covered" ? t("bk.allOnTime") : b.coverage === "unknown" ? t("catalog.unknown") : t("adv.someLate")}
             </span>
           </span>
           {b.also.length > 0 && <small style={{ marginTop: 6 }}>{t("bk.also", { k: b.also.map((k) => label("kind", k)).join(", ") })}</small>}
@@ -57,7 +57,7 @@ export default function BasketPage() {
   // Once the approved orders cover every need, there is nothing left to buy: show the approved basket instead.
   const settled = !!approval && !approval.stale && (!candidate || candidate.lines.length === 0);
   const selected = settled ? undefined : candidate;
-  const budget = baskets.budget_eur ?? 0;
+  const budget = baskets.remaining_budget_eur ?? 0;
   const isApproved = !!approval && !approval.stale && approvedBasket === selected;
   const orders = approval ? (state.purchase_orders ?? []).filter((po) => po.approval_id === approval.id) : [];
   const supplierQuestions = (baskets.open_questions ?? []).filter((q) => q.resolved_by === "supplier");
@@ -108,7 +108,7 @@ export default function BasketPage() {
                 className="jp-action jp-primary"
                 style={{ marginTop: 10 }}
                 disabled={advisor.running}
-                onClick={() => ask(t("bk.askQuestion", { ingredient: label("ing", lateIngredient) }))}
+                onClick={() => ask(t("bk.askQuestion", { ingredient: label("ing", lateIngredient) }), { basket_kind: selected?.kind })}
               >
                 <Sparkles aria-hidden />
                 {t("bk.askAdvisor")}
@@ -195,12 +195,13 @@ export default function BasketPage() {
                   {t("bk.approvedThis")} · {d.time(approval!.approved_at)}
                 </span>
               ) : (
-                <button id="approve" type="button" className="jp-action jp-primary" disabled={busy} onClick={approve}>
+                <button id="approve" type="button" className="jp-action jp-primary" disabled={busy || selected.coverage !== "covered"} onClick={approve}>
                   <Check aria-hidden />
                   {busy ? t("bk.approving") : t("bk.approve")}
                 </button>
               )}
               <p className="jp-muted" style={{ fontSize: 11, marginTop: 10 }}>
+                {selected.coverage === "unknown" ? t("adv.unknownTiming") : selected.coverage === "shortfall" ? t("adv.noSafe") : t("adv.projection")}{" "}
                 {t("bk.approveNote")}
               </p>
             </section>

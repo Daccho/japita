@@ -7,7 +7,7 @@ import { qty } from "@/lib/api";
 import { useDates, useI18n, useLabel } from "@/lib/i18n";
 import { useWorkspace } from "@/components/workspace";
 
-type Item = { id: string; badge: string; warn: boolean; title: string; body: string; href: string; action: string };
+type Item = { id: string; badge: string; warn: boolean; title: string; body: string; href: string; action: string; due?: string };
 
 const SEEN_KEY = "japita.notifications.seen";
 
@@ -30,6 +30,7 @@ function useItems(): Item[] {
       alerted.add(dl.ingredient);
       items.push({
         id: `delay-${dl.id}-${tl.first_stockout}`,
+        due: tl.first_stockout,
         badge: t("nt.delivery"),
         warn: true,
         title: t("nt.delayed", { weekday: d.weekday(dl.date), ingredient: label("ing", dl.ingredient) }),
@@ -49,6 +50,7 @@ function useItems(): Item[] {
       if (!tl.first_stockout || alerted.has(tl.ingredient)) continue;
       items.push({
         id: `stockout-${tl.ingredient}-${tl.first_stockout}`,
+        due: tl.first_stockout,
         badge: t("nt.stockout"),
         warn: true,
         title: t("nt.stockoutTitle", { ingredient: label("ing", tl.ingredient), date: d.day(tl.first_stockout) }),
@@ -105,7 +107,7 @@ function useItems(): Item[] {
           action: t("nt.open"),
         });
     }
-    return items;
+    return items.sort((a, b) => Number(b.warn) - Number(a.warn) || (a.due ?? "9999").localeCompare(b.due ?? "9999"));
   }
 }
 
