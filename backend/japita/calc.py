@@ -254,14 +254,18 @@ def eligible_offers(store: Store) -> tuple[dict[str, list[dict]], list[dict]]:
 def open_questions(store: Store) -> list[dict]:
     """Mandatory rules an offer cannot be checked against yet, and who can answer each one.
 
-    `drafted` is true when a clarification for the same offer and field is already open.
+    `drafted` is true when a clarification for the same offer and field is already open. An offer that already fails
+    another mandatory rule has no open questions: no answer would make it usable.
     """
     open_ = {(c["offer_id"], c["field"]) for c in store.clarifications if c["state"] != "replied"}
     out = []
     for offer in store.offers:
         if offer["ingredient"] not in store.profile["ingredients"]:
             continue
-        for m in check_evidence(store, offer["id"])["mandatory"]:
+        mandatory = check_evidence(store, offer["id"])["mandatory"]
+        if any(m["outcome"] == "fail" for m in mandatory):
+            continue
+        for m in mandatory:
             if m["outcome"] in ("missing_evidence", "needs_review"):
                 out.append({"offer_id": offer["id"], "product": offer["product"],
                             "supplier": store.suppliers[offer["supplier_id"]]["name"],

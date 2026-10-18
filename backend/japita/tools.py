@@ -76,6 +76,11 @@ def _purchase_brief(store: Store) -> dict:
 
 def _draft_clarification(store: Store, offer_id: str, field: str, text_ja: str, reason: str,
                          text_it: str = "", text_en: str = "", reason_it: str = "") -> dict:
+    failing = [m["rule"] for m in calc.check_evidence(store, offer_id)["mandatory"]
+               if m["outcome"] == "fail" and m["field"] != field]
+    if failing:
+        return {"error": "not drafted: this offer already fails the mandatory rule(s) " + "; ".join(failing)
+                         + ", so no supplier answer would make it usable. Cite that failing rule as evidence instead."}
     translations = {k: v for k, v in (("it", text_it), ("en", text_en)) if v}
     c = store.add_clarification(offer_id, field, text_ja, reason, translations,
                                 {k: v for k, v in (("it", reason_it), ("en", reason)) if v})

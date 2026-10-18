@@ -269,3 +269,42 @@ def test_catalog_job_uses_server_currency_text(client):
     result = run_search(Search(lang="en", criteria=Criteria(ingredient="noodles")))
     assert result["offers"] and result["offers"][0]["delivered_text"].startswith("$")
     assert "kg" in result["offers"][0]["basis_text"]
+
+
+def test_offer_failing_a_mandatory_rule_has_no_open_questions():
+    store = Store.load(FIXTURE)
+    rules = store.profile["ingredients"]["noodles"]["mandatory"]
+    rules.append({"field": "fresh", "op": "eq", "value": True, "label": "Fresh noodles"})
+    assert calc.check_evidence(store, "O-noo-3")["mandatory"][-1]["outcome"] == "fail"
+    assert not any(q["offer_id"] == "O-noo-3" for q in calc.open_questions(store))
+
+
+def test_empty_evidence_is_filled_from_recorded_outcomes():
+    store = Store.load(FIXTURE)
+    for q in calc.open_questions(store):
+        if q["resolved_by"] == "supplier":
+            store.add_clarification(q["offer_id"], q["field"], "ご確認ください。", "missing", {}, {})
+    decision = brief(store)
+    answer = {"recommended_kind": (decision["recommended"] or {}).get("kind"), "focus": "missing_information",
+              "evidence": []}
+    result = validate_explanation(json.dumps(answer), store, decision)
+    assert result["validated"] and result["evidence_selected_by"] == "app"
+    assert result["evidence"] and len(result["evidence"]) <= 6
+    for ref in result["evidence"]:
+        recorded = calc.check_evidence(store, ref["offer_id"])["mandatory"]
+        assert any(r["field"] == ref["field"] and r["outcome"] == ref["outcome"] for r in recorded)
+
+
+def test_no_draft_and_failing_rule_shown_for_an_offer_that_fails_another_rule():
+    from japita.tools import call_tool
+    store = Store.load(FIXTURE)
+    store.profile["ingredients"]["noodles"]["mandatory"].append(
+        {"field": "fresh", "op": "eq", "value": True, "label": "Fresh noodles"})
+    out = json.loads(call_tool(store, "draft_clarification", {
+        "offer_id": "O-noo-3", "field": "hydration_pct", "text_ja": "加水率は？", "reason": "missing"}))
+    assert "error" in out and not store.clarifications
+    decision = brief(store)
+    answer = {"recommended_kind": (decision["recommended"] or {}).get("kind"), "focus": "missing_information",
+              "evidence": [{"offer_id": "O-noo-3", "field": "hydration_pct", "outcome": "missing_evidence"}]}
+    fields = [r["field"] for r in validate_explanation(json.dumps(answer), store, decision)["evidence"]]
+    assert fields == ["hydration_pct", "fresh"]
