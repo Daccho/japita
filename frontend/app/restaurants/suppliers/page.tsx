@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { Check, CircleHelp, Copy, Filter, Leaf, Link2, MapPin, Search, X } from "lucide-react";
-import { api, errorText, qty, unitPrice, type Evidence, type Offer, type Supplier } from "@/lib/api";
+import { api, errorText, qty, unitPrice, type Day, type Evidence, type Offer, type ProfileField, type Supplier } from "@/lib/api";
 import { useDates, useI18n, useLabel, type Key } from "@/lib/i18n";
 import { useWorkspace } from "@/components/workspace";
 import { copyText, fmtValue, offerImage } from "@/components/helpers";
 import PageHeader from "@/components/PageHeader";
+import { InfoTip } from "@/components/InfoTip";
 
 type View = "existing" | "candidate";
 type Sort = "name-asc" | "name-desc" | "price-asc" | "price-desc";
@@ -75,7 +76,8 @@ function OfferCard({ offer, evidence }: { offer: Offer; evidence?: Evidence }) {
       <div key={r.field + name} className={`jp-check ${ok ? "jp-ok" : "jp-bad"}`}>
         {ok ? <Check aria-hidden /> : missing ? <CircleHelp aria-hidden /> : <X aria-hidden />}
         <span>
-          {name} · {label("field", r.field)}: {missing ? t("of.notStated") : `${fmtValue(r.value, yes, no)}${r.field === "hydration_pct" ? "%" : ""}`}
+          {name} · {label("field", r.field)}
+          <InfoTip field={r.field} />: {missing ? t("of.notStated") : `${fmtValue(r.value, yes, no)}${r.field === "hydration_pct" ? "%" : ""}`}
           {missing && <span className="jp-muted"> · {r.resolved_by === "owner" ? t("of.ownerDecides") : t("of.askSupplier")}</span>}
         </span>
       </div>
@@ -164,7 +166,10 @@ function OfferCard({ offer, evidence }: { offer: Offer; evidence?: Evidence }) {
               )}
               {Object.entries(p.attributes ?? {}).map(([k, v]) => (
                 <span key={k} style={{ display: "contents" }}>
-                  <dt>{label("field", k)}</dt>
+                  <dt>
+                    {label("field", k)}
+                    <InfoTip field={k} />
+                  </dt>
                   <dd>
                     <s>{fmtValue(offer.attributes[k], yes, no)}</s> → <strong>{fmtValue(v, yes, no)}</strong>
                   </dd>
@@ -197,6 +202,78 @@ function OfferCard({ offer, evidence }: { offer: Offer; evidence?: Evidence }) {
       )}
       {msg && <p className="jp-toast">{msg}</p>}
     </article>
+  );
+}
+
+// A supplier's proposed profile changes (from the supplier portal), applied or rejected by the restaurant.
+function ProfileProposal({ supplier }: { supplier: Supplier }) {
+  const { t, lang, money } = useI18n();
+  const d = useDates();
+  const { refresh } = useWorkspace();
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const p = supplier.pending_profile;
+
+  const show = (k: ProfileField, v: unknown) => {
+    if (v === null || v === undefined || v === "") return "—";
+    if (k === "delivery_days") return (v as Day[]).length ? (v as Day[]).map((x) => d.weekdayName(x)).join(", ") : t("sup.noDays");
+    if (k === "min_order_eur" || k === "shipping_eur") return money(v as number);
+    if (k === "lead_time_days") return t("sup.lead", { n: v as number });
+    return String(v);
+  };
+  const act = async (fn: () => Promise<unknown>, done: Key) => {
+    setBusy(true);
+    setMsg(null);
+    try {
+      await fn();
+      setMsg(t(done));
+      await refresh();
+    } catch (e) {
+      setMsg(errorText(e, t));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (!p) return msg ? <p className="jp-toast">{msg}</p> : null;
+  return (
+    <div className="jp-proposal" style={{ marginTop: 0, marginBottom: 12 }}>
+      <h3>
+        {t("pp.title")} · {t("pp.profile")}
+      </h3>
+      <dl className="jp-diff">
+        {(Object.entries(p.changes) as [ProfileField, unknown][]).map(([k, v]) => (
+          <span key={k} style={{ display: "contents" }}>
+            <dt>{t(`pf.${k}` as Key)}</dt>
+            <dd style={{ overflowWrap: "anywhere" }}>
+              <s>{show(k, supplier[k as keyof Supplier])}</s> → <strong>{show(k, v)}</strong>
+            </dd>
+          </span>
+        ))}
+      </dl>
+      {p.note_translations?.[lang] && (
+        <div className="jp-message" style={{ marginBottom: 8 }}>
+          <span className="jp-message-label">{t("pp.note")}</span>
+          {p.note_translations[lang]}
+        </div>
+      )}
+      {p.note_ja && (
+        <div className="jp-message jp-ja" lang="ja" style={{ marginBottom: 8 }}>
+          <span className="jp-message-label">{t("pp.original")}</span>
+          {p.note_ja}
+        </div>
+      )}
+      <div className="jp-form-actions">
+        <button type="button" className="jp-action jp-primary" disabled={busy} onClick={() => act(() => api.applyProfileUpdate(supplier.id), "pp.profileApplied")}>
+          <Check aria-hidden />
+          {t("pp.apply")}
+        </button>
+        <button type="button" className="jp-action" disabled={busy} onClick={() => act(() => api.rejectProfileUpdate(supplier.id), "pp.rejected")}>
+          {t("pp.reject")}
+        </button>
+      </div>
+      {msg && <p className="jp-toast">{msg}</p>}
+    </div>
   );
 }
 
@@ -245,6 +322,7 @@ function SupplierDetail({ supplier, offers }: { supplier: Supplier; offers: Offe
           {!copied && <Copy aria-hidden style={{ width: 13, height: 13 }} />}
         </button>
       </div>
+      <ProfileProposal supplier={supplier} />
       {offers.map((o) => (
         <OfferCard key={o.id} offer={o} evidence={evidence[o.id]} />
       ))}
@@ -451,7 +529,7 @@ export default function SuppliersPage() {
               const first = offers[0];
               const best = cheapest(offers);
               const img = first ? offerImage(offers.find((o) => offerImage(o)) ?? first) : null;
-              const pending = offers.some((o) => o.pending_update);
+              const pending = offers.some((o) => o.pending_update) || !!s.pending_profile;
               return (
                 <article key={s.id} className="jp-supplier-row">
                   <div className="jp-supplier-summary">

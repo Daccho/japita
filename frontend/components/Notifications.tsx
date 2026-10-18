@@ -82,6 +82,18 @@ function useItems(): Item[] {
         action: t("nt.open"),
       });
     }
+    for (const s of Object.values(state.suppliers)) {
+      if (!s.pending_profile) continue;
+      items.push({
+        id: `profile-${s.id}-${s.pending_profile.submitted_at}`,
+        badge: t("nt.proposal"),
+        warn: false,
+        title: s.name,
+        body: t("nt.profileBody", { supplier: s.name }),
+        href: `/restaurants/suppliers?supplier=${s.id}`,
+        action: t("nt.open"),
+      });
+    }
     for (const po of state.purchase_orders ?? []) {
       (po.delivery_changes ?? []).forEach((ch, i) =>
         items.push({

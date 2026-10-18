@@ -10,6 +10,7 @@ import { findBasket, KIND_ORDER, suggestedBasket } from "@/components/helpers";
 import PageHeader from "@/components/PageHeader";
 import Orders from "@/components/Orders";
 import Clarifications from "@/components/Clarifications";
+import { InfoFor } from "@/components/InfoTip";
 
 const signed = (n: number, money: (eur: number) => string) => `${n > 0 ? "+" : n < 0 ? "−" : ""}${money(Math.abs(n))}`;
 
@@ -100,6 +101,7 @@ export default function BasketPage() {
               {supplierQuestions.map((q) => (
                 <p key={`${q.offer_id}-${q.field}`} style={{ margin: "4px 0", color: "var(--jp-text)" }}>
                   {q.product} · {q.supplier}: {q.rule}
+                  <InfoFor text={q.rule} />
                   {q.drafted && <span className="jp-badge" style={{ marginLeft: 6 }}>{t("bk.drafted")}</span>}
                 </p>
               ))}
@@ -160,7 +162,10 @@ export default function BasketPage() {
                   <strong style={{ fontWeight: 500 }}>{t("bk.tradeoffs")}</strong>
                   <ul style={{ margin: "6px 0 0", paddingLeft: 18, listStyle: "disc" }}>
                     {selected.unmet_preferences.map((u) => (
-                      <li key={u}>{u.replace(/^(\w+):/, (_, ing) => `${label("ing", ing)}:`).replace(/ \((fail|missing_evidence|needs_review)\)$/, "")}</li>
+                      <li key={u}>
+                        {u.replace(/^(\w+):/, (_, ing) => `${label("ing", ing)}:`).replace(/ \((fail|missing_evidence|needs_review)\)$/, "")}
+                        <InfoFor text={u} />
+                      </li>
                     ))}
                   </ul>
                 </div>
@@ -271,7 +276,10 @@ export default function BasketPage() {
                     <div>
                       <h3>{x.product}</h3>
                       {x.reasons.map((r) => (
-                        <p key={r}>{r.replace(/^(missing_evidence|fails_mandatory|needs_review): /, "")}</p>
+                        <p key={r}>
+                          {r.replace(/^(missing_evidence|fails_mandatory|needs_review): /, "")}
+                          <InfoFor text={r} />
+                        </p>
                       ))}
                     </div>
                   </div>

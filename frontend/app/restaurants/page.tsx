@@ -58,6 +58,10 @@ export default function WeekPage() {
   const orders = (state.purchase_orders ?? []).filter((po) => po.state !== "cancelled");
   const delayed = (week.deliveries ?? []).filter((dl) => dl.status === "delayed" && tl[dl.ingredient]?.first_stockout);
   const used = Math.min(100, (spending.committed_eur / spending.budget_eur) * 100);
+  const supplierName = (id: string) => state.suppliers[id]?.name ?? id;
+  // Who the suggested basket buys each ingredient from.
+  const buyFrom = (ingredient: string) =>
+    [...new Set((suggested?.lines ?? []).filter((ln) => ln.ingredient === ingredient).map((ln) => supplierName(ln.supplier_id)))].join(", ");
 
   return (
     <>
@@ -112,6 +116,11 @@ export default function WeekPage() {
                     <div className="jp-number" style={{ fontSize: 16, fontWeight: 700 }}>
                       {qty(n.required, n.unit)}
                     </div>
+                    {n.required > 0 && buyFrom(n.ingredient) && (
+                      <small className="jp-muted" style={{ display: "block" }}>
+                        {t("bk.from", { supplier: buyFrom(n.ingredient) })}
+                      </small>
+                    )}
                     {line?.first_stockout ? (
                       <span className="jp-badge jp-warning">{t("wk.runsOut", { date: d.day(line.first_stockout) })}</span>
                     ) : (
@@ -143,6 +152,11 @@ export default function WeekPage() {
             <div className="jp-budget-track">
               <span style={{ width: `${used}%` }} />
             </div>
+            {spending.sent_eur > 0 && (
+              <p className="jp-muted" style={{ fontSize: 12, marginTop: 10 }}>
+                {t("wk.sent", { v: money(spending.sent_eur) })}
+              </p>
+            )}
             <p className="jp-muted" style={{ fontSize: 12, marginTop: 10 }}>
               {t("wk.remaining", { r: money(spending.remaining_eur), b: money(spending.budget_eur) })}
             </p>
@@ -162,6 +176,13 @@ export default function WeekPage() {
               <small className="jp-muted">
                 {suggested.late_lines.length ? t("adv.someLate") : t("adv.inTime")}
               </small>
+              <ul style={{ margin: "10px 0 0", padding: 0, listStyle: "none", fontSize: 12 }}>
+                {suggested.lines.map((ln) => (
+                  <li key={ln.offer_id} style={{ marginTop: 4 }}>
+                    <strong>{label("ing", ln.ingredient)}</strong> · {supplierName(ln.supplier_id)}
+                  </li>
+                ))}
+              </ul>
               <Link href="/restaurants/basket" className="jp-action jp-primary jp-full">
                 {t("adv.openBasket")}
               </Link>

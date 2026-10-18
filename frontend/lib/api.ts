@@ -161,6 +161,31 @@ export type Supplier = {
   shipping_eur: number | null;
   delivery_days: Day[];
   lead_time_days?: number;
+  country?: string | null;
+  address?: string | null;
+  city?: string | null;
+  contact_name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  pending_profile?: PendingProfile;
+};
+export type ProfileField =
+  | "name"
+  | "country"
+  | "address"
+  | "city"
+  | "contact_name"
+  | "email"
+  | "phone"
+  | "delivery_days"
+  | "min_order_eur"
+  | "shipping_eur"
+  | "lead_time_days";
+export type PendingProfile = {
+  changes: Partial<Record<ProfileField, string | number | Day[] | null>>;
+  note_ja?: string | null;
+  note_translations?: Translations;
+  submitted_at: string;
 };
 export type PendingUpdate = {
   product?: string;
@@ -378,7 +403,13 @@ export type PurchaseOrder = {
   acknowledgment: { received_at: string; note_ja?: string | null; note_translations?: Translations } | null;
   delivery_changes?: DeliveryChange[];
 };
-export type Spending = { budget_eur: number; planned_eur: number | null; committed_eur: number; remaining_eur: number };
+export type Spending = {
+  budget_eur: number;
+  planned_eur: number | null;
+  committed_eur: number;
+  sent_eur: number;
+  remaining_eur: number;
+};
 export type AgentAnswer = { answer: string; clarifications: Clarification[] };
 export type WeeklyCheck = { status: string; output_text: string | null };
 
@@ -407,6 +438,8 @@ export const api = {
   spending: (profileId: string) => request<Spending>(`/spending?${q(profileId)}`),
   portalLink: (supplierId: string) => request<{ token: string; path: string }>(`/suppliers/${supplierId}/portal-link`),
   applySupplierUpdate: (offerId: string) => request<Offer>(`/offers/${offerId}/supplier-update/apply`, { method: "POST" }),
+  applyProfileUpdate: (supplierId: string) => request<Supplier>(`/suppliers/${supplierId}/profile-update/apply`, { method: "POST" }),
+  rejectProfileUpdate: (supplierId: string) => request<Supplier>(`/suppliers/${supplierId}/profile-update/reject`, { method: "POST" }),
   rejectSupplierUpdate: (offerId: string) => request<Offer>(`/offers/${offerId}/supplier-update/reject`, { method: "POST" }),
   weeklyCheck: (profileId: string) =>
     runJob<WeeklyCheck>(request(`/evolus/weekly-intake?${q(profileId)}`, { method: "POST" })),

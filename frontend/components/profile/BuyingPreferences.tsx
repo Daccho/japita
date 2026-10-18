@@ -7,6 +7,7 @@ import { api, errorText, type BasketResult, type Day, type Profile, type Rule } 
 import { useDates, useI18n, useLabel, type Key } from "@/lib/i18n";
 import { useWorkspace } from "@/components/workspace";
 import { findBasket } from "@/components/helpers";
+import { InfoTip } from "@/components/InfoTip";
 
 const DAYS: Day[] = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 const cheapest = (r: BasketResult) => findBasket(r, "lowest_cost")?.delivered_total_eur ?? null;
@@ -58,7 +59,10 @@ export default function BuyingPreferences() {
   const ruleRow = (ing: string, r: Rule, kind: "mandatory" | "negotiable") => (
     <div key={`${kind}-${r.field}`} className="jp-row" style={{ padding: "10px 0" }}>
       <div>
-        <p style={{ color: "var(--jp-text)", fontSize: 13, marginTop: 0 }}>{r.label}</p>
+        <p style={{ color: "var(--jp-text)", fontSize: 13, marginTop: 0 }}>
+          {r.label}
+          <InfoTip field={r.field} />
+        </p>
       </div>
       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
         <span className={`jp-badge ${kind === "mandatory" ? "" : "jp-neutral"}`}>{kind === "mandatory" ? t("by.required") : t("by.preferred")}</span>
