@@ -105,11 +105,11 @@ def test_additive_catalog_import_preserves_edits_and_is_idempotent(tmp_path, mon
     original["recipe"]["menu_items"] = [{"id": "mine", "name": "Owner's dish", "ingredients": ["Carrot"]}]
     repo.save_state(original)
     before = repo.load_state()
-    assert demo_catalog.import_catalog() == {"suppliers": 9, "offers": 119}
+    assert demo_catalog.import_catalog() == {"suppliers": 9, "offers": 119, "backfilled_offers": 0}
     with Session(engine) as session, session.begin():
         record = session.get(repo.Record, (repo.DEFAULT_WORKSPACE, "offer", "O-lib-carrots"))
         record.data = {**record.data, "price_eur": 99}
-    assert demo_catalog.import_catalog() == {"suppliers": 0, "offers": 0}
+    assert demo_catalog.import_catalog() == {"suppliers": 0, "offers": 0, "backfilled_offers": 0}
     after = repo.load_state()
     for key in ("week", "recipe", "profiles", "approvals", "purchase_orders"):
         assert after[key] == before[key]
@@ -125,12 +125,12 @@ def test_additive_catalog_import_respects_restaurant_workspace(tmp_path, monkeyp
     repo.save_state(repo.blank_state("Second restaurant"), "second")
     before_other = repo.load_state("second")
     with repo.use_workspace("first"):
-        assert demo_catalog.import_catalog() == {"suppliers": 9, "offers": 119}
-        assert demo_catalog.import_catalog() == {"suppliers": 0, "offers": 0}
+        assert demo_catalog.import_catalog() == {"suppliers": 9, "offers": 119, "backfilled_offers": 0}
+        assert demo_catalog.import_catalog() == {"suppliers": 0, "offers": 0, "backfilled_offers": 0}
     assert len(repo.load_state("first")["offers"]) == 119
     assert repo.load_state("second") == before_other
     assert repo.is_empty(repo.DEFAULT_WORKSPACE)
-    assert demo_catalog.import_catalog("second") == {"suppliers": 9, "offers": 119}
+    assert demo_catalog.import_catalog("second") == {"suppliers": 9, "offers": 119, "backfilled_offers": 0}
     assert len(repo.load_state("second")["offers"]) == 119
     engine.dispose()
 
@@ -168,4 +168,26 @@ def test_demo_startup_adds_missing_catalog_only_when_enabled(tmp_path, monkeypat
             pass
         assert len(repo.load_state()["offers"]) == 129
         assert Store(repo.load_state()).offer("O-lib-carrots")["price_eur"] == 99
+    engine.dispose()
+
+
+def test_import_backfills_missing_availability_without_overwriting_edits(tmp_path, monkeypatch):
+    from japita import calc
+    engine = create_engine(f"sqlite:///{tmp_path / 'backfill.db'}")
+    repo.Base.metadata.create_all(engine)
+    monkeypatch.setattr(repo, "_engine", engine)
+    original = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    for offer in original["offers"]:
+        if offer["id"] == "O-noo-1":
+            for key in demo_catalog.BACKFILL_FIELDS:
+                offer.pop(key, None)
+        if offer["id"] == "O-noo-2":
+            offer["availability_status"] = "unavailable"  # an owner's edit
+    repo.save_state(original)
+    assert "availability_unknown" in calc.orderability(Store(repo.load_state()), "O-noo-1")["codes"]
+    assert demo_catalog.import_catalog()["backfilled_offers"] == 1
+    store = Store(repo.load_state())
+    assert "availability_unknown" not in calc.orderability(store, "O-noo-1")["codes"]
+    assert store.offer("O-noo-2")["availability_status"] == "unavailable"
+    assert demo_catalog.import_catalog()["backfilled_offers"] == 0
     engine.dispose()
