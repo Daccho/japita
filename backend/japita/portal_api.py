@@ -87,13 +87,22 @@ def _profile_changes(body: ProfileUpdate) -> dict:
     return d
 
 
-def _load(token: str) -> tuple[dict, Store, dict]:
-    data = repo.load_state()
-    store = Store(data, next(iter(data["profiles"])))
+def _has_token(data: dict, token: str) -> bool:
     try:
-        return data, store, portal.supplier_by_token(store, token)
+        return bool(data["profiles"]) and bool(portal.supplier_by_token(Store(data, next(iter(data["profiles"]))), token))
     except KeyError:
+        return False
+
+
+def _load(token: str) -> tuple[dict, Store, dict]:
+    """The workspace holding this portal link; later saves in the request go to it."""
+    found = repo.find_workspace(lambda data: _has_token(data, token))
+    if found is None:
         raise AppError(404, "link_not_found", "ページが見つかりません（リンクをご確認ください）")
+    workspace, data = found
+    repo.enter_workspace(workspace)
+    store = Store(data, next(iter(data["profiles"])))
+    return data, store, portal.supplier_by_token(store, token)
 
 
 def _priced(body: BaseModel) -> dict:

@@ -215,7 +215,7 @@ FIXTURES = Path(__file__).resolve().parent.parent / "tests" / "fixtures"
 
 @app.post("/state/seed")
 def seed_state(fixture: str = "kumo", x_admin_key: str | None = Header(default=None)):
-    """Replace all data with a fixture (existing Kumo Ramen Milano data by default).
+    """Replace the demo workspace's data with a fixture (existing Kumo Ramen Milano data by default).
 
     Requires X-Admin-Key when ADMIN_KEY is set (always on the public deployment).
     """
@@ -498,12 +498,16 @@ def _supplier_view(store: Store, c: dict) -> dict:
 
 
 def _by_token(token: str) -> tuple[dict, Store, dict]:
-    data = repo.load_state()
-    store = Store(data, next(iter(data["profiles"])))
-    try:
-        return data, store, store.clarification_by_token(token)
-    except StopIteration:
+    """The workspace holding this request link; later saves in the request go to it."""
+    def holds(data: dict) -> bool:
+        return any(c.get("token") and secrets.compare_digest(c["token"], token) for c in data.get("clarifications", []))
+    found = repo.find_workspace(holds)
+    if found is None:
         raise AppError(404, "link_not_found", "依頼が見つかりません（リンクをご確認ください）")
+    workspace, data = found
+    repo.enter_workspace(workspace)
+    store = Store(data, next(iter(data["profiles"])))
+    return data, store, store.clarification_by_token(token)
 
 
 @app.get("/supplier/requests/{token}")
