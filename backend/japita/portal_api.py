@@ -47,6 +47,44 @@ class NewProduct(BaseModel):
     note_ja: str | None = Field(default=None, max_length=1000)
 
 
+Day = Literal["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+
+
+class ProfileUpdate(BaseModel):
+    name: str | None = Field(default=None, max_length=120)
+    country: str | None = Field(default=None, max_length=60)
+    address: str | None = Field(default=None, max_length=200)
+    city: str | None = Field(default=None, max_length=80)
+    contact_name: str | None = Field(default=None, max_length=120)
+    email: str | None = Field(default=None, max_length=200)
+    phone: str | None = Field(default=None, max_length=40)
+    delivery_days: list[Day] | None = None
+    min_order_eur: float | None = Field(default=None, ge=0)
+    shipping_eur: float | None = Field(default=None, ge=0)
+    min_order: float | None = Field(default=None, ge=0, description="Minimum order in `currency`")
+    shipping: float | None = Field(default=None, ge=0, description="Shipping in `currency`")
+    currency: str | None = Field(default=None, description="EUR, JPY or USD for `min_order` and `shipping`")
+    lead_time_days: int | None = Field(default=None, ge=0, le=60)
+    note_ja: str | None = Field(default=None, max_length=1000)
+
+
+def _profile_changes(body: ProfileUpdate) -> dict:
+    """The request with money in EUR: `min_order`/`shipping` in `currency` are converted with the current ECB rate."""
+    d = body.model_dump()
+    currency = d.pop("currency")
+    entered = {k: d.pop(k) for k in ("min_order", "shipping")}
+    if any(v is not None for v in entered.values()):
+        if not currency:
+            raise DomainError("invalid_input", "amounts need a currency", 422)
+        d["money_input"] = {"currency": currency.upper()}
+        for k, v in entered.items():
+            if v is not None:
+                eur, rate, rate_date = fx.to_eur(v, currency.upper())
+                d[f"{k}_eur"] = eur
+                d["money_input"].update({k: v, "rate": rate, "rate_date": rate_date})
+    return d
+
+
 def _load(token: str) -> tuple[dict, Store, dict]:
     data = repo.load_state()
     store = Store(data, next(iter(data["profiles"])))
@@ -165,6 +203,47 @@ def portal_new_product(token: str, body: NewProduct):
     repo.save_state(data)
     repo.log_calls(calls, "portal_note:new_product")
     return portal.view(store, sup)
+
+
+@router.post("/portal/{token}/profile")
+def portal_update_profile(token: str, body: ProfileUpdate):
+    data, store, sup = _load(token)
+    try:
+        changes = _profile_changes(body)
+    except ValueError as e:
+        raise from_value_error(e, 422)
+    tr, calls = _translations(body.note_ja)
+    try:
+        portal.propose_profile(store, sup["id"], {**changes, "note_translations": tr})
+    except ValueError as e:
+        raise from_value_error(e, 422)
+    repo.save_state(data)
+    repo.log_calls(calls, f"portal_note:profile:{sup['id']}")
+    return portal.view(store, sup)
+
+
+def _profile_decision(supplier_id: str, decide) -> dict:
+    data = repo.load_state()
+    store = Store(data, next(iter(data["profiles"])))
+    if supplier_id not in store.suppliers:
+        raise AppError(404, "not_found", "supplier not found")
+    try:
+        sup = decide(store, supplier_id)
+    except ValueError as e:
+        raise from_value_error(e, 409)
+    repo.save_state(data)
+    return sup
+
+
+@router.post("/suppliers/{supplier_id}/profile-update/apply")
+def apply_profile_update(supplier_id: str):
+    """Restaurant action: accept a supplier's profile proposal."""
+    return _profile_decision(supplier_id, portal.apply_profile)
+
+
+@router.post("/suppliers/{supplier_id}/profile-update/reject")
+def reject_profile_update(supplier_id: str):
+    return _profile_decision(supplier_id, portal.reject_profile)
 
 
 @router.post("/offers/{offer_id}/supplier-update/apply")

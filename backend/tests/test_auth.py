@@ -116,3 +116,21 @@ def test_demo_accounts_only_with_flag(client, monkeypatch):
     assert r.status_code == 200
     assert client.get("/state").status_code == 403  # suppliers never see restaurant data
     assert client.get("/auth/supplier/portal").json()["supplier_id"] == "S3"
+
+
+def test_profile_proposal_from_portal_is_decided_by_the_restaurant(client):
+    login(client, "tokyo-shokuhin", role="supplier")
+    path = client.get("/auth/supplier/portal").json()["path"]
+    token = path.rsplit("/", 1)[1]
+    r = client.post(f"/portal/{token}/profile", json={"phone": "+81 3 1234 5678", "shipping": 7000, "currency": "JPY"},
+                    headers={"origin": APP})
+    assert r.status_code == 200
+    pending = r.json()["pending_profile"]
+    assert pending["changes"]["phone"] == "+81 3 1234 5678" and pending["changes"]["shipping_eur"] > 0
+    assert client.post("/suppliers/S1/profile-update/apply", headers={"origin": APP}).status_code == 403
+    client.post("/auth/logout", headers={"origin": APP})
+    login(client)
+    r = client.post("/suppliers/S1/profile-update/apply", headers={"origin": APP})
+    assert r.status_code == 200 and r.json()["phone"] == "+81 3 1234 5678"
+    r = client.post("/suppliers/S1/profile-update/reject", headers={"origin": APP})
+    assert r.status_code == 409 and r.json()["error"]["code"] == "no_pending_update"

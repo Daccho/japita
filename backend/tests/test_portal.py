@@ -69,3 +69,40 @@ def test_new_product_ingredient_is_free_text():
     with pytest.raises(ValueError):
         portal.propose_new(store, "S3", {"ingredient": "白味噌", "product": "x", "unit": "g", "pack_size": 1,
                                          "price_eur": 1, "origin_route": "japan", "attributes": {"hydration_pct": 1}})
+
+
+def test_profile_update_waits_for_the_restaurant():
+    store = Store.load(FIXTURE)
+    portal.propose_profile(store, "S3", {"phone": "+31 20 123 4567", "delivery_days": ["fri", "tue"],
+                                         "min_order_eur": 200, "lead_time_days": 3, "note_ja": "火曜と金曜のみ"})
+    sup = store.suppliers["S3"]
+    assert sup["pending_profile"]["changes"] == {"phone": "+31 20 123 4567", "delivery_days": ["tue", "fri"],
+                                                 "lead_time_days": 3}  # unchanged minimum order is left out
+    assert sup["lead_time_days"] == 2  # not applied yet
+    view = portal.view(store, sup)
+    assert view["profile"]["lead_time_days"] == 2 and view["pending_profile"]["changes"]["lead_time_days"] == 3
+    portal.apply_profile(store, "S3")
+    assert sup["lead_time_days"] == 3 and sup["delivery_days"] == ["tue", "fri"] and "pending_profile" not in sup
+    with pytest.raises(ValueError, match="no pending"):
+        portal.apply_profile(store, "S3")
+
+
+def test_profile_update_rejected_or_invalid():
+    store = Store.load(FIXTURE)
+    with pytest.raises(ValueError):
+        portal.propose_profile(store, "S3", {"lead_time_days": 2})  # same as now: nothing to update
+    with pytest.raises(ValueError):
+        portal.propose_profile(store, "S3", {"delivery_days": ["someday"]})
+    with pytest.raises(ValueError):
+        portal.propose_profile(store, "S3", {"name": "  "})
+    portal.propose_profile(store, "S3", {"name": "EuroAsia Foods"})
+    portal.reject_profile(store, "S3")
+    assert store.suppliers["S3"]["name"] == "EuroAsia Foods B.V." and "pending_profile" not in store.suppliers["S3"]
+
+
+def test_cut_is_a_choice():
+    store = Store.load(FIXTURE)
+    with pytest.raises(ValueError):
+        portal.propose_update(store, "S3", "O-kik-2", {"attributes": {"cut": "diced"}})
+    offer = portal.propose_update(store, "S3", "O-kik-2", {"attributes": {"cut": "strips"}})
+    assert offer["pending_update"]["evidence"]["cut"].endswith("スライス")

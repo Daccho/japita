@@ -9,18 +9,24 @@ INGREDIENT_EN = {"noodles": "Noodles", "soy_sauce": "Soy sauce", "kikurage": "Ki
 FIELD_LABEL_EN = {
     "hydration_pct": "Hydration", "contains_kansui": "Contains kansui", "fresh": "Fresh (not frozen)",
     "origin_country": "Country of manufacture (e.g. JP)", "brewing_method": "Brewing method (e.g. honjozo)",
-    "additive_free": "Additive-free", "cut": "Cut (strips or whole)",
+    "additive_free": "Additive-free", "cut": "Cut",
 }
 
 # How each requested field appears on the supplier's mobile form.
 FIELD_FORM_JA = {
-    "hydration_pct": {"label_ja": "加水率", "input": "number", "unit": "%", "min": 0, "max": 100},
-    "contains_kansui": {"label_ja": "かんすい使用の有無", "input": "boolean"},
+    "hydration_pct": {"label_ja": "加水率", "input": "number", "unit": "%", "min": 0, "max": 100,
+                      "hint_ja": "小麦粉に対する水の重量比（%）。博多スタイルは約25〜30%",
+                      "hint_en": "Water as % of flour weight. Hakata style ≈ 25–30%"},
+    "contains_kansui": {"label_ja": "かんすい使用の有無", "input": "boolean",
+                        "hint_ja": "麺にコシと黄色みを与えるアルカリ剤",
+                        "hint_en": "Alkaline salts that give ramen noodles firmness and a yellow colour"},
     "fresh": {"label_ja": "生麺（冷凍ではない）", "input": "boolean"},
     "origin_country": {"label_ja": "製造国（例：JP）", "input": "text"},
     "brewing_method": {"label_ja": "製法（例：本醸造 = honjozo）", "input": "text"},
     "additive_free": {"label_ja": "無添加", "input": "boolean"},
-    "cut": {"label_ja": "形状（strips = スライス、whole = ホール）", "input": "text"},
+    "cut": {"label_ja": "形状", "input": "choice",
+            "choices": [{"value": "strips", "label_ja": "スライス", "label_en": "Strips"},
+                        {"value": "whole", "label_ja": "ホール", "label_en": "Whole"}]},
 }
 
 
@@ -53,8 +59,13 @@ def coerce(value: Any, sample: Any) -> Any:
     return value
 
 
+CHOICE_JA = {c["value"]: c["label_ja"] for f in FIELD_FORM_JA.values() for c in f.get("choices", [])}
+
+
 def display_ja(value: Any) -> str:
-    """A typed value as the supplier would read it: booleans as はい/いいえ."""
+    """A typed value as the supplier would read it: booleans as はい/いいえ, choices by their Japanese label."""
+    if isinstance(value, str) and value in CHOICE_JA:
+        return CHOICE_JA[value]
     if isinstance(value, bool):
         return "はい" if value else "いいえ"
     if isinstance(value, str) and value.strip().lower() in ("true", "false"):

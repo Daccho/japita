@@ -11,6 +11,11 @@ from .store import Store, _now
 
 OWNER_ONLY_FIELDS = {"chef_approved"}  # decided inside the restaurant, never entered by a supplier
 
+# Supplier profile fields a supplier can propose changes to; the restaurant applies or rejects them.
+PROFILE_TEXT_FIELDS = ("name", "country", "address", "city", "contact_name", "email", "phone")
+PROFILE_FIELDS = (*PROFILE_TEXT_FIELDS, "delivery_days", "min_order_eur", "shipping_eur", "lead_time_days")
+DAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
+
 
 def portal_token(store: Store, supplier_id: str) -> str:
     sup = store.suppliers[supplier_id]
@@ -40,7 +45,8 @@ def _typed_attributes(store: Store, ingredient: str, attributes: dict) -> tuple[
         if field not in samples:
             raise DomainError("unknown_field", f"field {field!r} cannot be entered by a supplier")
         value = coerce(raw, samples[field])
-        if value is None:
+        choices = [c["value"] for c in FIELD_FORM_JA.get(field, {}).get("choices", [])]
+        if value is None or (choices and value not in choices):
             raise DomainError("invalid_value", f"invalid value for {field}")
         values[field] = value
         label = FIELD_FORM_JA.get(field, {}).get("label_ja", field)
@@ -131,6 +137,61 @@ def reject_update(store: Store, offer_id: str) -> dict:
     return offer
 
 
+def profile(sup: dict) -> dict:
+    return {f: sup.get(f) for f in PROFILE_FIELDS}
+
+
+def propose_profile(store: Store, supplier_id: str, changes: dict) -> dict:
+    """Supplier action: propose profile changes. Only fields that differ from the current profile are kept."""
+    sup = store.suppliers[supplier_id]
+    proposal: dict = {}
+    for field in PROFILE_FIELDS:
+        value = changes.get(field)
+        if value is None:
+            continue
+        if field in PROFILE_TEXT_FIELDS:
+            value = str(value).strip()
+            if field == "name" and not value:
+                raise DomainError("invalid_input", "name is required", 422)
+        elif field == "delivery_days":
+            if any(d not in DAYS for d in value):
+                raise DomainError("invalid_value", "unknown delivery day", 422)
+            value = [d for d in DAYS if d in value]
+        elif field == "lead_time_days":
+            if int(value) != value or value < 0:
+                raise DomainError("invalid_value", "lead time must be a whole number of days", 422)
+            value = int(value)
+        else:
+            if value < 0:
+                raise DomainError("invalid_value", f"{field} must be zero or more", 422)
+            value = round(float(value), 2)
+        if value != sup.get(field):
+            proposal[field] = value
+    if not proposal:
+        raise DomainError("nothing_to_update", "nothing to update")
+    sup["pending_profile"] = {"changes": proposal, "money_input": changes.get("money_input"),
+                              "note_ja": changes.get("note_ja"),
+                              "note_translations": changes.get("note_translations") or {}, "submitted_at": _now()}
+    return sup
+
+
+def apply_profile(store: Store, supplier_id: str) -> dict:
+    """Restaurant action: accept the supplier's profile proposal."""
+    sup = store.suppliers[supplier_id]
+    proposal = sup.pop("pending_profile", None)
+    if proposal is None:
+        raise DomainError("no_pending_update", "no pending supplier update")
+    sup.update(proposal["changes"])
+    return sup
+
+
+def reject_profile(store: Store, supplier_id: str) -> dict:
+    sup = store.suppliers[supplier_id]
+    if sup.pop("pending_profile", None) is None:
+        raise DomainError("no_pending_update", "no pending supplier update")
+    return sup
+
+
 def view(store: Store, sup: dict) -> dict:
     """Everything the supplier portal shows: only this supplier's requests, orders and products."""
     offer_ids = {o["id"] for o in store.offers if o["supplier_id"] == sup["id"]}
@@ -138,7 +199,10 @@ def view(store: Store, sup: dict) -> dict:
                  "question_en": (c.get("translations") or {}).get("en"), "form": form(c["field"]), "state": "awaiting_reply" if c["state"] == "sent" else "replied",
                  "sent_at": c.get("sent_at"), "reply_ja": (c.get("reply") or {}).get("text_ja")}
                 for c in store.clarifications if c["offer_id"] in offer_ids and c.get("token")]
+    approvals = {a["id"]: a["profile_id"] for a in store.data["approvals"]}
+    profiles = store.data["profiles"]
     orders = [{"id": po["id"], "state": po["state"], "submitted_at": po.get("submitted_at"),
+               "restaurant": profiles.get(approvals.get(po["approval_id"]), store.profile)["name"],
                "delivery_date": po["delivery_date"], "total_eur": po["total_eur"], "goods_eur": po["goods_eur"],
                "shipping_eur": po["shipping_eur"], "acknowledgment": po.get("acknowledgment"),
                "delivery_changes": po.get("delivery_changes", []),
@@ -158,6 +222,7 @@ def view(store: Store, sup: dict) -> dict:
                  "form": product_form(store, o["ingredient"])}
                 for o in store.offers if o["supplier_id"] == sup["id"]]
     return {"restaurant": store.profile["name"], "supplier": {"id": sup["id"], "name": sup["name"]},
+            "profile": profile(sup), "pending_profile": sup.get("pending_profile"),
             "requests": requests, "orders": orders, "products": products,
             "new_product_forms": {ing: product_form(store, ing) for ing in store.profile["ingredients"]},
             "ingredient_ja": INGREDIENT_JA, "ingredient_en": INGREDIENT_EN}
