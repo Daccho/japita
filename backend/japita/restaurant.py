@@ -98,10 +98,10 @@ def logo_url(data: dict) -> str:
 
 
 def set_logo_url(data: dict, url: str | None) -> str:
-    """Save the restaurant logo; an empty value restores the default logo."""
+    """Save the restaurant logo (a URL or an uploaded image data URL); an empty value restores the default logo."""
     from .avatar import clean_logo_url
     settings = {k: v for k, v in (data.get("restaurant_settings") or {}).items() if k != "logo_url"}
-    cleaned = clean_logo_url(url)
+    cleaned = clean_logo_url(url, allow_data=True)
     data["restaurant_settings"] = {**settings, **({"logo_url": cleaned} if cleaned else {})}
     return logo_url(data)
 
