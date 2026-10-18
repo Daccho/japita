@@ -6,7 +6,8 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Loader2, RotateCcw, Sparkles, X } from "lucide-react";
 import { errorText } from "@/lib/api";
-import { useI18n, type Key } from "@/lib/i18n";
+import { useI18n, useLabel, type Key } from "@/lib/i18n";
+import type { PurchasingAnswer } from "@/lib/purchasing";
 import { useWorkspace } from "@/components/workspace";
 import PurchaseBrief from "@/components/PurchaseBrief";
 
@@ -17,6 +18,60 @@ export function Markdown({ text }: { text: string }) {
   return (
     <div className="jp-md">
       <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
+    </div>
+  );
+}
+
+type Explanation = PurchasingAnswer["explanation"];
+const OUTCOME_BADGE: Record<string, { key: Key; tone: string }> = {
+  fail: { key: "of.fails_mandatory", tone: "jp-danger" },
+  missing_evidence: { key: "of.missing_evidence", tone: "jp-warning" },
+  needs_review: { key: "of.needs_review", tone: "jp-warning" },
+  ok: { key: "of.eligible", tone: "jp-neutral" },
+};
+
+// Recorded rule outcomes, grouped by product: what was checked, what is known, and what to do next.
+function EvidenceList({ explanation }: { explanation: Explanation }) {
+  const { t } = useI18n();
+  const label = useLabel();
+  if (!explanation.evidence.length) return null;
+  const groups = new Map<string, Explanation["evidence"]>();
+  for (const item of explanation.evidence) groups.set(item.offer_id, [...(groups.get(item.offer_id) ?? []), item]);
+  const next = (item: Explanation["evidence"][number]) =>
+    item.outcome === "fail" ? t("adv.cannotUse")
+      : item.outcome === "ok" ? t("adv.meets")
+      : item.resolved_by === "owner" ? t("adv.nextOwner")
+      : item.outcome === "needs_review" ? t("adv.nextVerify")
+      : t("adv.nextAsk");
+  return (
+    <div className="jp-quote">
+      <h3>{t("adv.why")}</h3>
+      <p className="jp-section-note">{explanation.evidence_selected_by === "app" ? t("adv.byApp") : t("adv.verified")}</p>
+      {[...groups.values()].map((items) => (
+        <div key={items[0].offer_id} style={{ marginTop: 12 }}>
+          <strong style={{ color: "var(--jp-text)" }}>{items[0].product}</strong>
+          {items.map((item) => {
+            const badge = OUTCOME_BADGE[item.outcome];
+            return (
+              <div key={item.field} style={{ marginTop: 8 }}>
+                <span className={`jp-badge ${badge.tone}`}>{t(badge.key)}</span>{" "}
+                <span style={{ color: "var(--jp-text)" }}>{label("field", item.field)}</span>
+                {item.rule && <small style={{ display: "block", color: "var(--jp-muted)" }}>{item.rule}</small>}
+                <p style={{ margin: "4px 0" }}>
+                  {item.value === null || item.value === undefined ? t("adv.notStated") : t("adv.recorded", { value: String(item.value) })}
+                  {" · "}{next(item)}
+                </p>
+                {item.source_text && (
+                  <details>
+                    <summary>{t("adv.original")}</summary>
+                    <small lang="ja">{item.source_text}</small>
+                  </details>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      ))}
     </div>
   );
 }
@@ -121,7 +176,7 @@ function AdvisorBody() {
             {advisor.question && <p style={{ fontStyle: "italic" }}>“{advisor.question}”</p>}
             {(advisor.result.stale || advisor.result.input_version !== data?.brief.input_version) && <p className="jp-error">{t("adv.stale")}</p>}
             {!advisor.result.explanation.validated && <p className="jp-section-note">{t("adv.unverified")}</p>}
-            {advisor.result.explanation.evidence.map((item, i) => <p key={i}>{item.product} · {item.field}: {String(item.value)} · {item.outcome}<br /><small>{item.source_text}</small></p>)}
+            {advisor.result.explanation.validated && <EvidenceList explanation={advisor.result.explanation} />}
             {conversation.length > 1 && <details><summary>{t("adv.previous")}</summary>{conversation.slice(0,-1).map((turn,i)=><p key={i}>{turn.question}</p>)}</details>}
             {drafts.length > 0 && (
               <div className="jp-quote">

@@ -283,7 +283,7 @@ export type PurchaseBrief = {
 };
 export type AdvisorContext = { offer_id?: string; basket_kind?: string };
 export type PurchasingAnswer = { drafts: {id:string;text:string}[]; answer: string; clarifications: Clarification[]; brief: PurchaseBrief; input_version: string; stale: boolean;
-  explanation: { validated: boolean; focus: string; evidence: (RuleOutcome & { offer_id: string; product: string })[] } };
+  explanation: { validated: boolean; focus: string; evidence: (RuleOutcome & { offer_id: string; product: string })[]; evidence_selected_by?: "app" } };
 export type CatalogCriteria = { ingredient?: string | null; relationship?: "existing" | "candidate"; supplier_country?: string | null; dispatch_country?: string | null; product_origin?: string | null; fresh?: boolean | null; needed_by?: string | null; name?: string | null };
 export type CatalogQuote = { offer_id: string; supplier_id: string; product: string; ingredient: string; comparison_key: string;
   basis_qty: number; unit: string; packs: number; purchase_qty: number; goods_eur: number; shipping_eur: number | null;
