@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { PortalApp } from "@/components/portal/PortalApp";
-import { AuthError, supplierPortal } from "@/lib/auth";
+import { AuthError, logout, me, supplierPortal } from "@/lib/auth";
 
 // Signed-in supplier: their own portal. Shared link-token pages stay at /supplier/portal/[token] without sign-in.
 export default function SupplierHome() {
   const [token, setToken] = useState<string | null>(null);
+  const [name, setName] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -24,10 +25,14 @@ export default function SupplierHome() {
           }
         });
     load(0);
+    me()
+      .then((u) => !cancelled && u && setName(u.display_name))
+      .catch(() => {});
     return () => {
       cancelled = true;
     };
   }, []);
 
-  return token ? <PortalApp token={token} /> : null;
+  const signOut = () => logout().finally(() => window.location.replace("/"));
+  return token ? <PortalApp token={token} homeHref="/suppliers" account={{ name, onSignOut: signOut }} /> : null;
 }

@@ -1520,3 +1520,28 @@
 .jp .jp-app .jp-login-role strong { font-weight:var(--aj-weight-bold); }
 .jp .jp-app .jp-login-note { color:var(--aj-muted); }
 
+
+/* Supplier portal pieces without a workspace equivalent, on the same tokens. */
+.jp .jp-app .jp-field-hint { color:var(--aj-muted); font-size:var(--aj-type-small); font-weight:var(--aj-weight-medium); }
+.jp .jp-app .jp-input-unit { position:relative; display:block; min-width:0; }
+.jp .jp-app .jp-input-unit input { width:100%; padding-right:46px; }
+.jp .jp-app .jp-input-unit > span { position:absolute; right:12px; top:50%; transform:translateY(-50%); color:var(--aj-muted); pointer-events:none; }
+.jp .jp-app .jp-subnav.jp-choice { margin:0; width:auto; max-width:100%; flex-wrap:wrap; gap:8px; padding:0; background:var(--aj-transparent); }
+.jp .jp-app .jp-portal-empty { display:grid; justify-items:center; gap:8px; padding:36px 20px; text-align:center; }
+.jp .jp-app .jp-portal-empty .jp-thumb-icon { display:grid; place-items:center; width:48px; height:48px; }
+.jp .jp-app .jp-portal-days { display:flex; flex-wrap:wrap; gap:6px 14px; }
+.jp .jp-app .jp-portal-days label { display:inline-flex; align-items:center; gap:6px; color:var(--aj-ink); font-weight:var(--aj-weight-bold); }
+.jp .jp-floating-toast { position:fixed; left:16px; right:16px; bottom:20px; z-index:30; display:flex; justify-content:center; pointer-events:none; }
+.jp .jp-floating-toast .jp-toast { margin:0; max-width:440px; border:var(--aj-border-strong); border-left:var(--aj-border-notice); border-radius:var(--aj-radius-control); box-shadow:var(--aj-shadow-control); }
+/* Short help next to a preference term (ⓘ). */
+.jp .jp-info { position:relative; display:inline-flex; vertical-align:middle; margin-left:4px; }
+.jp .jp-info > button { display:inline-grid; place-items:center; width:20px; height:20px; padding:0; border-radius:50%; color:var(--aj-muted); cursor:help; }
+.jp .jp-info > button svg { width:15px; height:15px; }
+.jp .jp-info [role="tooltip"] { position:absolute; z-index:40; left:50%; top:calc(100% + 6px); transform:translateX(-50%); width:max-content; max-width:min(260px,80vw); padding:8px 10px; border:var(--aj-border-strong); border-radius:var(--aj-radius-control); background:var(--aj-surface); color:var(--aj-ink); font-size:var(--aj-type-small); font-weight:var(--aj-weight-medium); line-height:1.4; text-align:left; white-space:normal; letter-spacing:normal; text-transform:none; box-shadow:var(--aj-shadow-dropdown); }
+.jp .jp-app .jp-portal-body { display:grid; gap:18px; max-width:760px; min-width:0; }
+.jp .jp-app .jp-portal-group { display:grid; gap:12px; }
+.jp .jp-app .jp-portal-form { display:grid; gap:0; margin-top:16px; padding-top:16px; border-top:var(--aj-border-light); }
+/* Entry page role choices: a large picture per side in a yolk tile. */
+.jp .jp-app .jp-login-role .jp-login-tile { position:relative; display:grid; place-items:center; flex-shrink:0; width:64px; height:64px; border:var(--aj-border-strong); border-radius:var(--aj-radius-card); background:var(--aj-yolk); }
+.jp .jp-app .jp-login-role .jp-login-tile svg { width:40px; height:40px; stroke-width:1.75; }
+.jp .jp-app .jp-login-role .jp-login-tile svg.jp-login-tile-badge { position:absolute; right:-8px; bottom:-8px; width:26px; height:26px; padding:3px; border:var(--aj-border-strong); border-radius:50%; background:var(--aj-surface); stroke-width:2; }

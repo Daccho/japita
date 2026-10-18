@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { CheckCircle2, Inbox, MessageSquareText, Send } from "lucide-react";
 import { portalApi, PortalError, type PortalProduct, type PortalRequest } from "@/lib/portal";
-import { errorMessage, fieldLabel, formatDateTime, ingredientName } from "./format";
+import { errorMessage, formatDateTime, ingredientName } from "./format";
 import { useLang } from "./i18n";
-import { Button, Card, Chip, EmptyState, ErrorBox, FieldInput, Label, NoteInput, fieldError, fieldPayload } from "./ui";
+import { Button, Card, Chip, EmptyState, ErrorBox, FieldBlock, NoteInput, fieldError, fieldPayload } from "./ui";
 import type { TabProps } from "./types";
 
 /** The backend stores form replies as "[仕入先フォーム入力] label: value"; show them as plain "label: value". */
@@ -24,15 +24,15 @@ export function RequestsTab({ view, reload, notify }: TabProps) {
   );
   if (!sorted.length) {
     return (
-      <EmptyState icon={<Inbox className="h-6 w-6" aria-hidden />} title={t.noRequests} body={t.noRequestsBody(view.restaurant)} />
+      <EmptyState icon={<Inbox aria-hidden />} title={t.noRequests} body={t.noRequestsBody(view.restaurant)} />
     );
   }
   return (
-    <div className="space-y-4">
+    <>
       {sorted.map((r) => (
         <RequestCard key={r.id} req={r} product={products.get(r.offer_id)} reload={reload} notify={notify} />
       ))}
-    </div>
+    </>
   );
 }
 
@@ -84,17 +84,17 @@ function RequestCard({
 
   return (
     <Card>
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
+      <div className="jp-line-head" style={{ alignItems: "flex-start", marginBottom: 12 }}>
+        <div style={{ minWidth: 0 }}>
           {product && (
-            <p className="text-xs font-bold text-aj-muted">
+            <span className="jp-kicker">
               {ingredientName(product.ingredient, lang, { ja: product.ingredient_ja, en: product.ingredient_en })}
-            </p>
+            </span>
           )}
-          <h3 className="mt-0.5 font-bold leading-snug text-aj-ink">{product?.product ?? t.product}</h3>
+          <h2 style={{ marginTop: 4 }}>{product?.product ?? t.product}</h2>
         </div>
         {replied ? (
-          <Chip tone="ok" icon={<CheckCircle2 className="h-3.5 w-3.5" aria-hidden />}>
+          <Chip tone="ok" icon={<CheckCircle2 size={12} aria-hidden />}>
             {t.replied}
           </Chip>
         ) : (
@@ -102,33 +102,30 @@ function RequestCard({
         )}
       </div>
 
-      <div className="mt-3 rounded-[10px] bg-aj-page p-3">
-        <p className="flex items-center gap-1.5 text-xs text-aj-muted">
-          <MessageSquareText className="h-3.5 w-3.5" aria-hidden />
+      <div className="jp-message">
+        <span className="jp-message-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <MessageSquareText size={13} aria-hidden />
           {t.questionFrom(formatDateTime(req.sent_at, lang))}
-        </p>
-        <p className="mt-1 whitespace-pre-wrap leading-relaxed text-aj-ink">{question}</p>
+        </span>
+        {question}
       </div>
 
       {replied ? (
-        <div className="mt-3 border-l-4 border-aj-ink pl-3">
-          <p className="text-xs font-bold text-aj-ink">{t.yourReply}</p>
-          <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-aj-ink">{req.reply_ja ? prettyReply(req.reply_ja, t.yes, t.no) : t.sent}</p>
+        <div className="jp-toast">
+          <strong>{t.yourReply}</strong>
+          <div style={{ whiteSpace: "pre-wrap", marginTop: 4 }}>{req.reply_ja ? prettyReply(req.reply_ja, t.yes, t.no) : t.sent}</div>
         </div>
       ) : (
-        <div className="mt-4 space-y-4">
-          <div>
-            <Label>{fieldLabel(req.form, lang)}</Label>
-            <FieldInput field={req.form} value={value} onChange={setValue} />
-          </div>
+        <div className="jp-portal-form">
+          <FieldBlock field={req.form} value={value} onChange={setValue} />
           <NoteInput value={note} onChange={setNote} />
           <ErrorBox message={error} />
           <Button
             onClick={submit}
             busy={busy}
             busyLabel={note.trim() ? t.sendingTranslating : t.sending}
-            icon={<Send className="h-4 w-4" aria-hidden />}
-            className="w-full"
+            icon={<Send aria-hidden />}
+            style={{ width: "100%" }}
           >
             {t.sendReply}
           </Button>

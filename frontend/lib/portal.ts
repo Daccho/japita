@@ -6,10 +6,13 @@ export type FormField = {
   field: string;
   label_ja: string;
   label_en?: string;
-  input: "number" | "boolean" | "text";
+  input: "number" | "boolean" | "text" | "choice";
   unit?: string;
   min?: number;
   max?: number;
+  hint_ja?: string;
+  hint_en?: string;
+  choices?: { value: string; label_ja: string; label_en: string }[];
 };
 
 export type PortalRequest = {
@@ -40,6 +43,7 @@ export type DeliveryChange = { from: string; to: string; at: string; note_ja: st
 
 export type PortalOrder = {
   id: string;
+  restaurant: string;
   state: "submitted" | "acknowledged";
   submitted_at: string | null;
   delivery_date: string;
@@ -80,9 +84,41 @@ export type PortalProduct = {
   form: FormField[];
 };
 
+export type Day = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
+
+export type SupplierProfile = {
+  name: string;
+  country: string | null;
+  address: string | null;
+  city: string | null;
+  contact_name: string | null;
+  email: string | null;
+  phone: string | null;
+  delivery_days: Day[] | null;
+  min_order_eur: number | null;
+  shipping_eur: number | null;
+  lead_time_days: number | null;
+};
+
+export type PendingProfile = {
+  changes: Partial<SupplierProfile>;
+  note_ja?: string | null;
+  submitted_at: string;
+};
+
+/** Profile changes a supplier proposes; money in `currency` is converted to EUR by the API. */
+export type ProfileUpdate = Partial<Omit<SupplierProfile, "min_order_eur" | "shipping_eur">> & {
+  min_order?: number;
+  shipping?: number;
+  currency?: Currency;
+  note_ja?: string;
+};
+
 export type PortalView = {
   restaurant: string;
   supplier: { id: string; name: string };
+  profile: SupplierProfile;
+  pending_profile: PendingProfile | null;
   requests: PortalRequest[];
   orders: PortalOrder[];
   products: PortalProduct[];
@@ -149,6 +185,7 @@ const MESSAGES: Record<string, [string, string]> = {
   link_not_found: ["ページが見つかりません。リンクをご確認ください。", "Page not found. Please check the link."],
   order_not_found: ["注文が見つかりません。画面を更新してください。", "Order not found. Please reload the page."],
   product_not_found: ["商品が見つかりません。画面を更新してください。", "Product not found. Please reload the page."],
+  invalid_currency: ["この通貨は使用できません。", "This currency is not supported."],
   invalid_input: ["入力内容をご確認ください（未入力または形式が正しくない項目があります）。", "Please check your input (a field is missing or has an invalid format)."],
   model_unavailable: ["翻訳サービスに接続できません。しばらくしてからもう一度お試しください。", "The translation service is not reachable. Please try again shortly."],
   model_timeout: ["処理に時間がかかりすぎました。もう一度お試しください。", "This took too long. Please try again."],
@@ -211,4 +248,5 @@ export const portalApi = {
   updateProduct: (token: string, offerId: string, body: ProductUpdate) =>
     call<PortalView>(`/portal/${t(token)}/products/${t(offerId)}`, post(body)),
   newProduct: (token: string, body: NewProduct) => call<PortalView>(`/portal/${t(token)}/products`, post(body)),
+  updateProfile: (token: string, body: ProfileUpdate) => call<PortalView>(`/portal/${t(token)}/profile`, post(body)),
 };

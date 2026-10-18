@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, CalendarClock, CalendarDays, CheckCircle2, ClipboardList, Package, Truck } from "lucide-react";
+import { ArrowRight, CalendarClock, CheckCircle2, ClipboardList, Store, Truck } from "lucide-react";
 import { portalApi, type PortalOrder, type PortalView } from "@/lib/portal";
 import { errorMessage, formatDate, formatDateTime, formatQty, ingredientName, packWord } from "./format";
 import { useLang } from "./i18n";
-import { Button, Card, Chip, EmptyState, ErrorBox, Label, NoteInput, inputClass } from "./ui";
+import { Button, Card, Chip, EmptyState, ErrorBox, Field, NoteInput } from "./ui";
 import type { TabProps } from "./types";
 
 export function OrdersTab(props: TabProps) {
@@ -18,18 +18,18 @@ export function OrdersTab(props: TabProps) {
   if (!sorted.length) {
     return (
       <EmptyState
-        icon={<ClipboardList className="h-6 w-6" aria-hidden />}
+        icon={<ClipboardList aria-hidden />}
         title={t.noOrders}
         body={t.noOrdersBody(props.view.restaurant)}
       />
     );
   }
   return (
-    <div className="space-y-4">
+    <>
       {sorted.map((o) => (
         <OrderCard key={o.id} order={o} {...props} />
       ))}
-    </div>
+    </>
   );
 }
 
@@ -75,14 +75,21 @@ function OrderCard({ order, token, onView, notify }: TabProps & { order: PortalO
 
   return (
     <Card>
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-xs text-aj-muted">{t.orderNumber}</p>
-          <h3 className="text-lg font-bold tracking-wide text-aj-ink">{order.id}</h3>
-          <p className="mt-0.5 text-xs text-aj-muted">{t.received(formatDateTime(order.submitted_at, lang))}</p>
+      <div className="jp-line-head" style={{ alignItems: "flex-start", marginBottom: 12 }}>
+        <div style={{ minWidth: 0 }}>
+          <span className="jp-kicker">
+            {t.orderNumber} {order.id}
+          </span>
+          <h2 style={{ marginTop: 4, display: "flex", alignItems: "center", gap: 8 }}>
+            <Store size={18} aria-hidden style={{ flexShrink: 0 }} />
+            {t.orderFrom(order.restaurant)}
+          </h2>
+          <p className="jp-muted" style={{ fontSize: 12, marginTop: 4 }}>
+            {t.received(formatDateTime(order.submitted_at, lang))}
+          </p>
         </div>
         {accepted ? (
-          <Chip tone="ok" icon={<CheckCircle2 className="h-3.5 w-3.5" aria-hidden />}>
+          <Chip tone="ok" icon={<CheckCircle2 size={12} aria-hidden />}>
             {t.accepted}
           </Chip>
         ) : (
@@ -90,51 +97,41 @@ function OrderCard({ order, token, onView, notify }: TabProps & { order: PortalO
         )}
       </div>
 
-      <div className="mt-3 flex items-center gap-2 rounded-[10px] bg-aj-yolk-tint px-3 py-2.5 text-aj-ink">
-        <Truck className="h-4 w-4 shrink-0 text-aj-ink" aria-hidden />
-        <span className="text-sm">{accepted ? t.plannedDelivery : t.requestedDelivery}</span>
-        <span className="ml-auto font-bold">{formatDate(order.delivery_date, lang)}</span>
+      <div className="jp-message" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <Truck size={16} aria-hidden style={{ flexShrink: 0 }} />
+        <span>{accepted ? t.plannedDelivery : t.requestedDelivery}</span>
+        <strong style={{ marginLeft: "auto" }}>{formatDate(order.delivery_date, lang)}</strong>
       </div>
 
-      <ul className="mt-3 divide-y divide-aj-line">
+      <div style={{ marginTop: 8 }}>
         {order.lines.map((ln) => (
-          <li key={`${ln.ingredient}-${ln.product}`} className="flex items-start gap-3 py-2.5">
-            <Package className="mt-0.5 h-4 w-4 shrink-0 text-aj-muted" aria-hidden />
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold leading-snug text-aj-ink">{ln.product}</p>
-              <p className="mt-0.5 text-sm text-aj-muted">
-                <span className="mr-2">{ingredientName(ln.ingredient, lang, { ja: ln.ingredient_ja, en: ln.ingredient_en })}</span>
-                <span className="whitespace-nowrap">
-                  {ln.packs} {packWord(ln.ingredient, ln.packs, lang)} × {formatQty(ln.pack_size, ln.unit)}
-                </span>
-                <span className="ml-1 whitespace-nowrap">({t.total(formatQty(ln.purchase_qty, ln.unit))})</span>
+          <div key={`${ln.ingredient}-${ln.product}`} className="jp-row">
+            <div>
+              <h3>{ln.product}</h3>
+              <p>
+                {ingredientName(ln.ingredient, lang, { ja: ln.ingredient_ja, en: ln.ingredient_en })} · {ln.packs}{" "}
+                {packWord(ln.ingredient, ln.packs, lang)} × {formatQty(ln.pack_size, ln.unit)} ({t.total(formatQty(ln.purchase_qty, ln.unit))})
               </p>
             </div>
-            <span className="shrink-0 text-sm font-bold tabular-nums text-aj-ink">{fx.money(ln.cost_eur)}</span>
-          </li>
+            <strong className="jp-number">{fx.money(ln.cost_eur)}</strong>
+          </div>
         ))}
-      </ul>
+      </div>
 
-      <dl className="mt-1 space-y-1 border-t border-aj-line pt-3 text-sm">
-        <div className="flex justify-between text-aj-muted">
-          <dt>{t.subtotal}</dt>
-          <dd className="tabular-nums">{fx.money(order.goods_eur)}</dd>
-        </div>
-        <div className="flex justify-between text-aj-muted">
-          <dt>{t.shipping}</dt>
-          <dd className="tabular-nums">{order.shipping_eur ? fx.money(order.shipping_eur) : t.free}</dd>
-        </div>
-        <div className="flex justify-between pt-1 text-base font-bold text-aj-ink">
-          <dt>{t.grandTotal}</dt>
-          <dd className="tabular-nums">{fx.money(order.total_eur)}</dd>
-        </div>
+      <dl className="jp-kv" style={{ borderTop: "1.5px solid var(--aj-line)", paddingTop: 12, marginTop: 4 }}>
+        <dt>{t.subtotal}</dt>
+        <dd>{fx.money(order.goods_eur)}</dd>
+        <dt>{t.shipping}</dt>
+        <dd>{order.shipping_eur ? fx.money(order.shipping_eur) : t.free}</dd>
+        <dt style={{ color: "var(--aj-ink)", fontWeight: 700, fontSize: 14 }}>{t.grandTotal}</dt>
+        <dd style={{ fontWeight: 700, fontSize: 14 }}>{fx.money(order.total_eur)}</dd>
       </dl>
 
       {accepted && order.acknowledgment && (
-        <p className="mt-3 text-xs text-aj-muted">
+        <p className="jp-muted" style={{ fontSize: 12, marginTop: 12 }}>
           {t.acceptedAt(formatDateTime(order.acknowledgment.received_at, lang))}
           {order.acknowledgment.note_ja && (
-            <span className="mt-1 block text-aj-ink">
+            <span style={{ display: "block", marginTop: 4, color: "var(--aj-ink)" }}>
               {t.commentPrefix}
               {order.acknowledgment.note_ja}
             </span>
@@ -143,65 +140,46 @@ function OrderCard({ order, token, onView, notify }: TabProps & { order: PortalO
       )}
 
       {order.delivery_changes.length > 0 && (
-        <div className="mt-3 rounded-[10px] border border-aj-line p-3">
-          <p className="flex items-center gap-1.5 text-xs font-bold text-aj-muted">
-            <CalendarClock className="h-3.5 w-3.5" aria-hidden />
+        <div className="jp-toast">
+          <strong style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <CalendarClock size={14} aria-hidden />
             {t.changeHistory}
-          </p>
-          <ol className="mt-2 space-y-2">
-            {order.delivery_changes.map((c) => (
-              <li key={c.at} className="text-sm">
-                <span className="inline-flex items-center gap-1 text-aj-ink">
-                  <span className="text-aj-muted line-through">{formatDate(c.from, lang)}</span>
-                  <ArrowRight className="h-3.5 w-3.5 text-aj-muted" aria-hidden />
-                  <span className="font-bold">{formatDate(c.to, lang)}</span>
-                </span>
-                <span className="ml-2 text-xs text-aj-muted">{formatDateTime(c.at, lang)}</span>
-                {c.note_ja && <p className="mt-0.5 text-xs text-aj-muted">{c.note_ja}</p>}
-              </li>
-            ))}
-          </ol>
+          </strong>
+          {order.delivery_changes.map((c) => (
+            <div key={c.at} style={{ marginTop: 6 }}>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                <s className="jp-muted">{formatDate(c.from, lang)}</s>
+                <ArrowRight size={13} aria-hidden />
+                <strong>{formatDate(c.to, lang)}</strong>
+              </span>
+              <span className="jp-muted" style={{ marginLeft: 8 }}>
+                {formatDateTime(c.at, lang)}
+              </span>
+              {c.note_ja && <div className="jp-muted">{c.note_ja}</div>}
+            </div>
+          ))}
         </div>
       )}
 
       {(!accepted || editing) && (
-        <div className="mt-4 space-y-4 border-t border-aj-line pt-4">
-          <label className="block">
-            <Label>{accepted ? t.newDeliveryDate : t.deliveryDate}</Label>
-            <div className="relative">
-              <CalendarDays
-                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-aj-muted"
-                aria-hidden
-              />
-              <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={`${inputClass} pl-9`} />
-            </div>
-            {!accepted && <span className="mt-1 block text-xs text-aj-muted">{t.requestedDateHint}</span>}
-          </label>
+        <div className="jp-portal-form">
+          <Field label={accepted ? t.newDeliveryDate : t.deliveryDate} note={!accepted ? t.requestedDateHint : undefined}>
+            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          </Field>
           <NoteInput value={note} onChange={setNote} placeholder={accepted ? t.notePlaceholderChange : t.notePlaceholderAccept} />
         </div>
       )}
 
       <ErrorBox message={error} />
 
-      <div className="mt-4 flex gap-2">
+      <div className="jp-form-actions" style={{ marginTop: 14 }}>
         {!accepted && (
-          <Button
-            onClick={accept}
-            busy={busy}
-            busyLabel={busyLabel}
-            className="w-full"
-            icon={<CheckCircle2 className="h-4 w-4" aria-hidden />}
-          >
+          <Button onClick={accept} busy={busy} busyLabel={busyLabel} style={{ width: "100%" }} icon={<CheckCircle2 aria-hidden />}>
             {t.acceptOrder}
           </Button>
         )}
         {accepted && !editing && (
-          <Button
-            variant="secondary"
-            className="w-full"
-            onClick={() => setEditing(true)}
-            icon={<CalendarClock className="h-4 w-4" aria-hidden />}
-          >
+          <Button variant="secondary" onClick={() => setEditing(true)} icon={<CalendarClock aria-hidden />}>
             {t.changeDelivery}
           </Button>
         )}
@@ -218,7 +196,7 @@ function OrderCard({ order, token, onView, notify }: TabProps & { order: PortalO
             >
               {t.cancel}
             </Button>
-            <Button onClick={change} busy={busy} busyLabel={busyLabel} className="flex-1">
+            <Button onClick={change} busy={busy} busyLabel={busyLabel}>
               {t.sendChange}
             </Button>
           </>

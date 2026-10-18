@@ -49,6 +49,9 @@ export const originLabel = (o: Origin, t: { originJapan: string; originEurope: s
 /** Form label in the chosen language. */
 export const fieldLabel = (f: FormField, lang: Lang) => (lang === "en" && f.label_en ? f.label_en : f.label_ja);
 
+/** Help text under a field, in the chosen language. */
+export const fieldHint = (f: FormField, lang: Lang) => (lang === "en" ? f.hint_en : f.hint_ja) ?? null;
+
 /** Short field label: drops the "（例：…）" / "(e.g. …)" hint used on input forms. */
 export const shortLabel = (f: FormField, lang: Lang) =>
   fieldLabel(f, lang)
@@ -59,9 +62,12 @@ export function formatValue(
   value: unknown,
   f: FormField | undefined,
   t: { yes: string; no: string; notSet: string },
+  lang: Lang = "ja",
 ): string {
   if (value === null || value === undefined || value === "") return t.notSet;
   if (typeof value === "boolean") return value ? t.yes : t.no;
+  const choice = f?.choices?.find((c) => c.value === value);
+  if (choice) return lang === "en" ? choice.label_en : choice.label_ja;
   return `${value}${f?.unit ?? ""}`;
 }
 

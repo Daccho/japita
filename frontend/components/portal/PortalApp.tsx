@@ -1,25 +1,30 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CheckCircle2, ClipboardList, LinkIcon, MessageSquareText, Package, RefreshCw, Store, WifiOff } from "lucide-react";
+import { Building2, CheckCircle2, ClipboardList, LinkIcon, Loader2, MessageSquareText, Package, RefreshCw, WifiOff } from "lucide-react";
+import AppShell, { type NavItem } from "@/components/AppShell";
 import { portalApi, PortalError, type PortalView } from "@/lib/portal";
 import { PortalLangProvider, useLang, type Lang } from "./i18n";
 import { OrdersTab } from "./OrdersTab";
 import { ProductsTab } from "./ProductsTab";
+import { ProfileTab } from "./ProfileTab";
 import { RequestsTab } from "./RequestsTab";
 import type { TabProps } from "./types";
 
-type Tab = "requests" | "orders" | "products";
+type Tab = "requests" | "orders" | "products" | "profile";
 
-export function PortalApp({ token }: { token: string }) {
+/** Signed-in supplier account shown in the header; absent on shared-link pages. */
+export type PortalAccount = { name: string; onSignOut: () => void };
+
+export function PortalApp({ token, account, homeHref }: { token: string; account?: PortalAccount | null; homeHref?: string }) {
   return (
     <PortalLangProvider>
-      <Portal token={token} />
+      <Portal token={token} account={account ?? null} homeHref={homeHref} />
     </PortalLangProvider>
   );
 }
 
-function Portal({ token }: { token: string }) {
+function Portal({ token, account, homeHref }: { token: string; account: PortalAccount | null; homeHref?: string }) {
   const { t, fx } = useLang();
   const [view, setView] = useState<PortalView | null>(null);
   const [failure, setFailure] = useState<"notfound" | "offline" | null>(null);
@@ -32,7 +37,7 @@ function Portal({ token }: { token: string }) {
       const v = await portalApi.view(token);
       setView(v);
       setFailure(null);
-      // Open the tab that needs attention first, only on the first load.
+      // Open the section that needs attention first, only on the first load.
       setTab(
         (cur) =>
           cur ??
@@ -61,148 +66,120 @@ function Portal({ token }: { token: string }) {
     toastTimer.current = setTimeout(() => setToast(null), 3500);
   }, []);
 
+  const select = (id: Tab) => {
+    setTab(id);
+    window.scrollTo({ top: 0 });
+  };
+  const counts: Record<Tab, number> = {
+    requests: view?.requests.filter((r) => r.state === "awaiting_reply").length ?? 0,
+    orders: view?.orders.filter((o) => o.state === "submitted").length ?? 0,
+    products: 0,
+    profile: 0,
+  };
+  const sections: { id: Tab; label: string; intro: string; icon: NavItem["icon"] }[] = [
+    { id: "requests", label: t.tabRequests, intro: t.introRequests, icon: MessageSquareText },
+    { id: "orders", label: t.tabOrders, intro: t.introOrders, icon: ClipboardList },
+    { id: "products", label: t.tabProducts, intro: t.introProducts, icon: Package },
+    { id: "profile", label: t.tabProfile, intro: t.introProfile, icon: Building2 },
+  ];
+  const nav: NavItem[] = view
+    ? sections.map(({ id, label, icon }) => ({ id, label, icon, current: tab === id, onSelect: () => select(id), count: counts[id] }))
+    : [];
+
+  const frame = (body: React.ReactNode) => (
+    <AppShell
+      homeHref={homeHref}
+      controls={<LangToggle />}
+      account={account && { name: account.name, signOutLabel: t.signOut, onSignOut: account.onSignOut }}
+      navLabel={t.navLabel}
+      nav={nav}
+      sidebarFoot={
+        view && (
+          <>
+            {view.supplier.name}
+            <br />
+            {t.forRestaurant(view.restaurant)}
+          </>
+        )
+      }
+      after={
+        toast && (
+          <div className="jp-floating-toast" role="status">
+            <p className="jp-toast" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <CheckCircle2 aria-hidden style={{ width: 16, height: 16, flexShrink: 0 }} />
+              {toast}
+            </p>
+          </div>
+        )
+      }
+    >
+      {body}
+    </AppShell>
+  );
+
   if (failure === "notfound" || (failure === "offline" && !view)) {
     const notFound = failure === "notfound";
-    return (
-      <Shell>
-        <div className="flex min-h-[70vh] flex-col items-center justify-center px-6 text-center">
-          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full border-2 border-aj-ink bg-aj-yolk text-aj-ink">
-            {notFound ? <LinkIcon className="h-7 w-7" aria-hidden /> : <WifiOff className="h-7 w-7" aria-hidden />}
-          </div>
-          <h1 className="font-aj-display text-lg font-normal text-aj-ink">{notFound ? t.notFoundTitle : t.offlineTitle}</h1>
-          <p className="mt-2 max-w-xs text-sm leading-relaxed text-aj-muted">{notFound ? t.notFoundBody : t.offlineBody}</p>
-          {!notFound && (
-            <button
-              type="button"
-              onClick={reload}
-              className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-[10px] border-2 border-aj-ink bg-aj-ink px-5 text-sm font-bold text-white shadow-aj-control active:translate-y-0.5 active:shadow-aj-pressed"
-            >
-              <RefreshCw className="h-4 w-4" aria-hidden />
-              {t.retry}
-            </button>
-          )}
-        </div>
-      </Shell>
+    return frame(
+      <section className="jp-panel jp-portal-empty" style={{ maxWidth: 520 }}>
+        <span className="jp-thumb-icon">{notFound ? <LinkIcon aria-hidden /> : <WifiOff aria-hidden />}</span>
+        <h2>{notFound ? t.notFoundTitle : t.offlineTitle}</h2>
+        <p className="jp-muted">{notFound ? t.notFoundBody : t.offlineBody}</p>
+        {!notFound && (
+          <button type="button" className="jp-action jp-primary" onClick={reload}>
+            <RefreshCw aria-hidden />
+            {t.retry}
+          </button>
+        )}
+      </section>,
     );
   }
 
   if (!view || !tab) {
-    return (
-      <Shell>
-        <div className="space-y-4 px-4 pt-6" aria-busy="true" aria-label={t.loading}>
-          <div className="h-16 animate-pulse rounded-[12px] bg-aj-yolk-tint" />
-          <div className="h-11 animate-pulse rounded-[10px] bg-aj-yolk-tint" />
-          <div className="h-48 animate-pulse rounded-[12px] border-2 border-aj-line bg-white" />
-          <div className="h-48 animate-pulse rounded-[12px] border-2 border-aj-line bg-white" />
-        </div>
-      </Shell>
+    return frame(
+      <section className="jp-panel" role="status" style={{ maxWidth: 520 }}>
+        <p className="jp-muted" style={{ display: "flex", alignItems: "center", gap: 8, margin: 0, fontSize: 13 }}>
+          <Loader2 className="jp-spinner" aria-hidden style={{ width: 16, height: 16 }} />
+          {t.loading}
+        </p>
+      </section>,
     );
   }
 
-  const counts: Record<Tab, number> = {
-    requests: view.requests.filter((r) => r.state === "awaiting_reply").length,
-    orders: view.orders.filter((o) => o.state === "submitted").length,
-    products: 0,
-  };
-  const tabs: { id: Tab; label: string; icon: typeof Package }[] = [
-    { id: "requests", label: t.tabRequests, icon: MessageSquareText },
-    { id: "orders", label: t.tabOrders, icon: ClipboardList },
-    { id: "products", label: t.tabProducts, icon: Package },
-  ];
+  const section = sections.find((s) => s.id === tab)!;
   const props: TabProps = { view, token, onView: setView, reload, notify };
-
-  return (
-    <Shell>
-      <header className="border-b-2 border-aj-ink bg-aj-yolk px-4 pb-3 pt-5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-xs font-bold tracking-wider text-aj-ink-soft">{t.supplierPortal}</p>
-            <h1 className="mt-1 font-aj-display text-[22px] font-normal leading-tight text-aj-ink">{view.supplier.name}</h1>
-            <p className="mt-1 flex items-start gap-1.5 text-sm font-medium text-aj-ink-soft">
-              <Store className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-              <span>{t.forRestaurant(view.restaurant)}</span>
-            </p>
-          </div>
-          <LangToggle />
+  return frame(
+    <>
+      <div className="jp-header">
+        <div>
+          <span className="jp-kicker">{view.supplier.name}</span>
+          <h1 style={{ marginTop: 8 }}>{section.label}</h1>
+          <p className="jp-muted">{section.intro}</p>
         </div>
-      </header>
-
-      <nav className="sticky top-0 z-10 border-b-2 border-aj-ink bg-white px-4 py-2.5">
-        <div className="grid grid-cols-3 gap-2" role="tablist">
-          {tabs.map(({ id, label, icon: Icon }) => {
-            const on = tab === id;
-            return (
-              <button
-                key={id}
-                type="button"
-                role="tab"
-                aria-selected={on}
-                onClick={() => setTab(id)}
-                className={`relative flex min-h-11 items-center justify-center gap-1.5 rounded-[10px] border-2 border-aj-ink text-sm font-bold shadow-aj-control transition-[transform,box-shadow] duration-75 active:translate-y-0.5 active:shadow-aj-pressed motion-reduce:transition-none ${
-                  on ? "bg-aj-ink text-white" : "bg-white text-aj-ink hover:bg-aj-yolk-tint"
-                }`}
-              >
-                <Icon className="h-4 w-4" aria-hidden />
-                {label}
-                {counts[id] > 0 && (
-                  <span className="ml-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-aj-ink bg-aj-chili px-1 text-[11px] font-bold leading-none text-aj-alert-ink">
-                    {counts[id]}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </nav>
-
-      <main className="px-4 pb-24 pt-4" role="tabpanel">
+      </div>
+      <div className="jp-portal-body">
         {tab === "requests" && <RequestsTab {...props} />}
         {tab === "orders" && <OrdersTab {...props} />}
         {tab === "products" && <ProductsTab {...props} />}
-        {fx.note && tab !== "requests" && <p className="mt-6 text-center text-xs text-aj-muted tabular-nums">{fx.note}</p>}
-      </main>
-
-      {toast && (
-        <div className="pointer-events-none fixed inset-x-0 bottom-5 z-20 flex justify-center px-4" role="status">
-          <p className="flex max-w-md items-center gap-2 rounded-[10px] border-2 border-aj-ink border-l-4 bg-aj-yolk-tint px-4 py-2.5 text-sm font-medium text-aj-ink shadow-aj-control">
-            <CheckCircle2 className="h-4 w-4 shrink-0 text-aj-ink" aria-hidden />
-            {toast}
-          </p>
-        </div>
+        {tab === "profile" && <ProfileTab {...props} />}
+      </div>
+      {fx.note && tab !== "requests" && (
+        <footer className="jp-footer">
+          <span>{fx.note}</span>
+        </footer>
       )}
-    </Shell>
+    </>,
   );
 }
 
 function LangToggle() {
   const { lang, setLang } = useLang();
-  const opts: [Lang, string][] = [
-    ["ja", "日本語"],
-    ["en", "English"],
-  ];
   return (
-    <div className="flex shrink-0 gap-0.5 rounded-[10px] border-2 border-aj-ink bg-white p-0.5 text-xs font-bold shadow-aj-dropdown" role="group" aria-label="Language">
-      {opts.map(([l, label]) => (
-        <button
-          key={l}
-          type="button"
-          aria-pressed={lang === l}
-          onClick={() => setLang(l)}
-          className={`min-h-8 rounded-[7px] px-2.5 transition-colors ${
-            lang === l ? "bg-aj-ink text-white" : "text-aj-ink hover:bg-aj-yolk-tint"
-          }`}
-        >
-          {label}
+    <div className="jp-segment" role="group" aria-label="Language">
+      {(["ja", "en"] as Lang[]).map((l) => (
+        <button key={l} type="button" aria-pressed={lang === l} onClick={() => setLang(l)}>
+          {l.toUpperCase()}
         </button>
       ))}
-    </div>
-  );
-}
-
-function Shell({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="min-h-screen bg-aj-page font-[family-name:var(--font-zen-kaku),var(--font-noto),sans-serif] text-aj-ink">
-      <div className="mx-auto min-h-screen max-w-xl bg-aj-page sm:border-x-2 sm:border-aj-ink">{children}</div>
     </div>
   );
 }

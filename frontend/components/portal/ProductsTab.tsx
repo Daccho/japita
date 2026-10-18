@@ -6,7 +6,6 @@ import { formatEurPlain, type MoneyTools } from "@/lib/money";
 import { portalApi, type FormField, type Origin, type PortalProduct, type ProductUpdate } from "@/lib/portal";
 import {
   errorMessage,
-  fieldLabel,
   formatDate,
   formatDateTime,
   formatQty,
@@ -16,7 +15,7 @@ import {
   shortLabel,
 } from "./format";
 import { useLang, type Lang } from "./i18n";
-import { Button, Card, Chip, EmptyState, ErrorBox, FieldInput, Label, NoteInput, fieldError, fieldPayload, inputClass } from "./ui";
+import { Button, Card, Chip, Choice, EmptyState, ErrorBox, Field, FieldBlock, NoteInput, UnitInput, fieldError, fieldPayload } from "./ui";
 import type { TabProps } from "./types";
 
 type Values = Record<string, string | boolean | null>;
@@ -48,11 +47,6 @@ function parseAmount(raw: string, allowZero: boolean): number | null {
   return n;
 }
 
-const segment = (on: boolean) =>
-  `min-h-11 rounded-[10px] border-2 px-2 text-sm font-bold leading-tight shadow-aj-dropdown transition-colors ${
-    on ? "border-aj-ink bg-aj-ink text-white" : "border-aj-ink bg-white text-aj-ink hover:bg-aj-yolk-tint"
-  }`;
-
 export function ProductsTab(props: TabProps) {
   const { t, lang } = useLang();
   const [adding, setAdding] = useState(false);
@@ -64,37 +58,32 @@ export function ProductsTab(props: TabProps) {
   if (others.length) groups.push({ ing: "other", items: others });
 
   return (
-    <div className="space-y-4">
+    <>
       {adding ? (
         <NewProductForm {...props} onClose={() => setAdding(false)} />
       ) : (
-        <Button
-          variant="secondary"
-          className="w-full border-dashed"
-          onClick={() => setAdding(true)}
-          icon={<Plus className="h-4 w-4" aria-hidden />}
-        >
-          {t.addProduct}
-        </Button>
+        <div>
+          <Button variant="secondary" onClick={() => setAdding(true)} icon={<Plus aria-hidden />}>
+            {t.addProduct}
+          </Button>
+        </div>
       )}
 
-      {!view.products.length && (
-        <EmptyState icon={<ShoppingBasket className="h-6 w-6" aria-hidden />} title={t.noProducts} body={t.noProductsBody} />
-      )}
+      {!view.products.length && <EmptyState icon={<ShoppingBasket aria-hidden />} title={t.noProducts} body={t.noProductsBody} />}
 
       {groups.map((g) => (
-        <div key={g.ing} className="space-y-3">
-          <h3 className="px-1 text-xs font-bold tracking-wider text-aj-muted">
+        <div key={g.ing} className="jp-portal-group">
+          <span className="jp-kicker">
             {g.ing === "other"
               ? t.other
               : ingredientName(g.ing, lang, { ja: view.ingredient_ja[g.ing], en: view.ingredient_en?.[g.ing] })}
-          </h3>
+          </span>
           {g.items.map((p) => (
             <ProductCard key={p.id} product={p} {...props} />
           ))}
         </div>
       ))}
-    </div>
+    </>
   );
 }
 
@@ -110,34 +99,13 @@ function PendingBox({ product }: { product: PortalProduct }) {
     if (u.pack_size !== undefined) changes.push([t.packSize, formatQty(u.pack_size, product.unit)]);
     for (const [k, v] of Object.entries(u.attributes ?? {})) {
       const f = fieldByName.get(k);
-      changes.push([f ? shortLabel(f, lang) : k, formatValue(v, f, t)]);
+      changes.push([f ? shortLabel(f, lang) : k, formatValue(v, f, t, lang)]);
     }
   }
   return (
-    <div className="mt-3 rounded-[10px] bg-aj-chili-tint p-3 text-sm text-aj-ink">
-      <p className="flex flex-wrap items-center gap-x-1.5 font-bold text-aj-chili-text">
-        <Clock className="h-4 w-4" aria-hidden />
-        {t.pendingReview}
-        <span className="ml-auto text-xs font-normal">{t.sentAt(formatDateTime(u.submitted_at, lang))}</span>
-      </p>
-      {product.pending_new ? (
-        <p className="mt-1">{t.pendingNewBody}</p>
-      ) : (
-        <ul className="mt-1.5 space-y-0.5">
-          {changes.map(([k, v]) => (
-            <li key={k}>
-              {k}: <span className="font-bold">{v}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-      {u.note_ja && (
-        <p className="mt-1.5 text-xs">
-          {t.commentPrefix}
-          {u.note_ja}
-        </p>
-      )}
-    </div>
+    <PendingPanel title={t.pendingReview} when={t.sentAt(formatDateTime(u.submitted_at, lang))} note={u.note_ja} commentPrefix={t.commentPrefix}>
+      {product.pending_new ? <p style={{ fontSize: 13 }}>{t.pendingNewBody}</p> : <ChangeList changes={changes} />}
+    </PendingPanel>
   );
 }
 
@@ -146,32 +114,36 @@ function ProductCard({ product: p, token, onView, notify }: TabProps & { product
   const [editing, setEditing] = useState(false);
   return (
     <Card>
-      <div className="flex items-start justify-between gap-3">
-        <h4 className="min-w-0 font-bold leading-snug text-aj-ink">{p.product}</h4>
+      <div className="jp-line-head" style={{ alignItems: "flex-start", marginBottom: 6 }}>
+        <h2 style={{ minWidth: 0 }}>{p.product}</h2>
         {p.pending_new ? (
           <Chip tone="warn">{t.newProduct}</Chip>
         ) : (
-          <Chip icon={<Globe2 className="h-3 w-3" aria-hidden />}>{originLabel(p.origin_route, t)}</Chip>
+          <Chip icon={<Globe2 size={12} aria-hidden />}>{originLabel(p.origin_route, t)}</Chip>
         )}
       </div>
-      <p className="mt-1 text-sm text-aj-ink">
-        <span className="text-lg font-bold tabular-nums">{fx.money(p.price_eur)}</span>
-        <span className="text-aj-muted"> / {formatQty(p.pack_size, p.unit)}</span>
+      <p>
+        <strong className="jp-price jp-number" style={{ fontSize: 19 }}>
+          {fx.money(p.price_eur)}
+        </strong>
+        <span className="jp-muted"> / {formatQty(p.pack_size, p.unit)}</span>
       </p>
 
       {p.form.length > 0 && (
-        <dl className="mt-3 grid grid-cols-2 gap-2">
+        <dl className="jp-kv" style={{ marginTop: 12 }}>
           {p.form.map((f) => (
-            <div key={f.field} className="rounded-[10px] bg-aj-page px-3 py-2">
-              <dt className="text-xs text-aj-muted">{shortLabel(f, lang)}</dt>
-              <dd className={`text-sm font-bold ${p.attributes[f.field] == null ? "text-aj-chili-text" : "text-aj-ink"}`}>
-                {formatValue(p.attributes[f.field], f, t)}
+            <div key={f.field} style={{ display: "contents" }}>
+              <dt>{shortLabel(f, lang)}</dt>
+              <dd style={p.attributes[f.field] == null ? { color: "var(--aj-chili-text)", fontWeight: 700 } : { fontWeight: 700 }}>
+                {formatValue(p.attributes[f.field], f, t, lang)}
               </dd>
             </div>
           ))}
         </dl>
       )}
-      <p className="mt-2 text-xs text-aj-muted">{t.updatedOn(formatDate(p.offer_date, lang))}</p>
+      <p className="jp-muted" style={{ fontSize: 12, marginTop: 10 }}>
+        {t.updatedOn(formatDate(p.offer_date, lang))}
+      </p>
 
       <PendingBox product={p} />
 
@@ -179,17 +151,65 @@ function ProductCard({ product: p, token, onView, notify }: TabProps & { product
         <EditForm product={p} token={token} onView={onView} notify={notify} onClose={() => setEditing(false)} />
       ) : (
         !p.pending_new && (
-          <Button
-            variant="secondary"
-            className="mt-3 w-full"
-            onClick={() => setEditing(true)}
-            icon={<Pencil className="h-4 w-4" aria-hidden />}
-          >
-            {p.pending_update ? t.fixChange : t.updateProduct}
-          </Button>
+          <div className="jp-form-actions" style={{ marginTop: 14 }}>
+            <Button variant="secondary" onClick={() => setEditing(true)} icon={<Pencil aria-hidden />}>
+              {p.pending_update ? t.fixChange : t.updateProduct}
+            </Button>
+          </div>
         )
       )}
     </Card>
+  );
+}
+
+/** A proposal waiting for the restaurant: the workspace's proposal panel. */
+export function PendingPanel({
+  title,
+  when,
+  note,
+  commentPrefix,
+  children,
+}: {
+  title: string;
+  when: string;
+  note?: string | null;
+  commentPrefix: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="jp-proposal">
+      <div className="jp-line-head" style={{ marginBottom: 6 }}>
+        <strong style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+          <Clock size={15} aria-hidden />
+          {title}
+        </strong>
+        <span className="jp-muted" style={{ fontSize: 12 }}>
+          {when}
+        </span>
+      </div>
+      {children}
+      {note && (
+        <div className="jp-message" style={{ marginTop: 8 }}>
+          {commentPrefix}
+          {note}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function ChangeList({ changes }: { changes: [string, string][] }) {
+  return (
+    <dl className="jp-diff">
+      {changes.map(([k, v]) => (
+        <div key={k} style={{ display: "contents" }}>
+          <dt>{k}</dt>
+          <dd>
+            <strong>{v}</strong>
+          </dd>
+        </div>
+      ))}
+    </dl>
   );
 }
 
@@ -251,35 +271,31 @@ function EditForm({
   };
 
   return (
-    <div className="mt-4 space-y-4 border-t border-aj-line pt-4">
-      <label className="block">
-        <Label>{t.productName}</Label>
-        <input value={name} onChange={(e) => setName(e.target.value)} className={inputClass} />
-      </label>
-      <div className="grid grid-cols-2 gap-3">
-        <label className="block">
-          <Label>{t.pricePerPack}</Label>
-          <PriceInput value={price} onChange={setPrice} fx={fx} lang={lang} />
-        </label>
-        <label className="block">
-          <Label>{t.packSize}</Label>
+    <div className="jp-portal-form">
+      <Field label={t.productName}>
+        <input value={name} onChange={(e) => setName(e.target.value)} />
+      </Field>
+      <div className="jp-field-grid">
+        <Field label={t.pricePerPack} note={<EurHint value={price} fx={fx} lang={lang} />}>
+          <UnitInput value={price} onChange={setPrice} unit={fx.symbol} />
+        </Field>
+        <Field label={t.packSize}>
           <UnitInput value={pack} onChange={setPack} unit={p.unit} />
-        </label>
+        </Field>
       </div>
       {p.form.map((f) => (
-        <div key={f.field}>
-          <Label>{fieldLabel(f, lang)}</Label>
-          <FieldInput field={f} value={values[f.field] ?? null} onChange={(v) => setValues({ ...values, [f.field]: v })} />
-        </div>
+        <FieldBlock key={f.field} field={f} value={values[f.field] ?? null} onChange={(v) => setValues({ ...values, [f.field]: v })} />
       ))}
       <NoteInput value={note} onChange={setNote} placeholder={t.notePlaceholderPrice} />
-      <p className="text-xs text-aj-muted">{t.reviewedFirst}</p>
+      <p className="jp-muted" style={{ fontSize: 12 }}>
+        {t.reviewedFirst}
+      </p>
       <ErrorBox message={error} />
-      <div className="flex gap-2">
+      <div className="jp-form-actions" style={{ marginTop: 12 }}>
         <Button variant="secondary" onClick={onClose} disabled={busy}>
           {t.cancel}
         </Button>
-        <Button onClick={submit} busy={busy} busyLabel={note.trim() ? t.sendingTranslating : t.sending} className="flex-1">
+        <Button onClick={submit} busy={busy} busyLabel={note.trim() ? t.sendingTranslating : t.sending}>
           {t.sendChange}
         </Button>
       </div>
@@ -287,34 +303,11 @@ function EditForm({
   );
 }
 
-/** Price in the shown currency, with the EUR amount the restaurant will see. */
-function PriceInput({ value, onChange, fx, lang }: { value: string; onChange: (v: string) => void; fx: MoneyTools; lang: Lang }) {
+/** The EUR amount the restaurant will see for a price typed in another currency. */
+export function EurHint({ value, fx, lang }: { value: string; fx: MoneyTools; lang: Lang }) {
   const n = parseAmount(value, true);
-  return (
-    <>
-      <UnitInput value={value} onChange={onChange} unit={fx.symbol} />
-      {fx.currency !== "EUR" && n !== null && (
-        <p className="mt-1 text-xs text-aj-muted tabular-nums">≈ {formatEurPlain(fx.toEur(n), lang === "ja" ? "ja-JP" : "en-US")}</p>
-      )}
-    </>
-  );
-}
-
-function UnitInput({ value, onChange, unit }: { value: string; onChange: (v: string) => void; unit: string }) {
-  return (
-    <div className="relative">
-      <input
-        type="number"
-        inputMode="decimal"
-        step="any"
-        min={0}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={`${inputClass} pr-10`}
-      />
-      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-aj-muted">{unit}</span>
-    </div>
-  );
+  if (fx.currency === "EUR" || n === null) return null;
+  return <span className="jp-number">≈ {formatEurPlain(fx.toEur(n), lang === "ja" ? "ja-JP" : "en-US")}</span>;
 }
 
 function NewProductForm({ view, token, onView, notify, onClose }: TabProps & { onClose: () => void }) {
@@ -383,96 +376,70 @@ function NewProductForm({ view, token, onView, notify, onClose }: TabProps & { o
   };
 
   return (
-    <Card className="border-aj-ink">
-      <div className="flex items-center justify-between">
-        <h3 className="flex items-center gap-2 font-bold text-aj-ink">
-          <PackagePlus className="h-5 w-5 text-aj-ink" aria-hidden />
+    <Card>
+      <div className="jp-line-head" style={{ marginBottom: 6 }}>
+        <h2 style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <PackagePlus size={20} aria-hidden />
           {t.addProduct}
-        </h3>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label={t.close}
-          className="rounded-full p-2 text-aj-muted hover:bg-aj-yolk-tint"
-        >
-          <X className="h-5 w-5" aria-hidden />
+        </h2>
+        <button type="button" className="jp-close" onClick={onClose} aria-label={t.close}>
+          <X aria-hidden />
         </button>
       </div>
-      <p className="mt-1 text-xs text-aj-muted">{t.newProductIntro(view.restaurant)}</p>
+      <p className="jp-section-note">{t.newProductIntro(view.restaurant)}</p>
 
-      <div className="mt-4 space-y-4">
-        <div>
-          <Label>{t.ingredient}</Label>
-          <input
-            value={ingredientText}
-            onChange={(e) => typeIngredient(e.target.value)}
-            list="japita-ingredients"
-            className={inputClass}
-            placeholder={t.ingredientPlaceholder}
-            maxLength={60}
-          />
-          <datalist id="japita-ingredients">
-            {ingredients.map((ing) => (
-              <option key={ing} value={ingredientName(ing, lang, { ja: view.ingredient_ja[ing], en: view.ingredient_en?.[ing] })} />
-            ))}
-          </datalist>
-          {ingredientText.trim() && !ingredient && <p className="mt-1 text-xs text-aj-muted">{t.ingredientOther}</p>}
-        </div>
-        <label className="block">
-          <Label>{t.productName}</Label>
-          <input value={name} onChange={(e) => setName(e.target.value)} className={inputClass} placeholder={t.productNamePlaceholder} />
-        </label>
-        <div className="grid grid-cols-2 gap-3">
-          <label className="block">
-            <Label>{t.packSize}</Label>
-            <UnitInput value={pack} onChange={setPack} unit={unit} />
-          </label>
-          <div>
-            <Label>{t.unit}</Label>
-            <div className="grid grid-cols-2 gap-2">
-              {(["g", "ml"] as const).map((u) => (
-                <button key={u} type="button" onClick={() => setUnit(u)} className={segment(u === unit)}>
-                  {u}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-        <label className="block">
-          <Label>{t.priceNew}</Label>
-          <PriceInput value={price} onChange={setPrice} fx={fx} lang={lang} />
-        </label>
-        <div>
-          <Label>{t.origin}</Label>
-          <div className="grid grid-cols-3 gap-2">
-            {ORIGINS.map((o) => (
-              <button key={o} type="button" onClick={() => setOrigin(o)} className={segment(o === origin)}>
-                {originLabel(o, t)}
-              </button>
-            ))}
-          </div>
-        </div>
-        {form.map((f) => (
-          <div key={`${ingredient}-${f.field}`}>
-            <Label hint={t.optional}>{fieldLabel(f, lang)}</Label>
-            <FieldInput
-              field={f}
-              value={values[f.field] ?? null}
-              allowClear
-              onChange={(v) => setValues({ ...values, [f.field]: v })}
-            />
-          </div>
+      <Field label={t.ingredient} note={ingredientText.trim() && !ingredient ? t.ingredientOther : undefined}>
+        <input
+          value={ingredientText}
+          onChange={(e) => typeIngredient(e.target.value)}
+          list="japita-ingredients"
+          placeholder={t.ingredientPlaceholder}
+          maxLength={60}
+        />
+      </Field>
+      <datalist id="japita-ingredients">
+        {ingredients.map((ing) => (
+          <option key={ing} value={ingredientName(ing, lang, { ja: view.ingredient_ja[ing], en: view.ingredient_en?.[ing] })} />
         ))}
-        <NoteInput value={note} onChange={setNote} placeholder={t.notePlaceholderNew} />
-        <ErrorBox message={error} />
-        <div className="flex gap-2">
-          <Button variant="secondary" onClick={onClose} disabled={busy}>
-            {t.cancel}
-          </Button>
-          <Button onClick={submit} busy={busy} busyLabel={note.trim() ? t.sendingTranslating : t.sending} className="flex-1">
-            {t.proposeProduct}
-          </Button>
+      </datalist>
+      <Field label={t.productName}>
+        <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t.productNamePlaceholder} />
+      </Field>
+      <div className="jp-field-grid">
+        <Field label={t.packSize}>
+          <UnitInput value={pack} onChange={setPack} unit={unit} />
+        </Field>
+        <div className="jp-field">
+          <span>{t.unit}</span>
+          <Choice label={t.unit} options={[["g", "g"], ["ml", "ml"]]} value={unit} onChange={setUnit} />
         </div>
+      </div>
+      <Field label={t.priceNew} note={<EurHint value={price} fx={fx} lang={lang} />}>
+        <UnitInput value={price} onChange={setPrice} unit={fx.symbol} />
+      </Field>
+      <div className="jp-field">
+        <span>{t.origin}</span>
+        <Choice label={t.origin} options={ORIGINS.map((o) => [o, originLabel(o, t)] as [Origin, string])} value={origin} onChange={setOrigin} />
+      </div>
+      {form.map((f) => (
+        <FieldBlock
+          key={`${ingredient}-${f.field}`}
+          field={f}
+          optional
+          allowClear
+          value={values[f.field] ?? null}
+          onChange={(v) => setValues({ ...values, [f.field]: v })}
+        />
+      ))}
+      <NoteInput value={note} onChange={setNote} placeholder={t.notePlaceholderNew} />
+      <ErrorBox message={error} />
+      <div className="jp-form-actions" style={{ marginTop: 12 }}>
+        <Button variant="secondary" onClick={onClose} disabled={busy}>
+          {t.cancel}
+        </Button>
+        <Button onClick={submit} busy={busy} busyLabel={note.trim() ? t.sendingTranslating : t.sending}>
+          {t.proposeProduct}
+        </Button>
       </div>
     </Card>
   );

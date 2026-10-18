@@ -1,10 +1,9 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { CalendarDays, Loader2, LogOut, ShoppingBasket, SlidersHorizontal, Store } from "lucide-react";
+import { CalendarDays, Loader2, ShoppingBasket, SlidersHorizontal, Store } from "lucide-react";
+import AppShell from "@/components/AppShell";
 import { LangToggle, useDates, useI18n, type Key } from "@/lib/i18n";
 import { PROFILES, useWorkspace } from "@/components/workspace";
 import { suggestedBasket } from "@/components/helpers";
@@ -63,57 +62,42 @@ export default function Shell({ children }: { children: ReactNode }) {
       window.location.replace("/");
     });
   return (
-    <div className="jp">
-      <div className="jp-app">
-        <header className="jp-top">
-          <div className="jp-workspace-brands">
-            <Link href="/restaurants" className="jp-brand">
-              <Image className="jp-brand-logo" src="/japita-logo.png" alt="Japita" width={112} height={56} priority />
-            </Link>
-          </div>
-          <div className="jp-top-controls">
-            <div className="jp-segment" role="group" aria-label={t("profile.switch")}>
-              <span className="jp-segment-label">{t("profile.switch")}</span>
-              {PROFILES.map((p) => (
-                <button key={p} type="button" aria-pressed={profileId === p} onClick={() => setProfileId(p)}>
-                  {t(`profile.${p}` as Key)}
-                </button>
-              ))}
-            </div>
-            <LangToggle />
-            <div className="jp-account">
-              <span className="jp-muted">{user.display_name}</span>
-              <button type="button" className="jp-action" onClick={signOut}>
-                <LogOut aria-hidden />
-                {t("au.logout")}
+    <AppShell
+      homeHref="/restaurants"
+      controls={
+        <>
+          <div className="jp-segment" role="group" aria-label={t("profile.switch")}>
+            <span className="jp-segment-label">{t("profile.switch")}</span>
+            {PROFILES.map((p) => (
+              <button key={p} type="button" aria-pressed={profileId === p} onClick={() => setProfileId(p)}>
+                {t(`profile.${p}` as Key)}
               </button>
-            </div>
+            ))}
           </div>
-        </header>
-        <div className="jp-shell">
-          <aside className="jp-sidebar">
-            <nav className="jp-nav" aria-label="Main navigation">
-              {NAV.map(({ href, key, icon: Icon }) => (
-                <Link key={href} href={href} aria-current={(href === "/restaurants" ? path === "/restaurants" : path.startsWith(href)) ? "page" : undefined}>
-                  <Icon aria-hidden />
-                  {t(key)}
-                  {href === "/restaurants/basket" && !!lines && <span className="jp-nav-count">{lines}</span>}
-                </Link>
-              ))}
-            </nav>
-            <div className="jp-sidebar-foot">
-              Kumo Ramen
-              <br />
-              {t("side.place")}
-            </div>
-          </aside>
-          <main className="jp-body">
-            {data ? children : <FirstLoad />}
-            <Footer />
-          </main>
-        </div>
-        <AdvisorDock />
-      </div>
-    </div>
+          <LangToggle />
+        </>
+      }
+      account={{ name: user.display_name, signOutLabel: t("au.logout"), onSignOut: signOut }}
+      navLabel="Main navigation"
+      nav={NAV.map(({ href, key, icon }) => ({
+        id: href,
+        href,
+        icon,
+        label: t(key),
+        current: href === "/restaurants" ? path === "/restaurants" : path.startsWith(href),
+        count: href === "/restaurants/basket" ? lines : undefined,
+      }))}
+      sidebarFoot={
+        <>
+          Kumo Ramen
+          <br />
+          {t("side.place")}
+        </>
+      }
+      after={<AdvisorDock />}
+    >
+      {data ? children : <FirstLoad />}
+      <Footer />
+    </AppShell>
   );
 }
