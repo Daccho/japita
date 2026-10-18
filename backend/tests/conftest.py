@@ -6,7 +6,7 @@ import time
 
 import pytest
 
-from japita import fx
+from japita.core import fx
 
 RATES = {"JPY": 177.81, "USD": 1.1253}
 RATE_DATE = "2026-10-16"
@@ -38,7 +38,7 @@ def fixed_rates():
 def covered_store():
     """A feasible order plan: cancel delayed arrivals and allow fresh orders on the next matching day."""
     from pathlib import Path
-    from japita.store import Store
+    from japita.core.store import Store
     store = Store.load(Path(__file__).parent / "fixtures/kumo.json")
     for supplier in store.suppliers.values():
         supplier.update(lead_time_days=0, delivery_days=["mon", "tue", "wed", "thu", "fri", "sat", "sun"])
@@ -55,7 +55,8 @@ def sign_in_supplier():
     from sqlalchemy import select
     from sqlalchemy.orm import Session
 
-    from japita import auth, repo
+    from japita.accounts import auth
+    from japita.core import repo
 
     def sign_in(client, supplier_id="S3", origin="http://localhost:3000"):
         username = f"supplier-{supplier_id.lower()}"

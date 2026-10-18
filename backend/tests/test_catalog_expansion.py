@@ -8,11 +8,18 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from japita import calc, catalog, demo_catalog, drawings, portal, repo, tools, views
+from japita.purchasing import calc
+from japita.catalog import api as catalog
+from japita.catalog import demo as demo_catalog
+from japita.drawings import service as drawings
+from japita.portal import service as portal
+from japita.core import repo
+from japita.advisor import tools
+from japita.views import service as views
 from japita.api import Offer, Supplier
-from japita.drawings_library import ingredient_key, library
-from japita.store import Store
-from japita.textfmt import Money, label
+from japita.drawings.library import ingredient_key, library
+from japita.core.store import Store
+from japita.core.textfmt import Money, label
 
 FIXTURE = Path(__file__).parent / "fixtures/kumo.json"
 
@@ -137,7 +144,8 @@ def test_additive_catalog_import_respects_restaurant_workspace(tmp_path, monkeyp
 
 @pytest.mark.parametrize("enabled", [False, True])
 def test_demo_startup_adds_missing_catalog_only_when_enabled(tmp_path, monkeypatch, enabled):
-    from japita import api, auth
+    from japita import api
+    from japita.accounts import auth
     engine = create_engine(f"sqlite:///{tmp_path / 'startup.db'}", connect_args={"check_same_thread": False})
     repo.Base.metadata.create_all(engine)
     monkeypatch.setattr(repo, "_engine", engine)
@@ -172,7 +180,7 @@ def test_demo_startup_adds_missing_catalog_only_when_enabled(tmp_path, monkeypat
 
 
 def test_import_backfills_missing_availability_without_overwriting_edits(tmp_path, monkeypatch):
-    from japita import calc
+    from japita.purchasing import calc
     engine = create_engine(f"sqlite:///{tmp_path / 'backfill.db'}")
     repo.Base.metadata.create_all(engine)
     monkeypatch.setattr(repo, "_engine", engine)

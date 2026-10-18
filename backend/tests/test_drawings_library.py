@@ -1,7 +1,7 @@
 """Static drawing safety and multilingual ingredient aliases (no model calls)."""
 import pytest
 
-from japita.drawings_library import ROOT, drawing_svg, ingredient_key, library, validate_svg
+from japita.drawings.library import ROOT, drawing_svg, ingredient_key, library, validate_svg
 
 
 def test_complete_starter_library_and_shared_style():

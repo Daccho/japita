@@ -9,9 +9,14 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from japita import api, auth, evolus, evolus_api, jobs, repo
-from japita.errors import AppError
-from japita.llm import LLM, LLMConfig
+from japita import api
+from japita.accounts import auth
+from japita.advisor import evolus
+from japita.advisor import evolus_api
+from japita.core import jobs
+from japita.core import repo
+from japita.core.errors import AppError
+from japita.core.llm import LLM, LLMConfig
 
 FIXTURE = Path(__file__).parent / "fixtures" / "kumo.json"
 APP = "http://localhost:3000"

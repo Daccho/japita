@@ -6,7 +6,8 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from japita import auth, repo
+from japita.accounts import auth
+from japita.core import repo
 
 FIXTURE = Path(__file__).parent / "fixtures" / "kumo.json"
 APP = "http://localhost:3000"
@@ -105,8 +106,8 @@ def test_passkey_routes_are_gone(client):
 
 
 def test_portal_needs_the_suppliers_own_session(client, sign_in_supplier):
-    from japita import portal
-    from japita.store import Store
+    from japita.portal import service as portal
+    from japita.core.store import Store
     data = repo.load_state()
     store = Store(data, next(iter(data["profiles"])))
     own, other = portal.portal_token(store, "S3"), portal.portal_token(store, "S1")
@@ -158,7 +159,7 @@ def test_profile_proposal_from_portal_is_decided_by_the_restaurant(client):
 
 
 def test_startup_prepares_demo_accounts_and_runs_drawing_lifecycle(tmp_path, monkeypatch):
-    from japita import drawings
+    from japita.drawings import service as drawings
     from japita.api import app
 
     monkeypatch.setenv("DATABASE_URL", f"sqlite:///{tmp_path / 'startup.db'}")
@@ -176,7 +177,7 @@ def test_startup_prepares_demo_accounts_and_runs_drawing_lifecycle(tmp_path, mon
 
 
 def test_portal_reply_by_request_id(client, sign_in_supplier, monkeypatch):
-    from japita.store import Store
+    from japita.core.store import Store
     monkeypatch.delenv("LLM_BASE_URL", raising=False)  # a typed value needs no model
     data = repo.load_state()
     store = Store(data, next(iter(data["profiles"])))
@@ -205,7 +206,7 @@ def test_portal_reply_by_request_id(client, sign_in_supplier, monkeypatch):
 
 
 def test_supplier_notifications_and_decisions(client, sign_in_supplier):
-    from japita.store import Store
+    from japita.core.store import Store
     data = repo.load_state()
     store = Store(data, next(iter(data["profiles"])))
     c = store.add_clarification("O-noo-3", "hydration_pct", "加水率を教えてください", "missing")

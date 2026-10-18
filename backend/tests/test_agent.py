@@ -4,9 +4,9 @@ import json
 from pathlib import Path
 from types import SimpleNamespace as NS
 
-from japita.agent import run_agent
-from japita.llm import LLM, LLMConfig
-from japita.store import Store
+from japita.advisor.agent import run_agent
+from japita.core.llm import LLM, LLMConfig
+from japita.core.store import Store
 
 FIXTURE = Path(__file__).parent / "fixtures" / "kumo.json"
 

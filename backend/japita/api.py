@@ -18,15 +18,22 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from datetime import date
 
-from . import auth, calc, fx, jobs, portal, repo, rules, views
-from .agent import run_agent
-from .errors import AppError, from_value_error, install as install_error_handlers
-from .evolus import EvolusAgent, run_agent_evolus
-from .extract import double_read, read_reply, translate
-from .forms import coerce as _coerce, display_ja, form as _form, in_range, spec_fields as _spec_fields
-from .llm import LLM
-from .store import Store, active_profile_id
-from .textfmt import Money, lang_from_request, restaurant_lang
+from japita.accounts import auth
+from japita.purchasing import calc
+from japita.core import fx
+from japita.core import jobs
+from japita.portal import service as portal
+from japita.core import repo
+from japita.import_rules import rules
+from japita.views import service as views
+from japita.advisor.agent import run_agent
+from japita.core.errors import AppError, from_value_error, install as install_error_handlers
+from japita.advisor.evolus import EvolusAgent, run_agent_evolus
+from japita.advisor.extract import double_read, read_reply, translate
+from japita.core.forms import coerce as _coerce, display_ja, form as _form, in_range, spec_fields as _spec_fields
+from japita.core.llm import LLM
+from japita.core.store import Store, active_profile_id
+from japita.core.textfmt import Money, lang_from_request, restaurant_lang
 
 
 def _demo_accounts() -> None:
@@ -41,7 +48,7 @@ def _demo_accounts() -> None:
         try:
             # Existing hosted demos need additive catalog updates after a code deploy, not a destructive reseed.
             if "kumo-authentic" in repo.load_state(repo.DEFAULT_WORKSPACE)["profiles"]:
-                from .demo_catalog import import_catalog
+                from japita.catalog.demo import import_catalog
                 added = import_catalog(repo.DEFAULT_WORKSPACE)
                 if any(added.values()):
                     logging.getLogger("japita.catalog").info("demo catalog additions: %s", added)
@@ -51,7 +58,7 @@ def _demo_accounts() -> None:
 
 @asynccontextmanager
 async def lifespan(app):
-    from . import drawings
+    from japita.drawings import service as drawings
     _demo_accounts()
     drawings.start(scan_catalog=True)
     try:
@@ -280,8 +287,8 @@ def _dump(m: BaseModel) -> dict:
 
 @app.get("/state")
 def get_state():
-    from .menu_api import menu_view
-    from .drawings import offer_view
+    from japita.menu.api import menu_view
+    from japita.drawings.service import offer_view
     data = repo.load_state()
     return {**data, "offers": [offer_view(offer) for offer in data["offers"]], "menu": menu_view(data)}
 
@@ -302,7 +309,7 @@ def seed_state(fixture: str = "kumo", x_admin_key: str | None = Header(default=N
     if not fixture.isidentifier() or not p.is_file():
         raise HTTPException(404, f"fixture {fixture!r} not found")
     repo.seed(p)
-    from .drawings import register_state
+    from japita.drawings.service import register_state
     register_state(repo.load_state())
     auth.ensure_demo_accounts()  # display names follow the reloaded data
     return {"seeded": fixture}
@@ -324,7 +331,7 @@ def put_profile(profile_id: str, body: Profile, request: Request):
     data["profiles"][profile_id] = profile
     after = views.cheapest_total(Store(data, profile_id))
     repo.save_state(data)
-    from .drawings import register_state
+    from japita.drawings.service import register_state
     register_state(data)
     lang = restaurant_lang(lang_from_request(request))
     return {**profile, "impact": views.impact(before, after, lang, Money(lang))}
@@ -339,7 +346,7 @@ def put_recipe(body: Recipe, profile_id: str | None = None, if_match: str | None
         recipe["menu_items"] = data["recipe"]["menu_items"]
     data["recipe"] = recipe
     repo.save_state(data)
-    from .drawings import register_state
+    from japita.drawings.service import register_state
     register_state(data)
     return data["recipe"]
 
@@ -358,7 +365,7 @@ def put_week(body: Week, profile_id: str | None = None, if_match: str | None = H
 
 
 def _check_input_version(data: dict, profile_id: str | None, expected: str | None) -> None:
-    from .context import input_version
+    from japita.core.context import input_version
     pid = profile_id or next(iter(data["profiles"]))
     if pid not in data["profiles"]:
         raise AppError(404, "not_found", "Unknown profile")
@@ -387,7 +394,7 @@ def put_purchasing_terms(offer_id: str, body: PurchasingTerms):
 
 @app.put("/offers/{offer_id}/chef-assessment")
 def put_chef_assessment(offer_id: str, body: ChefAssessment):
-    from .store import _now
+    from japita.core.store import _now
     store = _store()
     offer = store.offer(offer_id)
     offer["attributes"]["chef_approved"] = body.approved
@@ -432,7 +439,7 @@ def delete_supplier(supplier_id: str):
 
 @app.get("/offers")
 def list_offers(ingredient: str | None = None):
-    from .drawings import offer_view
+    from japita.drawings.service import offer_view
     return [offer_view(o) for o in repo.load_state()["offers"] if not ingredient or o["ingredient"] == ingredient]
 
 
@@ -445,7 +452,7 @@ def put_offer(offer_id: str, body: Offer):
     data["offers"] = [o for o in data["offers"] if o["id"] != offer_id] + [offer]
     data["review_flags"].pop(offer_id, None)  # edited by a person: previous double-read flags no longer apply
     repo.save_state(data)
-    from .drawings import offer_view, register
+    from japita.drawings.service import offer_view, register
     register(offer["product"], offer["ingredient"], offer["attributes"])
     return offer_view(offer)
 
@@ -506,7 +513,7 @@ async def upload_spec(offer_id: str, file: UploadFile = File(...)):
         data["review_flags"].pop(offer_id, None)
     repo.save_state(data)
     repo.log_calls(llm.calls, f"spec_double_read:{offer_id}")
-    from .drawings import register
+    from japita.drawings.service import register
     register(offer["product"], offer["ingredient"], offer["attributes"])
     return {"offer_id": offer_id, "fields": result, "elapsed_ms": elapsed_ms,
             "calls": [c.__dict__ for c in llm.calls]}
@@ -533,9 +540,9 @@ def get_evidence(offer_id: str, profile_id: str | None = None):
 def answer_question(body: Question) -> dict:
     """The agent run itself (synchronous). Saves clarification drafts and logs model calls."""
     store = _store(body.profile_id)
-    from .advice import brief, validate_explanation
-    from .context import input_version
-    from .store import _now
+    from japita.purchasing.advice import brief, validate_explanation
+    from japita.core.context import input_version
+    from japita.core.store import _now
     body.profile_id = store.profile_id
     version = input_version(store)
     previous_ids = {c["id"] for c in store.clarifications}
@@ -578,7 +585,7 @@ def answer_question(body: Question) -> dict:
 
 @app.get("/advisor/brief")
 def advisor_brief(profile_id: str | None = None):
-    from .advice import brief
+    from japita.purchasing.advice import brief
     return brief(_store(profile_id))
 
 
@@ -748,7 +755,7 @@ def supplier_reply(token: str, body: SupplierReply, request: Request):
 def portal_request_reply(portal_token: str, clarification_id: str, body: SupplierReply, request: Request):
     """The same reply from the portal (`/portal/me/requests/{id}/reply`): the question is found by id among the
     signed-in supplier's requests; returns the updated portal view."""
-    from .portal_api import _load, _view
+    from japita.portal.api import _load, _view
     _, store, sup = _load(portal_token, request)
     offers = {o["id"] for o in store.offers if o["supplier_id"] == sup["id"]}
     c = next((c for c in store.clarifications if c["id"] == clarification_id and c["offer_id"] in offers
@@ -785,35 +792,35 @@ def llm_calls(limit: int = 50):
     return repo.recent_calls(limit)
 
 
-from .evolus_api import router as evolus_router  # noqa: E402
+from japita.advisor.evolus_api import router as evolus_router  # noqa: E402
 
 app.include_router(evolus_router)
 
-from .orders_api import router as orders_router  # noqa: E402
+from japita.purchasing.orders_api import router as orders_router  # noqa: E402
 
 app.include_router(orders_router)
 
-from .portal_api import router as portal_router  # noqa: E402
+from japita.portal.api import router as portal_router  # noqa: E402
 
 app.include_router(portal_router)
 
-from .drawings_api import router as drawings_router  # noqa: E402
+from japita.drawings.api import router as drawings_router  # noqa: E402
 
 app.include_router(drawings_router)
 
-from .menu_api import router as menu_router, views_router as menu_views_router  # noqa: E402
+from japita.menu.api import router as menu_router, views_router as menu_views_router  # noqa: E402
 
 app.include_router(menu_router)
 
-from .catalog import router as catalog_router  # noqa: E402
+from japita.catalog.api import router as catalog_router  # noqa: E402
 
 app.include_router(catalog_router)
 app.include_router(menu_views_router)
 
-from .views_api import router as views_router  # noqa: E402
+from japita.views.api import router as views_router  # noqa: E402
 
 app.include_router(views_router)
 
-from .rules_api import router as rules_router  # noqa: E402
+from japita.import_rules.api import router as rules_router  # noqa: E402
 
 app.include_router(rules_router)

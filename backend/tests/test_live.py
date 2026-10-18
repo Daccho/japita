@@ -9,11 +9,11 @@ from pathlib import Path
 import pytest
 from dotenv import load_dotenv
 
-from japita.agent import run_agent
-from japita.advice import brief, validate_explanation
-from japita.extract import double_read
-from japita.llm import LLM
-from japita.store import Store
+from japita.advisor.agent import run_agent
+from japita.purchasing.advice import brief, validate_explanation
+from japita.advisor.extract import double_read
+from japita.core.llm import LLM
+from japita.core.store import Store
 
 load_dotenv()
 pytestmark = [pytest.mark.live,
@@ -60,7 +60,7 @@ def test_agent_answers_from_tools_and_drafts_clarification():
 
 @pytest.mark.skipif(not os.environ.get("EVOLUS_AGENT_ID"), reason="Evolus agent not configured")
 def test_agent_through_evolus():
-    from japita.evolus import EvolusAgent, run_agent_evolus
+    from japita.advisor.evolus import EvolusAgent, run_agent_evolus
 
     agent = EvolusAgent()
     store = Store.load(FIXTURE)

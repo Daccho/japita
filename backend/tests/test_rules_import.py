@@ -9,8 +9,10 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from japita import repo, rules, rules_import
-from japita.store import Store
+from japita.core import repo
+from japita.import_rules import rules
+from japita.import_rules import rules_import
+from japita.core.store import Store
 
 FIXTURE = Path(__file__).parent / "fixtures" / "kumo.json"
 SAMPLE = Path(rules.__file__).parent / "data" / "import_rules.sample.csv"

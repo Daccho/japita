@@ -4,10 +4,12 @@ from pathlib import Path
 
 import pytest
 
-from japita import orders, restaurant, views
-from japita.errors import DomainError
-from japita.store import Store
-from japita.textfmt import Money
+from japita.purchasing import orders
+from japita.accounts import restaurant
+from japita.views import service as views
+from japita.core.errors import DomainError
+from japita.core.store import Store
+from japita.core.textfmt import Money
 
 FIXTURE = Path(__file__).parent / "fixtures" / "kumo.json"
 

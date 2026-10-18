@@ -10,10 +10,14 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from japita import auth, calc, repo, rules, views
-from japita.store import Store
-from japita.textfmt import Money
-from japita.tools import call_tool, openai_tool_specs
+from japita.accounts import auth
+from japita.purchasing import calc
+from japita.core import repo
+from japita.import_rules import rules
+from japita.views import service as views
+from japita.core.store import Store
+from japita.core.textfmt import Money
+from japita.advisor.tools import call_tool, openai_tool_specs
 
 FIXTURE = Path(__file__).parent / "fixtures" / "kumo.json"
 APP = "http://localhost:3000"
@@ -263,7 +267,7 @@ def test_tool_output(store):
 
 
 def test_agent_prompt_forbids_clearance_claims():
-    from japita.agent import SYSTEM_PROMPT
+    from japita.advisor.agent import SYSTEM_PROMPT
     assert "check_import_rules" in SYSTEM_PROMPT and "Never state that an offer is legally" in SYSTEM_PROMPT
 
 

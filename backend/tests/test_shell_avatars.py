@@ -4,10 +4,13 @@ from pathlib import Path
 
 import pytest
 
-from japita import avatar, portal, restaurant, views
-from japita.errors import DomainError
-from japita.store import Store
-from japita.textfmt import Money
+from japita.accounts import avatar
+from japita.portal import service as portal
+from japita.accounts import restaurant
+from japita.views import service as views
+from japita.core.errors import DomainError
+from japita.core.store import Store
+from japita.core.textfmt import Money
 
 FIXTURE = Path(__file__).parent / "fixtures" / "kumo.json"
 
@@ -47,7 +50,8 @@ def test_shell_view(covered_store):
                             "place_text": "42 seats · Milan"}
     assert v["footer"]["week_text"].endswith("planned bowls") and v["footer"]["fx_note"].startswith("1 EUR = $")
     assert v["nav_counts"]["basket"] == 3 and v["labels"]["nav.basket"] == "Order plans"
-    from japita import calc, orders
+    from japita.purchasing import calc
+    from japita.purchasing import orders
     orders.approve_basket(store, views.suggested_basket(calc.calculate_baskets(store))["kind"])
     assert views.shell_view(store, "en", Money("en"))["nav_counts"]["basket"] == 0  # current plan approved
     it = views.shell_view(store, "it", Money("it"))
@@ -79,7 +83,7 @@ def test_supplier_logo_goes_through_the_profile_proposal(store):
 
 def test_plan_lines_and_orders_carry_drawing_and_submit_key(covered_store):
     store = covered_store
-    from japita import orders
+    from japita.purchasing import orders
     v = views.basket_view(store, "en", Money("en"), "baseline")
     assert all(ln["drawing"] for ln in v["selected"]["lines"])
     orders.approve_basket(store, "baseline")
