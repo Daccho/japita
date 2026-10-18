@@ -30,8 +30,9 @@ The Japanese teammate reviews language and ingredient ambiguity. The Italian tea
 
 ## Import rule checks
 
-`backend/japita/data/import_rules.json` holds a small ruleset; `backend/japita/rules.py` judges it in code (no LLM)
-for each offer and its supplier. Outcomes are `ok`, `info`, `needs_review` or `missing_document`; no rule outputs an
+The active ruleset is a versioned record in the database (table `import_rule_sets`); `backend/japita/rules.py` judges
+it in code (no LLM) for each offer and its supplier. `backend/japita/data/import_rules.json` is the first version,
+stored when the database has none (and used directly when no database is configured). Outcomes are `ok`, `info`, `needs_review` or `missing_document`; no rule outputs an
 approval or a clearance. Results appear at `GET /views/import-checks`, as `import_checks` summaries on supplier offers
 and plan lines, and in the agent tool `check_import_rules`, which Gemma uses to explain the outcomes with their sources
 and to draft supplier questions for missing fields. The checks do not change which offers can be ordered unless a rule
@@ -54,3 +55,63 @@ asks for it or is skipped, never passes silently.
 Limits: decision support for a restaurant buyer, not legal, customs or food-safety clearance. The ruleset covers six
 points only; it does not classify goods, compute duties, check contaminant limits, or confirm that any shipment meets
 EU law. Sources were read on 2026-10-18 and can change.
+
+### Updating the rules
+
+Rules change, so an operator replaces them by importing a file; no deploy is needed.
+
+1. A person reads the official source and decides what the rule says. The app never fetches or interprets legal
+   texts, and Gemma never writes rules or decides an outcome.
+2. Export the active set: `GET /admin/import-rules/export.csv` or `uv run python -m japita.rules export rules.csv`
+   (`backend/japita/data/import_rules.sample.csv` is the export of the bundled rules).
+3. Edit the rows, setting `source_accessed` to the date the source was checked.
+4. Check the file: `POST /admin/import-rules?dry_run=true` (multipart `file`) or
+   `uv run python -m japita.rules import rules.csv --dry-run`. The answer lists `added`, `changed` and `removed` rule ids.
+5. Import it: the same call without `dry_run` stores it as a new version and activates it. A file identical to the
+   active set creates no version.
+6. Roll back with `POST /admin/import-rules/activate/{version}`; `GET /admin/import-rules/versions` lists them.
+
+The `/admin/import-rules` routes need the `X-Admin-Key` header when `ADMIN_KEY` is set, like `/state/seed`. The CLI
+writes to the database in `DATABASE_URL` and prints which one first; `.env` may name the production database. Other
+server processes pick up an import or rollback within 60 seconds. Seeding (`/state/seed`, `japita.repo seed`) replaces
+restaurant data only and keeps every rule set version, like the product drawing tables. A later change to the bundled
+JSON file does not reach a database that already has rules: import that file to apply it.
+
+CSV format: UTF-8 (the export starts with a byte-order mark for spreadsheet programs), one row per rule, header row
+with exactly these columns:
+
+| Column | Content |
+| --- | --- |
+| `id` | Lowercase letters, digits and hyphens; unique |
+| `applies_when` | Conditions under which the rule applies (empty: every offer) |
+| `when_unknown` | `needs_review` (ask for the unrecorded field) or `skip` |
+| `checks` | Conditions on the recorded evidence (may be empty) |
+| `outcome` | Rules without checks: `ok`, `info`, `needs_review` or `missing_document` |
+| `outcome_met`, `outcome_unmet` | Rules with checks: `ok`/`info` when all checks hold, else `needs_review`/`missing_document` |
+| `blocks_order` | `true` or `false`; `true` only when the rule can return `missing_document` |
+| `supplier_question_field` | Optional: the import field a supplier question fills (one of the ruleset's `fields`) |
+| `title_en`, `title_it`, `title_ja` | Required |
+| `explanation_en`, `explanation_it`, `explanation_ja` | Required |
+| `explanation_met_*`, `explanation_unknown_*` | Optional; all three languages or none |
+| `source_title`, `source_url`, `source_accessed` | Required: official source, `https://` URL, date checked (`YYYY-MM-DD`, not in the future) |
+
+Conditions are `field op value`, several joined with `;` (all must hold), for example
+`offer.origin_route eq "japan"; dispatch_country not_in $eu_countries`. `field` is `dispatch_country`,
+`offer.origin_route|ingredient|comparison_group|unit`, `supplier.dispatch_country|account_status|relationship`, or
+`attributes.<name>` for an offer specification or import field. `op` is `eq` (one value) or `in`, `not_in`,
+`contains_any` (a list). `value` is JSON (`"JP"`, `true`, `["E 500", "E501"]`) or `$eu_countries`.
+
+A JSON file in the schema of `import_rules.json` is accepted too; its `fields` and `eu_countries` replace the active
+ones when present. A CSV keeps the active `fields` and `eu_countries`.
+
+Validation is all-or-nothing. A rejected file returns 422 with code `rules_invalid` and an `errors` list, one entry per
+problem: `{row, rule_id, column, code, message}` (CSV row numbers count the header as row 1). Codes: `invalid_file`,
+`file_too_large`, `missing_column`, `unknown_column`, `invalid_row`, `empty_rule_set`, `invalid_id`, `duplicate_id`,
+`missing_text`, `invalid_condition`, `unknown_field`, `unknown_operator`, `invalid_value`, `invalid_when_unknown`,
+`invalid_outcome`, `invalid_boolean`, `blocking_not_allowed`, `unknown_question_field`, `missing_source`,
+`invalid_source_url`, `invalid_accessed_date`, `forbidden_claim`. `forbidden_claim` rejects wording that presents a
+check as clearance, approval or legality in any language (for example "customs cleared", "legal to import",
+"sdoganato", "通関可能", "適法"; list in `backend/japita/rules_import.py`).
+
+Each check carries its `accessed` date and is `stale` when the source was last checked more than 90 days before the
+server's date, so the interface can ask for a re-check.
