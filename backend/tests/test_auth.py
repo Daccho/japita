@@ -175,8 +175,9 @@ def test_startup_prepares_demo_accounts_and_runs_drawing_lifecycle(tmp_path, mon
     assert lifecycle[-1] == ("stop", {})
 
 
-def test_portal_reply_by_request_id(client, sign_in_supplier):
+def test_portal_reply_by_request_id(client, sign_in_supplier, monkeypatch):
     from japita.store import Store
+    monkeypatch.delenv("LLM_BASE_URL", raising=False)  # a typed value needs no model
     data = repo.load_state()
     store = Store(data, next(iter(data["profiles"])))
     c = store.add_clarification("O-noo-3", "hydration_pct", "加水率を教えてください", "missing")

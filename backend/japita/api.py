@@ -537,9 +537,10 @@ def supplier_reply(token: str, body: SupplierReply, request: Request):
         raise AppError(422, "empty_reply", "回答を入力してください")
     field = c["field"]
     label, sample = _spec_fields(data, store.offer(c["offer_id"])["ingredient"]).get(field, (field, ""))
-    llm = LLM()
     started = time.perf_counter()
     if body.value is not None:
+        # A typed value needs the model only to translate an optional note.
+        llm = LLM() if body.note_ja else None
         # Entered in a typed form field by the supplier: no reading needed, only the note is translated.
         value = _coerce(body.value, sample)
         choices = [ch["value"] for ch in _form(field).get("choices", [])]
@@ -551,11 +552,14 @@ def supplier_reply(token: str, body: SupplierReply, request: Request):
         translations = translate(llm, body.note_ja) if body.note_ja else {}
         text_ja = source + (f"\n{body.note_ja}" if body.note_ja else "")
         extraction["elapsed_ms"] = int((time.perf_counter() - started) * 1000)
-        extraction["calls"] = [call.__dict__ for call in llm.calls]
+        calls = llm.calls if llm else []
+        extraction["calls"] = [call.__dict__ for call in calls]
         store.receive_supplier_reply(token, text_ja, extraction, translations)
         repo.save_state(data)
-        repo.log_calls(llm.calls, f"supplier_form:{c['id']}")
+        if calls:
+            repo.log_calls(calls, f"supplier_form:{c['id']}")
         return _supplier_view(store, c)
+    llm = LLM()
     extraction, translations = read_reply(llm, field, _describe(label, sample), body.text_ja)
     extraction["read_1"], extraction["read_2"] = _coerce(extraction["read_1"], sample), _coerce(extraction["read_2"], sample)
     extraction["value"] = _coerce(extraction["value"], sample)
