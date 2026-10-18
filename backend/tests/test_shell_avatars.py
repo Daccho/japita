@@ -46,6 +46,9 @@ def test_shell_view(store):
                             "place_text": "42 seats · Milan"}
     assert v["footer"]["week_text"].endswith("planned bowls") and v["footer"]["fx_note"].startswith("1 EUR = $")
     assert v["nav_counts"]["basket"] == 3 and v["labels"]["nav.basket"] == "Order plans"
+    from japita import calc, orders
+    orders.approve_basket(store, views.suggested_basket(calc.calculate_baskets(store))["kind"])
+    assert views.shell_view(store, "en", Money("en"))["nav_counts"]["basket"] == 0  # current plan approved
     it = views.shell_view(store, "it", Money("it"))
     assert it["footer"]["fx_note"] is None and it["account"]["place_text"] == "42 coperti · Milano"
 

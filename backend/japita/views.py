@@ -456,7 +456,9 @@ def shell_view(store: Store, lang: str, money: Money) -> dict:
     bowls = sum(store.week.get("servings", {}).get(k, 0) for k in BOWLS)
     week_text = t(lang, "foot.week", dates=date_range(dates[0], dates[1], lang), bowls=f"{bowls:,}") \
         if len(dates) == 2 else None
-    suggested = suggested_basket(calc.calculate_baskets(store))
+    # The order plans badge counts the lines still to buy; none once a current plan is approved.
+    approval = orders.approval_status(store)
+    suggested = None if approval and not approval["stale"] else suggested_basket(calc.calculate_baskets(store))
     return {"lang": lang, "account": account_view(store, lang),
             "footer": {"week_text": week_text, "fx_note": money.note()},
             "nav_counts": {"basket": len(suggested["lines"]) if suggested else 0},
