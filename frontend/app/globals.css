@@ -1505,6 +1505,7 @@
 .jp-drawing-sizes figure:first-child svg { transform:scale(1.2); }
 .jp-drawing-sizes svg { margin:0 auto 12px; }
 .jp-drawing-sizes figcaption,.jp-drawing-review-grid article > p { font-size:12px; overflow-wrap:anywhere; }
+.jp-drawing-revised { display:inline-block; margin-left:8px; padding:1px 5px; border:1px solid var(--aj-line); border-radius:4px; font:500 11px/1.4 var(--aj-font-ui); color:var(--aj-muted); }
 .jp .jp-menu-ingredient-editor { display:block; margin:14px 0; font:400 13px/1.45 var(--aj-font-menu-copy); }
 .jp .jp-menu-ingredient-editor textarea { display:block; width:100%; margin:6px 0; }
 .jp .jp-menu-ingredient-editor small { display:block; color:var(--aj-menu-muted); }

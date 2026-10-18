@@ -3,7 +3,7 @@ import { createElement, type CSSProperties, type ReactNode } from "react";
 export type DrawingNode = { tag: string; attrs: Record<string, string>; children: DrawingNode[] };
 export type LibraryDrawing = {
   key: string; name: string; ingredient: string; form: string; state: string;
-  aliases: string[]; group: string; source: "library"; reference: boolean; tree: DrawingNode;
+  aliases: string[]; group: string; source: "library"; reference: boolean; revised?: boolean; tree: DrawingNode;
 };
 export type DrawingLibrary = { version: number; drawings: LibraryDrawing[] };
 

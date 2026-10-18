@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "viewBox": "0 0 64 64",
   "strokeWidth": 2.1,
   "palette": {
@@ -44,7 +44,8 @@
       ],
       "group": "Noodles & wrappers",
       "source": "library",
-      "reference": true
+      "reference": false,
+      "revised": true
     },
     {
       "key": "ramen-frozen-box",
@@ -66,7 +67,8 @@
       ],
       "group": "Noodles & wrappers",
       "source": "library",
-      "reference": true
+      "reference": false,
+      "revised": true
     },
     {
       "key": "soba-bundle",
@@ -145,7 +147,8 @@
       ],
       "group": "Noodles & wrappers",
       "source": "library",
-      "reference": false
+      "reference": false,
+      "revised": true
     },
     {
       "key": "gyoza-wrappers-stack",
@@ -285,7 +288,8 @@
       ],
       "group": "Japanese pantry",
       "source": "library",
-      "reference": false
+      "reference": false,
+      "revised": true
     },
     {
       "key": "miso-tub",
@@ -401,7 +405,8 @@
       ],
       "group": "Japanese pantry",
       "source": "library",
-      "reference": false
+      "reference": false,
+      "revised": true
     },
     {
       "key": "panko-bag",
@@ -438,7 +443,8 @@
       ],
       "group": "Japanese pantry",
       "source": "library",
-      "reference": false
+      "reference": false,
+      "revised": true
     },
     {
       "key": "beni-shoga-jar",
@@ -457,7 +463,8 @@
       ],
       "group": "Japanese pantry",
       "source": "library",
-      "reference": false
+      "reference": false,
+      "revised": true
     },
     {
       "key": "pork-bones-crate",
@@ -475,7 +482,8 @@
       ],
       "group": "Proteins",
       "source": "library",
-      "reference": false
+      "reference": false,
+      "revised": true
     },
     {
       "key": "pork-belly-vacuum",
@@ -494,7 +502,8 @@
       ],
       "group": "Proteins",
       "source": "library",
-      "reference": false
+      "reference": false,
+      "revised": true
     },
     {
       "key": "chicken-thighs-tray",
@@ -513,13 +522,14 @@
       ],
       "group": "Proteins",
       "source": "library",
-      "reference": false
+      "reference": false,
+      "revised": true
     },
     {
       "key": "eggs-tray",
-      "name": "Eggs · tray",
+      "name": "Eggs · open carton",
       "ingredient": "eggs",
-      "form": "tray",
+      "form": "carton",
       "state": "none",
       "file": "eggs-tray.svg",
       "aliases": [
@@ -533,7 +543,8 @@
       ],
       "group": "Proteins",
       "source": "library",
-      "reference": false
+      "reference": false,
+      "revised": true
     },
     {
       "key": "tofu-tray",
@@ -555,9 +566,9 @@
     },
     {
       "key": "salmon-tray",
-      "name": "Salmon fillet · tray",
+      "name": "Salmon · whole fish",
       "ingredient": "salmon",
-      "form": "tray",
+      "form": "none",
       "state": "none",
       "file": "salmon-tray.svg",
       "aliases": [
@@ -572,7 +583,8 @@
       ],
       "group": "Proteins",
       "source": "library",
-      "reference": false
+      "reference": false,
+      "revised": true
     },
     {
       "key": "spring-onions-bunch",
@@ -616,7 +628,8 @@
       ],
       "group": "Produce",
       "source": "library",
-      "reference": false
+      "reference": false,
+      "revised": true
     },
     {
       "key": "ginger-root",
@@ -636,7 +649,8 @@
       ],
       "group": "Produce",
       "source": "library",
-      "reference": false
+      "reference": false,
+      "revised": true
     },
     {
       "key": "shiitake-crate",
@@ -654,7 +668,8 @@
       ],
       "group": "Produce",
       "source": "library",
-      "reference": false
+      "reference": false,
+      "revised": true
     },
     {
       "key": "bean-sprouts-bag",
@@ -671,7 +686,8 @@
       ],
       "group": "Produce",
       "source": "library",
-      "reference": false
+      "reference": false,
+      "revised": true
     },
     {
       "key": "corn-can",
@@ -692,7 +708,8 @@
       ],
       "group": "Produce",
       "source": "library",
-      "reference": false
+      "reference": false,
+      "revised": true
     },
     {
       "key": "cabbage-head",
@@ -938,7 +955,8 @@
       ],
       "group": "Current catalog additions",
       "source": "library",
-      "reference": false
+      "reference": false,
+      "revised": true
     },
     {
       "key": "generic-bag",
