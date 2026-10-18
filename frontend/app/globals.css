@@ -1486,7 +1486,7 @@
   .jp .jp-row:has(.jp-days) > .jp-row-right { display:flex; align-items:center; flex-wrap:wrap; gap:4px 10px; text-align:left; }
   .jp .jp-row:has(.jp-days) > .jp-row-right .jp-badge { margin-top:0; }
   /* Compact 7-day strip: weekday + status icon; the tapped day's figures open below (DayStrip). */
-  .jp .jp-days { gap:3px; }
+  .jp .jp-days { gap:3px; margin-inline:-14px; }
   .jp .jp-app .jp-day { padding:6px 0 5px; }
   .jp .jp-app .jp-day .jp-day-value { display:none; }
   .jp .jp-app .jp-day .jp-day-icon { display:block; }
@@ -1763,7 +1763,7 @@
   .jp .jp-app .jp-shortage-table td::before { content:attr(data-label); color:var(--aj-muted); font-size:12px; font-weight:400; }
   .jp .jp-app .jp-resolution-row { align-items:flex-start; flex-direction:column; gap:12px; }
   .jp .jp-app .jp-resolution-actions { width:100%; flex-direction:row; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; }
-  .jp .jp-app .jp-resolution-actions .jp-action { white-space:normal; text-align:center; }
+  .jp .jp-app .jp-resolution-actions .jp-action { flex:0 0 auto; max-width:100%; white-space:normal; text-align:center; }
   .jp .jp-app .jp-question-detail > summary { align-items:flex-start; flex-direction:column; gap:10px; }
   .jp .jp-app .jp-question-state { justify-content:space-between; width:100%; }
 }
@@ -1803,3 +1803,14 @@
 /* Required fields: red asterisk after the label, legend line at the top of the form. */
 .jp .jp-req { color:var(--aj-chili-text); font-weight:var(--aj-weight-bold); }
 .jp .jp-req-legend { margin:0 0 16px; color:var(--aj-muted); font-size:12px; }
+/* Phones and tablets: every control is at least 44px to tap, and form text is 16px so iOS does not zoom. */
+@media(pointer:coarse) {
+  .jp .jp-app { --aj-header-control-height:var(--aj-touch-size); }
+  .jp .jp-app .jp-segment button { min-height:var(--aj-touch-size); min-width:var(--aj-touch-size); }
+  .jp .jp-app :is(input:not([type=checkbox]):not([type=radio]):not(.jp-menu-inline),select) { min-height:var(--aj-touch-size); }
+  .jp .jp-app .jp-import-chip { min-height:var(--aj-touch-size); }
+  .jp .jp-app .jp-info > button { min-width:var(--aj-touch-size); margin-inline:-12px; }
+  .jp .jp-app .jp-portal-days label { min-height:var(--aj-touch-size); }
+  .jp .jp-app .jp-portal-days input[type=checkbox] { width:20px; height:20px; }
+  .jp summary { padding-block:10px; }
+}
