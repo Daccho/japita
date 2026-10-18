@@ -203,6 +203,7 @@ def seed_state(fixture: str = "kumo", x_admin_key: str | None = Header(default=N
     if not fixture.isidentifier() or not p.is_file():
         raise HTTPException(404, f"fixture {fixture!r} not found")
     repo.seed(p)
+    auth.ensure_demo_accounts()  # display names follow the reloaded data
     return {"seeded": fixture}
 
 
