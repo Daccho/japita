@@ -375,6 +375,145 @@ def basket_view(store: Store, lang: str, money: Money, kind: str | None = None) 
     }
 
 
+# --- advisor answer --------------------------------------------------------------------------------
+
+PLAN_LINK = "/restaurants/basket?plan={kind}"
+
+
+def _late_notes(basket: dict, lang: str) -> list[str]:
+    return [t(lang, "ans.late", ingredient=_ing(lang, ln["ingredient"]), date=day(ln["earliest_delivery"], lang),
+              weekday=weekday_long(ln["needed_by"], lang))
+            if ln.get("earliest_delivery") else t(lang, "ans.lateUnknown", ingredient=_ing(lang, ln["ingredient"]),
+                                                     weekday=weekday_long(ln["needed_by"], lang))
+            for ln in basket["lines"] if ln.get("arrives_in_time") is False]
+
+
+def _plan_answer(store: Store, res: dict, kind: str, lang: str, money: Money) -> dict | None:
+    """The calculated plan of this kind: its sentence, how it compares with the recommended plan, its trade-offs
+    (late arrivals, coverage, budget, fewer preferences) and its lines. Every amount comes from calc."""
+    basket = find_basket(res, kind)
+    if not basket or not basket["lines"]:
+        return None
+    total = basket["delivered_total_eur"]
+    rec = find_basket(res, res.get("recommended_kind"))
+    is_rec = rec is basket
+    sentence = t(lang, f"ans.plan.{kind}")
+    compare = None
+    if is_rec and kind != "recommended":
+        compare = t(lang, "ans.sameAsRec")
+    elif rec and not is_rec:
+        compare = t(lang, "ans.vsRec", d=money.signed(round(total - rec["delivered_total_eur"], 2)),
+                    total=money(rec["delivered_total_eur"]))
+    tradeoffs_ = _late_notes(basket, lang)
+    if basket["coverage"] == "shortfall" and not basket["late_lines"]:
+        tradeoffs_.append(t(lang, "ans.shortfall"))
+    elif basket["coverage"] == "unknown":
+        tradeoffs_.append(t(lang, "ans.unknown"))
+    if not basket["within_budget"]:
+        tradeoffs_.append(t(lang, "ans.overBudget", r=money(round(total - res["remaining_budget_eur"], 2))))
+    if rec and not is_rec and basket["preferences_met"] < rec["preferences_met"]:
+        tradeoffs_.append(t(lang, "ans.fewerPrefs", m=basket["preferences_met"], t=basket["preferences_total"],
+                            r=rec["preferences_met"]))
+    new = new_offer_ids(store)
+    lines = []
+    for ln in basket["lines"]:
+        v = _plan_line(store, ln, lang, money, new)
+        lines.append({k: v[k] for k in ("offer_id", "product", "drawing", "ingredient_label", "supplier", "qty_text",
+                                        "cost_text", "badge")})
+    return {"kind": kind, "title": label(lang, "kind", kind), "sentence": sentence, "compare_text": compare,
+            "tradeoffs": tradeoffs_, "lines": lines,
+            "total_text": money(total), "total_eur": total, "href": PLAN_LINK.format(kind=kind),
+            "link_text": t(lang, "ans.openPlan")}
+
+
+def _questions_answer(store: Store, res: dict, lang: str) -> dict:
+    qs = res.get("open_questions", [])
+    supplier = [q for q in qs if q["resolved_by"] == "supplier"]
+    headline = t(lang, "ans.noMissing") if not qs else t(
+        lang, "ans.missing1" if len(qs) == 1 else "ans.missing", n=len(qs), s=len(supplier), o=len(qs) - len(supplier))
+    items = [{"label": f"{q['product']} · {q['supplier']}", "value": rule_text(lang, q["rule"]),
+              "note": t(lang, "adv.ownerAction") if q["resolved_by"] == "owner"
+              else t(lang, "bk.drafted") if q["drafted"] else _hint(lang, q["field"])} for q in qs[:6]]
+    return {"headline": headline, "items": items,
+            "link": {"href": "/restaurants/basket#questions", "text": t(lang, "adv.review")} if qs else None}
+
+
+def _orders_answer(store: Store, lang: str, money: Money) -> dict:
+    pos = [po for po in store.data.get("purchase_orders", []) if po["state"] != "cancelled"]
+    if not pos:
+        return {"headline": t(lang, "ans.noOrders"), "items": [],
+                "link": {"href": "/restaurants/basket", "text": t(lang, "adv.openBasket")}}
+    total = round(sum(po["total_eur"] for po in pos), 2)
+    items = [{"label": po["supplier_name"], "value": money(po["total_eur"]),
+              "note": f"{t(lang, {'approved': 'po.approved', 'submitted': 'po.submitted', 'acknowledged': 'po.acknowledged'}[po['state']])}"
+                      f" · {t(lang, 'po.delivery', date=day(po['delivery_date'], lang))}"} for po in pos]
+    return {"headline": t(lang, "ans.orders1" if len(pos) == 1 else "ans.orders", n=len(pos), total=money(total)),
+            "items": items, "link": {"href": "/restaurants/basket", "text": t(lang, "adv.openBasket")}}
+
+
+def _prices_answer(store: Store, lang: str, money: Money) -> dict:
+    """The lowest price per kg or litre among offers that meet every required rule and can be ordered."""
+    eligible, _ = calc.eligible_offers(store)
+    items = []
+    for ing, offers in eligible.items():
+        if not offers:
+            continue
+        best = min(offers, key=lambda o: o["price_eur"] / o["pack_size"])
+        items.append({"label": _ing(lang, ing), "value": unit_price(best, money),
+                      "note": f"{best['product']} · {_sup(store, best['supplier_id'])}"})
+    return {"headline": t(lang, "ans.prices" if items else "ans.noPrices"), "items": items,
+            "link": {"href": "/restaurants/suppliers", "text": t(lang, "nav.suppliers")}}
+
+
+def advisor_answer_view(store: Store, explanation: dict, lang: str, money: Money) -> dict:
+    """What the advisor answer shows above its evidence, built from calculations for the plan and focus the model
+    selected. Model prose and model numbers are never part of it."""
+    view = _answer_view(store, explanation, lang, money)
+    return {**view, "items_title": view.get("items_title"),
+            "labels": {"why": t(lang, "ans.why"), "show_all": t(lang, "ans.showAll"), "total": t(lang, "bk.total")}}
+
+
+def _answer_view(store: Store, explanation: dict, lang: str, money: Money) -> dict:
+    res = calc.calculate_baskets(store)
+    if not explanation.get("validated"):
+        # The calculated recommendation still answers; the owner is invited to rephrase.
+        plan = _plan_answer(store, res, "recommended", lang, money) if res.get("recommended_kind") else None
+        return {"focus": "recommendation", "fallback": True, "note": t(lang, "ans.rephrase"),
+                "headline": plan.pop("sentence") if plan else t(lang, "ans.noPlan"), "items": [], "plan": plan,
+                "link": None if plan else {"href": "/restaurants/basket", "text": t(lang, "adv.openBasket")},
+                "questions_link": _questions_link(res, lang)}
+    focus = explanation["focus"]
+    kind = explanation.get("plan_kind")
+    plan = _plan_answer(store, res, kind, lang, money) if kind else None
+    return {**_focus_answer(store, res, focus, kind, plan, lang, money), "fallback": False, "note": None,
+            "questions_link": None if focus == "missing_information" else _questions_link(res, lang)}
+
+
+def _questions_link(res: dict, lang: str) -> dict | None:
+    """Open supplier questions as a secondary action, when there are any."""
+    if not any(q["resolved_by"] == "supplier" for q in res.get("open_questions", [])):
+        return None
+    return {"href": "/restaurants/basket#questions", "text": t(lang, "ans.reviewQuestions")}
+
+
+def _focus_answer(store: Store, res: dict, focus: str, kind: str | None, plan: dict | None, lang: str,
+                  money: Money) -> dict:
+    if focus == "missing_information":
+        return {"focus": focus, **_questions_answer(store, res, lang), "plan": None}
+    if focus == "orders":
+        return {"focus": focus, **_orders_answer(store, lang, money), "plan": None}
+    if focus == "prices":
+        prices = _prices_answer(store, lang, money)
+        if plan and kind != res.get("recommended_kind"):  # a specific plan was asked for: it leads the answer
+            return {"focus": focus, "headline": plan.pop("sentence"), "items_title": prices["headline"],
+                    "items": prices["items"], "link": None, "plan": plan}
+        return {"focus": focus, **prices, "plan": plan}
+    if plan:
+        return {"focus": focus, "headline": plan.pop("sentence"), "items": [], "link": None, "plan": plan}
+    return {"focus": focus, "headline": t(lang, "ans.noPlan"), "items": [], "plan": None,
+            "link": {"href": "/restaurants/basket", "text": t(lang, "adv.openBasket")}}
+
+
 # --- this week --------------------------------------------------------------------------------------
 
 def delayed_alerts(store: Store, tl: dict, lang: str) -> list[dict]:

@@ -282,7 +282,20 @@ export type PurchaseBrief = {
   comparisons: Record<string, { groups: { comparison_group: string; count: number; median_eur: number | null; offers: { offer_id: string; product: string; unit_price_eur: number; per: string; offer_date: string }[] }[] }>;
 };
 export type AdvisorContext = { offer_id?: string; basket_kind?: string };
+// The advisor's answer block, built by the server from calculations for the plan and focus the model selected.
+export type AdvisorAnswerLink = { href: string; text: string };
+export type AdvisorAnswerView = {
+  focus: string; fallback: boolean; note: string | null; headline: string;
+  items_title?: string; items: { label: string; value: string; note: string | null }[];
+  link: AdvisorAnswerLink | null; questions_link: AdvisorAnswerLink | null;
+  labels: { why: string; show_all: string; total: string };
+  plan: null | { kind: string; title: string; sentence?: string; compare_text: string | null; tradeoffs: string[];
+    total_text: string; total_eur: number; href: string; link_text: string;
+    lines: { offer_id: string; product: string; drawing: import("@/lib/drawings").DrawingReference | null; ingredient_label: string;
+      supplier: string; qty_text: string; cost_text: string; badge: { text: string; warn: boolean } | null }[] };
+};
 export type PurchasingAnswer = { drafts: {id:string;text:string}[]; answer: string; clarifications: Clarification[]; brief: PurchaseBrief; input_version: string; stale: boolean;
+  answer_view?: AdvisorAnswerView | null;
   explanation: { validated: boolean; focus: string; evidence: (RuleOutcome & { offer_id: string; product: string; text?: string[]; codes?: string[] })[]; evidence_selected_by?: "app" } };
 export type CatalogCriteria = { ingredient?: string | null; relationship?: "existing" | "candidate"; supplier_country?: string | null; dispatch_country?: string | null; product_origin?: string | null; fresh?: boolean | null; needed_by?: string | null; name?: string | null };
 export type CatalogQuote = { offer_id: string; supplier_id: string; product: string; ingredient: string; comparison_key: string;

@@ -44,9 +44,13 @@ def brief(store: Store) -> dict:
     questions = sorted(result["open_questions"], key=lambda q: (
         deadlines.get(store.offer(q["offer_id"])["ingredient"], "9999"), q["resolved_by"] != "supplier", q["offer_id"]))
     recommended = next((b for b in result["baskets"] if b["kind"] == result["recommended_kind"]), None)
+    plans = [{"kind": b["kind"], "also": b["also"], "rule": b["rule"], "delivered_total_eur": b["delivered_total_eur"],
+              "coverage": b["coverage"], "supplier_count": b["supplier_count"],
+              "preferences_met": b["preferences_met"], "within_budget": b["within_budget"], "late_lines": b["late_lines"]}
+             for b in result["baskets"]]
     return {"input_version": input_version(store), "week_id": store.week["id"], "risks": risks,
             "nothing_to_buy": not any(n["required"] > 0 for n in result["needs"].values()),
-            "timing_known": result["timing_known"], "recommended": recommended,
+            "timing_known": result["timing_known"], "recommended": recommended, "plans": plans,
             "priority_order": result["priority_order"], "budget_conflict": result["budget_conflict"],
             "remaining_budget_eur": result["remaining_budget_eur"], "questions": questions,
             "actions": [{"kind": "review_basket", "href": "/restaurants/basket"},
@@ -106,10 +110,16 @@ def default_evidence(store: Store, decision: dict, limit: int = 6) -> list[dict]
     return refs[:limit]
 
 
-def validate_explanation(raw: str, store: Store, decision: dict) -> dict:
-    """Reject an unreadable answer or a conflicting recommended basket; drop references that match no record.
+def plan_kinds(decision: dict) -> set[str]:
+    """Every plan kind the app calculated this week, including kinds that share a basket ("also")."""
+    return {k for p in decision.get("plans", []) for k in (p["kind"], *p["also"])}
 
-    Arbitrary model prose is never used as a supplier claim or a source of numbers.
+
+def validate_explanation(raw: str, store: Store, decision: dict) -> dict:
+    """Reject an unreadable answer or a plan kind the app did not calculate; drop references that match no record.
+
+    `recommended_kind` selects which calculated plan answers the question (`plan_kind`); null means the recommended
+    plan. Arbitrary model prose is never used as a supplier claim or a source of numbers.
     """
     try:
         found = re.search(r"\{.*\}", raw, re.S)  # tolerates a code fence or text around the object
@@ -117,10 +127,9 @@ def validate_explanation(raw: str, store: Store, decision: dict) -> dict:
         if isinstance(obj, dict) and obj.get("action") == "answer" and isinstance(obj.get("text"), str):
             obj = json.loads(obj["text"])  # an Evolus answer action passed through unwrapped
         parsed = Explanation.model_validate(obj)
-        selected = decision["recommended"]
-        allowed = {selected["kind"], *selected["also"]} if selected else {None}
-        if parsed.recommended_kind not in allowed:
-            raise ValueError("recommendation does not match the calculated decision")
+        if parsed.recommended_kind is not None and parsed.recommended_kind not in plan_kinds(decision):
+            raise ValueError("plan kind was not calculated for this week")
+        plan_kind = parsed.recommended_kind or ("recommended" if decision["recommended"] else None)
         if any(q["resolved_by"] == "supplier" and not q["drafted"] for q in decision["questions"]):
             raise ValueError("supplier questions still need drafts")
         refs: list[dict] = []
@@ -130,13 +139,13 @@ def validate_explanation(raw: str, store: Store, decision: dict) -> dict:
                 log.warning("advisor evidence dropped: %s", ref.model_dump())
             _add(refs, resolved)
         if not refs:
-            return {"validated": True, "focus": parsed.focus, "evidence": default_evidence(store, decision),
-                    "evidence_selected_by": "app"}
+            return {"validated": True, "focus": parsed.focus, "plan_kind": plan_kind,
+                    "evidence": default_evidence(store, decision), "evidence_selected_by": "app"}
         # A cited offer that is unusable for another reason shows that reason too.
         for ref in list(refs):
             for blocker in _blockers(store, ref["offer_id"]):
                 _add(refs, blocker)
-        return {"validated": True, "focus": parsed.focus, "evidence": refs}
+        return {"validated": True, "focus": parsed.focus, "plan_kind": plan_kind, "evidence": refs}
     except (ValidationError, ValueError, KeyError, TypeError, StopIteration) as e:
         log.warning("advisor explanation rejected: %s: %s | %s", type(e).__name__, str(e)[:200], raw[:300])
-        return {"validated": False, "focus": "recommendation", "evidence": []}
+        return {"validated": False, "focus": "recommendation", "plan_kind": None, "evidence": []}

@@ -1814,3 +1814,31 @@
   .jp .jp-app .jp-portal-days input[type=checkbox] { width:20px; height:20px; }
   .jp summary { padding-block:10px; }
 }
+
+/* Advisor answer block: direct answer first, evidence collapsed below. */
+.jp .jp-app .jp-advisor-popup .jp-answer-question { margin:0 0 8px; color:var(--aj-muted); font-size:var(--aj-type-small); font-style:italic; overflow-wrap:anywhere; }
+.jp .jp-app .jp-advisor-popup .jp-answer { display:grid; gap:10px; padding:12px; border:var(--aj-border-strong); border-radius:var(--aj-radius-card); background:var(--aj-surface); color:var(--aj-ink); }
+.jp .jp-app .jp-advisor-popup .jp-answer p { margin:0; }
+.jp .jp-app .jp-advisor-popup .jp-answer .jp-answer-note { padding:8px 10px; border-radius:var(--aj-radius-control); background:var(--aj-yolk-tint); color:var(--aj-ink); font-size:var(--aj-type-small); }
+.jp .jp-app .jp-advisor-popup .jp-answer .jp-answer-headline { color:var(--aj-ink); font-size:var(--aj-type-advisor-main); font-weight:var(--aj-weight-bold); line-height:1.3; overflow-wrap:anywhere; }
+.jp .jp-app .jp-advisor-popup .jp-answer .jp-answer-sentence { color:var(--aj-ink); font-weight:var(--aj-weight-medium); }
+.jp .jp-app .jp-advisor-popup .jp-answer-plan { display:grid; gap:8px; }
+.jp .jp-app .jp-advisor-popup .jp-answer-total { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:4px 12px; padding:8px 10px; border-radius:var(--aj-radius-control); background:var(--aj-yolk-tint); }
+.jp .jp-app .jp-advisor-popup .jp-answer-total span { font-weight:var(--aj-weight-medium); }
+.jp .jp-app .jp-advisor-popup .jp-answer-total strong { font-size:var(--aj-type-advisor-price); font-weight:var(--aj-weight-bold); font-variant-numeric:tabular-nums; }
+.jp .jp-app .jp-advisor-popup .jp-answer .jp-answer-compare { color:var(--aj-muted); font-size:var(--aj-type-small); }
+.jp .jp-app .jp-advisor-popup :is(.jp-answer-tradeoffs,.jp-answer-lines,.jp-answer-items ul) { display:grid; margin:0; padding:0; list-style:none; }
+.jp .jp-app .jp-advisor-popup .jp-answer-tradeoffs { gap:6px; }
+.jp .jp-app .jp-advisor-popup .jp-answer-tradeoffs .jp-badge { display:block; width:fit-content; max-width:100%; padding:6px 8px; white-space:normal; line-height:1.4; }
+.jp .jp-app .jp-advisor-popup :is(.jp-answer-lines,.jp-answer-items ul) li { display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:10px; padding:8px 0; border-top:var(--aj-border-light); }
+.jp .jp-app .jp-advisor-popup .jp-answer-items ul li { grid-template-columns:minmax(0,1fr) auto; }
+.jp .jp-app .jp-advisor-popup :is(.jp-answer-lines,.jp-answer-items) li > div { display:grid; gap:2px; min-width:0; }
+.jp .jp-app .jp-advisor-popup :is(.jp-answer-lines,.jp-answer-items) li strong { font-weight:var(--aj-weight-bold); overflow-wrap:anywhere; }
+.jp .jp-app .jp-advisor-popup :is(.jp-answer-lines,.jp-answer-items) li small { color:var(--aj-muted); font-size:var(--aj-type-small); overflow-wrap:anywhere; }
+.jp .jp-app .jp-advisor-popup :is(.jp-answer-lines,.jp-answer-items) li > span:last-child { font-weight:var(--aj-weight-bold); font-variant-numeric:tabular-nums; white-space:nowrap; }
+.jp .jp-app .jp-advisor-popup .jp-answer-lines .jp-badge { justify-self:start; margin-top:2px; }
+.jp .jp-app .jp-advisor-popup .jp-answer-nodrawing { width:36px; height:36px; border-radius:var(--aj-radius-badge); background:var(--aj-line); }
+.jp .jp-app .jp-advisor-popup .jp-answer-more { justify-self:start; padding:0; border:0; background:none; color:var(--aj-ink); font-weight:var(--aj-weight-bold); text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
+.jp .jp-app .jp-advisor-popup .jp-answer-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.jp .jp-app .jp-advisor-popup .jp-answer-why { margin-top:12px; padding:10px 12px; border:var(--aj-border-light); border-radius:var(--aj-radius-card); }
+.jp .jp-app .jp-advisor-popup .jp-answer-why summary { font-weight:var(--aj-weight-bold); cursor:pointer; }

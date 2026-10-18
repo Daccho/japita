@@ -7,11 +7,13 @@ import remarkGfm from "remark-gfm";
 import { Loader2, RotateCcw, Sparkles, X } from "lucide-react";
 import { errorText } from "@/lib/api";
 import { useI18n, useLabel, type Key } from "@/lib/i18n";
-import type { PurchasingAnswer } from "@/lib/purchasing";
+import type { AdvisorAnswerView, PurchasingAnswer } from "@/lib/purchasing";
+import ProductDrawing from "@/components/ProductDrawing";
 import { useWorkspace } from "@/components/workspace";
 import PurchaseBrief from "@/components/PurchaseBrief";
 
 const POS_KEY = "japita.advisor.position";
+const VISIBLE_LINES = 5;
 const EXAMPLES: Key[] = ["adv.q1", "adv.q2", "adv.q3"];
 
 export function Markdown({ text }: { text: string }) {
@@ -31,7 +33,7 @@ const OUTCOME_BADGE: Record<string, { key: Key; tone: string }> = {
 };
 
 // Recorded rule outcomes, grouped by product: what was checked, what is known, and what to do next.
-function EvidenceList({ explanation }: { explanation: Explanation }) {
+function EvidenceList({ explanation, collapsed }: { explanation: Explanation; collapsed?: string }) {
   const { t } = useI18n();
   const label = useLabel();
   if (!explanation.evidence.length) return null;
@@ -44,9 +46,8 @@ function EvidenceList({ explanation }: { explanation: Explanation }) {
       : item.resolved_by === "owner" ? t("adv.nextOwner")
       : item.outcome === "needs_review" ? t("adv.nextVerify")
       : t("adv.nextAsk");
-  return (
-    <div className="jp-quote">
-      <h3>{t("adv.why")}</h3>
+  const body = (
+    <>
       <p className="jp-section-note">{explanation.evidence_selected_by === "app" ? t("adv.byApp") : t("adv.verified")}</p>
       {[...groups.values()].map((items) => (
         <div key={items[0].offer_id} style={{ marginTop: 12 }}>
@@ -71,6 +72,91 @@ function EvidenceList({ explanation }: { explanation: Explanation }) {
           })}
         </div>
       ))}
+    </>
+  );
+  if (collapsed)
+    return (
+      <details className="jp-answer-why">
+        <summary>{collapsed}</summary>
+        {body}
+      </details>
+    );
+  return (
+    <div className="jp-quote">
+      <h3>{t("adv.why")}</h3>
+      {body}
+    </div>
+  );
+}
+
+// The direct answer: a headline, the plan total and how it compares with the recommended plan, what to buy and one
+// primary action. Every text and amount comes from the server's calculations.
+function AnswerBlock({ view, onNavigate }: { view: AdvisorAnswerView; onNavigate: () => void }) {
+  const [all, setAll] = useState(false);
+  const plan = view.plan;
+  const lines = plan ? (all ? plan.lines : plan.lines.slice(0, VISIBLE_LINES)) : [];
+  const primary = plan ? { href: plan.href, text: plan.link_text } : view.link;
+  return (
+    <div className="jp-answer">
+      {view.note && <p className="jp-answer-note">{view.note}</p>}
+      <p className="jp-answer-headline">{view.headline}</p>
+      {plan && (
+        <div className="jp-answer-plan">
+          {plan.sentence && <p className="jp-answer-sentence">{plan.sentence}</p>}
+          <div className="jp-answer-total">
+            <span>{view.labels.total}</span>
+            <strong className="jp-number">{plan.total_text}</strong>
+          </div>
+          {plan.compare_text && <p className="jp-answer-compare">{plan.compare_text}</p>}
+          {plan.tradeoffs.length > 0 && (
+            <ul className="jp-answer-tradeoffs">
+              {plan.tradeoffs.map((x) => (
+                <li key={x}><span className="jp-badge jp-warning">{x}</span></li>
+              ))}
+            </ul>
+          )}
+          <ul className="jp-answer-lines">
+            {lines.map((ln) => (
+              <li key={ln.offer_id}>
+                {ln.drawing ? <ProductDrawing drawing={ln.drawing} size={36} /> : <span className="jp-answer-nodrawing" aria-hidden />}
+                <div>
+                  <strong>{ln.product}</strong>
+                  <small>{ln.supplier} · {ln.qty_text}</small>
+                  {ln.badge && <span className={`jp-badge ${ln.badge.warn ? "jp-warning" : "jp-neutral"}`}>{ln.badge.text}</span>}
+                </div>
+                <span className="jp-number">{ln.cost_text}</span>
+              </li>
+            ))}
+          </ul>
+          {!all && plan.lines.length > VISIBLE_LINES && (
+            <button type="button" className="jp-answer-more" onClick={() => setAll(true)}>
+              {view.labels.show_all.replace("{n}", String(plan.lines.length))}
+            </button>
+          )}
+        </div>
+      )}
+      {view.items.length > 0 && (
+        <div className="jp-answer-items">
+          {view.items_title && <p className="jp-answer-sentence">{view.items_title}</p>}
+          <ul>
+            {view.items.map((it) => (
+              <li key={`${it.label}-${it.value}`}>
+                <div>
+                  <strong>{it.label}</strong>
+                  {it.note && <small>{it.note}</small>}
+                </div>
+                <span>{it.value}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {(primary || view.questions_link) && (
+        <div className="jp-answer-actions">
+          {primary && <Link href={primary.href} className="jp-action jp-primary" onClick={onNavigate}>{primary.text}</Link>}
+          {view.questions_link && <Link href={view.questions_link.href} className="jp-action" onClick={onNavigate}>{view.questions_link.text}</Link>}
+        </div>
+      )}
     </div>
   );
 }
@@ -81,6 +167,7 @@ function AdvisorBody() {
   const [question, setQuestion] = useState("");
   const [example, setExample] = useState(0);
   const drafts = advisor.result?.drafts ?? [];
+  const answer = advisor.result?.answer_view ?? null;
 
   // The placeholder cycles through example questions; Tab on an empty box takes the one shown.
   useEffect(() => {
@@ -172,10 +259,11 @@ function AdvisorBody() {
 
         {advisor.result && !advisor.running && (
           <div style={{ marginTop: 14 }}>
-            {advisor.question && <p style={{ fontStyle: "italic" }}>“{advisor.question}”</p>}
+            {advisor.question && <p className="jp-answer-question">“{advisor.question}”</p>}
             {(advisor.result.stale || advisor.result.input_version !== data?.brief.input_version) && <p className="jp-error">{t("adv.stale")}</p>}
-            {!advisor.result.explanation.validated && <p className="jp-section-note">{t("adv.unverified")}</p>}
-            {advisor.result.explanation.validated && <EvidenceList explanation={advisor.result.explanation} />}
+            {answer && <AnswerBlock view={answer} onNavigate={() => setAdvisorOpen(false)} />}
+            {!answer && !advisor.result.explanation.validated && <p className="jp-section-note">{t("adv.unverified")}</p>}
+            {advisor.result.explanation.validated && <EvidenceList explanation={advisor.result.explanation} collapsed={answer?.labels.why} />}
             {conversation.length > 1 && <details><summary>{t("adv.previous")}</summary>{conversation.slice(0,-1).map((turn,i)=><p key={i}>{turn.question}</p>)}</details>}
             {drafts.length > 0 && (
               <div className="jp-quote">

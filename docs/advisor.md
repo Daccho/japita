@@ -18,7 +18,18 @@ The baseline is the cheapest eligible combination of existing suppliers, not an 
 
 The existing main agent still runs on the configured AMD model, directly or through Evolus. The app passes it the `get_purchase_brief` result (the same owner decision data, current screen selection and saved menu) up front, so the model spends no round trip fetching it, and its final reply is only the short evidence JSON; all owner-facing text comes from code. It continues to draft Japanese supplier questions. Supplier sources, notes, links and historical turns are data rather than operating instructions.
 
-Final model output is a small JSON explanation containing `recommended_kind`, `focus` (`recommendation`, `prices`, `missing_information`, or `orders`), and `evidence` references (`offer_id`, `field`, `outcome`). The app checks those references against current rule outcomes and checks the recommendation against the calculated choice. Arbitrary model prose and model-authored amounts are not rendered as purchasing facts. Invalid output leaves the deterministic brief available with an explanation-verification notice. There is no new model provider or non-AMD fallback.
+Final model output is a small JSON explanation containing `recommended_kind`, `focus` (`recommendation`, `prices`, `missing_information`, or `orders`), and `evidence` references (`offer_id`, `field`, `outcome`). `recommended_kind` selects the calculated plan that best matches the question (cheapest → `lowest_cost`, fewest deliveries → `fewest_suppliers`, on time → `on_time`, and so on); it must be one of the plan kinds, or "also" kinds, in the brief's `plans`, and null means the recommended plan. A kind the app did not calculate is rejected. The app checks evidence references against current rule outcomes. Arbitrary model prose and model-authored amounts are not rendered as purchasing facts. There is no new model provider or non-AMD fallback.
+
+### Answer block
+
+The job result carries `answer_view` (`views/service.py: advisor_answer_view`), built only from calculations and the restaurant message catalog in the owner's language and currency. The advisor panel shows it under the quoted question and above the evidence, which sits in a collapsed "Why" section.
+
+- **Plan** (focus `recommendation`, or `prices` when a plan other than the recommended one was asked for): a headline naming the plan ("Cheapest plan that meets your requirements"), the total including delivery, how it compares with the recommended plan (same plan, or the signed difference and the recommended total), trade-offs as warning badges (a line arriving after a stockout, uncovered service, unknown timing, over budget, fewer preferences met), up to five lines with drawing, supplier, packs, cost and on-time badge ("Show all" for more), and the primary action "Open this plan" (`/restaurants/basket?plan=<kind>`).
+- **Prices:** the lowest price per kg or litre among products that meet every required rule and can be ordered, one row per ingredient.
+- **Missing information:** how many required details are missing, split into supplier questions and restaurant decisions, with up to six of them and a link to the questions.
+- **Orders:** this week's non-cancelled supplier orders with state, delivery date and total.
+
+"Review questions" is a secondary action whenever supplier questions are open. When the model reply cannot be verified, the block still answers with the calculated recommended plan and a short note inviting the owner to rephrase.
 
 Mandatory fields with missing evidence **or extraction disagreements** appear in the information queue. Chef assessments are restaurant decisions, recorded with an owner note through `PUT /offers/{id}/chef-assessment`; suppliers cannot submit them. Supplier questions still require owner approval before appearing on the test portal. Replies and product proposals still require owner application.
 
@@ -48,6 +59,6 @@ New supplier feeds, live web discovery, independently verified stock/quotes, phy
 
 ## Verification
 
-Offline regression tests cover expiry and late-arrival bridge quantities, complete basket replay, unknown timing, changed delivery approvals, preference selection, source requirements, disagreement queues, explanation validation, country/origin separation, read-only search, stale week edits, chef decisions, follow-up context and concurrent agent saves. Existing fixture totals remain EUR 493.80 for the existing-supplier basket and EUR 444.10 for the on-time basket after the sample hydration reply is applied.
+Offline regression tests cover expiry and late-arrival bridge quantities, complete basket replay, unknown timing, changed delivery approvals, preference selection, source requirements, disagreement queues, explanation validation, plan selection and the answer block (IT/EN), country/origin separation, read-only search, stale week edits, chef decisions, follow-up context and concurrent agent saves. Existing fixture totals remain EUR 493.80 for the existing-supplier basket and EUR 444.10 for the on-time basket after the sample hydration reply is applied.
 
 Live AMD/Evolus inference, natural-language interpretation quality, deployed database state and a browser walkthrough of the connected interface require a separate live check. The local file preview is not evidence of connected behavior.

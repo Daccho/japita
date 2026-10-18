@@ -13,6 +13,7 @@ from japita.core import jobs, repo
 from japita.core.context import input_version
 from japita.core.llm import LLM
 from japita.core.store import _now, load_store
+from japita.core.textfmt import Money
 from japita.purchasing.advice import brief, validate_explanation
 from japita.views import service as views
 
@@ -69,7 +70,9 @@ def answer_question(body: Question) -> dict:
     current = load_store(body.profile_id)
     return {"via": body.via, "answer": "", "steps": result.steps, "brief": decision,
             "input_version": version, "stale": input_version(current) != version,
-            "explanation": {**explanation, "evidence": views.evidence_view(current, explanation["evidence"], body.lang)}, "clarifications": current.clarifications,
+            "explanation": {**explanation, "evidence": views.evidence_view(current, explanation["evidence"], body.lang)},
+            "answer_view": views.advisor_answer_view(current, explanation, body.lang, Money(body.lang)),
+            "clarifications": current.clarifications,
             "drafts": views.drafts_view(current, current.clarifications, body.lang)}
 
 

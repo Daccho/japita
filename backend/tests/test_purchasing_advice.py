@@ -225,6 +225,7 @@ def test_agent_run_does_not_overwrite_concurrent_edits_and_retains_followup_cont
     assert not repo.load_state()["clarifications"]  # stale run does not add obsolete drafts
     second = advisor_api.answer_question(advisor_api.Question(question="What about the frozen option?", via="direct", conversation_id="same-chat"))
     assert not second["stale"] and second["explanation"]["validated"]
+    assert second["answer_view"]["headline"] and not second["answer_view"]["fallback"]
     assert seen[1][0]["content"] == "What should I buy?"
 
 
@@ -336,3 +337,77 @@ def test_no_draft_and_failing_rule_shown_for_an_offer_that_fails_another_rule():
               "evidence": [{"offer_id": "O-noo-3", "field": "hydration_pct", "outcome": "missing_evidence"}]}
     fields = [r["field"] for r in validate_explanation(json.dumps(answer), store, decision)["evidence"]]
     assert fields == ["hydration_pct", "fresh"]
+
+
+def _answer(store, kind, focus="recommendation", lang="en"):
+    from japita.core.textfmt import Money
+    from japita.views import service as views
+    decision = brief(store)
+    explanation = validate_explanation(json.dumps({"recommended_kind": kind, "focus": focus, "evidence": []}),
+                                       store, decision)
+    return explanation, views.advisor_answer_view(store, explanation, lang, Money(lang))
+
+
+def test_cheapest_request_answers_with_the_calculated_lowest_cost_plan():
+    store = unlocked()
+    result = calc.calculate_baskets(store)
+    cheapest = next(b for b in result["baskets"] if b["kind"] == "lowest_cost")
+    assert cheapest["kind"] != result["recommended_kind"]
+    explanation, view = _answer(store, "lowest_cost", "prices")
+    assert explanation["validated"] and explanation["plan_kind"] == "lowest_cost"
+    plan = view["plan"]
+    assert plan["total_text"] == "$471.95"
+    assert plan["total_eur"] == cheapest["delivered_total_eur"] == 419.40
+    assert view["headline"] == "Cheapest plan that meets your requirements"
+    assert plan["href"] == "/restaurants/basket?plan=lowest_cost"
+    assert plan["compare_text"].startswith("−$27.79 compared with the recommended plan ($499.75)")
+    assert any("after the Wednesday stockout" in x for x in plan["tradeoffs"])
+    assert [ln["offer_id"] for ln in plan["lines"]] == [ln["offer_id"] for ln in cheapest["lines"]]
+    assert view["items_title"] and view["items"]  # lowest unit prices among orderable products
+
+
+def test_also_kind_resolves_to_its_shared_plan():
+    explanation, view = _answer(unlocked(), "fewest_suppliers")
+    assert explanation["validated"] and view["plan"]["total_eur"] == 419.40
+
+
+def test_plan_kind_not_calculated_is_rejected_and_falls_back_to_the_recommendation():
+    store = unlocked()
+    store.week.pop("days")  # no timing: no on_time plan exists
+    assert "on_time" not in {k for b in calc.calculate_baskets(store)["baskets"] for k in [b["kind"], *b["also"]]}
+    explanation, view = _answer(store, "on_time")
+    assert not explanation["validated"]
+    assert view["fallback"] and view["note"]
+    assert view["plan"] is None or view["plan"]["kind"] == "recommended"
+    explanation, _ = _answer(unlocked(), "cheapest_ever")
+    assert not explanation["validated"]
+
+
+def test_plan_equal_to_the_recommended_one_says_so_in_italian_and_english():
+    store = unlocked()
+    rec = calc.calculate_baskets(store)["recommended_kind"]
+    assert rec == "on_time"
+    _, en = _answer(store, "on_time", lang="en")
+    _, it = _answer(store, "on_time", lang="it")
+    assert en["plan"]["compare_text"] == "It is also the recommended plan."
+    assert it["plan"]["compare_text"] == "È anche il piano consigliato."
+    assert it["headline"] == "Piano più economico che arriva prima di ogni esaurimento"
+    assert it["plan"]["total_text"] == "444,10\xa0€"
+    assert not en["plan"]["tradeoffs"]
+    _, null = _answer(store, None, lang="it")  # no kind named: the recommended plan
+    assert null["headline"] == "Piano consigliato per le tue priorità" and null["plan"]["total_eur"] == 444.10
+    _, it_cheap = _answer(store, "lowest_cost", lang="it")
+    assert "dopo l'esaurimento di mercoledì" in it_cheap["plan"]["tradeoffs"][0]
+    assert it_cheap["plan"]["compare_text"].startswith("−24,70\xa0€ rispetto al piano consigliato")
+
+
+def test_missing_information_and_orders_answers_come_from_records():
+    store = Store.load(FIXTURE)
+    for q in calc.open_questions(store):
+        if q["resolved_by"] == "supplier":
+            store.add_clarification(q["offer_id"], q["field"], "確認させてください。", "test")
+    _, view = _answer(store, None, "missing_information")
+    assert view["headline"].startswith(f"{len(calc.open_questions(store))} required details")
+    assert view["link"]["href"] == "/restaurants/basket#questions" and view["items"]
+    _, orders_view = _answer(unlocked(), None, "orders")
+    assert orders_view["headline"] == "No supplier orders have been approved this week."
