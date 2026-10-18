@@ -10,6 +10,9 @@ import { InfoTip } from "@/components/InfoTip";
 import ProductDrawing from "@/components/ProductDrawing";
 import ImportChecks from "@/components/ImportChecks";
 import { Avatar } from "@/components/AppShell";
+import OfferTerms from "@/components/OfferTerms";
+import CatalogSearch from "@/components/CatalogSearch";
+import { useWorkspace } from "@/components/workspace";
 import Loading from "@/components/pages/Loading";
 import { suppliersPath, type SupplierQuery } from "@/lib/paths";
 
@@ -94,6 +97,9 @@ function ProposalBox({ p, onApply, onReject, busy }: { p: Proposal; onApply: () 
 
 function OfferCard({ offer: o, labels }: { offer: OfferCardView; labels: Record<string, string> }) {
   const { busy, act } = useAct();
+  const { data, ask } = useWorkspace();
+  const raw = data?.state.offers.find(offer => offer.id === o.id);
+  const supplier = raw && data?.state.suppliers[raw.supplier_id];
   return (
     <article className="jp-offer" style={{ marginBottom: 12 }}>
       <div className="jp-line-head" style={{ marginBottom: 0 }}>
@@ -141,6 +147,8 @@ function OfferCard({ offer: o, labels }: { offer: OfferCardView; labels: Record<
           ))}
         </div>
       )}
+      {raw && supplier && <OfferTerms key={data?.brief.input_version} offer={raw} supplier={supplier} />}
+      <button type="button" className="jp-action" onClick={() => ask(o.product, {offer_id:o.id})}>{labels["of.askSupplier"] ?? "Ask advisor"}</button>
       {o.proposal && (
         <ProposalBox
           p={o.proposal}
@@ -217,6 +225,7 @@ export default function Suppliers({
   return (
     <>
       <PageHeader kicker={L("sup.kicker")} title={L("sup.title")} sub={v.sub} />
+      <CatalogSearch />
       <div className="jp-directory-controls">
         <div className="jp-subnav" aria-label={L("sup.views")}>
           {(["existing", "candidate"] as const).map((view) => (

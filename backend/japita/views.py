@@ -15,7 +15,7 @@ from .store import Store, active_profile_id
 from .textfmt import (Money, date_range, day, label, long_day, profile_label, qty, t, time_short,
                       unit_price, value_text, weekday_long, weekday_name)
 
-KIND_ORDER = ["baseline", "on_time", "lowest_cost", "best_fit", "fewest_suppliers"]
+KIND_ORDER = ["recommended", "baseline", "on_time", "lowest_cost", "best_fit", "fewest_suppliers"]
 DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
 
 
@@ -68,7 +68,7 @@ def find_basket(result: dict, kind: str | None) -> dict | None:
 def suggested_basket(result: dict) -> dict | None:
     """What the advisor suggests: on time if possible, else the lowest cost, else the first; None when there is
     nothing to buy."""
-    b = find_basket(result, "on_time") or find_basket(result, "lowest_cost") or next(iter(result.get("baskets", [])), None)
+    b = find_basket(result, result.get("recommended_kind")) or find_basket(result, "on_time") or find_basket(result, "lowest_cost") or next(iter(result.get("baskets", [])), None)
     return b if b and b["lines"] else None
 
 
@@ -302,7 +302,7 @@ def basket_view(store: Store, lang: str, money: Money, kind: str | None = None) 
             "within_budget": selected["within_budget"],
             "remaining_eur": round(budget - total, 2), "vs_baseline_eur": vs, "budget_text": budget_text,
             "savings_text": savings.get(selected["kind"]),
-            "approval": appr, "can_approve": not is_approved,
+            "approval": appr, "can_approve": not is_approved and candidate.get("coverage") == "covered",
             "approve_text": t(lang, "bk.approveSend"), "approving_text": t(lang, "bk.sendingAll"),
             "send_key": orders.send_key(store, selected["kind"]),
             "confirm": send_confirm(selected, lang, money),
@@ -600,7 +600,7 @@ STOP = set(("find show me i want would like looking for need search suppliers su
 
 def haystack(sup: dict, offers: list[dict]) -> str:
     """Words a restaurant might type (EN/IT), mapped onto catalog facts."""
-    parts = [sup["name"]]
+    parts = [sup["name"], sup.get("city") or "", sup.get("country") or ""]
     for o in offers:
         parts += [o["product"], o["ingredient"].replace("_", " ")]
         parts += [label(lg, "ing", o["ingredient"]) for lg in ("en", "it")]
@@ -1048,4 +1048,3 @@ def drafts_view(store: Store, clarifications: list[dict], lang: str) -> list[dic
                     "translation": tr,
                     "text": f"{product} · {label(lang, 'field', c['field'])}" + (f" — {tr}" if tr else "")})
     return out
-

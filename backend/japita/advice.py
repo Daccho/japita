@@ -1,0 +1,80 @@
+"""Owner decision brief and validation of the model's evidence references.
+
+The model selects evidence to explain; displayed facts and amounts come from code.
+"""
+import json
+from typing import Literal
+
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
+
+from . import calc, orders, stock
+from .context import input_version
+from .store import Store
+
+
+class EvidenceRef(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    offer_id: str
+    field: str
+    outcome: Literal["ok", "fail", "missing_evidence", "needs_review"]
+
+
+class Explanation(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    recommended_kind: str | None
+    focus: Literal["recommendation", "prices", "missing_information", "orders"]
+    evidence: list[EvidenceRef] = Field(default_factory=list, max_length=12)
+
+
+def brief(store: Store) -> dict:
+    result = calc.calculate_baskets(store)
+    timeline = stock.timeline(store)
+    risks = sorted([{"ingredient": ing, "unit": t["unit"], "date": t["first_stockout"],
+                     "first_shortfall": next(r["shortfall"] for r in t["days"] if r["shortfall"]),
+                     "total_shortfall": t["total_shortfall"]}
+                    for ing, t in timeline.get("ingredients", {}).items() if t["first_stockout"]],
+                   key=lambda r: (r["date"], r["ingredient"]))
+    deadlines = {r["ingredient"]: r["date"] for r in risks}
+    questions = sorted(result["open_questions"], key=lambda q: (
+        deadlines.get(store.offer(q["offer_id"])["ingredient"], "9999"), q["resolved_by"] != "supplier", q["offer_id"]))
+    recommended = next((b for b in result["baskets"] if b["kind"] == result["recommended_kind"]), None)
+    return {"input_version": input_version(store), "week_id": store.week["id"], "risks": risks,
+            "nothing_to_buy": not any(n["required"] > 0 for n in result["needs"].values()),
+            "timing_known": result["timing_known"], "recommended": recommended,
+            "priority_order": result["priority_order"], "budget_conflict": result["budget_conflict"],
+            "remaining_budget_eur": result["remaining_budget_eur"], "questions": questions,
+            "actions": [{"kind": "review_basket", "href": "/restaurants/basket"},
+                        {"kind": "review_questions", "href": "/restaurants/basket#questions"},
+                        {"kind": "edit_week", "href": "/restaurants?edit=week#planning"}],
+            "purchase_orders": store.data.get("purchase_orders", []), "spending": orders.spending(store),
+            "clarifications": store.clarifications, "excluded": result["excluded"],
+            "comparisons": {ing: calc.compare_prices(store, ing) for ing in store.profile["ingredients"]}}
+
+
+def validate_explanation(raw: str, store: Store, decision: dict) -> dict:
+    """Reject invented references, outcomes, or a conflicting recommended basket.
+
+    Arbitrary model prose is never used as a supplier claim or a source of numbers.
+    """
+    try:
+        text = raw.strip()
+        if text.startswith("```"):
+            text = text.split("\n", 1)[1].rsplit("```", 1)[0]
+        parsed = Explanation.model_validate(json.loads(text))
+        selected = decision["recommended"]
+        allowed = {selected["kind"], *selected["also"]} if selected else {None}
+        if parsed.recommended_kind not in allowed:
+            raise ValueError("recommendation does not match the calculated decision")
+        if any(q["resolved_by"] == "supplier" and not q["drafted"] for q in decision["questions"]):
+            raise ValueError("supplier questions still need drafts")
+        refs = []
+        for ref in parsed.evidence:
+            ev = calc.check_evidence(store, ref.offer_id)
+            match = next((r for r in [*ev["mandatory"], *ev["negotiable"]]
+                          if r["field"] == ref.field and r["outcome"] == ref.outcome), None)
+            if match is None:
+                raise ValueError("evidence does not match the recorded rule outcome")
+            refs.append({**match, "offer_id": ref.offer_id, "product": store.offer(ref.offer_id)["product"]})
+        return {"validated": True, "focus": parsed.focus, "evidence": refs}
+    except (ValidationError, ValueError, KeyError, TypeError, StopIteration):
+        return {"validated": False, "focus": "recommendation", "evidence": []}

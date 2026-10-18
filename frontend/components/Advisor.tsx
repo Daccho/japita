@@ -4,11 +4,11 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Loader2, RotateCcw, Sparkles, Store, Truck, X } from "lucide-react";
-import { errorText, type WeekView } from "@/lib/api";
+import { Loader2, RotateCcw, Sparkles, X } from "lucide-react";
+import { errorText } from "@/lib/api";
 import { useI18n, type Key } from "@/lib/i18n";
 import { useWorkspace } from "@/components/workspace";
-import { useView } from "@/components/live";
+import PurchaseBrief from "@/components/PurchaseBrief";
 
 const POS_KEY = "japita.advisor.position";
 const EXAMPLES: Key[] = ["adv.q1", "adv.q2", "adv.q3"];
@@ -22,12 +22,10 @@ export function Markdown({ text }: { text: string }) {
 }
 
 function AdvisorBody() {
-  const { t, lang } = useI18n();
-  const { advisor, ask, setAdvisorOpen } = useWorkspace();
+  const { t } = useI18n();
+  const { advisor, ask, setAdvisorOpen, data, conversation } = useWorkspace();
   const [question, setQuestion] = useState("");
   const [example, setExample] = useState(0);
-  const { data: week } = useView<WeekView>(`/views/week?lang=${lang}`, null);
-  const b = week?.suggested;
   const drafts = advisor.result?.drafts ?? [];
 
   // The placeholder cycles through example questions; Tab on an empty box takes the one shown.
@@ -45,24 +43,7 @@ function AdvisorBody() {
 
   return (
     <div className="jp-advisor" aria-label={t("adv.title")}>
-      {b && (
-        <div className="jp-recommendation" style={{ borderTop: 0, paddingTop: 0 }}>
-          <span className="jp-kicker">{t("adv.suggested")}</span>
-          <h3 style={{ marginTop: 8 }}>{b.title}</h3>
-          <div className="jp-price jp-number">{b.total_text}</div>
-          <div className="jp-proof">
-            <Truck aria-hidden />
-            <span>{b.timing_text}</span>
-          </div>
-          <div className="jp-proof">
-            <Store aria-hidden />
-            <span>{[...new Set(b.lines.map((l) => l.supplier))].join(" · ")}</span>
-          </div>
-          <Link href={b.action.href} className="jp-action jp-primary" style={{ width: "100%", marginTop: 13 }} onClick={() => setAdvisorOpen(false)}>
-            {b.action.label}
-          </Link>
-        </div>
-      )}
+      <PurchaseBrief />
 
       <div className="jp-recommendation jp-advisor-ask" style={{ marginTop: 16 }}>
         <span className="jp-kicker">{t("adv.ask")}</span>
@@ -138,7 +119,10 @@ function AdvisorBody() {
         {advisor.result && !advisor.running && (
           <div style={{ marginTop: 14 }}>
             {advisor.question && <p style={{ fontStyle: "italic" }}>“{advisor.question}”</p>}
-            <Markdown text={advisor.result.answer} />
+            {(advisor.result.stale || advisor.result.input_version !== data?.brief.input_version) && <p className="jp-error">{t("adv.stale")}</p>}
+            {!advisor.result.explanation.validated && <p className="jp-section-note">{t("adv.unverified")}</p>}
+            {advisor.result.explanation.evidence.map((item, i) => <p key={i}>{item.product} · {item.field}: {String(item.value)} · {item.outcome}<br /><small>{item.source_text}</small></p>)}
+            {conversation.length > 1 && <details><summary>{t("adv.previous")}</summary>{conversation.slice(0,-1).map((turn,i)=><p key={i}>{turn.question}</p>)}</details>}
             {drafts.length > 0 && (
               <div className="jp-quote">
                 <h3>{t("adv.drafted")}</h3>

@@ -230,7 +230,7 @@ export function AppHeader({
   menuLabel?: string;
   who?: SidebarAccount | null;
 }) {
-  const logo = <Image className="jp-brand-logo" src="/japita-logo-ajitama-flat.svg" alt="Japita" width={128} height={92} priority />;
+  const logo = <Image className="jp-brand-logo" src="/japita-logo-jp.webp" alt="Japita" width={1024} height={302} sizes="(max-width: 480px) 144px, 160px" priority />;
   const hasMenu = !!nav?.length;
   return (
     <header className="jp-top">

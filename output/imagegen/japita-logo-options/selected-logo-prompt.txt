@@ -1,0 +1,13 @@
+Mode: built-in image_gen edit. Transparent background: true.
+User selection: attached JP seal combined with the lettering from option 04; authorized for the app.
+Canonical generated PNG: mockup/assets/japita-logo-jp.png
+
+Use case: compositing.
+Asset type: finished Japita app logo, horizontal lockup.
+Input image 1: the user's approved JP symbol, the exact symbol to preserve. Remove only its dark outer square backdrop; preserve the rounded yolk-yellow seal, black interlocking J/P shapes, red wedge, proportions and distinctive contours.
+Input image 2: option 04 from the generated concepts. Use its EXACT Japita wordmark from the right side as the lettering source, preserving the existing chunky rounded warm-charcoal letter shapes, case, kerning and circular i dot. Do not substitute a font or redesign the text.
+Primary request: combine the symbol from image 1 on the left with the lettering from image 2 on the right, as one professional horizontal logo for Japita's app header.
+Text (verbatim): "Japita", exactly once. J-a-p-i-t-a.
+Composition: symbol and word optically aligned, modest gap, icon about 1.2 times the wordmark's visible capital height. Tight but safe transparent margin around the entire finished horizontal lockup. Keep the reference's friendly bold Ajitama style.
+Background: genuine alpha transparency everywhere outside the seal and lettering, including letter counters. The black corner backdrop around input 1 must disappear. Wordmark stays warm charcoal so it reads on white and on the app's yellow header.
+Constraints: retain the exact selected symbol and exact option-04 lettering. No new icon, tagline, border, plate, decoration, shadow, mockup or watermark. Return one finished logo only.

@@ -13,6 +13,7 @@ import Clarifications from "@/components/Clarifications";
 import { InfoTip } from "@/components/InfoTip";
 import ProductDrawing from "@/components/ProductDrawing";
 import ImportChecks from "@/components/ImportChecks";
+import PurchaseBrief from "@/components/PurchaseBrief";
 import Loading from "@/components/pages/Loading";
 
 // Order plans: compare the plans the server calculated, approve one, then send the supplier orders.
@@ -63,6 +64,7 @@ export default function Basket({ initial, initialPlan, questions }: { initial: B
 
   return (
     <>
+      <PurchaseBrief />
       <PageHeader
         kicker={L("bk.kicker")}
         title={L("bk.title")}

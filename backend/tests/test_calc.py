@@ -89,8 +89,10 @@ def test_profile_changes_recommendation():
 
 def test_median_only_with_three_offers():
     soy = calc.compare_prices(Store.load(FIXTURE), "soy_sauce")["groups"][0]
-    assert soy["count"] == 4 and soy["median_eur"] is not None
+    assert soy["count"] == 3 and soy["median_eur"] is not None  # Japanese honjozo cohort
+    assert soy["cohort"]["origin_country"] == "JP"
+    assert calc.compare_prices(Store.load(FIXTURE), "soy_sauce")["groups"][1]["count"] == 1  # NL is separate
     kikurage = calc.compare_prices(Store.load(FIXTURE), "kikurage")["groups"][0]
-    assert kikurage["count"] == 3 and kikurage["median_eur"] is not None
+    assert kikurage["count"] == 1 and kikurage["median_eur"] is None  # origin and cut differ
     fresh = calc.compare_prices(Store.load(FIXTURE), "noodles")["groups"][0]
     assert fresh["comparison_group"] == "noodles:fresh_hakata" and fresh["median_eur"] is None

@@ -31,24 +31,14 @@ def _week_needs(store: Store) -> dict:
 
 
 def _search_catalog(store: Store, ingredient: str | None = None, relationship: str | None = None,
-                    query: str | None = None) -> dict:
-    results = []
-    for o in store.offers:
-        sup = store.suppliers[o["supplier_id"]]
-        if ingredient and o["ingredient"] != ingredient:
-            continue
-        if relationship and sup["relationship"] != relationship:
-            continue
-        if query and query.lower() not in (o["product"] + " " + sup["name"]).lower():
-            continue
-        results.append({
-            "offer_id": o["id"], "ingredient": o["ingredient"], "product": o["product"],
-            "supplier": sup["name"], "relationship": sup["relationship"],
-            "origin_route": o["origin_route"], "price_eur": o["price_eur"],
-            "pack_size": o["pack_size"], "unit": o["unit"],
-        })
-    return {"count": len(results), "offers": results,
-            "note": "Bounded fictional demo catalog; not exhaustive supplier coverage."}
+                    query: str | None = None, supplier_country: str | None = None,
+                    product_origin: str | None = None, dispatch_country: str | None = None,
+                    fresh: bool | None = None, needed_by: str | None = None) -> dict:
+    from .catalog import Criteria, search
+    result = search(store, Criteria(ingredient=ingredient, relationship=relationship, name=query,
+                                   supplier_country=supplier_country, product_origin=product_origin,
+                                   dispatch_country=dispatch_country, fresh=fresh, needed_by=needed_by))
+    return {**result, "count": len(result["offers"])}
 
 
 def _offer_detail(store: Store, offer_id: str) -> dict:
@@ -77,6 +67,12 @@ def _compare_prices(store: Store, ingredient: str) -> dict:
     return calc.compare_prices(store, ingredient)
 
 
+def _purchase_brief(store: Store) -> dict:
+    from .advice import brief
+    return {**brief(store), "screen_context": getattr(store, "advisor_context", {}),
+            "menu": store.recipe.get("menu_items", [])}
+
+
 def _draft_clarification(store: Store, offer_id: str, field: str, text_ja: str, reason: str,
                          text_it: str = "", text_en: str = "", reason_it: str = "") -> dict:
     translations = {k: v for k, v in (("it", text_it), ("en", text_en)) if v}
@@ -92,6 +88,11 @@ def _p(props: dict, required: list[str] | None = None) -> dict:
 INGREDIENT = {"type": "string", "enum": ["noodles", "soy_sauce", "kikurage"]}
 
 TOOLS: dict[str, tuple[Callable[..., Any], str, dict]] = {
+    "get_purchase_brief": (
+        _purchase_brief,
+        "Current decision, sorted stock risks, recommended basket, priorities, open questions, order/request status, spending and menu. Call before giving a final answer.",
+        _p({}),
+    ),
     "get_restaurant_profile": (
         _profile,
         "Restaurant concept, budget, priorities, accepted delivery days, and per-ingredient mandatory requirements and negotiable preferences.",
@@ -107,7 +108,11 @@ TOOLS: dict[str, tuple[Callable[..., Any], str, dict]] = {
         "Search offers from existing and candidate suppliers in the bounded catalog.",
         _p({"ingredient": INGREDIENT,
             "relationship": {"type": "string", "enum": ["existing", "candidate"]},
-            "query": {"type": "string", "description": "Substring of product or supplier name"}}),
+            "query": {"type": "string", "description": "Substring of product or supplier name"},
+            "supplier_country": {"type": "string", "description": "Supplier location, ISO alpha-2"},
+            "dispatch_country": {"type": "string", "description": "Dispatch location, ISO alpha-2"},
+            "product_origin": {"type": "string", "description": "Product origin, ISO alpha-2"},
+            "fresh": {"type": "boolean"}, "needed_by": {"type": "string", "description": "ISO date"}}),
     ),
     "get_offer_detail": (
         _offer_detail,

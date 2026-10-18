@@ -10,6 +10,7 @@ import PageHeader from "@/components/PageHeader";
 import Orders from "@/components/Orders";
 import DayStrip from "@/components/DayStrip";
 import { Markdown } from "@/components/Advisor";
+import WeekInputs from "@/components/WeekInputs";
 import Loading from "@/components/pages/Loading";
 
 function WeeklyCheck() {
@@ -60,6 +61,7 @@ export default function Week({ initial }: { initial: WeekView | null }) {
   return (
     <>
       <PageHeader kicker={v.kicker} title={L("wk.title")} sub={v.sub} actions={reviewBasket(t("review.basket"))} />
+      <WeekInputs />
       <div className="jp-columns">
         <div className="jp-stack">
           {v.approval_notice && (

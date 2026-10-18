@@ -1,4 +1,5 @@
 """Export the read-only illustration review from the single shared SVG library."""
+import base64
 import html
 from pathlib import Path
 import sys
@@ -31,10 +32,10 @@ css = """
 *{box-sizing:border-box}body{margin:0;padding:32px;background:#F5F4F0;color:var(--aj-ink);font:15px/1.5 system-ui,sans-serif}main{max-width:1200px;margin:auto}header{border-bottom:2px solid var(--aj-ink);padding-bottom:20px}h1{font-size:32px;margin:4px 0}h2{margin:32px 0 12px}h3{font-size:15px;margin:0}p{color:#625B52}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:20px}article{padding:18px 0;border-bottom:1px solid #D8D2C8}.sizes{display:flex;align-items:end;justify-content:space-evenly;gap:28px;min-height:180px}figure{margin:16px 0 0;text-align:center}svg{display:block;overflow:visible;margin:0 auto 12px}.small svg{width:48px;height:48px;transform:scale(1.2)}.large svg{width:128px;height:128px}.sizes figcaption{font-size:12px;color:#625B52}article p{font-size:12px;overflow-wrap:anywhere}@media(max-width:480px){body{padding:20px}.grid{grid-template-columns:1fr}}
 """
 css += '.revised{display:inline-block;margin-left:8px;padding:1px 5px;border:1px solid #D8D2C8;border-radius:4px;font:500 11px/1.4 system-ui,sans-serif;color:#625B52}'
-logo = (ROOT / 'mockup/assets/japita-logo-ajitama-flat.svg').read_text(encoding="utf-8")
-logo = logo.replace('<svg ', '<svg role="img" aria-label="Japita" ')
+logo_data = base64.b64encode((ROOT / 'mockup/assets/japita-logo-jp.webp').read_bytes()).decode('ascii')
+logo = '<img src="data:image/webp;base64,' + logo_data + '" alt="Japita" width="160" height="48" style="object-fit:contain">'
 revised_count = sum(bool(d.get('revised')) for d in manifest['drawings'])
-document = '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'unsafe-inline\'"><title>Japita product drawings review</title><style>' + css + '</style><main><header>' + logo + '<p>Japita · illustration review</p><h1>Product drawing library</h1><p>' + str(len(manifest["drawings"])) + ' drawings · ' + str(revised_count) + ' revised · 48px and 128px. Approved product drawings are active in the workspace.</p></header>' + ''.join(sections) + '</main></html>\n'
+document = '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'unsafe-inline\'; img-src data:"><title>Japita product drawings review</title><style>' + css + '</style><main><header>' + logo + '<p>Japita · illustration review</p><h1>Product drawing library</h1><p>' + str(len(manifest["drawings"])) + ' drawings · ' + str(revised_count) + ' revised · 48px and 128px. Approved product drawings are active in the workspace.</p></header>' + ''.join(sections) + '</main></html>\n'
 target = ROOT / 'mockup/drawings-preview.html'
 target.write_text(document, encoding="utf-8")
 print(target)

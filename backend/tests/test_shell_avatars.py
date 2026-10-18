@@ -40,7 +40,8 @@ def test_logo_url_validation(store):
     assert e.value.code == "invalid_url"
 
 
-def test_shell_view(store):
+def test_shell_view(covered_store):
+    store = covered_store
     v = views.shell_view(store, "en", Money("en"))
     assert v["account"] == {"name": "Kumo Ramen Milano", "avatar": {"url": "/kumo-demo-logo.webp", "initials": "KR"},
                             "place_text": "42 seats · Milan"}
@@ -76,7 +77,8 @@ def test_supplier_logo_goes_through_the_profile_proposal(store):
         portal.propose_profile(store, "S3", {"logo_url": "javascript:alert(1)"})
 
 
-def test_plan_lines_and_orders_carry_drawing_and_submit_key(store):
+def test_plan_lines_and_orders_carry_drawing_and_submit_key(covered_store):
+    store = covered_store
     from japita import orders
     v = views.basket_view(store, "en", Money("en"), "baseline")
     assert all(ln["drawing"] for ln in v["selected"]["lines"])
