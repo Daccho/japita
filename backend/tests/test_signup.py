@@ -41,6 +41,7 @@ def signup(c, **body):
 
 
 def test_new_restaurant_gets_its_own_empty_workspace(app):
+    demo_state = repo.load_state(repo.DEFAULT_WORKSPACE)
     with client(app) as c:
         r = signup(c)
         assert r.status_code == 200 and r.json()["role"] == "restaurant"
@@ -53,7 +54,7 @@ def test_new_restaurant_gets_its_own_empty_workspace(app):
             assert c.get(path).status_code == 200, path
         # Writes stay in the new workspace.
         assert c.put("/menu", json={"items": []}, headers={"origin": APP}).status_code == 200
-    assert len(repo.load_state(repo.DEFAULT_WORKSPACE)["offers"]) == 10
+    assert repo.load_state(repo.DEFAULT_WORKSPACE) == demo_state
 
 
 def test_new_restaurant_cannot_see_the_demo_workspace(app):

@@ -44,7 +44,7 @@ class NewProduct(BaseModel):
     price_eur: float | None = Field(default=None, ge=0)
     price: float | None = Field(default=None, ge=0, description="Price in `currency`; converted to EUR on submission")
     currency: str | None = Field(default=None, description="EUR, JPY or USD")
-    origin_route: Literal["japan", "europe", "italy"] = "japan"
+    origin_route: Literal["japan", "europe", "italy", "unknown"] = "unknown"
     attributes: dict[str, Any] = {}
     note_ja: str | None = Field(default=None, max_length=1000)
 

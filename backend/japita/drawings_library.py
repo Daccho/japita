@@ -1,4 +1,4 @@
-"""Read-only, versioned starter drawings. Automatic drawing generation is a later phase."""
+"""Read-only, versioned ingredient drawings and multilingual names."""
 
 import json
 import math
@@ -123,6 +123,20 @@ def ingredient_key(name: str) -> str:
         if drawing["ingredient"] != "generic" and query in {normalize(a) for a in drawing["aliases"]}:
             return drawing["ingredient"]
     return query.replace(" ", "_")
+
+
+@lru_cache(maxsize=1)
+def ingredient_names() -> dict:
+    """One shared vocabulary for illustrations, catalog searches and translated labels."""
+    names = {}
+    for drawing in library()["drawings"]:
+        key = drawing["ingredient"]
+        if key == "generic":
+            continue
+        entry = names.setdefault(key, {"labels": {}, "aliases": []})
+        entry["labels"].update(drawing.get("labels", {}))
+        entry["aliases"] = list(dict.fromkeys([*entry["aliases"], *drawing["aliases"], key.replace("_", " ")]))
+    return names
 
 
 def drawing_svg(key: str) -> str:

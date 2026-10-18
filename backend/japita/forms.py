@@ -1,9 +1,15 @@
 """Typed form fields shared by the API and the supplier portal: labels, input types, and value coercion."""
 
 from typing import Any
+from .drawings_library import ingredient_names
 
 INGREDIENT_JA = {"noodles": "麺", "soy_sauce": "醤油", "kikurage": "きくらげ"}
 INGREDIENT_EN = {"noodles": "Noodles", "soy_sauce": "Soy sauce", "kikurage": "Kikurage (wood ear)"}
+for _key, _names in ingredient_names().items():
+    if _names["labels"].get("ja"):
+        INGREDIENT_JA.setdefault(_key, _names["labels"]["ja"])
+    if _names["labels"].get("en"):
+        INGREDIENT_EN.setdefault(_key, _names["labels"]["en"])
 
 # English labels for the supplier portal's language toggle.
 FIELD_LABEL_EN = {

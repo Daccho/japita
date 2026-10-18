@@ -86,17 +86,17 @@ def test_aliases_and_states_reuse_the_same_library_base(database, monkeypatch):
 
 
 def test_unknown_languages_share_one_generated_ingredient_form(database, monkeypatch):
-    identified = json.dumps({"ingredient": "fennel", "form": "bag", "state": "fresh"})
+    identified = json.dumps({"ingredient": "oca_tuber", "form": "bag", "state": "fresh"})
     calls = fake_model(monkeypatch, [identified, drawing_svg("generic-bag"), identified])
-    drawings.register("finocchio 1 kg", schedule=False)
+    drawings.register("oca peruviana 1 kg", schedule=False)
     process_all()
-    drawings.register("fennel 500 g", schedule=False)
+    drawings.register("oca tuber 500 g", schedule=False)
     process_all()
     assert len(calls) == 2  # the stored canonical alias avoids a second identification
     assert len(cache.assets()) == 1
-    assert drawings.reference("finocchio 1 kg")["key"] == drawings.reference("fennel 500 g")["key"]
-    assert drawings.reference("fennel 500 g")["source"] == "generated"
-    assert drawings.reference("finocchio 1 kg")["state"] == "fresh"
+    assert drawings.reference("oca peruviana 1 kg")["key"] == drawings.reference("oca tuber 500 g")["key"]
+    assert drawings.reference("oca tuber 500 g")["source"] == "generated"
+    assert drawings.reference("oca peruviana 1 kg")["state"] == "fresh"
     state = repo.load_state()
     repo.save_state(state)
     repo.seed(Path(__file__).parent / "fixtures/kumo.json")
@@ -214,14 +214,14 @@ def test_menu_creation_queues_unknown_food_without_waiting_for_a_model(database,
     with TestClient(app) as client:
         login(client)
         dishes = client.get("/menu").json()["items"]
-        dishes.append({"id": "new_salad", "name": "Fennel salad", "group": "sides", "ingredients": ["Fennel"]})
+        dishes.append({"id": "new_salad", "name": "Oca salad", "group": "sides", "ingredients": ["Oca tuber"]})
         assert client.put("/menu", json={"items": dishes}).status_code == 200
         assert len(cache.pending()) == 1
         snapshot = cache.matches()
         state = client.get("/state").json()
         assert cache.matches() == snapshot  # reads do not create more work
-        fennel = next(i for i in state["menu"]["ingredients"] if i["name"] == "Fennel")
-        assert fennel["drawing"]["source"] == "fallback"
+        oca = next(i for i in state["menu"]["ingredients"] if i["name"] == "Oca tuber")
+        assert oca["drawing"]["source"] == "fallback"
 
 
 def test_background_worker_does_not_block_product_save(database, monkeypatch):

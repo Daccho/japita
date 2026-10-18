@@ -27,6 +27,8 @@ Status: deployed. Web app https://japita.vercel.app, API https://japita-api.onre
    ```bash
    curl -X POST https://<api>/state/seed -H "X-Admin-Key: <ADMIN_KEY>"
    ```
+   Later deployments add missing approved catalog-expansion records to the established default Kumo workspace automatically when `DEMO_ACCOUNTS=1`; they do not reset owner edits or populate new restaurant workspaces. The additive import and verification are documented in [product drawings](product-drawings.md#expanded-fictional-product-catalog).
+
    The demo accounts are created on startup because `render.yaml` sets `DEMO_ACCOUNTS=1` (fictional data only; the password equals the login ID):
 
    | Login ID | Side | Opens |

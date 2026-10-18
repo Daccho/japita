@@ -2,6 +2,7 @@
 import copy
 import hashlib
 import re
+from functools import lru_cache
 
 from .drawings_library import ingredient_key, library, normalize
 
@@ -26,11 +27,29 @@ STATE_WORDS = {"frozen": ["frozen", "surgelato", "surgelati", "congelato", "cong
                "dried": ["dried", "dry", "secco", "secca", "secchi", "essiccato", "乾燥"]}
 
 
-def contains(text, alias):
+@lru_cache(maxsize=2048)
+def _phrase(alias):
     alias = normalize(alias)
     if any("\u3040" <= char <= "\u9fff" for char in alias) and len(alias) > 1:
-        return alias in text
-    return bool(re.search(r"(?<!\w)" + re.escape(alias) + r"(?!\w)", text))
+        return alias, None
+    return alias, re.compile(r"(?<!\w)" + re.escape(alias) + r"(?!\w)")
+
+
+def contains(text, alias):
+    alias, pattern = _phrase(alias)
+    return alias in text if pattern is None else bool(pattern.search(text))
+
+
+@lru_cache(maxsize=1)
+def _ingredient_aliases():
+    return sorted({(normalize(alias), d["ingredient"]) for d in library()["drawings"]
+                   if d["ingredient"] != "generic" for alias in d["aliases"]},
+                  key=lambda pair: (-len(pair[0]), pair[0], pair[1]))
+
+
+@lru_cache(maxsize=4096)
+def _ingredient_from_text(text):
+    return next((ingredient for alias, ingredient in _ingredient_aliases() if contains(text, alias)), None)
 
 
 def identify(name: str, hint: str = "", attributes: dict | None = None) -> dict:
@@ -39,10 +58,7 @@ def identify(name: str, hint: str = "", attributes: dict | None = None) -> dict:
     state = next((state for state, words in STATE_WORDS.items() if any(contains(text, w) for w in words)), "none")
     if state == "none" and attrs.get("fresh") is True:
         state = "fresh"
-    candidates = [(normalize(alias), drawing["ingredient"]) for drawing in library()["drawings"]
-                  if drawing["ingredient"] != "generic" for alias in drawing["aliases"]]
-    ingredient = next((ing for alias, ing in sorted(candidates, key=lambda x: len(x[0]), reverse=True)
-                       if contains(text, alias)), None)
+    ingredient = _ingredient_from_text(text)
     known = {d["ingredient"] for d in library()["drawings"] if d["ingredient"] != "generic"}
     if ingredient is None and hint:
         candidate = ingredient_key(hint)

@@ -19,7 +19,8 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 from dotenv import load_dotenv
-from sqlalchemy import JSON, Column, DateTime, Integer, String, UniqueConstraint, create_engine, delete, select
+from sqlalchemy import (JSON, Boolean, Column, DateTime, Integer, String, UniqueConstraint, create_engine, delete,
+                        func, select, update)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Session
 
@@ -109,6 +110,17 @@ class DrawingMatch(Base):
     version = Column(Integer, nullable=False, default=0)
     data = Column(JsonType, nullable=False)
     updated_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+
+
+class RuleSet(Base):
+    """One version of the import rule set (rules.py). Exactly one row is active; restaurant state saves and seeding
+    never touch this table."""
+    __tablename__ = "import_rule_sets"
+    version = Column(Integer, primary_key=True, autoincrement=False)
+    active = Column(Boolean, nullable=False, default=False, index=True)
+    origin = Column(String, nullable=False)  # "bundled" or the imported file name
+    data = Column(JsonType, nullable=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
 
 
 _engine = None
@@ -319,6 +331,39 @@ def add_directory_supplier(supplier: dict) -> dict:
     with Session(engine()) as s, s.begin():
         s.add(Record(workspace=DIRECTORY, kind="supplier", id=supplier["id"], data=supplier))
     return supplier
+
+
+def active_rule_set() -> dict | None:
+    with Session(engine()) as s:
+        row = s.scalar(select(RuleSet).where(RuleSet.active.is_(True)).order_by(RuleSet.version.desc()).limit(1))
+        return row.data if row else None
+
+
+def add_rule_set(data: dict, origin: str, version: int | None = None) -> int:
+    """Store `data` as the next version (or as `version`) and make it the only active one. Returns the version."""
+    with Session(engine()) as s, s.begin():
+        if version is None:
+            version = (s.scalar(select(func.max(RuleSet.version))) or 0) + 1
+        s.execute(update(RuleSet).values(active=False))
+        s.add(RuleSet(version=version, active=True, origin=origin, data={**data, "version": version}))
+    return version
+
+
+def activate_rule_set(version: int) -> bool:
+    """Make a stored version the active one; False when there is no such version."""
+    with Session(engine()) as s, s.begin():
+        if s.get(RuleSet, version) is None:
+            return False
+        s.execute(update(RuleSet).values(active=RuleSet.version == version))
+    return True
+
+
+def rule_sets() -> list[dict]:
+    with Session(engine()) as s:
+        rows = s.scalars(select(RuleSet).order_by(RuleSet.version.desc()))
+        return [{"version": r.version, "active": r.active, "origin": r.origin, "created_at": r.created_at.isoformat(),
+                 "accessed": r.data.get("accessed"), "rule_count": len(r.data.get("rules", [])),
+                 "rule_ids": [x.get("id") for x in r.data.get("rules", [])]} for r in rows]
 
 
 def log_calls(calls, purpose: str) -> None:

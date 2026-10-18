@@ -69,7 +69,7 @@ def test_invalid_menu_does_not_replace_saved_menu(client):
 
 def test_library_review_is_read_only_and_does_not_require_inference(client):
     response = client.get("/drawings")
-    assert response.status_code == 200 and len(response.json()["drawings"]) == 59
+    assert response.status_code == 200 and len(response.json()["drawings"]) == 178
     svg = client.get("/drawings/soy-sauce-tin.svg")
     assert svg.status_code == 200 and "image/svg+xml" in svg.headers["content-type"]
     assert client.get("/drawings/missing.svg").status_code == 404

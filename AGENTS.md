@@ -104,6 +104,8 @@ Full awards table and checklist: `docs/hackathon.md`.
 
 Record important decisions here (date — decision — reason) so every agent shares the same context.
 
+- 2026-10-18 — User approved expanding both ingredient illustrations and the fictional supplier catalog across cuisines, then reviewed and approved all 119 additions and requested pulling and pushing the repo. No new browsing interface was requested. Multilingual matching, additive import and evidence limits are documented in `docs/product-drawings.md`.
+
 - 2026-10-18 — User selected their attached JP seal combined with option 04's lettering and authorized applying it to the app. Current assets, responsive sizing, generation prompt and preserved earlier variants are documented in `mockup/assets/README.md`.
 
 - 2026-10-17 — Created AGENTS.md as shared memory for Claude Code and Codex.
@@ -138,3 +140,4 @@ Record important decisions here (date — decision — reason) so every agent sh
 - 2026-10-18 — Long model calls (`POST /agent/ask`, `POST /evolus/weekly-intake`) became in-memory background jobs polled through `GET /jobs/{id}` (hard limit 300 s, kept 30 min), so they do not depend on the Vercel proxy timeout. All errors use `{"error": {"code", "message"}}` with stable codes (`backend/japita/errors.py`); the restaurant app (`lib/api.ts` + i18n) and supplier portal (`lib/portal.ts`) map codes to translated messages and retry quietly while the API wakes up.
 - 2026-10-18 — User authorized all five assessed advisor improvements. The connected implementation and remaining evidence/data limits are documented in `docs/advisor.md`; the standalone mockup is unchanged.
 - 2026-10-18 — Public sign-up at the user's request, replacing CLI-only accounts: the sign-in page can create a restaurant or supplier account (`POST /auth/signup`). Each new restaurant gets its own empty workspace (records keyed by workspace; the demo accounts share `default`). A new supplier is stored once in a shared directory and appears in every workspace as an unconfirmed candidate (no terms, not orderable); a supplier session works with one restaurant at a time, chosen in the portal header (`japita_supplier_restaurant` cookie, checked on the server). Portal and request link tokens are resolved to the workspace that holds them. See `backend/japita/repo.py`.
+- 2026-10-18 — Import rules are versioned in the database and replaced by an operator importing a CSV or JSON file (`/admin/import-rules`, `python -m japita.rules`), with strict validation, dry-run diff and rollback; seeding keeps rule versions. A person verifies each official source before import; the app never fetches legal texts and Gemma never decides rule outcomes. See `docs/compliance.md`.

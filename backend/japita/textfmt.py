@@ -77,6 +77,10 @@ def label(lang: str, prefix: str, key: str) -> str:
     """Catalog label such as ing.noodles; unknown keys read as the key with spaces."""
     full = f"{prefix}.{key}"
     s = t(lang, full)
+    if s == full and prefix == "ing":
+        from .drawings_library import ingredient_names
+        names = ingredient_names().get(key, {}).get("labels", {})
+        return names.get(lang) or names.get("en") or key.replace("_", " ")
     return key.replace("_", " ") if s == full else s
 
 
@@ -150,6 +154,11 @@ def day(iso: str | None, lang: str) -> str:
     if lang == "ja":
         return f"{d.month}月{d.day}日({JA_WEEKDAYS[d.weekday()]})"
     return format_date(d, "EEE d MMM", locale="it" if lang == "it" else "en_GB")
+
+
+def long_day(iso: str, lang: str) -> str:
+    """A date with its year: "18 ott 2026" / "18 Oct 2026"."""
+    return format_date(_d(iso), "d MMM y", locale="it" if lang == "it" else "en_GB")
 
 
 def portal_day(iso: str | None, lang: str) -> str:

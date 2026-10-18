@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "viewBox": "0 0 64 64",
   "strokeWidth": 2.1,
   "palette": {
@@ -1170,6 +1170,2734 @@
       "group": "Packaging fallbacks",
       "source": "library",
       "reference": false
+    },
+    {
+      "key": "carrots",
+      "name": "Carrot",
+      "ingredient": "carrots",
+      "form": "none",
+      "state": "none",
+      "file": "carrots.svg",
+      "aliases": [
+        "carrot",
+        "carrots",
+        "carota",
+        "にんじん",
+        "carote"
+      ],
+      "labels": {
+        "en": "Carrot",
+        "it": "Carota",
+        "ja": "にんじん"
+      },
+      "group": "Vegetables",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "onions",
+      "name": "Onion",
+      "ingredient": "onions",
+      "form": "none",
+      "state": "none",
+      "file": "onions.svg",
+      "aliases": [
+        "onion",
+        "onions",
+        "cipolla",
+        "玉ねぎ",
+        "cipolle",
+        "たまねぎ"
+      ],
+      "labels": {
+        "en": "Onion",
+        "it": "Cipolla",
+        "ja": "玉ねぎ"
+      },
+      "group": "Vegetables",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "potatoes",
+      "name": "Potato",
+      "ingredient": "potatoes",
+      "form": "none",
+      "state": "none",
+      "file": "potatoes.svg",
+      "aliases": [
+        "potato",
+        "potatoes",
+        "patata",
+        "じゃがいも",
+        "patate"
+      ],
+      "labels": {
+        "en": "Potato",
+        "it": "Patata",
+        "ja": "じゃがいも"
+      },
+      "group": "Vegetables",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "sweet-potatoes",
+      "name": "Sweet potato",
+      "ingredient": "sweet_potatoes",
+      "form": "none",
+      "state": "none",
+      "file": "sweet-potatoes.svg",
+      "aliases": [
+        "sweet potato",
+        "sweet potatoes",
+        "patata dolce",
+        "さつまいも",
+        "patate dolci"
+      ],
+      "labels": {
+        "en": "Sweet potato",
+        "it": "Patata dolce",
+        "ja": "さつまいも"
+      },
+      "group": "Vegetables",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "daikon",
+      "name": "Daikon",
+      "ingredient": "daikon",
+      "form": "none",
+      "state": "none",
+      "file": "daikon.svg",
+      "aliases": [
+        "daikon",
+        "大根",
+        "daikon radish"
+      ],
+      "labels": {
+        "en": "Daikon",
+        "it": "Daikon",
+        "ja": "大根"
+      },
+      "group": "Vegetables",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "radishes",
+      "name": "Radish",
+      "ingredient": "radishes",
+      "form": "none",
+      "state": "none",
+      "file": "radishes.svg",
+      "aliases": [
+        "radish",
+        "radishes",
+        "ravanello",
+        "ラディッシュ",
+        "ravanelli"
+      ],
+      "labels": {
+        "en": "Radish",
+        "it": "Ravanello",
+        "ja": "ラディッシュ"
+      },
+      "group": "Vegetables",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "beetroot",
+      "name": "Beetroot",
+      "ingredient": "beetroot",
+      "form": "none",
+      "state": "none",
+      "file": "beetroot.svg",
+      "aliases": [
+        "beetroot",
+        "barbabietola",
+        "ビーツ"
+      ],
+      "labels": {
+        "en": "Beetroot",
+        "it": "Barbabietola",
+        "ja": "ビーツ"
+      },
+      "group": "Vegetables",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "cucumber",
+      "name": "Cucumber",
+      "ingredient": "cucumber",
+      "form": "none",
+      "state": "none",
+      "file": "cucumber.svg",
+      "aliases": [
+        "cucumber",
+        "cetriolo",
+        "きゅうり",
+        "cucumbers",
+        "cetrioli"
+      ],
+      "labels": {
+        "en": "Cucumber",
+        "it": "Cetriolo",
+        "ja": "きゅうり"
+      },
+      "group": "Vegetables",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "zucchini",
+      "name": "Zucchini",
+      "ingredient": "zucchini",
+      "form": "none",
+      "state": "none",
+      "file": "zucchini.svg",
+      "aliases": [
+        "zucchini",
+        "zucchina",
+        "ズッキーニ",
+        "courgette",
+        "courgettes",
+        "zucchine"
+      ],
+      "labels": {
+        "en": "Zucchini",
+        "it": "Zucchina",
+        "ja": "ズッキーニ"
+      },
+      "group": "Vegetables",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "eggplant",
+      "name": "Eggplant",
+      "ingredient": "eggplant",
+      "form": "none",
+      "state": "none",
+      "file": "eggplant.svg",
+      "aliases": [
+        "eggplant",
+        "melanzana",
+        "なす",
+        "aubergine",
+        "aubergines",
+        "melanzane",
+        "茄子"
+      ],
+      "labels": {
+        "en": "Eggplant",
+        "it": "Melanzana",
+        "ja": "なす"
+      },
+      "group": "Vegetables",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "bell-pepper",
+      "name": "Bell pepper",
+      "ingredient": "bell_pepper",
+      "form": "none",
+      "state": "none",
+      "file": "bell-pepper.svg",
+      "aliases": [
+        "bell pepper",
+        "peperone",
+        "パプリカ",
+        "bell peppers",
+        "sweet pepper",
+        "peperoni",
+        "ピーマン"
+      ],
+      "labels": {
+        "en": "Bell pepper",
+        "it": "Peperone",
+        "ja": "パプリカ"
+      },
+      "group": "Vegetables",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "chili-pepper",
+      "name": "Chili pepper",
+      "ingredient": "chili_pepper",
+      "form": "none",
+      "state": "none",
+      "file": "chili-pepper.svg",
+      "aliases": [
+        "chili pepper",
+        "peperoncino",
+        "唐辛子",
+        "chilli",
+        "chili peppers",
+        "peperoncini"
+      ],
+      "labels": {
+        "en": "Chili pepper",
+        "it": "Peperoncino",
+        "ja": "唐辛子"
+      },
+      "group": "Vegetables",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "broccoli",
+      "name": "Broccoli",
+      "ingredient": "broccoli",
+      "form": "none",
+      "state": "none",
+      "file": "broccoli.svg",
+      "aliases": [
+        "broccoli",
+        "broccolo",
+        "ブロッコリー"
+      ],
+      "labels": {
+        "en": "Broccoli",
+        "it": "Broccolo",
+        "ja": "ブロッコリー"
+      },
+      "group": "Vegetables",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "cauliflower",
+      "name": "Cauliflower",
+      "ingredient": "cauliflower",
+      "form": "none",
+      "state": "none",
+      "file": "cauliflower.svg",
+      "aliases": [
+        "cauliflower",
+        "cavolfiore",
+        "カリフラワー"
+      ],
+      "labels": {
+        "en": "Cauliflower",
+        "it": "Cavolfiore",
+        "ja": "カリフラワー"
+      },
+      "group": "Vegetables",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "spinach",
+      "name": "Spinach",
+      "ingredient": "spinach",
+      "form": "none",
+      "state": "none",
+      "file": "spinach.svg",
+      "aliases": [
+        "spinach",
+        "spinaci",
+        "ほうれん草"
+      ],
+      "labels": {
+        "en": "Spinach",
+        "it": "Spinaci",
+        "ja": "ほうれん草"
+      },
+      "group": "Vegetables",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "lettuce",
+      "name": "Lettuce",
+      "ingredient": "lettuce",
+      "form": "none",
+      "state": "none",
+      "file": "lettuce.svg",
+      "aliases": [
+        "lettuce",
+        "lattuga",
+        "レタス"
+      ],
+      "labels": {
+        "en": "Lettuce",
+        "it": "Lattuga",
+        "ja": "レタス"
+      },
+      "group": "Vegetables",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "napa-cabbage",
+      "name": "Napa cabbage",
+      "ingredient": "napa_cabbage",
+      "form": "none",
+      "state": "none",
+      "file": "napa-cabbage.svg",
+      "aliases": [
+        "napa cabbage",
+        "cavolo cinese",
+        "白菜"
+      ],
+      "labels": {
+        "en": "Napa cabbage",
+        "it": "Cavolo cinese",
+        "ja": "白菜"
+      },
+      "group": "Vegetables",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "bok-choy",
+      "name": "Bok choy",
+      "ingredient": "bok_choy",
+      "form": "none",
+      "state": "none",
+      "file": "bok-choy.svg",
+      "aliases": [
+        "bok choy",
+        "pak choi",
+        "チンゲン菜",
+        "bok choi",
+        "チンゲンサイ"
+      ],
+      "labels": {
+        "en": "Bok choy",
+        "it": "Pak choi",
+        "ja": "チンゲン菜"
+      },
+      "group": "Vegetables",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "leek",
+      "name": "Leek",
+      "ingredient": "leek",
+      "form": "none",
+      "state": "none",
+      "file": "leek.svg",
+      "aliases": [
+        "leek",
+        "porro",
+        "ポロねぎ"
+      ],
+      "labels": {
+        "en": "Leek",
+        "it": "Porro",
+        "ja": "ポロねぎ"
+      },
+      "group": "Vegetables",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "celery",
+      "name": "Celery",
+      "ingredient": "celery",
+      "form": "none",
+      "state": "none",
+      "file": "celery.svg",
+      "aliases": [
+        "celery",
+        "sedano",
+        "セロリ"
+      ],
+      "labels": {
+        "en": "Celery",
+        "it": "Sedano",
+        "ja": "セロリ"
+      },
+      "group": "Vegetables",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "asparagus",
+      "name": "Asparagus",
+      "ingredient": "asparagus",
+      "form": "none",
+      "state": "none",
+      "file": "asparagus.svg",
+      "aliases": [
+        "asparagus",
+        "asparagi",
+        "アスパラガス"
+      ],
+      "labels": {
+        "en": "Asparagus",
+        "it": "Asparagi",
+        "ja": "アスパラガス"
+      },
+      "group": "Vegetables",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "pumpkin",
+      "name": "Pumpkin",
+      "ingredient": "pumpkin",
+      "form": "none",
+      "state": "none",
+      "file": "pumpkin.svg",
+      "aliases": [
+        "pumpkin",
+        "zucca",
+        "かぼちゃ"
+      ],
+      "labels": {
+        "en": "Pumpkin",
+        "it": "Zucca",
+        "ja": "かぼちゃ"
+      },
+      "group": "Vegetables",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "fennel",
+      "name": "Fennel",
+      "ingredient": "fennel",
+      "form": "none",
+      "state": "none",
+      "file": "fennel.svg",
+      "aliases": [
+        "fennel",
+        "finocchio",
+        "フェンネル",
+        "finocchi"
+      ],
+      "labels": {
+        "en": "Fennel",
+        "it": "Finocchio",
+        "ja": "フェンネル"
+      },
+      "group": "Vegetables",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "green-peas",
+      "name": "Green peas",
+      "ingredient": "green_peas",
+      "form": "none",
+      "state": "none",
+      "file": "green-peas.svg",
+      "aliases": [
+        "green peas",
+        "piselli",
+        "グリーンピース",
+        "peas"
+      ],
+      "labels": {
+        "en": "Green peas",
+        "it": "Piselli",
+        "ja": "グリーンピース"
+      },
+      "group": "Vegetables",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "green-beans",
+      "name": "Green beans",
+      "ingredient": "green_beans",
+      "form": "none",
+      "state": "none",
+      "file": "green-beans.svg",
+      "aliases": [
+        "green beans",
+        "fagiolini",
+        "さやいんげん",
+        "string beans"
+      ],
+      "labels": {
+        "en": "Green beans",
+        "it": "Fagiolini",
+        "ja": "さやいんげん"
+      },
+      "group": "Vegetables",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "artichoke",
+      "name": "Artichoke",
+      "ingredient": "artichoke",
+      "form": "none",
+      "state": "none",
+      "file": "artichoke.svg",
+      "aliases": [
+        "artichoke",
+        "carciofo",
+        "アーティチョーク"
+      ],
+      "labels": {
+        "en": "Artichoke",
+        "it": "Carciofo",
+        "ja": "アーティチョーク"
+      },
+      "group": "Vegetables",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "okra",
+      "name": "Okra",
+      "ingredient": "okra",
+      "form": "none",
+      "state": "none",
+      "file": "okra.svg",
+      "aliases": [
+        "okra",
+        "gombo",
+        "オクラ"
+      ],
+      "labels": {
+        "en": "Okra",
+        "it": "Gombo",
+        "ja": "オクラ"
+      },
+      "group": "Vegetables",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "button-mushrooms",
+      "name": "Button mushrooms",
+      "ingredient": "button_mushrooms",
+      "form": "none",
+      "state": "none",
+      "file": "button-mushrooms.svg",
+      "aliases": [
+        "button mushrooms",
+        "champignon",
+        "マッシュルーム",
+        "champignon mushrooms",
+        "white mushrooms"
+      ],
+      "labels": {
+        "en": "Button mushrooms",
+        "it": "Champignon",
+        "ja": "マッシュルーム"
+      },
+      "group": "Mushrooms",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "oyster-mushrooms",
+      "name": "Oyster mushrooms",
+      "ingredient": "oyster_mushrooms",
+      "form": "none",
+      "state": "none",
+      "file": "oyster-mushrooms.svg",
+      "aliases": [
+        "oyster mushrooms",
+        "funghi pleurotus",
+        "ヒラタケ"
+      ],
+      "labels": {
+        "en": "Oyster mushrooms",
+        "it": "Funghi pleurotus",
+        "ja": "ヒラタケ"
+      },
+      "group": "Mushrooms",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "enoki",
+      "name": "Enoki mushrooms",
+      "ingredient": "enoki",
+      "form": "bunch",
+      "state": "none",
+      "file": "enoki.svg",
+      "aliases": [
+        "enoki mushrooms",
+        "enoki",
+        "funghi enoki",
+        "えのき",
+        "enokitake",
+        "えのき茸"
+      ],
+      "labels": {
+        "en": "Enoki mushrooms",
+        "it": "Funghi enoki",
+        "ja": "えのき"
+      },
+      "group": "Mushrooms",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "apple",
+      "name": "Apple",
+      "ingredient": "apple",
+      "form": "none",
+      "state": "none",
+      "file": "apple.svg",
+      "aliases": [
+        "apple",
+        "mela",
+        "りんご",
+        "apples",
+        "mele"
+      ],
+      "labels": {
+        "en": "Apple",
+        "it": "Mela",
+        "ja": "りんご"
+      },
+      "group": "Fruit",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "pear",
+      "name": "Pear",
+      "ingredient": "pear",
+      "form": "none",
+      "state": "none",
+      "file": "pear.svg",
+      "aliases": [
+        "pear",
+        "pera",
+        "梨",
+        "pears",
+        "pere"
+      ],
+      "labels": {
+        "en": "Pear",
+        "it": "Pera",
+        "ja": "梨"
+      },
+      "group": "Fruit",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "lemon",
+      "name": "Lemon",
+      "ingredient": "lemon",
+      "form": "none",
+      "state": "none",
+      "file": "lemon.svg",
+      "aliases": [
+        "lemon",
+        "limone",
+        "レモン",
+        "lemons",
+        "limoni"
+      ],
+      "labels": {
+        "en": "Lemon",
+        "it": "Limone",
+        "ja": "レモン"
+      },
+      "group": "Fruit",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "lime",
+      "name": "Lime",
+      "ingredient": "lime",
+      "form": "none",
+      "state": "none",
+      "file": "lime.svg",
+      "aliases": [
+        "lime",
+        "ライム",
+        "limes"
+      ],
+      "labels": {
+        "en": "Lime",
+        "it": "Lime",
+        "ja": "ライム"
+      },
+      "group": "Fruit",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "orange",
+      "name": "Orange",
+      "ingredient": "orange",
+      "form": "none",
+      "state": "none",
+      "file": "orange.svg",
+      "aliases": [
+        "orange",
+        "arancia",
+        "オレンジ",
+        "oranges",
+        "arance"
+      ],
+      "labels": {
+        "en": "Orange",
+        "it": "Arancia",
+        "ja": "オレンジ"
+      },
+      "group": "Fruit",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "grapefruit",
+      "name": "Grapefruit",
+      "ingredient": "grapefruit",
+      "form": "none",
+      "state": "none",
+      "file": "grapefruit.svg",
+      "aliases": [
+        "grapefruit",
+        "pompelmo",
+        "グレープフルーツ"
+      ],
+      "labels": {
+        "en": "Grapefruit",
+        "it": "Pompelmo",
+        "ja": "グレープフルーツ"
+      },
+      "group": "Fruit",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "banana",
+      "name": "Banana",
+      "ingredient": "banana",
+      "form": "none",
+      "state": "none",
+      "file": "banana.svg",
+      "aliases": [
+        "banana",
+        "バナナ",
+        "bananas",
+        "banane"
+      ],
+      "labels": {
+        "en": "Banana",
+        "it": "Banana",
+        "ja": "バナナ"
+      },
+      "group": "Fruit",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "avocado",
+      "name": "Avocado",
+      "ingredient": "avocado",
+      "form": "none",
+      "state": "none",
+      "file": "avocado.svg",
+      "aliases": [
+        "avocado",
+        "アボカド",
+        "avocados"
+      ],
+      "labels": {
+        "en": "Avocado",
+        "it": "Avocado",
+        "ja": "アボカド"
+      },
+      "group": "Fruit",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "mango",
+      "name": "Mango",
+      "ingredient": "mango",
+      "form": "none",
+      "state": "none",
+      "file": "mango.svg",
+      "aliases": [
+        "mango",
+        "マンゴー",
+        "mangoes"
+      ],
+      "labels": {
+        "en": "Mango",
+        "it": "Mango",
+        "ja": "マンゴー"
+      },
+      "group": "Fruit",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "pineapple",
+      "name": "Pineapple",
+      "ingredient": "pineapple",
+      "form": "none",
+      "state": "none",
+      "file": "pineapple.svg",
+      "aliases": [
+        "pineapple",
+        "ananas",
+        "パイナップル"
+      ],
+      "labels": {
+        "en": "Pineapple",
+        "it": "Ananas",
+        "ja": "パイナップル"
+      },
+      "group": "Fruit",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "peach",
+      "name": "Peach",
+      "ingredient": "peach",
+      "form": "none",
+      "state": "none",
+      "file": "peach.svg",
+      "aliases": [
+        "peach",
+        "pesca",
+        "桃",
+        "peaches",
+        "pesche"
+      ],
+      "labels": {
+        "en": "Peach",
+        "it": "Pesca",
+        "ja": "桃"
+      },
+      "group": "Fruit",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "strawberry",
+      "name": "Strawberry",
+      "ingredient": "strawberry",
+      "form": "none",
+      "state": "none",
+      "file": "strawberry.svg",
+      "aliases": [
+        "strawberry",
+        "fragola",
+        "いちご",
+        "strawberries",
+        "fragole",
+        "苺"
+      ],
+      "labels": {
+        "en": "Strawberry",
+        "it": "Fragola",
+        "ja": "いちご"
+      },
+      "group": "Fruit",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "blueberry",
+      "name": "Blueberry",
+      "ingredient": "blueberry",
+      "form": "none",
+      "state": "none",
+      "file": "blueberry.svg",
+      "aliases": [
+        "blueberry",
+        "mirtillo",
+        "ブルーベリー",
+        "blueberries",
+        "mirtilli"
+      ],
+      "labels": {
+        "en": "Blueberry",
+        "it": "Mirtillo",
+        "ja": "ブルーベリー"
+      },
+      "group": "Fruit",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "raspberry",
+      "name": "Raspberry",
+      "ingredient": "raspberry",
+      "form": "none",
+      "state": "none",
+      "file": "raspberry.svg",
+      "aliases": [
+        "raspberry",
+        "lampone",
+        "ラズベリー",
+        "raspberries",
+        "lamponi"
+      ],
+      "labels": {
+        "en": "Raspberry",
+        "it": "Lampone",
+        "ja": "ラズベリー"
+      },
+      "group": "Fruit",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "grapes",
+      "name": "Grapes",
+      "ingredient": "grapes",
+      "form": "none",
+      "state": "none",
+      "file": "grapes.svg",
+      "aliases": [
+        "grapes",
+        "uva",
+        "ぶどう",
+        "grape"
+      ],
+      "labels": {
+        "en": "Grapes",
+        "it": "Uva",
+        "ja": "ぶどう"
+      },
+      "group": "Fruit",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "coconut",
+      "name": "Coconut",
+      "ingredient": "coconut",
+      "form": "none",
+      "state": "none",
+      "file": "coconut.svg",
+      "aliases": [
+        "coconut",
+        "cocco",
+        "ココナッツ",
+        "coconuts"
+      ],
+      "labels": {
+        "en": "Coconut",
+        "it": "Cocco",
+        "ja": "ココナッツ"
+      },
+      "group": "Fruit",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "basil",
+      "name": "Basil",
+      "ingredient": "basil",
+      "form": "bunch",
+      "state": "none",
+      "file": "basil.svg",
+      "aliases": [
+        "basil",
+        "basilico",
+        "バジル"
+      ],
+      "labels": {
+        "en": "Basil",
+        "it": "Basilico",
+        "ja": "バジル"
+      },
+      "group": "Herbs",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "parsley",
+      "name": "Parsley",
+      "ingredient": "parsley",
+      "form": "bunch",
+      "state": "none",
+      "file": "parsley.svg",
+      "aliases": [
+        "parsley",
+        "prezzemolo",
+        "パセリ"
+      ],
+      "labels": {
+        "en": "Parsley",
+        "it": "Prezzemolo",
+        "ja": "パセリ"
+      },
+      "group": "Herbs",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "coriander",
+      "name": "Coriander leaves",
+      "ingredient": "coriander",
+      "form": "bunch",
+      "state": "none",
+      "file": "coriander.svg",
+      "aliases": [
+        "coriander leaves",
+        "coriander",
+        "coriandolo fresco",
+        "パクチー",
+        "cilantro",
+        "coriandolo",
+        "香菜"
+      ],
+      "labels": {
+        "en": "Coriander leaves",
+        "it": "Coriandolo fresco",
+        "ja": "パクチー"
+      },
+      "group": "Herbs",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "rosemary",
+      "name": "Rosemary",
+      "ingredient": "rosemary",
+      "form": "bunch",
+      "state": "none",
+      "file": "rosemary.svg",
+      "aliases": [
+        "rosemary",
+        "rosmarino",
+        "ローズマリー"
+      ],
+      "labels": {
+        "en": "Rosemary",
+        "it": "Rosmarino",
+        "ja": "ローズマリー"
+      },
+      "group": "Herbs",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "thyme",
+      "name": "Thyme",
+      "ingredient": "thyme",
+      "form": "bunch",
+      "state": "none",
+      "file": "thyme.svg",
+      "aliases": [
+        "thyme",
+        "timo",
+        "タイム"
+      ],
+      "labels": {
+        "en": "Thyme",
+        "it": "Timo",
+        "ja": "タイム"
+      },
+      "group": "Herbs",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "mint",
+      "name": "Mint",
+      "ingredient": "mint",
+      "form": "bunch",
+      "state": "none",
+      "file": "mint.svg",
+      "aliases": [
+        "mint",
+        "menta",
+        "ミント"
+      ],
+      "labels": {
+        "en": "Mint",
+        "it": "Menta",
+        "ja": "ミント"
+      },
+      "group": "Herbs",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "dill",
+      "name": "Dill",
+      "ingredient": "dill",
+      "form": "bunch",
+      "state": "none",
+      "file": "dill.svg",
+      "aliases": [
+        "dill",
+        "aneto",
+        "ディル"
+      ],
+      "labels": {
+        "en": "Dill",
+        "it": "Aneto",
+        "ja": "ディル"
+      },
+      "group": "Herbs",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "chives",
+      "name": "Chives",
+      "ingredient": "chives",
+      "form": "bunch",
+      "state": "none",
+      "file": "chives.svg",
+      "aliases": [
+        "chives",
+        "erba cipollina",
+        "チャイブ"
+      ],
+      "labels": {
+        "en": "Chives",
+        "it": "Erba cipollina",
+        "ja": "チャイブ"
+      },
+      "group": "Herbs",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "beef",
+      "name": "Beef",
+      "ingredient": "beef",
+      "form": "none",
+      "state": "none",
+      "file": "beef.svg",
+      "aliases": [
+        "beef",
+        "manzo",
+        "牛肉",
+        "beef steak",
+        "carne bovina"
+      ],
+      "labels": {
+        "en": "Beef",
+        "it": "Manzo",
+        "ja": "牛肉"
+      },
+      "group": "Meat & seafood",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "lamb",
+      "name": "Lamb",
+      "ingredient": "lamb",
+      "form": "none",
+      "state": "none",
+      "file": "lamb.svg",
+      "aliases": [
+        "lamb",
+        "agnello",
+        "ラム肉",
+        "lamb rack"
+      ],
+      "labels": {
+        "en": "Lamb",
+        "it": "Agnello",
+        "ja": "ラム肉"
+      },
+      "group": "Meat & seafood",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "duck",
+      "name": "Duck",
+      "ingredient": "duck",
+      "form": "none",
+      "state": "none",
+      "file": "duck.svg",
+      "aliases": [
+        "duck",
+        "anatra",
+        "鴨肉"
+      ],
+      "labels": {
+        "en": "Duck",
+        "it": "Anatra",
+        "ja": "鴨肉"
+      },
+      "group": "Meat & seafood",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "turkey",
+      "name": "Turkey",
+      "ingredient": "turkey",
+      "form": "none",
+      "state": "none",
+      "file": "turkey.svg",
+      "aliases": [
+        "turkey",
+        "tacchino",
+        "七面鳥"
+      ],
+      "labels": {
+        "en": "Turkey",
+        "it": "Tacchino",
+        "ja": "七面鳥"
+      },
+      "group": "Meat & seafood",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "chicken-breast",
+      "name": "Chicken breast",
+      "ingredient": "chicken_breast",
+      "form": "tray",
+      "state": "none",
+      "file": "chicken-breast.svg",
+      "aliases": [
+        "chicken breast",
+        "petto di pollo",
+        "鶏むね肉",
+        "chicken breasts",
+        "petti di pollo",
+        "鶏胸肉"
+      ],
+      "labels": {
+        "en": "Chicken breast",
+        "it": "Petto di pollo",
+        "ja": "鶏むね肉"
+      },
+      "group": "Meat & seafood",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "tuna",
+      "name": "Tuna",
+      "ingredient": "tuna",
+      "form": "none",
+      "state": "none",
+      "file": "tuna.svg",
+      "aliases": [
+        "tuna",
+        "tonno",
+        "まぐろ",
+        "maguro",
+        "マグロ"
+      ],
+      "labels": {
+        "en": "Tuna",
+        "it": "Tonno",
+        "ja": "まぐろ"
+      },
+      "group": "Meat & seafood",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "cod",
+      "name": "Cod",
+      "ingredient": "cod",
+      "form": "none",
+      "state": "none",
+      "file": "cod.svg",
+      "aliases": [
+        "cod",
+        "merluzzo",
+        "たら",
+        "タラ"
+      ],
+      "labels": {
+        "en": "Cod",
+        "it": "Merluzzo",
+        "ja": "たら"
+      },
+      "group": "Meat & seafood",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "mackerel",
+      "name": "Mackerel",
+      "ingredient": "mackerel",
+      "form": "none",
+      "state": "none",
+      "file": "mackerel.svg",
+      "aliases": [
+        "mackerel",
+        "sgombro",
+        "さば",
+        "saba",
+        "サバ"
+      ],
+      "labels": {
+        "en": "Mackerel",
+        "it": "Sgombro",
+        "ja": "さば"
+      },
+      "group": "Meat & seafood",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "sardines",
+      "name": "Sardines",
+      "ingredient": "sardines",
+      "form": "none",
+      "state": "none",
+      "file": "sardines.svg",
+      "aliases": [
+        "sardines",
+        "sardine",
+        "いわし",
+        "sardina",
+        "イワシ"
+      ],
+      "labels": {
+        "en": "Sardines",
+        "it": "Sardine",
+        "ja": "いわし"
+      },
+      "group": "Meat & seafood",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "shrimp",
+      "name": "Shrimp",
+      "ingredient": "shrimp",
+      "form": "none",
+      "state": "none",
+      "file": "shrimp.svg",
+      "aliases": [
+        "shrimp",
+        "gamberi",
+        "えび",
+        "prawns",
+        "shrimps",
+        "海老",
+        "エビ"
+      ],
+      "labels": {
+        "en": "Shrimp",
+        "it": "Gamberi",
+        "ja": "えび"
+      },
+      "group": "Meat & seafood",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "squid",
+      "name": "Squid",
+      "ingredient": "squid",
+      "form": "none",
+      "state": "none",
+      "file": "squid.svg",
+      "aliases": [
+        "squid",
+        "calamari",
+        "いか",
+        "calamaro",
+        "イカ"
+      ],
+      "labels": {
+        "en": "Squid",
+        "it": "Calamari",
+        "ja": "いか"
+      },
+      "group": "Meat & seafood",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "mussels",
+      "name": "Mussels",
+      "ingredient": "mussels",
+      "form": "none",
+      "state": "none",
+      "file": "mussels.svg",
+      "aliases": [
+        "mussels",
+        "cozze",
+        "ムール貝",
+        "mussel"
+      ],
+      "labels": {
+        "en": "Mussels",
+        "it": "Cozze",
+        "ja": "ムール貝"
+      },
+      "group": "Meat & seafood",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "clams",
+      "name": "Clams",
+      "ingredient": "clams",
+      "form": "none",
+      "state": "none",
+      "file": "clams.svg",
+      "aliases": [
+        "clams",
+        "vongole",
+        "あさり",
+        "clam"
+      ],
+      "labels": {
+        "en": "Clams",
+        "it": "Vongole",
+        "ja": "あさり"
+      },
+      "group": "Meat & seafood",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "scallops",
+      "name": "Scallops",
+      "ingredient": "scallops",
+      "form": "none",
+      "state": "none",
+      "file": "scallops.svg",
+      "aliases": [
+        "scallops",
+        "capesante",
+        "ほたて",
+        "scallop",
+        "ホタテ"
+      ],
+      "labels": {
+        "en": "Scallops",
+        "it": "Capesante",
+        "ja": "ほたて"
+      },
+      "group": "Meat & seafood",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "octopus",
+      "name": "Octopus",
+      "ingredient": "octopus",
+      "form": "none",
+      "state": "none",
+      "file": "octopus.svg",
+      "aliases": [
+        "octopus",
+        "polpo",
+        "たこ",
+        "タコ"
+      ],
+      "labels": {
+        "en": "Octopus",
+        "it": "Polpo",
+        "ja": "たこ"
+      },
+      "group": "Meat & seafood",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "anchovies",
+      "name": "Anchovies",
+      "ingredient": "anchovies",
+      "form": "none",
+      "state": "none",
+      "file": "anchovies.svg",
+      "aliases": [
+        "anchovies",
+        "acciughe",
+        "アンチョビ"
+      ],
+      "labels": {
+        "en": "Anchovies",
+        "it": "Acciughe",
+        "ja": "アンチョビ"
+      },
+      "group": "Meat & seafood",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "cream",
+      "name": "Cream",
+      "ingredient": "cream",
+      "form": "carton",
+      "state": "none",
+      "file": "cream.svg",
+      "aliases": [
+        "cream",
+        "panna",
+        "生クリーム",
+        "heavy cream",
+        "double cream",
+        "panna fresca"
+      ],
+      "labels": {
+        "en": "Cream",
+        "it": "Panna",
+        "ja": "生クリーム"
+      },
+      "group": "Dairy",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "yogurt",
+      "name": "Yogurt",
+      "ingredient": "yogurt",
+      "form": "tub",
+      "state": "none",
+      "file": "yogurt.svg",
+      "aliases": [
+        "yogurt",
+        "ヨーグルト",
+        "yoghurt"
+      ],
+      "labels": {
+        "en": "Yogurt",
+        "it": "Yogurt",
+        "ja": "ヨーグルト"
+      },
+      "group": "Dairy",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "ricotta",
+      "name": "Ricotta",
+      "ingredient": "ricotta",
+      "form": "none",
+      "state": "none",
+      "file": "ricotta.svg",
+      "aliases": [
+        "ricotta",
+        "リコッタ",
+        "ricotta cheese"
+      ],
+      "labels": {
+        "en": "Ricotta",
+        "it": "Ricotta",
+        "ja": "リコッタ"
+      },
+      "group": "Dairy",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "cheddar",
+      "name": "Cheddar",
+      "ingredient": "cheddar",
+      "form": "none",
+      "state": "none",
+      "file": "cheddar.svg",
+      "aliases": [
+        "cheddar",
+        "チェダー",
+        "cheddar cheese"
+      ],
+      "labels": {
+        "en": "Cheddar",
+        "it": "Cheddar",
+        "ja": "チェダー"
+      },
+      "group": "Dairy",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "feta",
+      "name": "Feta",
+      "ingredient": "feta",
+      "form": "tray",
+      "state": "none",
+      "file": "feta.svg",
+      "aliases": [
+        "feta",
+        "フェタチーズ",
+        "feta cheese"
+      ],
+      "labels": {
+        "en": "Feta",
+        "it": "Feta",
+        "ja": "フェタチーズ"
+      },
+      "group": "Dairy",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "spaghetti",
+      "name": "Spaghetti",
+      "ingredient": "spaghetti",
+      "form": "bundle",
+      "state": "none",
+      "file": "spaghetti.svg",
+      "aliases": [
+        "spaghetti",
+        "スパゲッティ",
+        "spaghetti pasta"
+      ],
+      "labels": {
+        "en": "Spaghetti",
+        "it": "Spaghetti",
+        "ja": "スパゲッティ"
+      },
+      "group": "Grains & legumes",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "penne",
+      "name": "Penne",
+      "ingredient": "penne",
+      "form": "none",
+      "state": "none",
+      "file": "penne.svg",
+      "aliases": [
+        "penne",
+        "ペンネ",
+        "penne pasta"
+      ],
+      "labels": {
+        "en": "Penne",
+        "it": "Penne",
+        "ja": "ペンネ"
+      },
+      "group": "Grains & legumes",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "couscous",
+      "name": "Couscous",
+      "ingredient": "couscous",
+      "form": "none",
+      "state": "none",
+      "file": "couscous.svg",
+      "aliases": [
+        "couscous",
+        "cous cous",
+        "クスクス"
+      ],
+      "labels": {
+        "en": "Couscous",
+        "it": "Cous cous",
+        "ja": "クスクス"
+      },
+      "group": "Grains & legumes",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "bulgur",
+      "name": "Bulgur",
+      "ingredient": "bulgur",
+      "form": "bag",
+      "state": "none",
+      "file": "bulgur.svg",
+      "aliases": [
+        "bulgur",
+        "ブルグル",
+        "bulgur wheat"
+      ],
+      "labels": {
+        "en": "Bulgur",
+        "it": "Bulgur",
+        "ja": "ブルグル"
+      },
+      "group": "Grains & legumes",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "quinoa",
+      "name": "Quinoa",
+      "ingredient": "quinoa",
+      "form": "none",
+      "state": "none",
+      "file": "quinoa.svg",
+      "aliases": [
+        "quinoa",
+        "キヌア",
+        "quinoa grain"
+      ],
+      "labels": {
+        "en": "Quinoa",
+        "it": "Quinoa",
+        "ja": "キヌア"
+      },
+      "group": "Grains & legumes",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "oats",
+      "name": "Oats",
+      "ingredient": "oats",
+      "form": "bag",
+      "state": "none",
+      "file": "oats.svg",
+      "aliases": [
+        "oats",
+        "avena",
+        "オーツ麦",
+        "oat",
+        "oat flakes",
+        "fiocchi di avena"
+      ],
+      "labels": {
+        "en": "Oats",
+        "it": "Avena",
+        "ja": "オーツ麦"
+      },
+      "group": "Grains & legumes",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "barley",
+      "name": "Barley",
+      "ingredient": "barley",
+      "form": "bag",
+      "state": "none",
+      "file": "barley.svg",
+      "aliases": [
+        "barley",
+        "orzo perlato",
+        "大麦"
+      ],
+      "labels": {
+        "en": "Barley",
+        "it": "Orzo perlato",
+        "ja": "大麦"
+      },
+      "group": "Grains & legumes",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "rice-noodles",
+      "name": "Rice noodles",
+      "ingredient": "rice_noodles",
+      "form": "bundle",
+      "state": "none",
+      "file": "rice-noodles.svg",
+      "aliases": [
+        "rice noodles",
+        "noodles di riso",
+        "ライスヌードル",
+        "rice vermicelli",
+        "spaghetti di riso",
+        "ビーフン"
+      ],
+      "labels": {
+        "en": "Rice noodles",
+        "it": "Noodles di riso",
+        "ja": "ライスヌードル"
+      },
+      "group": "Grains & legumes",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "glass-noodles",
+      "name": "Glass noodles",
+      "ingredient": "glass_noodles",
+      "form": "none",
+      "state": "none",
+      "file": "glass-noodles.svg",
+      "aliases": [
+        "glass noodles",
+        "spaghetti di soia",
+        "春雨",
+        "cellophane noodles",
+        "harusame"
+      ],
+      "labels": {
+        "en": "Glass noodles",
+        "it": "Spaghetti di soia",
+        "ja": "春雨"
+      },
+      "group": "Grains & legumes",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "lentils",
+      "name": "Lentils",
+      "ingredient": "lentils",
+      "form": "none",
+      "state": "none",
+      "file": "lentils.svg",
+      "aliases": [
+        "lentils",
+        "lenticchie",
+        "レンズ豆",
+        "lentil"
+      ],
+      "labels": {
+        "en": "Lentils",
+        "it": "Lenticchie",
+        "ja": "レンズ豆"
+      },
+      "group": "Grains & legumes",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "chickpeas",
+      "name": "Chickpeas",
+      "ingredient": "chickpeas",
+      "form": "none",
+      "state": "none",
+      "file": "chickpeas.svg",
+      "aliases": [
+        "chickpeas",
+        "ceci",
+        "ひよこ豆",
+        "chickpea",
+        "garbanzo beans"
+      ],
+      "labels": {
+        "en": "Chickpeas",
+        "it": "Ceci",
+        "ja": "ひよこ豆"
+      },
+      "group": "Grains & legumes",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "kidney-beans",
+      "name": "Kidney beans",
+      "ingredient": "kidney_beans",
+      "form": "none",
+      "state": "none",
+      "file": "kidney-beans.svg",
+      "aliases": [
+        "kidney beans",
+        "fagioli rossi",
+        "キドニービーンズ",
+        "red kidney beans"
+      ],
+      "labels": {
+        "en": "Kidney beans",
+        "it": "Fagioli rossi",
+        "ja": "キドニービーンズ"
+      },
+      "group": "Grains & legumes",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "black-beans",
+      "name": "Black beans",
+      "ingredient": "black_beans",
+      "form": "bag",
+      "state": "none",
+      "file": "black-beans.svg",
+      "aliases": [
+        "black beans",
+        "fagioli neri",
+        "ブラックビーンズ"
+      ],
+      "labels": {
+        "en": "Black beans",
+        "it": "Fagioli neri",
+        "ja": "ブラックビーンズ"
+      },
+      "group": "Grains & legumes",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "edamame",
+      "name": "Edamame",
+      "ingredient": "edamame",
+      "form": "none",
+      "state": "none",
+      "file": "edamame.svg",
+      "aliases": [
+        "edamame",
+        "枝豆",
+        "green soybeans"
+      ],
+      "labels": {
+        "en": "Edamame",
+        "it": "Edamame",
+        "ja": "枝豆"
+      },
+      "group": "Grains & legumes",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "tomato-paste",
+      "name": "Tomato paste",
+      "ingredient": "tomato_paste",
+      "form": "none",
+      "state": "none",
+      "file": "tomato-paste.svg",
+      "aliases": [
+        "tomato paste",
+        "concentrato di pomodoro",
+        "トマトペースト"
+      ],
+      "labels": {
+        "en": "Tomato paste",
+        "it": "Concentrato di pomodoro",
+        "ja": "トマトペースト"
+      },
+      "group": "Pantry staples",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "coconut-milk",
+      "name": "Coconut milk",
+      "ingredient": "coconut_milk",
+      "form": "can",
+      "state": "none",
+      "file": "coconut-milk.svg",
+      "aliases": [
+        "coconut milk",
+        "latte di cocco",
+        "ココナッツミルク",
+        "latte di cocco in scatola"
+      ],
+      "labels": {
+        "en": "Coconut milk",
+        "it": "Latte di cocco",
+        "ja": "ココナッツミルク"
+      },
+      "group": "Pantry staples",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "tahini",
+      "name": "Tahini",
+      "ingredient": "tahini",
+      "form": "jar",
+      "state": "none",
+      "file": "tahini.svg",
+      "aliases": [
+        "tahini",
+        "tahina",
+        "タヒニ"
+      ],
+      "labels": {
+        "en": "Tahini",
+        "it": "Tahina",
+        "ja": "タヒニ"
+      },
+      "group": "Pantry staples",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "peanut-butter",
+      "name": "Peanut butter",
+      "ingredient": "peanut_butter",
+      "form": "jar",
+      "state": "none",
+      "file": "peanut-butter.svg",
+      "aliases": [
+        "peanut butter",
+        "burro di arachidi",
+        "ピーナッツバター"
+      ],
+      "labels": {
+        "en": "Peanut butter",
+        "it": "Burro di arachidi",
+        "ja": "ピーナッツバター"
+      },
+      "group": "Pantry staples",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "honey",
+      "name": "Honey",
+      "ingredient": "honey",
+      "form": "jar",
+      "state": "none",
+      "file": "honey.svg",
+      "aliases": [
+        "honey",
+        "miele",
+        "はちみつ"
+      ],
+      "labels": {
+        "en": "Honey",
+        "it": "Miele",
+        "ja": "はちみつ"
+      },
+      "group": "Pantry staples",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "maple-syrup",
+      "name": "Maple syrup",
+      "ingredient": "maple_syrup",
+      "form": "bottle",
+      "state": "none",
+      "file": "maple-syrup.svg",
+      "aliases": [
+        "maple syrup",
+        "sciroppo d'acero",
+        "メープルシロップ"
+      ],
+      "labels": {
+        "en": "Maple syrup",
+        "it": "Sciroppo d'acero",
+        "ja": "メープルシロップ"
+      },
+      "group": "Pantry staples",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "dijon-mustard",
+      "name": "Dijon mustard",
+      "ingredient": "dijon_mustard",
+      "form": "jar",
+      "state": "none",
+      "file": "dijon-mustard.svg",
+      "aliases": [
+        "dijon mustard",
+        "senape di digione",
+        "ディジョンマスタード",
+        "dijon"
+      ],
+      "labels": {
+        "en": "Dijon mustard",
+        "it": "Senape di Digione",
+        "ja": "ディジョンマスタード"
+      },
+      "group": "Pantry staples",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "mayonnaise",
+      "name": "Mayonnaise",
+      "ingredient": "mayonnaise",
+      "form": "jar",
+      "state": "none",
+      "file": "mayonnaise.svg",
+      "aliases": [
+        "mayonnaise",
+        "maionese",
+        "マヨネーズ"
+      ],
+      "labels": {
+        "en": "Mayonnaise",
+        "it": "Maionese",
+        "ja": "マヨネーズ"
+      },
+      "group": "Pantry staples",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "ketchup",
+      "name": "Ketchup",
+      "ingredient": "ketchup",
+      "form": "bottle",
+      "state": "none",
+      "file": "ketchup.svg",
+      "aliases": [
+        "ketchup",
+        "ケチャップ",
+        "tomato ketchup"
+      ],
+      "labels": {
+        "en": "Ketchup",
+        "it": "Ketchup",
+        "ja": "ケチャップ"
+      },
+      "group": "Pantry staples",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "balsamic-vinegar",
+      "name": "Balsamic vinegar",
+      "ingredient": "balsamic_vinegar",
+      "form": "bottle",
+      "state": "none",
+      "file": "balsamic-vinegar.svg",
+      "aliases": [
+        "balsamic vinegar",
+        "aceto balsamico",
+        "バルサミコ酢"
+      ],
+      "labels": {
+        "en": "Balsamic vinegar",
+        "it": "Aceto balsamico",
+        "ja": "バルサミコ酢"
+      },
+      "group": "Pantry staples",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "white-wine-vinegar",
+      "name": "White wine vinegar",
+      "ingredient": "white_wine_vinegar",
+      "form": "bottle",
+      "state": "none",
+      "file": "white-wine-vinegar.svg",
+      "aliases": [
+        "white wine vinegar",
+        "aceto di vino bianco",
+        "白ワインビネガー"
+      ],
+      "labels": {
+        "en": "White wine vinegar",
+        "it": "Aceto di vino bianco",
+        "ja": "白ワインビネガー"
+      },
+      "group": "Pantry staples",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "capers",
+      "name": "Capers",
+      "ingredient": "capers",
+      "form": "jar",
+      "state": "none",
+      "file": "capers.svg",
+      "aliases": [
+        "capers",
+        "capperi",
+        "ケッパー"
+      ],
+      "labels": {
+        "en": "Capers",
+        "it": "Capperi",
+        "ja": "ケッパー"
+      },
+      "group": "Pantry staples",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "olives",
+      "name": "Olives",
+      "ingredient": "olives",
+      "form": "jar",
+      "state": "none",
+      "file": "olives.svg",
+      "aliases": [
+        "olives",
+        "olive",
+        "オリーブ"
+      ],
+      "labels": {
+        "en": "Olives",
+        "it": "Olive",
+        "ja": "オリーブ"
+      },
+      "group": "Pantry staples",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "dark-chocolate",
+      "name": "Dark chocolate",
+      "ingredient": "dark_chocolate",
+      "form": "none",
+      "state": "none",
+      "file": "dark-chocolate.svg",
+      "aliases": [
+        "dark chocolate",
+        "cioccolato fondente",
+        "ダークチョコレート"
+      ],
+      "labels": {
+        "en": "Dark chocolate",
+        "it": "Cioccolato fondente",
+        "ja": "ダークチョコレート"
+      },
+      "group": "Pantry staples",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "cocoa-powder",
+      "name": "Cocoa powder",
+      "ingredient": "cocoa_powder",
+      "form": "bag",
+      "state": "none",
+      "file": "cocoa-powder.svg",
+      "aliases": [
+        "cocoa powder",
+        "cacao amaro",
+        "ココアパウダー",
+        "cacao powder"
+      ],
+      "labels": {
+        "en": "Cocoa powder",
+        "it": "Cacao amaro",
+        "ja": "ココアパウダー"
+      },
+      "group": "Pantry staples",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "baking-powder",
+      "name": "Baking powder",
+      "ingredient": "baking_powder",
+      "form": "can",
+      "state": "none",
+      "file": "baking-powder.svg",
+      "aliases": [
+        "baking powder",
+        "lievito per dolci",
+        "ベーキングパウダー"
+      ],
+      "labels": {
+        "en": "Baking powder",
+        "it": "Lievito per dolci",
+        "ja": "ベーキングパウダー"
+      },
+      "group": "Pantry staples",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "yeast",
+      "name": "Yeast",
+      "ingredient": "yeast",
+      "form": "bag",
+      "state": "none",
+      "file": "yeast.svg",
+      "aliases": [
+        "yeast",
+        "lievito di birra",
+        "イースト"
+      ],
+      "labels": {
+        "en": "Yeast",
+        "it": "Lievito di birra",
+        "ja": "イースト"
+      },
+      "group": "Pantry staples",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "black-pepper",
+      "name": "Black pepper",
+      "ingredient": "black_pepper",
+      "form": "jar",
+      "state": "none",
+      "file": "black-pepper.svg",
+      "aliases": [
+        "black pepper",
+        "pepe nero",
+        "黒こしょう"
+      ],
+      "labels": {
+        "en": "Black pepper",
+        "it": "Pepe nero",
+        "ja": "黒こしょう"
+      },
+      "group": "Spices & nuts",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "cumin",
+      "name": "Cumin",
+      "ingredient": "cumin",
+      "form": "bag",
+      "state": "none",
+      "file": "cumin.svg",
+      "aliases": [
+        "cumin",
+        "cumino",
+        "クミン"
+      ],
+      "labels": {
+        "en": "Cumin",
+        "it": "Cumino",
+        "ja": "クミン"
+      },
+      "group": "Spices & nuts",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "paprika",
+      "name": "Paprika powder",
+      "ingredient": "paprika",
+      "form": "bag",
+      "state": "none",
+      "file": "paprika.svg",
+      "aliases": [
+        "paprika powder",
+        "paprika",
+        "paprica in polvere",
+        "パプリカパウダー",
+        "ground paprika"
+      ],
+      "labels": {
+        "en": "Paprika powder",
+        "it": "Paprica in polvere",
+        "ja": "パプリカパウダー"
+      },
+      "group": "Spices & nuts",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "turmeric",
+      "name": "Turmeric",
+      "ingredient": "turmeric",
+      "form": "none",
+      "state": "none",
+      "file": "turmeric.svg",
+      "aliases": [
+        "turmeric",
+        "curcuma",
+        "ウコン"
+      ],
+      "labels": {
+        "en": "Turmeric",
+        "it": "Curcuma",
+        "ja": "ウコン"
+      },
+      "group": "Spices & nuts",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "cinnamon",
+      "name": "Cinnamon",
+      "ingredient": "cinnamon",
+      "form": "none",
+      "state": "none",
+      "file": "cinnamon.svg",
+      "aliases": [
+        "cinnamon",
+        "cannella",
+        "シナモン"
+      ],
+      "labels": {
+        "en": "Cinnamon",
+        "it": "Cannella",
+        "ja": "シナモン"
+      },
+      "group": "Spices & nuts",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "nutmeg",
+      "name": "Nutmeg",
+      "ingredient": "nutmeg",
+      "form": "none",
+      "state": "none",
+      "file": "nutmeg.svg",
+      "aliases": [
+        "nutmeg",
+        "noce moscata",
+        "ナツメグ"
+      ],
+      "labels": {
+        "en": "Nutmeg",
+        "it": "Noce moscata",
+        "ja": "ナツメグ"
+      },
+      "group": "Spices & nuts",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "coriander-seeds",
+      "name": "Coriander seeds",
+      "ingredient": "coriander_seeds",
+      "form": "none",
+      "state": "none",
+      "file": "coriander-seeds.svg",
+      "aliases": [
+        "coriander seeds",
+        "semi di coriandolo",
+        "コリアンダーシード"
+      ],
+      "labels": {
+        "en": "Coriander seeds",
+        "it": "Semi di coriandolo",
+        "ja": "コリアンダーシード"
+      },
+      "group": "Spices & nuts",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "star-anise",
+      "name": "Star anise",
+      "ingredient": "star_anise",
+      "form": "none",
+      "state": "none",
+      "file": "star-anise.svg",
+      "aliases": [
+        "star anise",
+        "anice stellato",
+        "八角"
+      ],
+      "labels": {
+        "en": "Star anise",
+        "it": "Anice stellato",
+        "ja": "八角"
+      },
+      "group": "Spices & nuts",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "almonds",
+      "name": "Almonds",
+      "ingredient": "almonds",
+      "form": "none",
+      "state": "none",
+      "file": "almonds.svg",
+      "aliases": [
+        "almonds",
+        "mandorle",
+        "アーモンド",
+        "almond"
+      ],
+      "labels": {
+        "en": "Almonds",
+        "it": "Mandorle",
+        "ja": "アーモンド"
+      },
+      "group": "Spices & nuts",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "walnuts",
+      "name": "Walnuts",
+      "ingredient": "walnuts",
+      "form": "none",
+      "state": "none",
+      "file": "walnuts.svg",
+      "aliases": [
+        "walnuts",
+        "noci",
+        "くるみ",
+        "walnut"
+      ],
+      "labels": {
+        "en": "Walnuts",
+        "it": "Noci",
+        "ja": "くるみ"
+      },
+      "group": "Spices & nuts",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "peanuts",
+      "name": "Peanuts",
+      "ingredient": "peanuts",
+      "form": "none",
+      "state": "none",
+      "file": "peanuts.svg",
+      "aliases": [
+        "peanuts",
+        "arachidi",
+        "落花生",
+        "peanut"
+      ],
+      "labels": {
+        "en": "Peanuts",
+        "it": "Arachidi",
+        "ja": "落花生"
+      },
+      "group": "Spices & nuts",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "cashews",
+      "name": "Cashews",
+      "ingredient": "cashews",
+      "form": "none",
+      "state": "none",
+      "file": "cashews.svg",
+      "aliases": [
+        "cashews",
+        "anacardi",
+        "カシューナッツ",
+        "cashew"
+      ],
+      "labels": {
+        "en": "Cashews",
+        "it": "Anacardi",
+        "ja": "カシューナッツ"
+      },
+      "group": "Spices & nuts",
+      "source": "library",
+      "reference": false,
+      "expansion": true
+    },
+    {
+      "key": "pistachios",
+      "name": "Pistachios",
+      "ingredient": "pistachios",
+      "form": "none",
+      "state": "none",
+      "file": "pistachios.svg",
+      "aliases": [
+        "pistachios",
+        "pistacchi",
+        "ピスタチオ",
+        "pistachio"
+      ],
+      "labels": {
+        "en": "Pistachios",
+        "it": "Pistacchi",
+        "ja": "ピスタチオ"
+      },
+      "group": "Spices & nuts",
+      "source": "library",
+      "reference": false,
+      "expansion": true
     }
   ]
 }
