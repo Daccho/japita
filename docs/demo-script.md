@@ -17,13 +17,13 @@ On an ordinary Monday, a ramen shop in Milan learns that its Friday noodles will
 | Role | Login ID / password | Where |
 | --- | --- | --- |
 | Owner of Kumo Ramen Milano | `restaurant1` / `restaurant1` | Desktop browser, English |
-| S3 EuroAsia Foods B.V. (frozen Japanese noodles, the backup) | `supplier3` / `supplier3` | Phone, 日本語 |
+| S3 Hokuto Shoji Europe B.V. (frozen Japanese noodles, the backup) | `supplier3` / `supplier3` | Phone, 日本語 |
 | S1 Tokyo Shokuhin (soy sauce) | `supplier1` / `supplier1` | Second browser (off camera or short cut) |
 | S6 Daikoku Shoten Milano (kikurage) | `supplier6` / `supplier6` | Private window (off camera) |
 
-`restaurant2` and `restaurant3` open the same Kumo Ramen Milano workspace. `supplier2` is S2 Pasta Fresca Ramen Milano, the noodle maker whose Friday delivery is late; it has no part in the on-time basket.
+`restaurant2` and `restaurant3` open the same Kumo Ramen Milano workspace. `supplier2` is S2 Sakura Seimen Milano, the noodle maker whose Friday delivery is late; it has no part in the on-time basket.
 
-The on-time basket has three supplier orders: **S1** Tokyo Shokuhin (soy sauce), **S3** EuroAsia Foods B.V. (noodles) and **S6** Nippon Ramen Supply Europe (kikurage). To confirm the S6 order, sign in as `supplier6` / `supplier6` in a private window. Every supplier signs in; there are no shared portal links.
+The on-time basket has three supplier orders: **S1** Tokyo Shokuhin (soy sauce), **S3** Hokuto Shoji Europe B.V. (noodles) and **S6** Daikoku Shoten Milano (kikurage). To confirm the S6 order, sign in as `supplier6` / `supplier6` in a private window. Every supplier signs in; there are no shared portal links.
 
 ## Pre-recording checklist
 
@@ -58,7 +58,7 @@ Timestamps refer to the **edited** video.
 
 - **Screen:** This week.
 - **Clicks:** bell icon → **Notifications** panel. Then, in **What to buy this week**, tap **Fri** on the 7-day strip under **Hakata noodles**.
-- **Highlight:** "Delivery update · Friday Hakata noodles delivery moved": Pasta Fresca Ramen Milano moved the Fri 23 Oct delivery (76 kg) to Tue 27 Oct. "Stock alert · Hakata noodles runs out Fri 23 Oct · 76.8 kg short this week". In the day panel: **Shortfall 20.5 kg** (20.46 kg, shown with one decimal) and the arrival marked "delayed to Tue 27 Oct". The note "Calculated from planned servings, usable stock and confirmed deliveries."
+- **Highlight:** "Delivery update · Friday Hakata noodles delivery moved": Sakura Seimen Milano moved the Fri 23 Oct delivery (76 kg) to Tue 27 Oct. "Stock alert · Hakata noodles runs out Fri 23 Oct · 76.8 kg short this week". In the day panel: **Shortfall 20.5 kg** (20.46 kg, shown with one decimal) and the arrival marked "delayed to Tue 27 Oct". The note "Calculated from planned servings, usable stock and confirmed deliveries."
 - **Narration EN:** "It's Monday. The noodle maker warns that Friday's delivery slips to next Tuesday. Japita checks stock day by day and finds the noodles run out on Friday: about 20 kilos short that day. This is calculated in code from the owner's own serving plan, not guessed by AI."
 - **Narration JA:** 「月曜日。製麺所から、金曜の納品が来週火曜にずれると連絡が来ました。Japitaは在庫を日ごとに計算し、金曜に麺が切れることを見つけます。その日だけで約20kgの不足です。オーナーが入力した提供数からコードで計算した結果で、AIの推測ではありません。」
 - **Cut note:** none.
@@ -66,8 +66,8 @@ Timestamps refer to the **edited** video.
 ### Scene 3 — Baseline vs. backup (0:32–0:50)
 
 - **Screen:** **Basket** (`/restaurants/basket`), then **Suppliers** (`/restaurants/suppliers`).
-- **Clicks:** **Compare baskets** in the alert → Basket. Then **Suppliers** → **Discover new** → type "frozen noodles" → **Find suppliers** → **EuroAsia Foods B.V.** → **View products**.
-- **Highlight:** on Basket, the alert "No option arrives before every stockout", which names the frozen Hakata noodles from EuroAsia Foods B.V.; the **Current suppliers** option with its "Late" line (€493.80). On the supplier card, the offer "Frozen Hakata Hosomen 1 kg (made in Japan)" with **Missing details**: "Hydration: not stated · ask the supplier".
+- **Clicks:** **Compare baskets** in the alert → Basket. Then **Suppliers** → **Discover new** → type "frozen noodles" → **Find suppliers** → **Hokuto Shoji Europe B.V.** → **View products**.
+- **Highlight:** on Basket, the alert "No option arrives before every stockout", which names the frozen Hakata noodles from Hokuto Shoji Europe B.V.; the **Current suppliers** option with its "Late" line (€493.80). On the supplier card, the offer "Frozen Hakata Hosomen 1 kg (made in Japan)" with **Missing details**: "Hydration: not stated · ask the supplier".
 - **Narration EN:** "Staying with the current suppliers costs €493.80, and it still arrives too late. There's a backup: frozen Hakata noodles from Japan, held in stock by an EU importer, because sea freight straight from Japan takes weeks. But the Japanese spec sheet doesn't state hydration, and the chef requires 30% or less. So Japita won't let us order it yet."
 - **Narration JA:** 「今の仕入れ先のままだと493.80ユーロで、しかも納品が間に合いません。候補はEUの輸入業者が在庫している日本製の冷凍博多麺です。日本から直接の船便では数週間かかるためです。ただし日本語の仕様書に加水率の記載がなく、シェフの条件は30%以下。だから、まだ発注できません。」
 - **Cut note:** jump cut between Basket and Suppliers. No scrolling on screen.
@@ -76,7 +76,7 @@ Timestamps refer to the **edited** video.
 
 - **Screen:** Basket → the advisor popup → **Questions to suppliers**.
 - **Clicks:** **Ask the advisor to draft the question** → the **Purchasing advisor** opens and shows "The advisor is checking offers, stock and baskets. This usually takes 1–2 minutes. · NN s" → answer with **Draft questions for suppliers** → **Review in Basket** → the question card "Draft · needs your approval" → **Approve and send**.
-- **Highlight:** "Message to the supplier (Japanese)" in polite business Japanese, the "Translation" box, then the badge "Sent · waiting for the supplier" and "Supplier portal: Copy link · Open".
+- **Highlight:** "Message to the supplier (Japanese)" in polite business Japanese, the "Translation" box, then the badge "Sent · waiting for the supplier" and "Sent to the supplier's portal · waiting for reply".
 - **Narration EN:** "The advisor, Gemma running on AMD, drafts a polite business-Japanese question with a translation. Nothing is sent until the owner approves it."
 - **Narration JA:** 「AMD上で動くGemmaのアドバイザーが、丁寧なビジネス日本語の問い合わせ文を訳付きで作成します。オーナーが承認するまで何も送信されません。」
 - **Cut note:** **CUT while the advisor is thinking.** Keep the elapsed-seconds line for 1 second, then jump to the finished answer. Caption: "≈1–2 min, cut". Do not speed up the voice.
@@ -93,7 +93,7 @@ Timestamps refer to the **edited** video.
 ### Scene 6 — Apply, recalculate, change priorities (1:28–1:55)
 
 - **Screen:** desktop. Bell → Basket → header **Profile** switch.
-- **Clicks:** the bell shows "Supplier reply · EuroAsia Foods B.V. answered your question about Frozen Hakata Hosomen…" (the workspace refreshes every few seconds) → **Open** → question card "Supplier answered" → **Apply 27 and recalculate** → **Basket options**: select **Arrives on time**. Then header **Profile: Value** → Basket → back to **Authentic**.
+- **Clicks:** the bell shows "Supplier reply · Hokuto Shoji Europe B.V. answered your question about Frozen Hakata Hosomen…" (the workspace refreshes every few seconds) → **Open** → question card "Supplier answered" → **Apply 27 and recalculate** → **Basket options**: select **Arrives on time**. Then header **Profile: Value** → Basket → back to **Authentic**.
 - **Highlight:** "Supplier reply (translated)", "Value read from the reply: 27". **Arrives on time**: €444.10 (shown in USD; toggle **IT** for a second or caption the euro value), "−€49.70 vs current suppliers", "all on time", noodles "arrives Thu 22 Oct". With **Value**: **Lowest delivered cost** €377.50 with "1 late" (soy sauce) and **Arrives on time** €425.60.
 - **Narration EN:** "The reply is translated, the owner applies it, and Japita recalculates. Now there's a basket that arrives Thursday, before the stockout, for €444.10: €49.70 less than the late baseline. A restaurant with value priorities sees a different answer from the same catalog. The cheapest basket, €377.50, gets the soy sauce too late, so the on-time option is €425.60."
 - **Narration JA:** 「返信は自動で翻訳され、オーナーが反映するとJapitaが再計算します。欠品前の木曜に届くバスケットが444.10ユーロ。間に合わない現状より49.70ユーロ安くなります。同じカタログでも、価格重視の店なら答えが変わります。最安の377.50ユーロは醤油が間に合わず、間に合う案は425.60ユーロです。」
@@ -102,11 +102,11 @@ Timestamps refer to the **edited** video.
 ### Scene 7 — Approve and order (1:55–2:22)
 
 - **Screen:** Basket → **Supplier orders**; phone portal **受注** tab; This week.
-- **Clicks:** **Approve this basket** → three orders "Ready to send" (Tokyo Shokuhin, EuroAsia Foods B.V., Nippon Ramen Supply Europe) → **Send to supplier** on each → "Sent to supplier, waiting for confirmation". Phone: **受注** → the order ("受注待ち", 納品日 pre-filled with the restaurant's date) → **受注する** → "注文を受注しました。" Desktop: the EuroAsia order shows **Confirmed by supplier**; bell "Order confirmed". Off camera, `supplier1` accepts the soy order in a second browser and `supplier6` accepts the kikurage order. Back to **This week**.
+- **Clicks:** **Approve and send to suppliers** → the confirmation "Send 3 orders: Tokyo Shokuhin …, Hokuto Shoji Europe B.V. …, Daikoku Shoten Milano …?" → **Send orders** → three orders "Sent to supplier, waiting for confirmation". Phone: **受注** → the order ("受注待ち", 納品日 pre-filled with the restaurant's date) → **受注する** → "注文を受注しました。" Desktop: the Hokuto Shoji order shows **Confirmed by supplier**; bell "Order confirmed". Off camera, `supplier1` accepts the soy order in a second browser and `supplier6` accepts the kikurage order. Back to **This week**.
 - **Highlight:** one order per supplier; the status change on the restaurant side; on This week the noodle alert is gone and **Spending this week → Committed** shows €444.10 of the €900 budget.
-- **Narration EN:** "The owner approves the basket, and Japita splits it into one order per supplier. Each order is sent only when the owner presses Send. The supplier accepts on the phone with a delivery date, and the Friday stockout is gone. Committed spending: €444.10 of a €900 budget. All data here is fictional, and no real purchase or payment happens."
-- **Narration JA:** 「オーナーがバスケットを承認すると、仕入れ先ごとの注文に分かれます。送信ボタンを押したときだけ注文が送られます。仕入れ先はスマホで納品日を確認して「受注する」を押し、金曜の欠品は解消。確定支出は予算900ユーロ中444.10ユーロです。データはすべて架空で、実際の購入や支払いは発生しません。」
-- **Cut note:** split screen (desktop left, phone right) for the 受注する moment. Committed spending counts orders once they are sent, so the €444.10 appears as soon as all three are sent.
+- **Narration EN:** "The owner approves the plan, confirms the summary, and Japita sends one order per supplier in a single step. The supplier accepts on the phone with a delivery date, and the Friday stockout is gone. Committed spending: €444.10 of a €900 budget. All data here is fictional, and no real purchase or payment happens."
+- **Narration JA:** 「オーナーが発注プランを承認し、確認画面で内容を確かめると、仕入れ先ごとの注文が一度に送られます。仕入れ先はスマホで納品日を確認して「受注する」を押し、金曜の欠品は解消。確定支出は予算900ユーロ中444.10ユーロです。データはすべて架空で、実際の購入や支払いは発生しません。」
+- **Cut note:** split screen (desktop left, phone right) for the 受注する moment. Committed spending counts orders once they are sent, so the €444.10 appears as soon as the three orders go out.
 
 ### Scene 8 — Weekly check with Evolus (2:22–2:37)
 
