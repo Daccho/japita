@@ -86,11 +86,18 @@ const json = (method: string, body: unknown, headers: Record<string, string> = {
 type JobStatus<R> = { job_id: string; status: "running" | "done" | "error"; result?: R; error?: { code: string } };
 const JOB_POLL_MS = 2500;
 
-async function runJob<R>(start: Promise<{ job_id: string }>): Promise<R> {
-  const { job_id } = await start;
+// Jobs live in the API process's memory, so a deploy or restart loses them (job_not_found): start once more.
+async function runJob<R>(start: () => Promise<{ job_id: string }>, restarted = false): Promise<R> {
+  const { job_id } = await start();
   for (;;) {
     await sleep(JOB_POLL_MS);
-    const job = await request<JobStatus<R>>(`/jobs/${encodeURIComponent(job_id)}`);
+    let job: JobStatus<R>;
+    try {
+      job = await request<JobStatus<R>>(`/jobs/${encodeURIComponent(job_id)}`);
+    } catch (e) {
+      if (!restarted && e instanceof ApiError && e.code === "job_not_found") return runJob(start, true);
+      throw e;
+    }
     if (job.status === "done") return job.result as R;
     if (job.status === "error") throw new ApiError(200, job.error?.code ?? "internal", `/jobs/${job_id}`);
   }
@@ -468,8 +475,8 @@ const enc = encodeURIComponent;
 
 // Actions. Each returns the API response; pages then re-fetch their views.
 export const api = {
-  ask: (question: string, lang: string) => runJob<AgentAnswer>(request("/agent/ask", json("POST", { question, lang }))),
-  weeklyCheck: () => runJob<WeeklyCheck>(request("/evolus/weekly-intake", { method: "POST" })),
+  ask: (question: string, lang: string) => runJob<AgentAnswer>(() => request("/agent/ask", json("POST", { question, lang }))),
+  weeklyCheck: () => runJob<WeeklyCheck>(() => request("/evolus/weekly-intake", { method: "POST" })),
   approveClarification: (id: string) => request(`/clarifications/${enc(id)}/approve`, { method: "POST" }),
   applyClarification: (id: string, value?: unknown) =>
     request(`/clarifications/${enc(id)}/apply`, json("POST", value === undefined ? {} : { value })),

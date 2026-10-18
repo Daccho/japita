@@ -308,9 +308,9 @@ export const purchasingApi = {
   putContext: (profileId: string, body: { restaurant_details?: Record<string, string>; links?: Record<string, string> }) => getJson<Profile>(`/profiles/${profileId}/context`, json("PATCH", body)),
   chefAssessment: (offerId: string, approved: boolean, note: string) => getJson<Offer>(`/offers/${offerId}/chef-assessment`, json("PUT", { approved, note })),
   brief: (profileId: string) => getJson<PurchaseBrief>(`/advisor/brief?${q(profileId)}`),
-  catalog: (query: string, profileId: string, criteria: CatalogCriteria) => runPurchasingJob<CatalogResult>(getJson("/catalog/search", json("POST", { query, profile_id: profileId, criteria }))),
+  catalog: (query: string, profileId: string, criteria: CatalogCriteria) => runPurchasingJob<CatalogResult>(() => getJson("/catalog/search", json("POST", { query, profile_id: profileId, criteria }))),
   ask: (question: string, profileId: string, conversationId: string, lang: string, context: AdvisorContext = {}) =>
-    runPurchasingJob<PurchasingAnswer>(getJson("/agent/ask", json("POST", { question, profile_id: profileId, conversation_id: conversationId, lang, ...context }))),
+    runPurchasingJob<PurchasingAnswer>(() => getJson("/agent/ask", json("POST", { question, profile_id: profileId, conversation_id: conversationId, lang, ...context }))),
   approveClarification: (id: string) => getJson<Clarification>(`/clarifications/${id}/approve`, { method: "POST" }),
   applyClarification: (id: string, profileId: string, value?: unknown) =>
     getJson<{ clarification: Clarification; baskets: BasketResult }>(
@@ -328,7 +328,7 @@ export const purchasingApi = {
   applySupplierUpdate: (offerId: string) => getJson<Offer>(`/offers/${offerId}/supplier-update/apply`, { method: "POST" }),
   rejectSupplierUpdate: (offerId: string) => getJson<Offer>(`/offers/${offerId}/supplier-update/reject`, { method: "POST" }),
   weeklyCheck: (profileId: string) =>
-    runPurchasingJob<WeeklyCheck>(getJson(`/evolus/weekly-intake?${q(profileId)}`, { method: "POST" })),
+    runPurchasingJob<WeeklyCheck>(() => getJson(`/evolus/weekly-intake?${q(profileId)}`, { method: "POST" })),
   // Legacy single-request supplier page (app/supplier/[token]).
   supplierRequest: (token: string) => getJson<SupplierRequest>(`/supplier/requests/${encodeURIComponent(token)}`),
   supplierReply: (token: string, textJa: string) =>
