@@ -11,7 +11,6 @@ from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
 
 from . import auth, fx, portal, repo, restaurant, rules, views
-from .avatar import LOGO_DATA_MAX
 from .errors import AppError, from_value_error
 from .store import Store, active_profile_id
 from .textfmt import Money, lang_from_request, restaurant_lang
@@ -173,8 +172,7 @@ def patch_profile(profile_id: str, body: ProfilePatch, request: Request):
 
 class RestaurantProfile(BaseModel):
     values: dict[str, str | None] = {}
-    logo_url: str | None = Field(default=None, max_length=LOGO_DATA_MAX,
-                                 description="Site path, http(s) URL or uploaded PNG/JPEG/WebP data URL; empty restores the default")
+    logo_url: str | None = Field(default=None, max_length=400, description="Site path or http(s) URL; empty restores the default")
 
 
 @router.get("/restaurant/profile")

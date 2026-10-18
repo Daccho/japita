@@ -999,8 +999,7 @@ def restaurant_profile_view(store: Store, lang: str) -> dict:
     name = store.profile.get("name", "")
     logo = restaurant.logo_url(store.data)
     return {
-        "lang": lang, "values": v, "name": name, "logo_url": logo,
-        "default_logo_url": restaurant.DEFAULT_LOGO_URL, "avatar": avatar(logo, name),
+        "lang": lang, "values": v, "name": name, "logo_url": logo, "avatar": avatar(logo, name),
         "subtitle": f"{v['location']} · {t(lang, 'ov.seatsShort', n=v['seats'])}",
         "facts": [fact("ov.concept", v["concept"]), fact("ov.guests", v["positioning"]), fact("ov.prices", v["menuPrice"]),
                   fact("ov.make", v["make"]), fact("ov.buy", v["buy"])],

@@ -1,27 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { ImageUp, Pencil, RotateCcw } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { errorText, sendJson, type RestaurantProfileView } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useBump, useToast, useView } from "@/components/live";
 import { Avatar } from "@/components/AppShell";
 
-// Scales the chosen image into a 256px square (letterboxed, transparent) before it is uploaded.
-async function squareIcon(file: File): Promise<string> {
-  const bitmap = await createImageBitmap(file);
-  const size = 256;
-  const canvas = document.createElement("canvas");
-  canvas.width = canvas.height = size;
-  const scale = Math.min(size / bitmap.width, size / bitmap.height);
-  const w = bitmap.width * scale;
-  const h = bitmap.height * scale;
-  canvas.getContext("2d")!.drawImage(bitmap, (size - w) / 2, (size - h) / 2, w, h);
-  bitmap.close();
-  return canvas.toDataURL("image/webp", 0.9);
-}
-
-// The restaurant's own description and icon, saved on the server.
+// The restaurant's own description, saved on the server.
 export default function Overview({ initial }: { initial: RestaurantProfileView | null }) {
   const { t, lang } = useI18n();
   const toast = useToast();
@@ -29,8 +15,6 @@ export default function Overview({ initial }: { initial: RestaurantProfileView |
   const { data: v, setData } = useView<RestaurantProfileView>(`/restaurant/profile?lang=${lang}`, initial);
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
-  // The icon being edited: a URL or an uploaded data URL; "" restores the default.
-  const [logo, setLogo] = useState("");
   if (!v) return null;
   const L = (k: string) => v.labels[k] ?? k;
 
@@ -49,7 +33,7 @@ export default function Overview({ initial }: { initial: RestaurantProfileView |
             try {
               const next = await sendJson<RestaurantProfileView>("PUT", `/restaurant/profile?lang=${lang}`, {
                 values,
-                logo_url: logo,
+                logo_url: String(form.get("logo_url") ?? "").trim(),
               });
               setData(next);
               setEditing(false);
@@ -72,38 +56,10 @@ export default function Overview({ initial }: { initial: RestaurantProfileView |
               )}
             </label>
           ))}
-          <div className="jp-field">
+          <label className="jp-field">
             {t("ov.logo")}
-            <div className="jp-profile-title" style={{ alignItems: "center", marginBottom: 0 }}>
-              <Avatar avatar={{ url: logo || v.default_logo_url || null, initials: v.avatar?.initials ?? "" }} name={v.name} size={50} />
-              <label className="jp-action">
-                <ImageUp aria-hidden />
-                {t("ov.logoChange")}
-                <input
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp"
-                  hidden
-                  onChange={async (e) => {
-                    const file = e.currentTarget.files?.[0];
-                    e.currentTarget.value = "";
-                    if (!file) return;
-                    try {
-                      setLogo(await squareIcon(file));
-                    } catch {
-                      toast(t("err.invalid_image"), "error");
-                    }
-                  }}
-                />
-              </label>
-              {logo && logo !== v.default_logo_url && (
-                <button type="button" className="jp-action" onClick={() => setLogo("")}>
-                  <RotateCcw aria-hidden />
-                  {t("ov.logoReset")}
-                </button>
-              )}
-            </div>
-            <span className="jp-muted">{t("ov.logoHint")}</span>
-          </div>
+            <input name="logo_url" defaultValue={v.logo_url ?? ""} maxLength={400} />
+          </label>
           <div className="jp-form-actions">
             <button type="submit" className="jp-action jp-primary" disabled={busy}>
               {L("ov.save")}
@@ -121,14 +77,7 @@ export default function Overview({ initial }: { initial: RestaurantProfileView |
       <section className="jp-panel">
         <div className="jp-line-head">
           <h2>{L("ov.about")}</h2>
-          <button
-            type="button"
-            className="jp-action"
-            onClick={() => {
-              setLogo(v.logo_url ?? "");
-              setEditing(true);
-            }}
-          >
+          <button type="button" className="jp-action" onClick={() => setEditing(true)}>
             <Pencil aria-hidden />
             {L("ov.edit")}
           </button>

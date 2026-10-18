@@ -239,13 +239,11 @@ PUT `{ "active_profile_id" }` (404 for an unknown id). Both return
 
 PUT `{ "values"?: { description, concept, positioning, location, seats, menuPrice, make, buy, ownerNotes },
 "logo_url"?: string }` (partial; multi-line fields ≤ 1200, others ≤ 160 characters). `logo_url` is a site path
-(`/kumo-demo-logo.webp`, not `//host`) or an http(s) URL without credentials, ≤ 400 characters (`invalid_url`), or an
-uploaded icon as a base64 PNG, JPEG or WebP data URL ≤ 200,000 characters (`invalid_image`); the profile edit form
-scales the chosen file to a 256px square WebP before sending it. An empty value restores the default
-`/kumo-demo-logo.webp`, which the view returns as `default_logo_url`.
+(`/kumo-demo-logo.webp`, not `//host`) or an http(s) URL without credentials, ≤ 400 characters (`invalid_url`); an
+empty value restores the default `/kumo-demo-logo.webp`.
 
 ```jsonc
-{ "lang", "values", "name", "logo_url", "default_logo_url", "avatar", "subtitle", "facts": [{ "label", "value" }], "questionnaire": [{ "label", "value" }],
+{ "lang", "values", "name", "logo_url", "avatar", "subtitle", "facts": [{ "label", "value" }], "questionnaire": [{ "label", "value" }],
   "fields": [{ "key", "label", "multiline", "max_length" }], "labels" }
 ```
 
@@ -288,8 +286,8 @@ received_text, state_text, badge, delivery_label, delivery_text, goods_text, shi
 can_accept, can_change_delivery`, lines add `ingredient_name, pack_word (本/袋/bottle/bag), qty_text, cost_text`,
 changes add `from_text, to_text, at_text`; each product adds `ingredient_name, is_restaurant_ingredient,
 not_ingredient_text, price_text, price_amount, pack_text, origin_text, updated_text, attribute_rows, pending_view,
-drawing`. The profile includes `logo_url`; `POST …/profile` accepts `logo_url` (a site path or http(s) URL, as for the
-restaurant logo, but no uploaded data URL; empty removes it) as part of the profile proposal the restaurant applies or rejects.
+drawing`. The profile includes `logo_url`; `POST …/profile` accepts `logo_url` (same rules as the restaurant logo;
+empty removes it) as part of the profile proposal the restaurant applies or rejects.
 Every POST under `/portal/{token}/…` returns the same view, including
 `POST /portal/me/requests/{request_id}/reply` `{ "value"?, "note_ja"?, "text_ja"? }` (the request id from `requests[].id`;
 404 for another supplier's question).
