@@ -8,7 +8,7 @@ import re
 import unicodedata
 from datetime import date, timedelta
 
-from . import calc, orders, restaurant, stock
+from . import calc, orders, restaurant, rules, stock
 from .avatar import avatar
 from .drawings import offer_drawing
 from .store import Store, active_profile_id
@@ -135,7 +135,8 @@ def exclusion_reasons(store: Store, offer_id: str, lang: str) -> list[str]:
 
 
 def _why(code: str) -> str:
-    return {"shipping_unknown": "shipping", "no_delivery_day": "days"}.get(code, code)
+    return {"shipping_unknown": "shipping", "no_delivery_day": "days",
+            "import_document_missing": "importDocument"}.get(code, code)
 
 
 def _timing(b: dict, lang: str) -> dict:
@@ -180,6 +181,7 @@ def _plan_line(store: Store, ln: dict, lang: str, money: Money, new: set[str]) -
     offer = next((o for o in store.offers if o["id"] == ln["offer_id"]), None)
     return {"offer_id": ln["offer_id"], "product": ln["product"], "ingredient": ln["ingredient"],
             "drawing": offer_drawing(offer) if offer else None,
+            "import_checks": rules.check_offer(store, ln["offer_id"], lang)["summary"],
             "ingredient_label": _ing(lang, ln["ingredient"]), "supplier": _sup(store, ln["supplier_id"]),
             "qty_text": f"{ln['packs']} × {qty(ln['pack_size'], ln['unit'])} = {qty(ln['purchase_qty'], ln['unit'])}",
             "detail_text": f"{_ing(lang, ln['ingredient'])} · {_sup(store, ln['supplier_id'])} · {ln['packs']} × "
@@ -742,6 +744,7 @@ def offer_card(store: Store, o: dict, lang: str, money: Money, new: set[str]) ->
         "image_alt": f"{t(lang, 'of.illustrative')}: {_ing(lang, o['ingredient'])}",
         "image_caption": t(lang, "of.illustrative"),
         "status": status, "checks": checks, "proposal": proposal,
+        "import_checks": rules.check_offer(store, o["id"], lang)["summary"],
         "is_new": is_new, "new_text": t(lang, "plan.new") if is_new else None,
     }
 

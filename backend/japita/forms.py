@@ -10,6 +10,10 @@ FIELD_LABEL_EN = {
     "hydration_pct": "Hydration", "contains_kansui": "Contains kansui", "fresh": "Fresh (not frozen)",
     "origin_country": "Country of manufacture (e.g. JP)", "brewing_method": "Brewing method (e.g. honjozo)",
     "additive_free": "Additive-free", "cut": "Cut",
+    "origin_statement": "Statement on origin (EU–Japan EPA) available", "italian_label": "Food information in Italian",
+    "kansui_composition": "Kansui composition (e.g. E 500, E 501)",
+    "animal_ingredients": "Contains ingredients of animal origin (egg, meat, dairy, fish)",
+    "dispatch_country": "Ships from (country, e.g. JP)",
 }
 
 # How each requested field appears on the supplier's mobile form.
@@ -27,6 +31,12 @@ FIELD_FORM_JA = {
     "cut": {"label_ja": "形状", "input": "choice",
             "choices": [{"value": "strips", "label_ja": "スライス", "label_en": "Strips"},
                         {"value": "whole", "label_ja": "ホール", "label_en": "Whole"}]},
+    # Import and labelling checks (data/import_rules.json)
+    "origin_statement": {"label_ja": "原産地に関する申告（日EU・EPA）の提供", "input": "boolean"},
+    "italian_label": {"label_ja": "イタリア語の食品表示（ラベルまたは添付書類）", "input": "boolean"},
+    "kansui_composition": {"label_ja": "かんすいの成分（例：E 500、E 501）", "input": "text"},
+    "animal_ingredients": {"label_ja": "動物由来の原材料（卵・肉・乳・魚）を含む", "input": "boolean"},
+    "dispatch_country": {"label_ja": "発送国（例：JP）", "input": "text"},
 }
 
 

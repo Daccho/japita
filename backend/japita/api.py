@@ -17,7 +17,7 @@ from fastapi import FastAPI, File, Header, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field
 
-from . import auth, calc, fx, jobs, portal, repo, views
+from . import auth, calc, fx, jobs, portal, repo, rules, views
 from .agent import run_agent
 from .errors import AppError, from_value_error, install as install_error_handlers
 from .evolus import EvolusAgent, run_agent_evolus
@@ -536,7 +536,8 @@ def supplier_reply(token: str, body: SupplierReply, request: Request):
     if body.value is None and not (body.text_ja or "").strip():
         raise AppError(422, "empty_reply", "回答を入力してください")
     field = c["field"]
-    label, sample = _spec_fields(data, store.offer(c["offer_id"])["ingredient"]).get(field, (field, ""))
+    label, sample = _spec_fields(data, store.offer(c["offer_id"])["ingredient"]).get(field) \
+        or rules.field_spec(field) or (field, "")
     started = time.perf_counter()
     if body.value is not None:
         # A typed value needs the model only to translate an optional note.

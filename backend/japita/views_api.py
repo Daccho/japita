@@ -10,7 +10,7 @@ from typing import Literal
 from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
 
-from . import fx, repo, restaurant, views
+from . import auth, fx, portal, repo, restaurant, rules, views
 from .errors import AppError, from_value_error
 from .store import Store, active_profile_id
 from .textfmt import Money, lang_from_request, restaurant_lang
@@ -48,6 +48,13 @@ def week(request: Request, profile_id: str | None = None):
 def basket(request: Request, profile_id: str | None = None, kind: str | None = None):
     store, lang, money = _ctx(request, profile_id)
     return views.basket_view(store, lang, money, kind)
+
+
+@router.get("/views/import-checks")
+def import_checks(request: Request, profile_id: str | None = None):
+    """Import and labelling rule checks for every offer, with official sources. Decision support, not clearance."""
+    store, lang, _ = _ctx(request, profile_id)
+    return rules.import_checks_view(store, lang)
 
 
 @router.get("/notifications")
