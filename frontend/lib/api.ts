@@ -109,6 +109,7 @@ const ERROR_KEYS: Record<string, Key> = {
   auth_required: "err.auth_required",
   forbidden: "err.forbidden",
   invalid_input: "err.invalid_input",
+  invalid_image: "err.invalid_image",
   not_found: "err.not_found",
   conflict: "err.conflict",
   model_unavailable: "err.model_unavailable",
@@ -430,6 +431,7 @@ export type RestaurantProfileView = {
   name: string;
   subtitle: string;
   logo_url?: string | null;
+  default_logo_url?: string;
   avatar?: Avatar | null;
   facts: { label: string; value: string }[];
   questionnaire: { label: string; value: string }[];
