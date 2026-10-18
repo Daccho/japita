@@ -8,6 +8,7 @@ import { Badge, EmptyState, useBump, useToast, useView } from "@/components/live
 import PageHeader from "@/components/PageHeader";
 import { InfoTip } from "@/components/InfoTip";
 import ProductDrawing from "@/components/ProductDrawing";
+import ImportChecks from "@/components/ImportChecks";
 import { Avatar } from "@/components/AppShell";
 import Loading from "@/components/pages/Loading";
 import { suppliersPath, type SupplierQuery } from "@/lib/paths";
@@ -125,6 +126,7 @@ function OfferCard({ offer: o, labels }: { offer: OfferCardView; labels: Record<
         <span>{o.pack_text}</span>
         <span>{o.unit_price_text}</span>
       </div>
+      <ImportChecks ic={o.import_checks} />
       {o.checks.length > 0 && (
         <div className="jp-detail" style={{ marginTop: 4 }}>
           {o.checks.map((c, i) => (
