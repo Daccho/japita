@@ -40,9 +40,9 @@ $env:DATABASE_URL = 'postgresql+psycopg://japita:japita@localhost:5432/japita'
 .\.venv\Scripts\python.exe -m japita.demo_catalog
 ```
 
-The importer is idempotent and does not reset the database. No deployed or existing owner database was modified as part of this expansion. The standalone workspace still has its separate small fictional supplier directory; its ingredient aliases and existing drawing-review export are refreshed from the shared library.
+The importer is idempotent and does not reset the database. It imports into the current workspace in Python; the CLI defaults to the demo workspace (`default`). Use `--workspace <id>` to explicitly select another restaurant; other workspaces are not changed. No deployed or existing owner database was modified as part of this expansion. The standalone workspace still has its separate small fictional supplier directory; its ingredient aliases and existing drawing-review export are refreshed from the shared library.
 
-Expansion verification: 192 offline backend tests passed (three live tests deselected); TypeScript, lint, the production build and mockup consistency checks passed. All new artwork was rendered into six review sheets and checked at 48px and a larger size; the existing standalone review also exports it at 48px and 128px. Tests cover multilingual matching, unknown geography, pending supplier proposals, blocked orderability, preserved basket totals and idempotent imports that retain owner edits. Live AMD interpretation and any deployed database remain outside this local check.
+Expansion verification after merging upstream workspace and import-rule changes: 221 offline backend tests passed (three live tests deselected); TypeScript, lint, the production build and mockup consistency checks passed. All new artwork was rendered into six review sheets and checked at 48px and a larger size; the existing standalone review also exports it at 48px and 128px. Tests cover multilingual matching, unknown geography, pending supplier proposals, blocked orderability, preserved basket totals and idempotent imports that retain owner edits and stay in the selected restaurant workspace. Live AMD interpretation and any deployed database remain outside this local check.
 
 ## Automatic generation
 

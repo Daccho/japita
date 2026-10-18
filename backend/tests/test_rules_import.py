@@ -55,7 +55,7 @@ def errors_of(content: str, filename: str = "rules.csv") -> list[dict]:
 
 
 def test_sample_csv_is_the_export_of_the_bundled_rules():
-    assert SAMPLE.read_bytes().decode("utf-8-sig") == rules_import.export_csv(rules.bundled_rules())
+    assert SAMPLE.read_text(encoding="utf-8-sig") == rules_import.export_csv(rules.bundled_rules())
 
 
 def test_csv_round_trip_keeps_every_rule():

@@ -89,11 +89,29 @@ def test_additive_catalog_import_preserves_edits_and_is_idempotent(tmp_path, mon
     before = repo.load_state()
     assert demo_catalog.import_catalog() == {"suppliers": 9, "offers": 119}
     with Session(engine) as session, session.begin():
-        record = session.get(repo.Record, ("offer", "O-lib-carrots"))
+        record = session.get(repo.Record, (repo.DEFAULT_WORKSPACE, "offer", "O-lib-carrots"))
         record.data = {**record.data, "price_eur": 99}
     assert demo_catalog.import_catalog() == {"suppliers": 0, "offers": 0}
     after = repo.load_state()
     for key in ("week", "recipe", "profiles", "approvals", "purchase_orders"):
         assert after[key] == before[key]
     assert Store(after).offer("O-lib-carrots")["price_eur"] == 99
+    engine.dispose()
+
+
+def test_additive_catalog_import_respects_restaurant_workspace(tmp_path, monkeypatch):
+    engine = create_engine(f"sqlite:///{tmp_path / 'workspaces.db'}")
+    repo.Base.metadata.create_all(engine)
+    monkeypatch.setattr(repo, "_engine", engine)
+    repo.save_state(repo.blank_state("First restaurant"), "first")
+    repo.save_state(repo.blank_state("Second restaurant"), "second")
+    before_other = repo.load_state("second")
+    with repo.use_workspace("first"):
+        assert demo_catalog.import_catalog() == {"suppliers": 9, "offers": 119}
+        assert demo_catalog.import_catalog() == {"suppliers": 0, "offers": 0}
+    assert len(repo.load_state("first")["offers"]) == 119
+    assert repo.load_state("second") == before_other
+    assert repo.is_empty(repo.DEFAULT_WORKSPACE)
+    assert demo_catalog.import_catalog("second") == {"suppliers": 9, "offers": 119}
+    assert len(repo.load_state("second")["offers"]) == 119
     engine.dispose()
