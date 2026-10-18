@@ -50,12 +50,14 @@ cd frontend && pnpm install && pnpm dev                      # http://localhost:
 | `EVOLUS_API_KEY`, `EVOLUS_APPLICATION_ID`, `EVOLUS_AGENT_ID`, `EVOLUS_WORKFLOW_ID` | Evolus agent and workflow. Without `EVOLUS_AGENT_ID` the app calls the model directly. |
 | `ADMIN_KEY` | Required for drawing-review Regenerate/Delete; also protects `POST /state/seed` when set. Never expose it as a public frontend environment variable. |
 | `DRAWING_TIMEOUT_SECONDS` | Background drawing job budget, default 60 seconds (maximum 120). |
-| `NEXT_PUBLIC_API_BASE` | Frontend: API URL (default `http://localhost:8000`). |
+| `APP_ORIGIN` | Backend: the web app's origin (default `http://localhost:3000`). CORS and the CSRF origin check use it; an `https://` origin makes the session cookie Secure. |
+| `API_ORIGIN` | Frontend, build time: where `/api/*` is proxied (default `http://localhost:8000`). |
 
 ```bash
 cd backend
 uv run pytest                              # offline tests
 uv run python -m japita.smoke              # check the real model endpoint
+uv run python -m japita.auth add-user kumo-milano --name "Kumo Ramen Milano"   # restaurant sign-in (prompts for a password)
 curl -X POST localhost:8000/state/seed     # reset demo data
 ```
 
@@ -63,7 +65,7 @@ Deployment: [docs/deploy.md](docs/deploy.md). Own vLLM and Evolus setup: [docs/s
 
 ## Current design scope
 
-The workspace assumes a restaurant that has already registered and signed in. A public homepage, pricing page, restaurant registration, and sign-in are future work. The static mockup in [`mockup/`](mockup/index.html) opens directly in a browser; see [docs/mockup-handoff.md](docs/mockup-handoff.md). Connecting the design to the backend follows [docs/design-integration.md](docs/design-integration.md).
+The connected app starts with a restaurant/supplier choice and login ID/password sign-in; the restaurant workspace lives at `/restaurants`. Accounts are provisioned through the backend CLI. A public marketing homepage, pricing page, and self-service restaurant registration remain future work. The static mockup in [`mockup/`](mockup/index.html) opens directly in a browser; see [docs/mockup-handoff.md](docs/mockup-handoff.md). Connecting the design to the backend follows [docs/design-integration.md](docs/design-integration.md).
 
 The connected restaurant menu supports adding dishes and saving their ingredients on the backend; those ingredients also populate My suppliers filters. Approved flat drawings replace product photos. Unknown foods queue background generation through the existing AMD model settings, with validated SVG and a packaging fallback. The connected `/drawings-review` page manages the cache; the standalone [library preview](mockup/drawings-preview.html) shows the approved artwork. See [docs/product-drawings.md](docs/product-drawings.md) for setup, persistence and verification boundaries.
 

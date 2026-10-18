@@ -3,7 +3,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import {
   api,
-  errorDetail,
   type AgentAnswer,
   type Approval,
   type BasketResult,
@@ -14,6 +13,7 @@ import {
 } from "@/lib/api";
 
 const PROFILE_KEY = "japita.profile";
+const CACHE_KEY = "japita.cache.";
 export const PROFILES = ["kumo-authentic", "kumo-value"] as const;
 
 type Data = {
@@ -24,14 +24,23 @@ type Data = {
   spending: Spending;
 };
 
-type Job<T> = { running: boolean; startedAt: number | null; result: T | null; error: string | null; question?: string };
+function cached(pid: string): Data | null {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY + pid);
+    return raw ? (JSON.parse(raw) as Data) : null;
+  } catch {
+    return null;
+  }
+}
+
+// `error` is the thrown ApiError (shown with errorText); null when there is none.
+type Job<T> = { running: boolean; startedAt: number | null; result: T | null; error: unknown; question?: string };
 
 type Ctx = {
   profileId: string;
   setProfileId: (id: string) => void;
   data: Data | null;
-  connecting: boolean; // first load still waiting (server may be waking up)
-  attempts: number;
+  live: boolean; // false while showing cached or build-time data and the API is still waking up
   refresh: () => Promise<void>;
   advisorOpen: boolean;
   setAdvisorOpen: (open: boolean) => void;
@@ -54,7 +63,7 @@ const idle = { running: false, startedAt: null, result: null, error: null };
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [profileId, setProfileState] = useState<string>("kumo-authentic");
   const [data, setData] = useState<Data | null>(null);
-  const [attempts, setAttempts] = useState(0);
+  const [live, setLive] = useState(false);
   const [advisorOpen, setAdvisorOpen] = useState(false);
   const [advisor, setAdvisor] = useState<Job<AgentAnswer>>(idle);
   const [weekly, setWeekly] = useState<Job<WeeklyCheck>>(idle);
@@ -67,6 +76,13 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       if (saved && (PROFILES as readonly string[]).includes(saved)) setProfileState(saved);
     } catch {}
   }, []);
+
+  // Show the last data this signed-in browser saw at once; live data replaces it. Nothing restaurant-specific
+  // is bundled into the public JavaScript, and the cache is cleared on sign-out and on 401.
+  useEffect(() => {
+    setLive(false);
+    setData(cached(profileId));
+  }, [profileId]);
 
   const setProfileId = (id: string) => {
     setProfileState(id);
@@ -84,10 +100,17 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       api.approval(pid),
       api.spending(pid),
     ]);
-    if (pid === profileRef.current) setData({ state, baskets, timeline, approval, spending });
+    if (pid !== profileRef.current) return;
+    const next = { state, baskets, timeline, approval, spending };
+    setData(next);
+    setLive(true);
+    try {
+      localStorage.setItem(CACHE_KEY + pid, JSON.stringify(next));
+    } catch {}
   }, []);
 
   // First load: retry until the (possibly sleeping) server answers. Never show an error for this.
+  // (request() already retries quietly for about a minute; this keeps trying after that.)
   useEffect(() => {
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout>;
@@ -96,7 +119,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         await load();
       } catch {
         if (cancelled) return;
-        setAttempts(n + 1);
         timer = setTimeout(() => attempt(n + 1), 4000);
       }
     };
@@ -129,7 +151,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         setAdvisor({ running: false, startedAt: null, result, error: null, question });
         load().catch(() => {});
       })
-      .catch((e) => setAdvisor({ running: false, startedAt: null, result: null, error: errorDetail(e), question }));
+      .catch((e) => setAdvisor({ running: false, startedAt: null, result: null, error: e ?? new Error("failed"), question }));
   };
 
   const runWeekly = () => {
@@ -138,7 +160,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     api
       .weeklyCheck(profileRef.current)
       .then((result) => setWeekly({ running: false, startedAt: null, result, error: null }))
-      .catch((e) => setWeekly({ running: false, startedAt: null, result: null, error: errorDetail(e) }));
+      .catch((e) => setWeekly({ running: false, startedAt: null, result: null, error: e ?? new Error("failed") }));
   };
 
   return (
@@ -147,8 +169,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         profileId,
         setProfileId,
         data,
-        connecting: data === null,
-        attempts,
+        live,
         refresh,
         advisorOpen,
         setAdvisorOpen,

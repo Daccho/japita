@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { CalendarDays, Check, Clock, Send } from "lucide-react";
-import { api, errorDetail, money, qty, type PurchaseOrder } from "@/lib/api";
+import Link from "next/link";
+import { api, errorCodeOf, errorText, money, qty, type PurchaseOrder } from "@/lib/api";
 import { useDates, useI18n, type Key } from "@/lib/i18n";
 import { useWorkspace } from "@/components/workspace";
 import { idempotencyKey } from "@/components/helpers";
@@ -20,7 +21,7 @@ export default function Orders({ orders, canSubmit }: { orders: PurchaseOrder[];
   const d = useDates();
   const { refresh } = useWorkspace();
   const [busy, setBusy] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ text: string; reapprove: boolean } | null>(null);
 
   const submit = async (po: PurchaseOrder) => {
     setBusy(po.id);
@@ -29,7 +30,7 @@ export default function Orders({ orders, canSubmit }: { orders: PurchaseOrder[];
       await api.submitOrder(po.id, idempotencyKey(po.id));
       await refresh();
     } catch (e) {
-      setError(errorDetail(e));
+      setError({ text: errorText(e, t), reapprove: errorCodeOf(e) === "basket_changed_reapprove" });
     } finally {
       setBusy(null);
     }
@@ -37,7 +38,19 @@ export default function Orders({ orders, canSubmit }: { orders: PurchaseOrder[];
 
   return (
     <div>
-      {error && <p className="jp-error">{t("err.generic", { e: error })}</p>}
+      {error && (
+        <p className="jp-error">
+          {error.text}
+          {error.reapprove && (
+            <>
+              {" "}
+              <Link href="/restaurants/basket#approve" onClick={() => document.getElementById("approve")?.scrollIntoView({ behavior: "smooth", block: "center" })}>
+                {t("err.reapprove")}
+              </Link>
+            </>
+          )}
+        </p>
+      )}
       {orders.map((po) => {
         const ack = po.acknowledgment;
         const note = ack?.note_translations?.[lang];

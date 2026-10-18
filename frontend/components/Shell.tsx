@@ -4,17 +4,20 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { CalendarDays, Loader2, ShoppingBasket, SlidersHorizontal, Store } from "lucide-react";
+import { CalendarDays, Loader2, LogOut, ShoppingBasket, SlidersHorizontal, Store } from "lucide-react";
 import { LangToggle, useDates, useI18n, type Key } from "@/lib/i18n";
 import { PROFILES, useWorkspace } from "@/components/workspace";
 import { suggestedBasket } from "@/components/helpers";
 import AdvisorDock from "@/components/Advisor";
+import { useAccount } from "@/components/AuthGate";
+import { forgetSession } from "@/lib/api";
+import { logout } from "@/lib/auth";
 
 const NAV: { href: string; key: Key; icon: typeof Store }[] = [
-  { href: "/", key: "nav.week", icon: CalendarDays },
-  { href: "/suppliers", key: "nav.suppliers", icon: Store },
-  { href: "/basket", key: "nav.basket", icon: ShoppingBasket },
-  { href: "/profile", key: "nav.profile", icon: SlidersHorizontal },
+  { href: "/restaurants", key: "nav.week", icon: CalendarDays },
+  { href: "/restaurants/suppliers", key: "nav.suppliers", icon: Store },
+  { href: "/restaurants/basket", key: "nav.basket", icon: ShoppingBasket },
+  { href: "/restaurants/profile", key: "nav.profile", icon: SlidersHorizontal },
 ];
 
 const BOWLS = ["tonkotsu", "set_full", "set_kaedama", "veggie_miso"];
@@ -35,47 +38,51 @@ export function Footer() {
   );
 }
 
-function Loading() {
+// First visit in this browser: the header and navigation are already usable; only the page body waits.
+function FirstLoad() {
   const { t } = useI18n();
-  const { attempts } = useWorkspace();
   return (
-    <section className="jp-panel" style={{ maxWidth: 520 }}>
-      <div className="jp-loading" style={{ padding: 0 }}>
-        <Loader2 className="jp-spinner" aria-hidden />
-        <h2>{t("load.title")}</h2>
-      </div>
-      <p className="jp-muted" style={{ fontSize: 13, marginTop: 10 }}>
-        {attempts > 0 ? t("load.retry") : t("load.note")}
+    <section className="jp-panel" role="status" style={{ maxWidth: 520 }}>
+      <p className="jp-muted" style={{ display: "flex", alignItems: "center", gap: 8, margin: 0, fontSize: 13 }}>
+        <Loader2 className="jp-spinner" aria-hidden style={{ width: 16, height: 16 }} />
+        {t("load.sync")}
       </p>
-      <div className="jp-progress">
-        <span />
-      </div>
     </section>
+  );
+}
+
+// Small, non-blocking hint while cached data is shown and the API is waking up.
+function SyncHint() {
+  const { t } = useI18n();
+  const { live } = useWorkspace();
+  if (live) return null;
+  return (
+    <span className="jp-muted" role="status" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12 }}>
+      <Loader2 className="jp-spinner" aria-hidden style={{ width: 14, height: 14 }} />
+      {t("load.sync")}
+    </span>
   );
 }
 
 export default function Shell({ children }: { children: ReactNode }) {
   const { t } = useI18n();
   const path = usePathname();
-  const { data, connecting, profileId, setProfileId } = useWorkspace();
+  const { data, profileId, setProfileId } = useWorkspace();
   const lines = suggestedBasket(data?.baskets)?.lines.length;
+  const { user } = useAccount();
+  const signOut = () =>
+    logout().finally(() => {
+      forgetSession();
+      window.location.replace("/");
+    });
   return (
     <div className="jp">
       <div className="jp-app">
         <header className="jp-top">
           <div className="jp-workspace-brands">
-            <Link href="/" className="jp-brand">
+            <Link href="/restaurants" className="jp-brand">
               <Image className="jp-brand-logo" src="/japita-logo-ajitama-flat.svg" alt="Japita" width={128} height={92} priority />
             </Link>
-            <span className="jp-brand-divider" aria-hidden />
-            <div className="jp-restaurant">
-              <Image className="jp-restaurant-logo" src="/kumo-demo-logo.webp" alt="Kumo Ramen demo logo" width={120} height={80} priority />
-              <div>
-                <span className="jp-restaurant-name">Kumo Ramen Milano</span>
-                <br />
-                <span className="jp-muted">{t("workspace")}</span>
-              </div>
-            </div>
           </div>
           <div className="jp-top-controls">
             <div className="jp-segment" role="group" aria-label={t("profile.switch")}>
@@ -87,16 +94,24 @@ export default function Shell({ children }: { children: ReactNode }) {
               ))}
             </div>
             <LangToggle />
+            <SyncHint />
+            <div className="jp-account">
+              <span className="jp-muted">{user.display_name}</span>
+              <button type="button" className="jp-action" onClick={signOut}>
+                <LogOut aria-hidden />
+                {t("au.logout")}
+              </button>
+            </div>
           </div>
         </header>
         <div className="jp-shell">
           <aside className="jp-sidebar">
             <nav className="jp-nav" aria-label="Main navigation">
               {NAV.map(({ href, key, icon: Icon }) => (
-                <Link key={href} href={href} aria-current={(href === "/" ? path === "/" : path.startsWith(href)) ? "page" : undefined}>
+                <Link key={href} href={href} aria-current={(href === "/restaurants" ? path === "/restaurants" : path.startsWith(href)) ? "page" : undefined}>
                   <Icon aria-hidden />
                   {t(key)}
-                  {href === "/basket" && !!lines && <span className="jp-nav-count">{lines}</span>}
+                  {href === "/restaurants/basket" && !!lines && <span className="jp-nav-count">{lines}</span>}
                 </Link>
               ))}
             </nav>
@@ -110,11 +125,11 @@ export default function Shell({ children }: { children: ReactNode }) {
             </div>
           </aside>
           <main className="jp-body">
-            {connecting ? <Loading /> : children}
+            {data ? children : <FirstLoad />}
             <Footer />
           </main>
         </div>
-        {!connecting && <AdvisorDock />}
+        <AdvisorDock />
       </div>
     </div>
   );

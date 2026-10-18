@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Check, CircleHelp, Copy, Filter, Link2, MapPin, Search, X } from "lucide-react";
-import { api, errorDetail, money, qty, unitPrice, type Evidence, type Offer, type Supplier } from "@/lib/api";
+import { api, errorText, money, qty, unitPrice, type Evidence, type Offer, type Supplier } from "@/lib/api";
 import { useDates, useI18n, useLabel, type Key } from "@/lib/i18n";
 import { useWorkspace } from "@/components/workspace";
 import { copyText, fmtValue } from "@/components/helpers";
@@ -62,7 +62,7 @@ function OfferCard({ offer, evidence }: { offer: Offer; evidence?: Evidence }) {
       setMsg(t(done));
       await refresh();
     } catch (e) {
-      setMsg(t("err.generic", { e: errorDetail(e) }));
+      setMsg(errorText(e, t));
     } finally {
       setBusy(false);
     }

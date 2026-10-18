@@ -1,6 +1,6 @@
 // Typed client for the supplier portal (Japanese, mobile). Shapes mirror backend/japita/portal.py.
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000";
+const API_BASE = "/api"; // same-origin proxy, see next.config.ts
 
 export type FormField = {
   field: string;
@@ -111,62 +111,76 @@ export type NewProduct = {
   note_ja?: string;
 };
 
-/** Error with an HTTP status and messages that are safe to show to the supplier (Japanese and English). */
+/** Error with a stable code and messages that are safe to show to the supplier (Japanese and English). */
 export class PortalError extends Error {
   constructor(
     public status: number,
     public ja: string,
     public en: string,
+    public code: string = "internal",
   ) {
     super(ja);
   }
 }
 
-// Known backend messages (English or Japanese) -> [Japanese, English].
-const MESSAGES: [RegExp, string, string][] = [
-  [/before the planning date/, "納品日は発注の基準日より前には設定できません。別の日付をお選びください。", "The delivery date cannot be before the order's planning date. Please choose another date."],
-  [/only accepted orders/, "受注済みの注文のみ納品日を変更できます。", "Only accepted orders can have their delivery date changed."],
-  [/purchase order is/, "この注文は現在受注できない状態です。画面を更新してください。", "This order cannot be accepted right now. Please reload the page."],
-  [/nothing to update/, "変更内容がありません。少なくとも1つの項目を変更してください。", "Nothing changed. Please change at least one field."],
-  [/invalid value for|入力値の形式/, "入力値の形式が正しくありません。", "One of the values has an invalid format."],
-  [/cannot be entered by a supplier/, "この項目は入力できません。", "This field cannot be entered."],
-  [/unknown ingredient/, "この食材は登録できません。", "This ingredient cannot be registered."],
-  [/isoformat/, "日付の形式が正しくありません。", "The date format is invalid."],
-  [/すでにご回答/, "この依頼にはすでにご回答いただいています。", "This request has already been answered."],
-  [/回答を入力/, "回答を入力してください。", "Please enter a reply."],
-  [/注文が見つかりません/, "注文が見つかりません。", "Order not found."],
-  [/商品が見つかりません/, "商品が見つかりません。", "Product not found."],
-];
+// Backend error code -> [Japanese, English], each with what to do next. Raw server text is never shown.
+const MESSAGES: Record<string, [string, string]> = {
+  network: ["サーバーに接続できません。起動中の可能性があります。1分ほどしてからもう一度お試しください。", "Cannot reach the server. It may be starting up; please try again in a minute."],
+  delivery_date_before_planning: ["納品日は発注の基準日より前には設定できません。別の日付をお選びください。", "The delivery date cannot be before the order's planning date. Please choose another date."],
+  invalid_date: ["日付の形式が正しくありません。カレンダーから選び直してください。", "The date format is invalid. Please pick the date again."],
+  order_not_accepted: ["受注済みの注文のみ納品日を変更できます。画面を更新してください。", "Only accepted orders can have their delivery date changed. Please reload the page."],
+  order_not_submitted: ["この注文は現在受注できない状態です。画面を更新してください。", "This order cannot be accepted right now. Please reload the page."],
+  nothing_to_update: ["変更内容がありません。少なくとも1つの項目を変更してください。", "Nothing changed. Please change at least one field."],
+  invalid_value: ["入力値の形式が正しくありません。数値や選択肢をご確認ください。", "One of the values has an invalid format. Please check numbers and choices."],
+  owner_only_field: ["この項目はレストラン側で判断するため、入力できません。", "This field is decided by the restaurant and cannot be entered."],
+  unknown_field: ["この項目は入力できません。画面を更新してください。", "This field cannot be entered. Please reload the page."],
+  unknown_ingredient: ["この食材は登録できません。", "This ingredient cannot be registered."],
+  reply_already_sent: ["この依頼にはすでにご回答いただいています。", "This request has already been answered."],
+  empty_reply: ["回答を入力してください。", "Please enter a reply."],
+  link_not_found: ["ページが見つかりません。リンクをご確認ください。", "Page not found. Please check the link."],
+  order_not_found: ["注文が見つかりません。画面を更新してください。", "Order not found. Please reload the page."],
+  product_not_found: ["商品が見つかりません。画面を更新してください。", "Product not found. Please reload the page."],
+  invalid_input: ["入力内容をご確認ください（未入力または形式が正しくない項目があります）。", "Please check your input (a field is missing or has an invalid format)."],
+  model_unavailable: ["翻訳サービスに接続できません。しばらくしてからもう一度お試しください。", "The translation service is not reachable. Please try again shortly."],
+  model_timeout: ["処理に時間がかかりすぎました。もう一度お試しください。", "This took too long. Please try again."],
+  conflict: ["この操作は現在できません。画面を更新してください。", "This action is not possible right now. Please reload the page."],
+  not_found: ["ページが見つかりません。リンクをご確認ください。", "Page not found. Please check the link."],
+  internal: ["送信できませんでした。しばらくしてからもう一度お試しください。", "Could not send. Please try again in a moment."],
+};
 
-function toError(status: number, detail: unknown): PortalError {
-  if (typeof detail === "string") {
-    const hit = MESSAGES.find(([re]) => re.test(detail));
-    if (hit) return new PortalError(status, hit[1], hit[2]);
-  }
-  if (status === 422)
-    return new PortalError(status, "入力内容をご確認ください（未入力または形式が正しくない項目があります）。", "Please check your input (a field is missing or has an invalid format).");
-  if (status === 404) return new PortalError(status, "ページが見つかりません。リンクをご確認ください。", "Page not found. Please check the link.");
-  if (status === 409) return new PortalError(status, "この操作は現在できません。画面を更新してください。", "This action is not possible right now. Please reload the page.");
-  return new PortalError(status, "送信できませんでした。しばらくしてからもう一度お試しください。", "Could not send. Please try again in a moment.");
+function toError(status: number, code: string): PortalError {
+  const fallback = status === 409 ? "conflict" : status === 404 ? "not_found" : status === 422 ? "invalid_input" : "internal";
+  const key = MESSAGES[code] ? code : fallback;
+  const [ja, en] = MESSAGES[key];
+  return new PortalError(status, ja, en, code);
 }
 
+// The API may be waking up (proxy 502/503/504 without our error body): retry quietly for about a minute.
+const RETRY_DELAYS_MS = [1000, 2000, 4000, 8000, 15000, 15000, 15000];
+
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
-  let res: Response;
-  try {
-    res = await fetch(`${API_BASE}${path}`, { cache: "no-store", ...init });
-  } catch {
-    throw new PortalError(0, "サーバーに接続できません。通信環境をご確認ください。", "Cannot reach the server. Please check your connection.");
-  }
-  if (!res.ok) {
-    let detail: unknown = null;
+  const method = (init?.method ?? "GET").toUpperCase();
+  for (let attempt = 0; ; attempt++) {
+    let res: Response | null = null;
     try {
-      detail = (await res.json()).detail;
-    } catch {
-      // non-JSON error body
+      res = await fetch(`${API_BASE}${path}`, { cache: "no-store", ...init });
+    } catch {}
+    if (res?.ok) return res.json() as Promise<T>;
+    let code = "";
+    if (res) {
+      try {
+        const c = (await res.json())?.error?.code;
+        if (typeof c === "string") code = c;
+      } catch {}
     }
-    throw toError(res.status, detail);
+    if (!code) code = !res || [502, 503, 504].includes(res.status) ? "network" : "internal";
+    const safe = method === "GET" || !res || res.status !== 504; // a write is retried only if it surely did not land
+    if (code === "network" && safe && attempt < RETRY_DELAYS_MS.length) {
+      await new Promise((r) => setTimeout(r, RETRY_DELAYS_MS[attempt]));
+      continue;
+    }
+    throw toError(res?.status ?? 0, code);
   }
-  return res.json() as Promise<T>;
 }
 
 const post = (body: unknown): RequestInit => ({

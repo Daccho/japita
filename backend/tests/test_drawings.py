@@ -12,7 +12,7 @@ import pytest
 from sqlalchemy import create_engine, update
 from sqlalchemy.orm import Session
 
-from japita import drawings, drawings_repo as cache, repo
+from japita import auth, drawings, drawings_repo as cache, repo
 from japita.api import app
 from japita.drawings_library import drawing_svg, validate_svg
 from japita.drawings_match import identify
@@ -26,8 +26,16 @@ def database(tmp_path, monkeypatch):
     monkeypatch.setenv("DRAWINGS_BACKGROUND", "0")
     monkeypatch.setenv("ADMIN_KEY", "review-test-key")
     repo.seed(Path(__file__).parent / "fixtures/kumo.json")
+    with Session(engine) as session, session.begin():
+        session.add(auth.User(username="drawing-tester", display_name="Drawing tester",
+                              password_hash=auth.hash_password("drawing-test-password")))
     yield engine
     engine.dispose()
+
+
+def login(client):
+    assert client.post("/auth/login", json={"role": "restaurant", "username": "drawing-tester",
+                                            "password": "drawing-test-password"}).status_code == 200
 
 
 def fake_model(monkeypatch, responses):
@@ -183,6 +191,7 @@ def test_review_actions_require_admin_and_do_not_touch_restaurant_data(database,
     calls = fake_model(monkeypatch, [drawing_svg("generic-bag"), drawing_svg("generic-bag")])
     before = repo.load_state()
     with TestClient(app) as client:
+        login(client)
         assert client.post("/drawings/garlic-bulb/regenerate").status_code == 403
         headers = {"X-Admin-Key": "review-test-key"}
         assert client.post("/drawings/garlic-bulb/regenerate", headers=headers).status_code == 202
@@ -203,6 +212,7 @@ def test_review_actions_require_admin_and_do_not_touch_restaurant_data(database,
 def test_menu_creation_queues_unknown_food_without_waiting_for_a_model(database, monkeypatch):
     monkeypatch.setattr(drawings, "LLM", lambda: pytest.fail("Saving must not await inference"))
     with TestClient(app) as client:
+        login(client)
         dishes = client.get("/menu").json()["items"]
         dishes.append({"id": "new_salad", "name": "Fennel salad", "group": "sides", "ingredients": ["Fennel"]})
         assert client.put("/menu", json={"items": dishes}).status_code == 200
@@ -224,6 +234,7 @@ def test_background_worker_does_not_block_product_save(database, monkeypatch):
     monkeypatch.setenv("DRAWINGS_BACKGROUND", "1")
     offer = {**repo.load_state()["offers"][0], "product": "garlic jar", "ingredient": "garlic"}
     with TestClient(app) as client:
+        login(client)
         try:
             response = client.put("/offers/drawing-test", json=offer)
             assert response.status_code == 200

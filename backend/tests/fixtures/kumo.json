@@ -3,8 +3,8 @@
   "profiles": {
     "kumo-authentic": {
       "id": "kumo-authentic",
-      "name": "Kumo Ramen Milano (fictional)",
-      "concept": "Hakata-style tonkotsu specialist in Milan (fictional): one classic pork-bone ramen, two sets, refills, plus one vegetarian bowl. Authentic profile: Japanese-brewed tare soy sauce, low-hydration noodles, and chef-approved kikurage are mandatory",
+      "name": "Kumo Ramen Milano",
+      "concept": "Hakata-style tonkotsu specialist in Milan: one classic pork-bone ramen, two sets, refills, plus one vegetarian bowl. Authentic profile: Japanese-brewed tare soy sauce, low-hydration noodles, and chef-approved kikurage are mandatory",
       "menu_price_eur": [
         14,
         19
@@ -98,7 +98,7 @@
     },
     "kumo-value": {
       "id": "kumo-value",
-      "name": "Kumo Ramen Milano (fictional)",
+      "name": "Kumo Ramen Milano",
       "concept": "Same tonkotsu shop, value profile: Japanese origin, low hydration, and chef approval are preferences, delivered cost comes first",
       "menu_price_eur": [
         12,
@@ -220,7 +220,7 @@
       "2026-10-19",
       "2026-10-25"
     ],
-    "_note": "Owner-entered servings (fictional). kaedama counts every full refill, including the one in each refill set (200 + 250 extra).",
+    "_note": "Owner-entered servings. kaedama counts every full refill, including the one in each refill set (200 + 250 extra).",
     "servings": {
       "tonkotsu": 450,
       "set_full": 150,
@@ -336,7 +336,7 @@
         }
       }
     ],
-    "_note_days": "Owner-entered daily servings (fictional). Weekly servings must equal the sum of the days.",
+    "_note_days": "Owner-entered daily servings. Weekly servings must equal the sum of the days.",
     "as_of": "2026-10-19",
     "deliveries": [
       {
@@ -366,7 +366,7 @@
   "suppliers": {
     "S1": {
       "id": "S1",
-      "name": "Tokyo Shokuhin Milano (fictional)",
+      "name": "Tokyo Shokuhin",
       "relationship": "existing",
       "account_status": "approved",
       "min_order_eur": 60,
@@ -379,7 +379,7 @@
     },
     "S2": {
       "id": "S2",
-      "name": "Pasta Fresca Ramen Milano (fictional)",
+      "name": "Pasta Fresca Ramen Milano",
       "relationship": "existing",
       "account_status": "approved",
       "min_order_eur": 80,
@@ -392,7 +392,7 @@
     },
     "S3": {
       "id": "S3",
-      "name": "EuroAsia Foods B.V. (fictional)",
+      "name": "EuroAsia Foods B.V.",
       "relationship": "candidate",
       "account_status": "approved",
       "min_order_eur": 200,
@@ -407,7 +407,7 @@
     },
     "S4": {
       "id": "S4",
-      "name": "Pastificio Lombardo Nord (fictional)",
+      "name": "Pastificio Lombardo Nord",
       "relationship": "candidate",
       "account_status": "approved",
       "min_order_eur": 100,
@@ -420,7 +420,7 @@
     },
     "S5": {
       "id": "S5",
-      "name": "Kyushu Direct Export (fictional)",
+      "name": "Kyushu Direct Export",
       "relationship": "candidate",
       "account_status": "pending",
       "min_order_eur": 300,
@@ -431,7 +431,7 @@
     },
     "S6": {
       "id": "S6",
-      "name": "Nippon Ramen Supply Europe (fictional)",
+      "name": "Nippon Ramen Supply Europe",
       "relationship": "existing",
       "account_status": "approved",
       "min_order_eur": 15,

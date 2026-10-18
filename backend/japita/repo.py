@@ -95,6 +95,8 @@ def engine():
                 if initialized.dialect.name == "postgresql":  # column added after the table first shipped
                     with initialized.begin() as conn:
                         conn.exec_driver_sql("ALTER TABLE llm_calls ADD COLUMN IF NOT EXISTS evolus_conversation_id VARCHAR")
+                        conn.exec_driver_sql("DROP TABLE IF EXISTS webauthn_challenges, passkeys CASCADE")
+                        conn.exec_driver_sql("ALTER TABLE IF EXISTS users DROP COLUMN IF EXISTS webauthn_user_id")
                 _engine = initialized
     return _engine
 

@@ -1,6 +1,8 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { useInitialLang } from "@/lib/initial-lang";
+import { LANG_COOKIE, saveLangCookie } from "@/lib/lang-cookies";
 
 // Restaurant workspace strings. Italian is the default (the restaurant is in Milan); English is for judges.
 // The supplier portal is Japanese only and does not use this.
@@ -20,12 +22,36 @@ const EN = {
   "load.title": "Connecting to the server…",
   "load.note": "The demo server may need up to a minute to wake up.",
   "load.retry": "Still waking up, retrying…",
+  "load.sync": "Updating…",
   "foot.sample": "Sample data · fictional suppliers and prices",
   "foot.week": "{dates} · {bowls} planned bowls",
   close: "Close",
   cancel: "Cancel",
   retry: "Try again",
-  "err.generic": "Something went wrong: {e}",
+  "err.network": "Cannot reach the server. It may be waking up; try again in a minute.",
+  "err.auth_required": "Your session has ended. Sign in again.",
+  "err.forbidden": "This account cannot do that. Sign in with the restaurant account.",
+  "err.invalid_input": "Some values are missing or invalid. Check the form and try again.",
+  "err.not_found": "This item no longer exists. Reload the page.",
+  "err.conflict": "This changed in the meantime. Reload the page and try again.",
+  "err.model_unavailable": "The AI model on AMD is not reachable right now. Try again in a minute.",
+  "err.model_timeout": "The AI model took too long to answer. Try again, perhaps with a shorter question.",
+  "err.evolus_rate_limited": "Evolus is receiving too many requests. Wait a minute and try again.",
+  "err.evolus_credits_exhausted": "The Evolus credits are used up. Ask the Japita team to top them up.",
+  "err.evolus_unavailable": "Evolus is not reachable right now. Try again in a minute.",
+  "err.job_not_found": "The request was interrupted because the server restarted. Please ask again.",
+  "err.internal": "Something went wrong on our side. Try again; if it keeps happening, reload the page.",
+  "err.basket_changed_reapprove": "The basket changed since you approved it. Approve it again, then send the order.",
+  "err.no_current_basket": "This basket is no longer available. Reload the page and choose a basket.",
+  "err.order_not_approved": "This order was already sent or cancelled. Reload the page.",
+  "err.clarification_already_sent": "This question was already sent to the supplier.",
+  "err.no_supplier_reply": "The supplier has not replied yet.",
+  "err.choose_value": "The two readings disagree. Choose the correct value before applying it.",
+  "err.clarification_not_sent": "Send the question to the supplier first.",
+  "err.no_pending_update": "This supplier proposal was already handled. Reload the page.",
+  "err.owner_only_field": "This detail is decided by the restaurant, not asked of the supplier.",
+  "err.retry": "Try again",
+  "err.reapprove": "Go to approval",
   "review.basket": "Review basket",
   // notifications
   "nt.title": "Notifications",
@@ -262,7 +288,6 @@ const EN = {
   "adv.elapsed": "{s} s",
   "adv.drafted": "Draft questions for suppliers",
   "adv.review": "Review in Basket",
-  "adv.error": "The advisor did not answer. Try again in a moment.",
   "adv.note": "Totals come from the app's calculations, not from the AI.",
   "adv.q1": "Which basket do you recommend this week, and how does it compare with my current suppliers?",
   "adv.q2": "The Friday noodle delivery is at risk. Which alternatives exist, and what detail is missing to order them?",
@@ -370,6 +395,23 @@ const EN = {
   "ln.fictional": "Kumo is fictional, so no public listings are prefilled.",
   "ln.saved": "Restaurant link saved in this browser.",
   "ln.removed": "Link removed.",
+  // sign-in and account
+  "au.title": "Sign in to Japita",
+  "au.who": "Who is signing in?",
+  "au.restaurant": "Restaurant",
+  "au.restaurantNote": "Weekly purchasing, suppliers and baskets",
+  "au.supplier": "Supplier",
+  "au.supplierNote": "Orders and questions from restaurants · 仕入先",
+  "au.back": "Change",
+  "au.id": "Login ID",
+  "au.password": "Password",
+  "au.submit": "Sign in",
+  "au.signingIn": "Signing in…",
+  "au.invalid": "Login ID or password is not correct.",
+  "au.throttled": "Too many attempts. Wait a few minutes and try again.",
+  "au.offline": "Cannot reach the server. It may be waking up; try again in a minute.",
+  "au.noSignup": "Accounts are created by the Japita team. Fictional demo accounts only.",
+  "au.logout": "Sign out",
 };
 
 export type Key = keyof typeof EN;
@@ -388,12 +430,36 @@ const IT: Record<Key, string> = {
   "load.title": "Connessione al server…",
   "load.note": "Il server demo può impiegare fino a un minuto per avviarsi.",
   "load.retry": "Ancora in avvio, nuovo tentativo…",
+  "load.sync": "Aggiornamento…",
   "foot.sample": "Dati di esempio · fornitori e prezzi fittizi",
   "foot.week": "{dates} · {bowls} ciotole previste",
   close: "Chiudi",
   cancel: "Annulla",
   retry: "Riprova",
-  "err.generic": "Qualcosa è andato storto: {e}",
+  "err.network": "Impossibile raggiungere il server. Potrebbe essere in avvio: riprova tra un minuto.",
+  "err.auth_required": "La sessione è scaduta. Accedi di nuovo.",
+  "err.forbidden": "Questo account non può farlo. Accedi con l'account del ristorante.",
+  "err.invalid_input": "Alcuni valori mancano o non sono validi. Controlla il modulo e riprova.",
+  "err.not_found": "Questo elemento non esiste più. Ricarica la pagina.",
+  "err.conflict": "Qualcosa è cambiato nel frattempo. Ricarica la pagina e riprova.",
+  "err.model_unavailable": "Il modello AI su AMD non è raggiungibile al momento. Riprova tra un minuto.",
+  "err.model_timeout": "Il modello AI ha impiegato troppo a rispondere. Riprova, magari con una domanda più breve.",
+  "err.evolus_rate_limited": "Evolus sta ricevendo troppe richieste. Attendi un minuto e riprova.",
+  "err.evolus_credits_exhausted": "I crediti Evolus sono esauriti. Chiedi al team Japita di ricaricarli.",
+  "err.evolus_unavailable": "Evolus non è raggiungibile al momento. Riprova tra un minuto.",
+  "err.job_not_found": "La richiesta è stata interrotta perché il server si è riavviato. Fai di nuovo la domanda.",
+  "err.internal": "Si è verificato un errore da parte nostra. Riprova; se succede ancora, ricarica la pagina.",
+  "err.basket_changed_reapprove": "Il carrello è cambiato dopo l'approvazione. Approvalo di nuovo, poi invia l'ordine.",
+  "err.no_current_basket": "Questo carrello non è più disponibile. Ricarica la pagina e scegli un carrello.",
+  "err.order_not_approved": "Questo ordine è già stato inviato o annullato. Ricarica la pagina.",
+  "err.clarification_already_sent": "Questa domanda è già stata inviata al fornitore.",
+  "err.no_supplier_reply": "Il fornitore non ha ancora risposto.",
+  "err.choose_value": "Le due letture non coincidono. Scegli il valore corretto prima di applicarlo.",
+  "err.clarification_not_sent": "Invia prima la domanda al fornitore.",
+  "err.no_pending_update": "Questa proposta del fornitore è già stata gestita. Ricarica la pagina.",
+  "err.owner_only_field": "Questo dettaglio lo decide il ristorante, non si chiede al fornitore.",
+  "err.retry": "Riprova",
+  "err.reapprove": "Vai all'approvazione",
   "review.basket": "Rivedi il carrello",
   "nt.title": "Notifiche",
   "nt.close": "Chiudi le notifiche",
@@ -624,7 +690,6 @@ const IT: Record<Key, string> = {
   "adv.elapsed": "{s} s",
   "adv.drafted": "Bozze di domande ai fornitori",
   "adv.review": "Rivedi nel carrello",
-  "adv.error": "Il consulente non ha risposto. Riprova tra poco.",
   "adv.note": "I totali vengono dai calcoli dell'app, non dall'IA.",
   "adv.q1": "Quale carrello consigli questa settimana e come si confronta con i fornitori attuali?",
   "adv.q2": "La consegna dei noodles di venerdì è a rischio. Quali alternative ci sono e quale dettaglio manca per ordinarle?",
@@ -731,6 +796,22 @@ const IT: Record<Key, string> = {
   "ln.fictional": "Kumo è fittizio, quindi nessuna scheda pubblica è precompilata.",
   "ln.saved": "Link del ristorante salvato in questo browser.",
   "ln.removed": "Link rimosso.",
+  "au.title": "Accedi a Japita",
+  "au.who": "Chi sta accedendo?",
+  "au.restaurant": "Ristorante",
+  "au.restaurantNote": "Acquisti settimanali, fornitori e carrelli",
+  "au.supplier": "Fornitore",
+  "au.supplierNote": "Ordini e domande dai ristoranti · 仕入先",
+  "au.back": "Cambia",
+  "au.id": "ID di accesso",
+  "au.password": "Password",
+  "au.submit": "Accedi",
+  "au.signingIn": "Accesso in corso…",
+  "au.invalid": "ID di accesso o password non corretti.",
+  "au.throttled": "Troppi tentativi. Attendi qualche minuto e riprova.",
+  "au.offline": "Server non raggiungibile. Potrebbe essere in avvio: riprova tra un minuto.",
+  "au.noSignup": "Gli account sono creati dal team Japita. Solo account demo fittizi.",
+  "au.logout": "Esci",
 };
 
 const STR: Record<Lang, Record<Key, string>> = { en: EN, it: IT };
@@ -746,14 +827,20 @@ const Ctx = createContext<{ lang: Lang; setLang: (l: Lang) => void; t: T }>({
 const KEY = "japita.lang";
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Lang>("it");
+  const initial = useInitialLang().restaurant;
+  const [lang, setLangState] = useState<Lang>(initial === "en" ? "en" : "it");
 
+  // Without a cookie, fall back to a choice saved in localStorage and copy it into the cookie.
   useEffect(() => {
+    if (initial) return;
     try {
       const saved = localStorage.getItem(KEY);
-      if (saved === "it" || saved === "en") setLangState(saved);
+      if (saved === "it" || saved === "en") {
+        setLangState(saved);
+        saveLangCookie(LANG_COOKIE, saved);
+      }
     } catch {}
-  }, []);
+  }, [initial]);
 
   useEffect(() => {
     document.documentElement.lang = lang;
@@ -761,6 +848,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
   const setLang = (l: Lang) => {
     setLangState(l);
+    saveLangCookie(LANG_COOKIE, l);
     try {
       localStorage.setItem(KEY, l);
     } catch {}

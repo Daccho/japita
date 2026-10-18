@@ -3,6 +3,8 @@
 // Supplier portal language toggle (日本語 default / English). Self-contained: does not use lib/i18n.tsx.
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { useInitialLang } from "@/lib/initial-lang";
+import { PORTAL_LANG_COOKIE, saveLangCookie } from "@/lib/lang-cookies";
 
 export type Lang = "ja" | "en";
 
@@ -227,20 +229,27 @@ type Ctx = { lang: Lang; t: Dict; setLang: (l: Lang) => void };
 const LangContext = createContext<Ctx>({ lang: "ja", t: ja, setLang: () => {} });
 
 export function PortalLangProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Lang>("ja");
+  const initial = useInitialLang().portal;
+  const [lang, setLangState] = useState<Lang>(initial === "en" ? "en" : "ja");
+  // Without a cookie, fall back to a choice saved in localStorage and copy it into the cookie.
   useEffect(() => {
+    if (initial) return;
     try {
       const saved = window.localStorage.getItem(STORAGE_KEY);
-      if (saved === "en" || saved === "ja") setLangState(saved);
+      if (saved === "en" || saved === "ja") {
+        setLangState(saved);
+        saveLangCookie(PORTAL_LANG_COOKIE, saved);
+      }
     } catch {
       // storage unavailable: keep Japanese
     }
-  }, []);
+  }, [initial]);
   useEffect(() => {
     document.documentElement.lang = lang;
   }, [lang]);
   const setLang = useCallback((l: Lang) => {
     setLangState(l);
+    saveLangCookie(PORTAL_LANG_COOKIE, l);
     try {
       window.localStorage.setItem(STORAGE_KEY, l);
     } catch {

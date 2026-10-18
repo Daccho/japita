@@ -18,7 +18,7 @@ export default function PageHeader({ kicker, title, sub, action }: { kicker: str
       </div>
       <div className="jp-toolbar">
         {action ?? (
-          <Link href="/basket" className="jp-action">
+          <Link href="/restaurants/basket" className="jp-action">
             <ShoppingBasket aria-hidden />
             {t("review.basket")}
           </Link>

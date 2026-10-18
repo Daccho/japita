@@ -5,9 +5,10 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
-from japita import repo
+from japita import auth, repo
 from japita.api import app
 
 
@@ -18,7 +19,12 @@ def client(monkeypatch):
     repo.Base.metadata.create_all(engine)
     monkeypatch.setattr(repo, "_engine", engine)
     repo.seed(Path(__file__).parent / "fixtures/kumo.json")
+    with Session(engine) as session, session.begin():
+        session.add(auth.User(username="menu-tester", display_name="Menu tester",
+                              password_hash=auth.hash_password("menu-test-password")))
     with TestClient(app) as client:
+        assert client.post("/auth/login", json={"role": "restaurant", "username": "menu-tester",
+                                                "password": "menu-test-password"}).status_code == 200
         yield client
     engine.dispose()
 

@@ -4,8 +4,8 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Check, Loader2, Sparkles, Store, Truck, X } from "lucide-react";
-import { money } from "@/lib/api";
+import { Check, Loader2, RotateCcw, Sparkles, Store, Truck, X } from "lucide-react";
+import { errorText, money } from "@/lib/api";
 import { useI18n, useLabel, type Key } from "@/lib/i18n";
 import { useElapsed, useWorkspace } from "@/components/workspace";
 import { suggestedBasket } from "@/components/helpers";
@@ -79,7 +79,7 @@ function AdvisorBody() {
             <Store aria-hidden />
             <span>{b.suppliers.map((s) => s.name).join(" · ")}</span>
           </div>
-          <Link href="/basket" className="jp-action jp-primary" style={{ width: "100%", marginTop: 13 }} onClick={() => setAdvisorOpen(false)}>
+          <Link href="/restaurants/basket" className="jp-action jp-primary" style={{ width: "100%", marginTop: 13 }} onClick={() => setAdvisorOpen(false)}>
             {t("adv.openBasket")}
           </Link>
         </div>
@@ -134,7 +134,17 @@ function AdvisorBody() {
           </form>
         )}
 
-        {advisor.error && !advisor.running && <p className="jp-error" style={{ marginTop: 12 }}>{t("adv.error")}</p>}
+        {!!advisor.error && !advisor.running && (
+          <div style={{ marginTop: 12 }}>
+            <p className="jp-error">{errorText(advisor.error, t)}</p>
+            {advisor.question && (
+              <button type="button" className="jp-action" onClick={() => ask(advisor.question!)}>
+                <RotateCcw aria-hidden />
+                {t("err.retry")}
+              </button>
+            )}
+          </div>
+        )}
 
         {advisor.result && !advisor.running && (
           <div style={{ marginTop: 14 }}>
@@ -157,7 +167,7 @@ function AdvisorBody() {
                     {c.translations?.[lang] ? ` — ${c.translations[lang]}` : ""}
                   </p>
                 ))}
-                <Link href="/basket#questions" className="jp-action" onClick={() => setAdvisorOpen(false)}>
+                <Link href="/restaurants/basket#questions" className="jp-action" onClick={() => setAdvisorOpen(false)}>
                   {t("adv.review")}
                 </Link>
               </div>

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Check, Pencil, Plus } from "lucide-react";
-import { api, errorDetail, money, qty, type MenuDish } from "@/lib/api";
+import { api, errorText, money, qty, type MenuDish } from "@/lib/api";
 import { useI18n, useLabel } from "@/lib/i18n";
 import { useStored, useWorkspace } from "@/components/workspace";
 import { MENU, MENU_GROUPS, PROFILE_DEFAULTS, type MenuItem } from "@/components/menuData";
@@ -49,7 +49,7 @@ export default function MenuSheet() {
       await api.saveMenu(next);
       await refresh();
       setDraft(null); setToast(t("mn.saved"));
-    } catch (e) { setError(t("mn.saveError", { e: errorDetail(e) })); }
+    } catch (e) { setError(t("mn.saveError", { e: errorText(e, t) })); }
     finally { setBusy(false); }
   };
   useEffect(() => {

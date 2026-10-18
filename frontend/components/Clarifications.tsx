@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Copy, ExternalLink, Send } from "lucide-react";
-import { api, errorDetail, type Clarification } from "@/lib/api";
+import { api, errorText, type Clarification } from "@/lib/api";
 import { useI18n, useLabel, type Key } from "@/lib/i18n";
 import { useWorkspace } from "@/components/workspace";
 import { copyText, fmtValue } from "@/components/helpers";
@@ -49,7 +49,7 @@ export default function Clarifications() {
       await fn();
       await refresh();
     } catch (e) {
-      setError(errorDetail(e));
+      setError(errorText(e, t));
     } finally {
       setBusy(null);
     }
@@ -59,7 +59,7 @@ export default function Clarifications() {
 
   return (
     <div>
-      {error && <p className="jp-error">{t("err.generic", { e: error })}</p>}
+      {error && <p className="jp-error">{error}</p>}
       {items.map((c) => {
         const offer = offers.find((o) => o.id === c.offer_id);
         const supplier = offer ? data?.state.suppliers[offer.supplier_id] : undefined;

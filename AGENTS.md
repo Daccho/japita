@@ -46,7 +46,8 @@ Keep it short: rules and pointers live here, details live in `docs/`. Each fact 
 # agent:    cd backend && uv run python -m japita.agent "質問"       # needs LLM_* and DATABASE_URL in .env
 # test:     cd backend && uv run pytest                               # offline
 # live:     cd backend && uv run pytest -m live -s                    # real model endpoint
-# web:      cd frontend && pnpm install && pnpm dev                   # http://localhost:3000, API from NEXT_PUBLIC_API_BASE
+# web:      cd frontend && pnpm install && pnpm dev                   # http://localhost:3000, /api proxied to API_ORIGIN
+# account:  cd backend && uv run python -m japita.auth add-user kumo-milano --name "Kumo Ramen Milano"
 ```
 
 ---
@@ -129,3 +130,6 @@ Record important decisions here (date — decision — reason) so every agent sh
 - 2026-10-18 — User approved backend persistence of owner-authored dishes and ingredients inside the existing recipe JSON. Saved menu ingredients also populate My suppliers filters; quantities and purchasing approvals remain separate. See `docs/product-drawings.md`.
 - 2026-10-18 — User approved the revised product drawings and two separate cache/job tables for automatic drawings. Current rendering, background inference, review controls, and local model-configuration limits are in `docs/product-drawings.md`.
 - 2026-10-18 — Approved a quieter Japita header logo with its wordmark restored in the existing Ajitama style; current usage, generated variant, and preserved original artwork are documented in `docs/mockup-handoff.md` and `mockup/assets/README.md`.
+- 2026-10-18 — Added sign-in at the user's request: login ID + password (Argon2id), with a restaurant/supplier choice first. Authorization is server-side and deny-by-default (`backend/japita/auth.py`): HttpOnly session cookie through the same-origin `/api` proxy, Origin check on writes, roles checked per request. No public sign-up; accounts come from the CLI. One deployment for both sides for now; the user noted separate hosting may suit production.
+- 2026-10-18 — Removed passkeys at the user's request; sign-in is login ID + password only. No database had auth tables yet, so nothing was migrated.
+- 2026-10-18 — Long model calls (`POST /agent/ask`, `POST /evolus/weekly-intake`) became in-memory background jobs polled through `GET /jobs/{id}` (hard limit 300 s, kept 30 min), so they do not depend on the Vercel proxy timeout. All errors use `{"error": {"code", "message"}}` with stable codes (`backend/japita/errors.py`); the restaurant app (`lib/api.ts` + i18n) and supplier portal (`lib/portal.ts`) map codes to translated messages and retry quietly while the API wakes up.
