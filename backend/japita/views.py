@@ -8,7 +8,7 @@ import re
 import unicodedata
 from datetime import date, timedelta
 
-from . import calc, orders, restaurant, rules, stock
+from . import calc, logos, orders, restaurant, rules, stock
 from .avatar import avatar
 from .drawings import offer_drawing
 from .drawings_library import ingredient_names
@@ -506,7 +506,7 @@ BOWLS = ("tonkotsu", "set_full", "set_kaedama", "veggie_miso")
 
 def account_view(store: Store, lang: str) -> dict:
     name = store.profile.get("name", "")
-    return {"name": name, "avatar": avatar(restaurant.logo_url(store.data), name), "place_text": t(lang, "side.place")}
+    return {"name": name, "avatar": avatar(logos.restaurant_url(store.data), name), "place_text": t(lang, "side.place")}
 
 
 def shell_view(store: Store, lang: str, money: Money) -> dict:
@@ -694,7 +694,7 @@ def suppliers_view(store: Store, lang: str, money: Money, view: str = "existing"
             "id": s["id"], "name": s["name"],
             "status_text": f"{t(lang, 'rel.' + s['relationship'])} · {t(lang, 'acct.' + s['account_status'])}",
             "pending": pending, "pending_text": t(lang, "pp.title") if pending else None,
-            "avatar": avatar(s.get("logo_url"), s["name"]),
+            "avatar": avatar(logos.supplier_url(store.data, s["id"]), s["name"]),
             "drawing": offer_drawing(preview_offers[0]) if preview_offers else None, "image_alt": t(lang, "of.illustrative"),
             "product": preview_offers[0]["product"] if preview_offers else "—",
             "product_count": len(offers),
@@ -819,10 +819,12 @@ def supplier_detail_view(store: Store, sid: str, lang: str, money: Money) -> dic
     pp = s.get("pending_profile")
     profile_proposal = None
     if pp:
+        from .portal import PROFILE_FIELDS
         profile_proposal = {
             "title": f"{t(lang, 'pp.title')} · {t(lang, 'pp.profile')}",
             "changes": [{"field": k, "label": t(lang, f"pf.{k}"), "from": _profile_value(s, k, s.get(k), lang, money),
-                         "to": _profile_value(s, k, v, lang, money)} for k, v in pp["changes"].items()],
+                         "to": _profile_value(s, k, v, lang, money)} for k, v in pp["changes"].items()
+                        if k in PROFILE_FIELDS],
             "note": (pp.get("note_translations") or {}).get(lang), "note_label": t(lang, "pp.note"),
             "note_ja": pp.get("note_ja"), "note_ja_label": t(lang, "pp.original"),
             "apply_text": t(lang, "pp.apply"), "reject_text": t(lang, "pp.reject"),
@@ -830,7 +832,7 @@ def supplier_detail_view(store: Store, sid: str, lang: str, money: Money) -> dic
     new = new_offer_ids(store)
     return {
         "lang": lang, **money_meta(money), "id": sid, "name": s["name"], "relationship": s["relationship"],
-        "avatar": avatar(s.get("logo_url"), s["name"]),
+        "avatar": avatar(logos.supplier_url(store.data, s["id"]), s["name"]),
         "terms_text": terms,
         "labels": labels(lang, "pp.applied", "pp.rejected", "pp.profileApplied"),
         "profile_proposal": profile_proposal,
@@ -997,9 +999,9 @@ def restaurant_profile_view(store: Store, lang: str) -> dict:
         return {"label": t(lang, key), "value": value or t(lang, "ov.notEntered")}
 
     name = store.profile.get("name", "")
-    logo = restaurant.logo_url(store.data)
+    logo = logos.restaurant_url(store.data)
     return {
-        "lang": lang, "values": v, "name": name, "logo_url": logo, "avatar": avatar(logo, name),
+        "lang": lang, "values": v, "name": name, "avatar": avatar(logo, name), "has_logo": logo is not None,
         "subtitle": f"{v['location']} · {t(lang, 'ov.seatsShort', n=v['seats'])}",
         "facts": [fact("ov.concept", v["concept"]), fact("ov.guests", v["positioning"]), fact("ov.prices", v["menuPrice"]),
                   fact("ov.make", v["make"]), fact("ov.buy", v["buy"])],
@@ -1010,7 +1012,9 @@ def restaurant_profile_view(store: Store, lang: str) -> dict:
                     "max_length": restaurant.MULTILINE_MAX if ml else restaurant.LINE_MAX}
                    for k, lk, ml in restaurant.PROFILE_FIELDS],
         "labels": labels(lang, "ov.about", "ov.edit", "ov.editTitle", "ov.save", "ov.saved", "ov.notes", "ov.quest",
-                         "ov.questNote", "cancel"),
+                         "ov.questNote", "cancel", "ov.logo", "ov.logoUpload", "ov.logoReplace", "ov.logoRemove",
+                         "ov.logoHint", "ov.logoDrop", "ov.logoUploading", "ov.logoSaved", "ov.logoRemoved",
+                         "err.logo_too_large", "err.logo_unsupported_type", "err.logo_invalid_image"),
     }
 
 

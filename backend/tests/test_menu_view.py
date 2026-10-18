@@ -6,7 +6,7 @@ def test_menu_view_texts(client):  # noqa: F811
     it = client.get("/views/menu?lang=it").json()
     en = client.get("/views/menu?lang=en").json()
     assert it["masthead"]["name"] == "Kumo Ramen Milano"
-    assert it["masthead"]["logo_url"] == "/kumo-demo-logo.webp"
+    assert it["masthead"]["avatar"]["url"].startswith("/api/logos/")
     assert it["prices"]["tonkotsu"] == "14,00 €"
     assert en["prices"]["tonkotsu"] == "€14.00"
     assert en["prices"]["toppings"] == "Various"

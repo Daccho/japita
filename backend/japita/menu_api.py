@@ -116,7 +116,8 @@ def menu_price(eur: float, lang: str) -> str:
 
 
 def menu_page_view(data: dict, lang: str) -> dict:
-    from . import restaurant
+    from . import logos, restaurant
+    from .avatar import avatar
     from .textfmt import label, qty, t
 
     items = menu_items(data)
@@ -140,7 +141,7 @@ def menu_page_view(data: dict, lang: str) -> dict:
         "lang": lang,
         "items": items,
         "masthead": {"name": name, "subtitle": f"{texts['concept']} · {texts['location']}",
-                     "logo_url": restaurant.logo_url(data)},
+                     "avatar": avatar(logos.restaurant_url(data), name)},
         "groups": [{"key": g, "title": t(lang, f"mn.{g}")} for g in ("ramen", "extras", "sides")],
         "prices": {item["id"]: (menu_price(item["price_eur"], lang) if item.get("price_eur") is not None
                                 else t(lang, "mn.various")) for item in items},

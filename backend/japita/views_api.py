@@ -7,10 +7,10 @@ Profile: `?profile_id=`, else the restaurant's active profile (GET/PUT /restaura
 
 from typing import Literal
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, File, Request, UploadFile
 from pydantic import BaseModel, Field
 
-from . import auth, fx, portal, repo, restaurant, rules, views
+from . import auth, fx, logos, portal, repo, restaurant, rules, views
 from .errors import AppError, from_value_error
 from .store import Store, active_profile_id
 from .textfmt import Money, lang_from_request, restaurant_lang
@@ -172,7 +172,6 @@ def patch_profile(profile_id: str, body: ProfilePatch, request: Request):
 
 class RestaurantProfile(BaseModel):
     values: dict[str, str | None] = {}
-    logo_url: str | None = Field(default=None, max_length=400, description="Site path or http(s) URL; empty restores the default")
 
 
 @router.get("/restaurant/profile")
@@ -186,11 +185,29 @@ def put_restaurant_profile(body: RestaurantProfile, request: Request):
     store, lang, _ = _ctx(request)
     try:
         restaurant.set_profile_text(store.data, body.values)
-        if "logo_url" in body.model_fields_set:
-            restaurant.set_logo_url(store.data, body.logo_url)
     except ValueError as e:
         raise from_value_error(e, 422)
     repo.save_state(store.data)
+    return views.restaurant_profile_view(store, lang)
+
+
+@router.post("/restaurant/logo")
+async def upload_restaurant_logo(request: Request, file: UploadFile = File(...)):
+    """Upload the restaurant's logo (multipart `file`: PNG, JPEG or WebP, at most 2 MB); replaces the current one.
+    Returns the restaurant profile view."""
+    try:
+        logos.save("restaurant", repo.current_workspace(), await logos.read_upload(file))
+    except ValueError as e:
+        raise from_value_error(e, 422)
+    store, lang, _ = _ctx(request)
+    return views.restaurant_profile_view(store, lang)
+
+
+@router.delete("/restaurant/logo")
+def delete_restaurant_logo(request: Request):
+    """Remove the restaurant's logo; its avatar shows initials."""
+    repo.delete_logo("restaurant", repo.current_workspace())
+    store, lang, _ = _ctx(request)
     return views.restaurant_profile_view(store, lang)
 
 
