@@ -520,7 +520,8 @@ def shell_view(store: Store, lang: str, money: Money) -> dict:
     return {"lang": lang, "account": account_view(store, lang),
             "footer": {"week_text": week_text, "fx_note": money.note()},
             "nav_counts": {"basket": len(suggested["lines"]) if suggested else 0},
-            "labels": labels(lang, "nav.week", "nav.suppliers", "nav.basket", "nav.profile", "au.logout", "workspace")}
+            "labels": labels(lang, "nav.week", "nav.suppliers", "nav.basket", "nav.profile", "au.logout", "workspace",
+                            "form.required")}
 
 
 # --- notifications ----------------------------------------------------------------------------------

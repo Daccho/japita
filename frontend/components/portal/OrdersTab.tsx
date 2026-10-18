@@ -7,7 +7,7 @@ import { Avatar } from "@/components/AppShell";
 import { Badge, EmptyState } from "@/components/live";
 import { errorMessage } from "./format";
 import { useLang } from "./i18n";
-import { Button, Card, ErrorBox, Field, NoteInput } from "./ui";
+import { Button, Card, ErrorBox, Field, NoteInput, PortalRequiredLegend } from "./ui";
 import type { TabProps } from "./types";
 
 export function OrdersTab(props: TabProps) {
@@ -140,8 +140,9 @@ function OrderCard({ order, view, onView, notify }: TabProps & { order: PortalOr
 
       {(order.can_accept || editing) && (
         <div className="jp-portal-form">
-          <Field label={accepted ? t.newDeliveryDate : t.deliveryDate} note={!accepted ? t.requestedDateHint : undefined}>
-            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          {accepted && <PortalRequiredLegend />}
+          <Field label={accepted ? t.newDeliveryDate : t.deliveryDate} required={accepted} note={!accepted ? t.requestedDateHint : undefined}>
+            <input type="date" value={date} required={accepted} aria-required={accepted || undefined} onChange={(e) => setDate(e.target.value)} />
           </Field>
           <NoteInput value={note} onChange={setNote} placeholder={accepted ? t.notePlaceholderChange : t.notePlaceholderAccept} />
         </div>

@@ -204,7 +204,8 @@
 .jp .jp-menu-leader { flex:1; min-width:12px; border-bottom:1px dotted var(--jp-menu-rule); }
 .jp .jp-menu-dish-price { flex-shrink:0; font-size:16px; font-variant-numeric:tabular-nums; }
 .jp .jp-menu-dish p { margin-top:6px!important; max-width:490px; font-size:12px; color:var(--jp-menu-faint); }
-.jp .jp-menu-document.jp-menu-editing .jp-menu-dish-line h3 { flex:0 1 70%; }
+.jp .jp-menu-document.jp-menu-editing .jp-menu-dish-line h3 { flex:0 1 70%; display:flex; align-items:flex-start; gap:2px; }
+.jp .jp-menu-document.jp-menu-editing .jp-menu-dish-line h3 > textarea { flex:1; min-width:0; }
 .jp .jp-menu-document.jp-menu-editing .jp-menu-dish-line { align-items:flex-start; }
 .jp .jp-menu-document.jp-menu-editing .jp-menu-leader { margin-top:22px; }
 .jp .jp-menu-inline { display:block; box-sizing:border-box; width:100%; min-width:0; padding:0; border:0; border-radius:2px; background:transparent; color:inherit; font:inherit; line-height:inherit; box-shadow:0 1px 0 var(--jp-menu-rule); }
@@ -1799,3 +1800,6 @@
 .jp .jp-logo-body { display:grid; gap:8px; min-width:0; flex:1 1 200px; }
 .jp .jp-logo-actions { display:flex; flex-wrap:wrap; gap:8px; }
 .jp .jp-logo-hint { margin:0; font-size:12px; }
+/* Required fields: red asterisk after the label, legend line at the top of the form. */
+.jp .jp-req { color:var(--aj-chili-text); font-weight:var(--aj-weight-bold); }
+.jp .jp-req-legend { margin:0 0 16px; color:var(--aj-muted); font-size:12px; }

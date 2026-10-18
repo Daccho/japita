@@ -8,7 +8,7 @@ import { LogoControl } from "@/components/LogoControl";
 import { errorMessage } from "./format";
 import { useLang } from "./i18n";
 import { PendingPanel } from "./ProductsTab";
-import { Button, Card, ErrorBox, Field, NoteInput, UnitInput } from "./ui";
+import { Button, Card, ErrorBox, Field, NoteInput, PortalRequiredLegend, UnitInput } from "./ui";
 import type { TabProps } from "./types";
 
 const DAYS: Day[] = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
@@ -181,8 +181,8 @@ function ProfileForm({ view, onView, notify, onClose }: Pick<TabProps, "view" | 
   };
 
   const input = (k: TextField, type = "text", note?: string) => (
-    <Field key={k} label={labels[k]} note={note}>
-      <input type={type} value={text[k]} maxLength={200} onChange={(e) => setText({ ...text, [k]: e.target.value })} />
+    <Field key={k} label={labels[k]} note={note} required={k === "name"}>
+      <input type={type} value={text[k]} maxLength={200} required={k === "name"} aria-required={k === "name" || undefined} onChange={(e) => setText({ ...text, [k]: e.target.value })} />
     </Field>
   );
 
@@ -190,6 +190,7 @@ function ProfileForm({ view, onView, notify, onClose }: Pick<TabProps, "view" | 
     <Card>
       <h2>{t.editProfile}</h2>
       <div className="jp-portal-form" style={{ borderTop: 0, paddingTop: 0 }}>
+        <PortalRequiredLegend />
         {input("name")}
         <div className="jp-field-grid">
           {input("country")}

@@ -7,7 +7,8 @@ import { Badge, EmptyState } from "@/components/live";
 import ProductDrawing from "@/components/ProductDrawing";
 import { errorMessage } from "./format";
 import { useLang, type Lang } from "./i18n";
-import { Button, Card, Choice, ErrorBox, Field, FieldBlock, NoteInput, UnitInput, fieldError, fieldPayload } from "./ui";
+import { Button, Card, Choice, ErrorBox, Field, FieldBlock, NoteInput, PortalRequiredLegend, UnitInput, fieldError, fieldPayload } from "./ui";
+import { Req } from "@/components/Required";
 import type { TabProps } from "./types";
 
 type Values = Record<string, string | boolean | null>;
@@ -366,28 +367,32 @@ function NewProductForm({ view, onView, notify, onClose }: TabProps & { onClose:
       </div>
       <p className="jp-section-note">{t.newProductIntro(view.restaurant)}</p>
 
-      <Field label={t.ingredient} note={ingredientText.trim() && lookup && !ingredient ? t.ingredientOther : undefined}>
-        <input value={ingredientText} onChange={(e) => setIngredientText(e.target.value)} list="japita-ingredients" placeholder={t.ingredientPlaceholder} maxLength={60} />
+      <PortalRequiredLegend />
+      <Field label={t.ingredient} required note={ingredientText.trim() && lookup && !ingredient ? t.ingredientOther : undefined}>
+        <input required aria-required value={ingredientText} onChange={(e) => setIngredientText(e.target.value)} list="japita-ingredients" placeholder={t.ingredientPlaceholder} maxLength={60} />
       </Field>
       <datalist id="japita-ingredients">
         {names.map((n) => (
           <option key={n} value={n} />
         ))}
       </datalist>
-      <Field label={t.productName}>
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t.productNamePlaceholder} />
+      <Field label={t.productName} required>
+        <input required aria-required value={name} onChange={(e) => setName(e.target.value)} placeholder={t.productNamePlaceholder} />
       </Field>
       <div className="jp-field-grid">
-        <Field label={t.packSize}>
-          <UnitInput value={pack} onChange={setPack} unit={unit} />
+        <Field label={t.packSize} required>
+          <UnitInput value={pack} onChange={setPack} unit={unit} required aria-required />
         </Field>
         <div className="jp-field">
-          <span>{t.unit}</span>
+          <span>
+            {t.unit}
+            <Req />
+          </span>
           <Choice label={t.unit} options={[["g", "g"], ["ml", "ml"]]} value={unit} onChange={setUnit} />
         </div>
       </div>
-      <Field label={t.priceNew}>
-        <UnitInput value={price} onChange={setPrice} unit={view.currency} />
+      <Field label={t.priceNew} required>
+        <UnitInput value={price} onChange={setPrice} unit={view.currency} required aria-required />
       </Field>
       <div className="jp-field">
         <span>{t.origin}</span>
@@ -397,7 +402,6 @@ function NewProductForm({ view, onView, notify, onClose }: TabProps & { onClose:
         <FieldBlock
           key={`${ingredient}-${f.field}`}
           field={f}
-          optional
           allowClear
           value={values[f.field] ?? null}
           onChange={(v) => setValues({ ...values, [f.field]: v })}

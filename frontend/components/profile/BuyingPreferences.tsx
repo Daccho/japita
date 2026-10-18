@@ -7,6 +7,7 @@ import { api, errorText, type ProfileView } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { Badge, useBump, useToast, useView } from "@/components/live";
 import { InfoTip } from "@/components/InfoTip";
+import { Req, WorkspaceRequiredLegend } from "@/components/Required";
 
 type Draft = { amount: number; days: string[] };
 
@@ -106,11 +107,19 @@ export default function BuyingPreferences({ initial }: { initial: ProfileView | 
             ))}
           </div>
         ))}
-        <div className="jp-field-grid" style={{ marginTop: 20 }}>
+        <div style={{ marginTop: 20 }}>
+          <WorkspaceRequiredLegend />
+        </div>
+        <div className="jp-field-grid">
           <label className="jp-field">
-            {v.budget.label}
+            <span>
+              {v.budget.label}
+              <Req />
+            </span>
             <input
               type="number"
+              required
+              aria-required
               min={v.budget.min}
               max={v.budget.max}
               step={1}
