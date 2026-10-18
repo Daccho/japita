@@ -32,7 +32,7 @@ One main agent with explicit tools. The model interprets, reads Japanese, transl
 | Package | Contents |
 | --- | --- |
 | `core` | Shared kernel: database (`repo`), purchasing state (`store`), model client (`llm`), background jobs, errors, UI texts (`textfmt`, `messages.json`), currency (`fx`), supplier form fields (`forms`), input versions (`context`) |
-| `accounts` | Sign-in, sign-up, sessions and roles (`auth`), restaurant details, avatars |
+| `accounts` | Sign-in, sign-up, sessions and roles (`auth`), restaurant details, avatars, uploaded logos (`logos`) |
 | `workspace` | Owner input: profiles, recipe, week, suppliers, offers, specification upload (`schemas` holds the request bodies) |
 | `menu` | Menu items and the menu page view |
 | `purchasing` | Needs, stock timeline, baskets (`calc`), approval and purchase orders (`orders`), the advisor brief (`advice`) |

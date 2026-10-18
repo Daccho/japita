@@ -10,7 +10,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from japita.accounts import auth
+from japita.accounts import auth, logos
 from japita.advisor import api as advisor_api, evolus_api
 from japita.catalog import api as catalog_api
 from japita.clarifications import api as clarifications_api
@@ -64,5 +64,5 @@ install_error_handlers(app)
 for router in (auth.router, jobs.router, workspace_api.router, purchasing_api.router, advisor_api.router,
                clarifications_api.router, fx.router, evolus_api.router, orders_api.router, portal_api.router,
                drawings_api.router, menu_api.router, catalog_api.router, menu_api.views_router, views_api.router,
-               import_rules_api.router):
+               logos.router, import_rules_api.router):
     app.include_router(router)

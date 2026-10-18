@@ -5,6 +5,7 @@ import { Check, Pencil, Plus } from "lucide-react";
 import { api, errorText, type MenuDish, type MenuView } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useBump, useToast, useView } from "@/components/live";
+import { Req, WorkspaceRequiredLegend } from "@/components/Required";
 
 type DraftDish = MenuDish & { ingredientText?: string };
 
@@ -16,7 +17,7 @@ function AutoText({ value, onChange, label, required, id }: { value: string; onC
       ref.current.style.height = `${ref.current.scrollHeight}px`;
     }
   }, [value]);
-  return <textarea ref={ref} id={id} className="jp-menu-inline" rows={1} value={value} aria-label={label} required={required} maxLength={required ? 80 : 240} onChange={(e) => onChange(e.target.value)} />;
+  return <textarea ref={ref} id={id} className="jp-menu-inline" rows={1} value={value} aria-label={label} required={required} aria-required={required || undefined} maxLength={required ? 80 : 240} onChange={(e) => onChange(e.target.value)} />;
 }
 
 // The printed menu, edited in place and saved on the server (GET/PUT /menu); texts and prices come from /views/menu.
@@ -89,6 +90,7 @@ export default function MenuSheet({ initial }: { initial: MenuView | null }) {
           <div>
             <h2>{L("mn.editing")}</h2>
             <p>{L("mn.editHelp")}</p>
+            <WorkspaceRequiredLegend />
           </div>
           <div className="jp-form-actions">
             <button
@@ -126,8 +128,10 @@ export default function MenuSheet({ initial }: { initial: MenuView | null }) {
           </button>
         )}
         <header className="jp-menu-masthead">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={v.masthead.logo_url} alt="" width={58} height={58} />
+          {v.masthead.avatar.url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={v.masthead.avatar.url} alt="" width={58} height={58} />
+          )}
           <h2 className="jp-menu-restaurant">{v.masthead.name}</h2>
           <p>{v.masthead.subtitle}</p>
           <span className="jp-menu-label">{L("mn.label")}</span>
@@ -140,7 +144,7 @@ export default function MenuSheet({ initial }: { initial: MenuView | null }) {
               .map((m) => (
                 <article key={m.id} className="jp-menu-dish">
                   <div className="jp-menu-dish-line">
-                    <h3>{draft ? <AutoText id={`menu-name-${m.id}`} value={m.name} label={L("mn.dishName")} required onChange={(name) => update(m.id, { name })} /> : m.name}</h3>
+                    <h3>{draft ? <AutoText id={`menu-name-${m.id}`} value={m.name} label={L("mn.dishName")} required onChange={(name) => update(m.id, { name })} /> : m.name}{draft && <Req />}</h3>
                     <span className="jp-menu-leader" aria-hidden />
                     <span className="jp-menu-dish-price">
                       {draft ? (

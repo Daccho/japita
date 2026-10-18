@@ -10,10 +10,10 @@ the API through the frontend's /api proxy, so the cookie is first-party and Same
 Anyone can sign up (POST /auth/signup): a restaurant gets its own empty workspace (see `repo`), a supplier a new
 supplier record in the shared directory, visible to every restaurant as an unconfirmed candidate.
 An operator can also create accounts:
-    uv run python -m japita.accounts.auth add-user kumo-milano --name "Kumo Ramen Milano"   # prompts for the password
-    uv run python -m japita.accounts.auth add-user tokyo-shokuhin --name "Tokyo Shokuhin" --role supplier --supplier S1
-    uv run python -m japita.accounts.auth set-password kumo-milano
-    uv run python -m japita.accounts.auth set-name tokyo-shokuhin "Tokyo Shokuhin"
+    uv run python -m japita.auth add-user kumo-milano --name "Kumo Ramen Milano"   # prompts for the password
+    uv run python -m japita.auth add-user tokyo-shokuhin --name "Tokyo Shokuhin" --role supplier --supplier S1
+    uv run python -m japita.auth set-password kumo-milano
+    uv run python -m japita.auth set-name tokyo-shokuhin "Tokyo Shokuhin"
 """
 
 import argparse
@@ -55,6 +55,7 @@ PUBLIC_PATHS = [
     re.compile(r"^/admin/import-rules(/.*)?$"),          # guarded by X-Admin-Key instead
     re.compile(r"^/health(/.*)?$"),
     re.compile(r"^/fx$"),                                # public ECB reference rates
+    re.compile(r"^/logos/[0-9a-f]+\.webp$"),            # uploaded logos, shown as plain <img> avatars
     re.compile(r"^/(docs|redoc|openapi\.json)$"),
 ]
 # Supplier routes: a signed-in supplier account; each handler also checks the link token belongs to that supplier
@@ -371,19 +372,19 @@ def _account_display(request: Request, me: dict) -> dict:
     """Avatar and the second sidebar line: the restaurant's place (restaurant language) or, for a supplier,
     "For <restaurant>" in the portal language."""
     from japita.accounts.avatar import avatar
+    from japita.accounts.logos import restaurant_url, supplier_url
     from japita.core.textfmt import lang_from_request, portal_lang, pt, restaurant_lang, t
-    from japita.accounts import restaurant
 
     data = repo.load_state()
     if me["role"] == "restaurant":
         pid = (data.get("restaurant_settings") or {}).get("active_profile_id")
         name = data["profiles"].get(pid, next(iter(data["profiles"].values()), {})).get("name", me["display_name"])
         lang = restaurant_lang(lang_from_request(request))
-        return {"avatar": avatar(restaurant.logo_url(data), name), "place_text": t(lang, "side.place")}
+        return {"avatar": avatar(restaurant_url(data), name), "place_text": t(lang, "side.place")}
     sup = data["suppliers"].get(me.get("supplier_id") or "", {})
     restaurant_name = next(iter(data["profiles"].values()), {}).get("name", "")
     lang = portal_lang(lang_from_request(request, portal=True))
-    return {"avatar": avatar(sup.get("logo_url"), sup.get("name") or me["display_name"]),
+    return {"avatar": avatar(supplier_url(data, me.get("supplier_id") or ""), sup.get("name") or me["display_name"]),
             "place_text": pt(lang, "forRestaurant", r=restaurant_name)}
 
 
@@ -452,7 +453,7 @@ def ensure_demo_accounts() -> list[str]:
 
 
 def main(argv: list[str] | None = None) -> None:
-    p = argparse.ArgumentParser(prog="python -m japita.accounts.auth")
+    p = argparse.ArgumentParser(prog="python -m japita.auth")
     sub = p.add_subparsers(dest="cmd", required=True)
     a = sub.add_parser("add-user", help="create an owner account")
     a.add_argument("username")

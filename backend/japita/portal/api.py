@@ -2,10 +2,11 @@
 
 from typing import Any, Literal
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, File, HTTPException, Request, UploadFile
 from pydantic import BaseModel, Field
 
 from japita.core import fx
+from japita.accounts import logos
 from japita.purchasing import orders
 from japita.portal import service as portal
 from japita.core import repo
@@ -63,7 +64,6 @@ class ProfileUpdate(BaseModel):
     contact_name: str | None = Field(default=None, max_length=120)
     email: str | None = Field(default=None, max_length=200)
     phone: str | None = Field(default=None, max_length=40)
-    logo_url: str | None = Field(default=None, max_length=400, description="Site path or http(s) URL; empty removes it")
     delivery_days: list[Day] | None = None
     min_order_eur: float | None = Field(default=None, ge=0)
     shipping_eur: float | None = Field(default=None, ge=0)
@@ -278,6 +278,27 @@ def portal_update_profile(token: str, body: ProfileUpdate, request: Request):
         raise from_value_error(e, 422)
     repo.save_state(data)
     repo.log_calls(calls, f"portal_note:profile:{sup['id']}")
+    return _view(store, sup, request)
+
+
+@router.post("/portal/me/logo")
+async def portal_upload_logo(request: Request, file: UploadFile = File(...)):
+    """The signed-in supplier's own logo (multipart `file`: PNG, JPEG or WebP, at most 2 MB). It replaces the current
+    logo at once, for every restaurant that lists the supplier. Returns the portal view."""
+    _, store, sup = _load("me", request)
+    try:
+        logos.save("supplier", sup["id"], await logos.read_upload(file))
+    except ValueError as e:
+        raise from_value_error(e, 422)
+    store.data["logos"] = repo.logo_ids(repo.current_workspace())
+    return _view(store, sup, request)
+
+
+@router.delete("/portal/me/logo")
+def portal_delete_logo(request: Request):
+    _, store, sup = _load("me", request)
+    repo.delete_logo("supplier", sup["id"])
+    store.data["logos"] = repo.logo_ids(repo.current_workspace())
     return _view(store, sup, request)
 
 

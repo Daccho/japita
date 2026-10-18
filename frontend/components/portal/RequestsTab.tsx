@@ -6,7 +6,7 @@ import { portalApi, type PortalProduct, type PortalRequest } from "@/lib/portal"
 import { Badge, EmptyState, useBump } from "@/components/live";
 import { errorMessage } from "./format";
 import { useLang } from "./i18n";
-import { Button, Card, ErrorBox, FieldBlock, NoteInput, fieldError, fieldPayload } from "./ui";
+import { Button, Card, ErrorBox, FieldBlock, NoteInput, PortalRequiredLegend, fieldError, fieldPayload } from "./ui";
 import type { TabProps } from "./types";
 
 /** The backend stores form replies as "[仕入先フォーム入力] label: value"; show them as plain "label: value". */
@@ -44,7 +44,7 @@ function RequestCard({ req, product, onView, notify }: { req: PortalRequest; pro
     setError(null);
     const payload = fieldPayload(req.form, value);
     const noteJa = note.trim();
-    if (payload === undefined && !noteJa) {
+    if (payload === undefined) {
       setError(t.enterReply);
       return;
     }
@@ -99,7 +99,8 @@ function RequestCard({ req, product, onView, notify }: { req: PortalRequest; pro
         </div>
       ) : (
         <div className="jp-portal-form">
-          <FieldBlock field={req.form} value={value} onChange={setValue} />
+          <PortalRequiredLegend />
+          <FieldBlock field={req.form} value={value} onChange={setValue} required />
           <NoteInput value={note} onChange={setNote} />
           <ErrorBox message={error} />
           <Button onClick={submit} busy={busy} busyLabel={note.trim() ? t.sendingTranslating : t.sending} icon={<Send aria-hidden />} style={{ width: "100%" }}>

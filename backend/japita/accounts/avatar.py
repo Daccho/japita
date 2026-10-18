@@ -1,9 +1,7 @@
-"""Account and company avatars: a logo URL when one is set, plus initials for the round fallback badge."""
+"""Account and company avatars: the uploaded logo's URL when there is one (see logos), plus initials for the round
+fallback badge."""
 
 import re
-
-from japita.core.errors import DomainError
-from japita.accounts.restaurant import URL_MAX, valid_url
 
 # Legal-form words that never become initials ("Hokuto Shoji Europe B.V." -> "HS").
 LEGAL = {"bv", "b.v", "srl", "s.r.l", "spa", "s.p.a", "snc", "sas", "gmbh", "ag", "ltd", "llc", "inc", "co", "corp",
@@ -22,22 +20,3 @@ def initials(name: str) -> str:
 
 def avatar(url: str | None, name: str) -> dict:
     return {"url": url or None, "initials": initials(name)}
-
-
-def valid_logo_url(url: str) -> bool:
-    """A site path ("/logo.webp", not "//host") or a full http(s) URL without credentials, at most 400 characters."""
-    if len(url) > URL_MAX:
-        return False
-    if url.startswith("/"):
-        return not url.startswith("//") and "\\" not in url and not any(ch.isspace() for ch in url)
-    return valid_url(url)
-
-
-def clean_logo_url(url: str | None) -> str | None:
-    """The stored form of a logo URL: None when empty; raises invalid_url when it is not acceptable."""
-    url = (url or "").strip()
-    if not url:
-        return None
-    if not valid_logo_url(url):
-        raise DomainError("invalid_url", "enter a site path or a full http:// or https:// URL without account credentials", 422)
-    return url
