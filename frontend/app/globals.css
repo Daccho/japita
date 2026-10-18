@@ -1545,3 +1545,13 @@
 .jp .jp-app .jp-login-role .jp-login-tile { position:relative; display:grid; place-items:center; flex-shrink:0; width:64px; height:64px; border:var(--aj-border-strong); border-radius:var(--aj-radius-card); background:var(--aj-yolk); }
 .jp .jp-app .jp-login-role .jp-login-tile svg { width:40px; height:40px; stroke-width:1.75; }
 .jp .jp-app .jp-login-role .jp-login-tile svg.jp-login-tile-badge { position:absolute; right:-8px; bottom:-8px; width:26px; height:26px; padding:3px; border:var(--aj-border-strong); border-radius:50%; background:var(--aj-surface); stroke-width:2; }
+
+/* Buying preferences: rule name beside its actions; on phones the actions wrap under the name. */
+.jp .jp-app .jp-rule-row { padding:10px 0; }
+.jp .jp-app .jp-rule-name { min-width:0; }
+.jp .jp-app .jp-rule-actions { display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+@media (max-width:520px) {
+  .jp .jp-app .jp-rule-row { grid-template-columns:minmax(0,1fr); gap:8px; }
+  .jp .jp-app .jp-rule-actions { justify-content:space-between; }
+}
+

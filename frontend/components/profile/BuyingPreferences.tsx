@@ -92,16 +92,16 @@ export default function BuyingPreferences() {
   };
 
   const ruleRow = (ing: string, r: Rule, kind: "mandatory" | "negotiable") => (
-    <div key={`${kind}-${r.field}`} className="jp-row" style={{ padding: "10px 0" }}>
-      <div>
+    <div key={`${kind}-${r.field}`} className="jp-row jp-rule-row">
+      <div className="jp-rule-name">
         <p style={{ color: "var(--jp-text)", fontSize: 13, marginTop: 0 }}>
           {r.label}
           <InfoTip field={r.field} />
         </p>
       </div>
-      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+      <div className="jp-rule-actions">
         <span className={`jp-badge ${kind === "mandatory" ? "" : "jp-neutral"}`}>{kind === "mandatory" ? t("by.required") : t("by.preferred")}</span>
-        <button type="button" className="jp-action" style={{ padding: "6px 9px" }} onClick={() => move(ing, r, kind)}>
+        <button type="button" className="jp-action" onClick={() => move(ing, r, kind)}>
           {kind === "mandatory" ? <ArrowDown aria-hidden /> : <ArrowUp aria-hidden />}
           {kind === "mandatory" ? t("by.toPref") : t("by.toReq")}
         </button>
@@ -160,23 +160,6 @@ export default function BuyingPreferences() {
               );
             })}
           </div>
-        </div>
-      </div>
-      <div className="jp-field">
-        <span>{t("by.priorities")}</span>
-        <div className="jp-field-grid">
-          {Object.entries(p.priorities).map(([k, v]) => (
-            <label key={k} className="jp-select-label" style={{ margin: "4px 0" }}>
-              {label("prio", k)}
-              <select value={v} onChange={(e) => edit({ ...p, priorities: { ...p.priorities, [k]: e.target.value as typeof v } })}>
-                {(["low", "medium", "high"] as const).map((l) => (
-                  <option key={l} value={l}>
-                    {label("lvl", l)}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ))}
         </div>
       </div>
       <div className="jp-form-actions">
