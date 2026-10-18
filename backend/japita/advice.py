@@ -3,6 +3,8 @@
 The model selects evidence to explain; displayed facts and amounts come from code.
 """
 import json
+import logging
+import re
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
@@ -10,6 +12,8 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from . import calc, orders, stock
 from .context import input_version
 from .store import Store
+
+log = logging.getLogger("japita.advice")
 
 
 class EvidenceRef(BaseModel):
@@ -57,10 +61,11 @@ def validate_explanation(raw: str, store: Store, decision: dict) -> dict:
     Arbitrary model prose is never used as a supplier claim or a source of numbers.
     """
     try:
-        text = raw.strip()
-        if text.startswith("```"):
-            text = text.split("\n", 1)[1].rsplit("```", 1)[0]
-        parsed = Explanation.model_validate(json.loads(text))
+        found = re.search(r"\{.*\}", raw, re.S)  # tolerates a code fence or text around the object
+        obj = json.loads(found.group(0) if found else raw)
+        if isinstance(obj, dict) and obj.get("action") == "answer" and isinstance(obj.get("text"), str):
+            obj = json.loads(obj["text"])  # an Evolus answer action passed through unwrapped
+        parsed = Explanation.model_validate(obj)
         selected = decision["recommended"]
         allowed = {selected["kind"], *selected["also"]} if selected else {None}
         if parsed.recommended_kind not in allowed:
@@ -76,5 +81,6 @@ def validate_explanation(raw: str, store: Store, decision: dict) -> dict:
                 raise ValueError("evidence does not match the recorded rule outcome")
             refs.append({**match, "offer_id": ref.offer_id, "product": store.offer(ref.offer_id)["product"]})
         return {"validated": True, "focus": parsed.focus, "evidence": refs}
-    except (ValidationError, ValueError, KeyError, TypeError, StopIteration):
+    except (ValidationError, ValueError, KeyError, TypeError, StopIteration) as e:
+        log.warning("advisor explanation rejected: %s: %s | %s", type(e).__name__, str(e)[:200], raw[:300])
         return {"validated": False, "focus": "recommendation", "evidence": []}

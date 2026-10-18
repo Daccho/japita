@@ -134,6 +134,8 @@ def parse_action(text: str) -> dict | None:
             return None
     if action.get("action") == "answer" and isinstance(action.get("text"), str):
         return action
+    if "action" not in action and "recommended_kind" in action:  # the final object without its answer wrapper
+        return {"action": "answer", "text": json.dumps(action, ensure_ascii=False)}
     if action.get("action") == "call":
         calls = action.get("calls") or ([{"tool": action["tool"], "arguments": action.get("arguments", {})}]
                                         if "tool" in action else [])

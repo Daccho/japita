@@ -94,6 +94,8 @@ def test_explanation_rejects_wrong_basket_false_outcome_and_free_prose():
     answer = {"recommended_kind": decision["recommended"]["kind"], "focus": "recommendation",
               "evidence": [{"offer_id": "O-noo-3", "field": "hydration_pct", "outcome": "ok"}]}
     assert validate_explanation(json.dumps(answer), store, decision)["validated"]
+    wrapped = json.dumps({"action": "answer", "text": json.dumps(answer)})
+    assert validate_explanation("```json\n" + wrapped + "\n```", store, decision)["validated"]
     answer["evidence"][0]["outcome"] = "fail"
     assert not validate_explanation(json.dumps(answer), store, decision)["validated"]
     answer["recommended_kind"] = "invented"

@@ -1,5 +1,7 @@
 """Option B action parsing (no network)."""
 
+import json
+
 from japita.evolus import output_text, parse_action
 
 
@@ -26,3 +28,8 @@ def test_parse_answer_with_latex_backslashes():
     text = '```json\n{"action": "answer", "text": "Idratazione $\\le 30\\%$ richiesta"}\n```'
     text = text.replace("\\\\", "\\")  # single backslashes, as the model writes them
     assert parse_action(text)["text"].startswith("Idratazione")
+
+
+def test_bare_final_object_counts_as_answer():
+    action = parse_action('```json\n{"recommended_kind": null, "focus": "prices", "evidence": []}\n```')
+    assert action["action"] == "answer" and json.loads(action["text"])["focus"] == "prices"
