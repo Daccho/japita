@@ -44,6 +44,13 @@ def week(request: Request, profile_id: str | None = None):
     return views.week_view(store, lang, money)
 
 
+@router.get("/views/purchasing")
+def purchasing(request: Request, profile_id: str | None = None):
+    from .purchasing_view import purchasing_view
+    store, lang, money = _ctx(request, profile_id)
+    return purchasing_view(store, lang, money)
+
+
 @router.get("/views/basket")
 def basket(request: Request, profile_id: str | None = None, kind: str | None = None):
     store, lang, money = _ctx(request, profile_id)

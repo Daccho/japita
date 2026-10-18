@@ -28,7 +28,7 @@ load_dotenv()
 # Kinds stored one document per id; "recipe", "week" and restaurant settings are singletons stored under
 # id "current".
 COLLECTIONS = {"profile": "profiles", "supplier": "suppliers", "offer": "offers", "clarification": "clarifications",
-               "approval": "approvals", "purchase_order": "purchase_orders"}
+               "approval": "approvals", "purchase_order": "purchase_orders", "advisor_turn": "advisor_turns"}
 SINGLETONS = {"recipe": "recipe", "week": "week", "restaurant_profile": "restaurant_profile",
               "restaurant_links": "restaurant_links", "restaurant_settings": "restaurant_settings",
               "notifications_seen": "notifications_seen"}
@@ -149,7 +149,7 @@ def engine():
 def load_state(workspace: str | None = None) -> dict:
     workspace = workspace or current_workspace()
     data: dict = {"profiles": {}, "suppliers": {}, "offers": [], "clarifications": [], "review_flags": {},
-                  "approvals": [], "purchase_orders": [],
+                  "approvals": [], "purchase_orders": [], "advisor_turns": [],
                   "recipe": {"lines": []}, "week": {"servings": {}, "stock": {}}}
     with Session(engine()) as s:
         for r in s.scalars(select(Record).where(Record.workspace == workspace).order_by(Record.kind, Record.id)):
@@ -192,6 +192,45 @@ def save_state(data: dict, workspace: str | None = None) -> None:
     with Session(engine()) as s, s.begin():
         s.execute(delete(Record).where(Record.workspace == workspace))
         s.add_all(records)
+
+
+_agent_write_lock = threading.Lock()
+
+
+def save_advisor_run(new_drafts: list[dict], turn: dict, workspace: str | None = None) -> None:
+    """Insert only new drafts and the turn into the workspace; never write the agent's old restaurant snapshot.
+
+    One API process is used for this MVP. PostgreSQL also serializes concurrent agent merges.
+    """
+    workspace = workspace or current_workspace()
+    in_ws = Record.workspace == workspace
+    with _agent_write_lock, Session(engine()) as s, s.begin():
+        if s.bind.dialect.name == "postgresql":
+            s.connection().exec_driver_sql("SELECT pg_advisory_xact_lock(742391)")
+        rows = list(s.scalars(select(Record).where(in_ws, Record.kind == "clarification").with_for_update()))
+        existing = [row.data for row in rows]
+        keys = {(c["offer_id"], c["field"]) for c in existing if c["state"] != "replied"}
+        n = max((int(c["id"][1:]) for c in existing), default=0)
+        for draft in new_drafts:
+            key = (draft["offer_id"], draft["field"])
+            if key in keys:
+                continue
+            offer = s.get(Record, (workspace, "offer", draft["offer_id"]))
+            flags = s.get(Record, (workspace, "review_flag", draft["offer_id"]))
+            if offer is None or (offer.data.get("attributes", {}).get(draft["field"]) is not None
+                                 and draft["field"] not in (flags.data if flags else {})):
+                continue  # another person may have resolved this while the model was running
+            n += 1
+            data = {**draft, "id": f"C{n}"}
+            s.add(Record(workspace=workspace, kind="clarification", id=data["id"], data=data))
+            keys.add(key)
+        turn_id = uuid.uuid4().hex
+        older = [r for r in s.scalars(select(Record).where(in_ws, Record.kind == "advisor_turn"))
+                 if turn.get("conversation_id") and r.data.get("conversation_id") == turn["conversation_id"]
+                 and r.data.get("profile_id") == turn["profile_id"]]
+        for row in sorted(older, key=lambda r: r.data["created_at"])[:-7]:
+            s.delete(row)
+        s.add(Record(workspace=workspace, kind="advisor_turn", id=turn_id, data={**turn, "id": turn_id}))
 
 
 def is_empty(workspace: str | None = None) -> bool:

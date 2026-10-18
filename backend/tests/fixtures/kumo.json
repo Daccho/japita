@@ -477,7 +477,9 @@
         "italian_label": "Etichetta in italiano: \"Ingredienti: farina di grano tenero, acqua, sale, carbonato di sodio (kansui)\"",
         "animal_ingredients": "Ingredienti: farina di grano tenero, acqua, sale, carbonato di sodio (kansui)"
       },
-      "document": "doc-noo-1.pdf"
+      "document": "doc-noo-1.pdf",
+      "availability_status": "confirmed",
+      "availability_source": "[FICTIONAL DEMO] Supplier offer confirms availability for the sample purchasing week."
     },
     {
       "id": "O-noo-2",
@@ -504,7 +506,9 @@
         "kansui_composition": "Contiene carbonato di potassio (kansui)",
         "italian_label": "Etichetta in italiano: \"Contiene carbonato di potassio (kansui)\""
       },
-      "document": "doc-noo-2.pdf"
+      "document": "doc-noo-2.pdf",
+      "availability_status": "confirmed",
+      "availability_source": "[FICTIONAL DEMO] Supplier offer confirms availability for the sample purchasing week."
     },
     {
       "id": "O-noo-3",
@@ -529,7 +533,9 @@
         "hydration_pct": "規格書に加水率の記載なし",
         "animal_ingredients": "原材料：小麦粉、食塩、かんすい"
       },
-      "document": "doc-noo-3.jpg"
+      "document": "doc-noo-3.jpg",
+      "availability_status": "confirmed",
+      "availability_source": "[FICTIONAL DEMO] Supplier offer confirms availability for the sample purchasing week."
     },
     {
       "id": "O-soy-1",
@@ -552,7 +558,9 @@
         "brewing_method": "本醸造",
         "additive_free": "原材料：脱脂加工大豆、小麦、食塩、アルコール"
       },
-      "document": "doc-soy-1.pdf"
+      "document": "doc-soy-1.pdf",
+      "availability_status": "confirmed",
+      "availability_source": "[FICTIONAL DEMO] Supplier offer confirms availability for the sample purchasing week."
     },
     {
       "id": "O-soy-2",
@@ -575,7 +583,9 @@
         "brewing_method": "Naturally brewed",
         "additive_free": "Ingredients: water, soybeans, wheat, salt, E211"
       },
-      "document": "doc-soy-2.pdf"
+      "document": "doc-soy-2.pdf",
+      "availability_status": "confirmed",
+      "availability_source": "[FICTIONAL DEMO] Supplier offer confirms availability for the sample purchasing week."
     },
     {
       "id": "O-soy-3",
@@ -600,7 +610,9 @@
         "additive_free": "原材料：大豆、小麦、食塩（無添加）",
         "animal_ingredients": "原材料：大豆、小麦、食塩（無添加）"
       },
-      "document": "doc-soy-3.jpg"
+      "document": "doc-soy-3.jpg",
+      "availability_status": "confirmed",
+      "availability_source": "[FICTIONAL DEMO] Supplier offer confirms availability for the sample purchasing week."
     },
     {
       "id": "O-soy-4",
@@ -623,7 +635,9 @@
         "brewing_method": "本醸造方式",
         "additive_free": "原材料：大豆、小麦、食塩　保存料不使用"
       },
-      "document": "doc-soy-4.pdf"
+      "document": "doc-soy-4.pdf",
+      "availability_status": "confirmed",
+      "availability_source": "[FICTIONAL DEMO] Supplier offer confirms availability for the sample purchasing week."
     },
     {
       "id": "O-kik-1",
@@ -646,7 +660,9 @@
         "origin_country": "原産国：中国",
         "cut": "形状：ホール"
       },
-      "document": "doc-kik-1.pdf"
+      "document": "doc-kik-1.pdf",
+      "availability_status": "confirmed",
+      "availability_source": "[FICTIONAL DEMO] Supplier offer confirms availability for the sample purchasing week."
     },
     {
       "id": "O-kik-2",
@@ -669,7 +685,9 @@
         "origin_country": "Origin: China",
         "cut": "Cut: strips"
       },
-      "document": "doc-kik-2.pdf"
+      "document": "doc-kik-2.pdf",
+      "availability_status": "confirmed",
+      "availability_source": "[FICTIONAL DEMO] Supplier offer confirms availability for the sample purchasing week."
     },
     {
       "id": "O-kik-3",
@@ -692,7 +710,9 @@
         "origin_country": "原産地：熊本県",
         "cut": "形状：スライス"
       },
-      "document": "doc-kik-3.jpg"
+      "document": "doc-kik-3.jpg",
+      "availability_status": "confirmed",
+      "availability_source": "[FICTIONAL DEMO] Supplier offer confirms availability for the sample purchasing week."
     }
   ],
   "menu": [

@@ -66,9 +66,13 @@ export const sendJson = <R,>(method: "POST" | "PUT" | "PATCH", path: string, bod
   request<R>(path, body === undefined ? { method, headers } : json(method, body, headers));
 
 // On sign-out or an expired session: forget anything older versions of the app kept in this browser.
+export const purchasingRequest = request;
+export const runPurchasingJob = runJob;
+
 export function forgetSession() {
   try {
     for (const k of Object.keys(localStorage)) if (k.startsWith("japita.")) localStorage.removeItem(k);
+    for (const k of Object.keys(sessionStorage)) if (k.startsWith("japita.advisor.conversation.")) sessionStorage.removeItem(k);
   } catch {}
 }
 

@@ -37,6 +37,7 @@ Keep it short: rules and pointers live here, details live in `docs/`. Each fact 
 | `docs/open-questions.md` | Unresolved questions |
 | `docs/mockup-handoff.md` | Current visual mockup, approved UI decisions, exclusions, and continuation prompt |
 | `docs/design-integration.md` | Workflow for joining visual/product design with backend capabilities, integration questions, and verification |
+| `docs/advisor.md` | Connected purchasing brief, coverage checks, preferences, context, input editing, catalog search, and verification limits |
 
 ### Commands
 ```bash
@@ -103,6 +104,8 @@ Full awards table and checklist: `docs/hackathon.md`.
 
 Record important decisions here (date — decision — reason) so every agent shares the same context.
 
+- 2026-10-18 — User selected their attached JP seal combined with option 04's lettering and authorized applying it to the app. Current assets, responsive sizing, generation prompt and preserved earlier variants are documented in `mockup/assets/README.md`.
+
 - 2026-10-17 — Created AGENTS.md as shared memory for Claude Code and Codex.
 - 2026-10-17 — Selected Japanese ramen businesses opening in Italy as the first demo audience, as confirmed by the user.
 - 2026-10-17 — Refined the demo to a normal purchasing week, including both existing suppliers and discovery of new options. The user confirmed that centralized management and advice based on quality, price, and restaurant preferences are the product's focus; pre-opening import planning is no longer the central workflow.
@@ -133,4 +136,5 @@ Record important decisions here (date — decision — reason) so every agent sh
 - 2026-10-18 — Added sign-in at the user's request: login ID + password (Argon2id), with a restaurant/supplier choice first. Authorization is server-side and deny-by-default (`backend/japita/auth.py`): HttpOnly session cookie through the same-origin `/api` proxy, Origin check on writes, roles checked per request. No public sign-up; accounts come from the CLI. One deployment for both sides for now; the user noted separate hosting may suit production.
 - 2026-10-18 — Removed passkeys at the user's request; sign-in is login ID + password only. No database had auth tables yet, so nothing was migrated.
 - 2026-10-18 — Long model calls (`POST /agent/ask`, `POST /evolus/weekly-intake`) became in-memory background jobs polled through `GET /jobs/{id}` (hard limit 300 s, kept 30 min), so they do not depend on the Vercel proxy timeout. All errors use `{"error": {"code", "message"}}` with stable codes (`backend/japita/errors.py`); the restaurant app (`lib/api.ts` + i18n) and supplier portal (`lib/portal.ts`) map codes to translated messages and retry quietly while the API wakes up.
+- 2026-10-18 — User authorized all five assessed advisor improvements. The connected implementation and remaining evidence/data limits are documented in `docs/advisor.md`; the standalone mockup is unchanged.
 - 2026-10-18 — Public sign-up at the user's request, replacing CLI-only accounts: the sign-in page can create a restaurant or supplier account (`POST /auth/signup`). Each new restaurant gets its own empty workspace (records keyed by workspace; the demo accounts share `default`). A new supplier is stored once in a shared directory and appears in every workspace as an unconfirmed candidate (no terms, not orderable); a supplier session works with one restaurant at a time, chosen in the portal header (`japita_supplier_restaurant` cookie, checked on the server). Portal and request link tokens are resolved to the workspace that holds them. See `backend/japita/repo.py`.

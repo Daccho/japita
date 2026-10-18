@@ -48,6 +48,8 @@ Python calculates all the numbers: needs, pack rounding, minimum orders, shippin
 
 Every model call is logged with its model, backend, and latency (`/llm-calls`, `/health/model`).
 
+The connected advisor now provides a calculated purchasing brief, complete stock-coverage replay, recommendations selected by saved priorities, bounded follow-up context, editable operational inputs, and evidence-aware catalog search. Implementation, API behavior and remaining data limits are in [the advisor guide](docs/advisor.md). Older saved offers need a recorded availability confirmation before they become orderable; the updated fictional fixture includes labeled sample confirmations.
+
 **Evolus:** We registered our TokenFactory Gemma in Evolus as an own model. It powers two Evolus building blocks: the agent "Japita purchasing advisor", which drives the purchasing conversation, and the workflow "Japita weekly intake", which runs the weekly consistency check across offers. The app calls both through the Evolus APIs. See [the architecture](docs/architecture.md).
 
 ## Run locally
@@ -97,6 +99,8 @@ Deployment: [docs/deploy.md](docs/deploy.md). Own vLLM and Evolus setup: [docs/s
 ## Current design scope
 
 The connected app starts with a restaurant/supplier choice and login ID/password sign-in; the restaurant workspace lives at `/restaurants`. Accounts are provisioned through the backend CLI. A public marketing homepage, pricing page, and self-service restaurant registration remain future work. The static mockup in [`mockup/`](mockup/index.html) opens directly in a browser; see [docs/mockup-handoff.md](docs/mockup-handoff.md). Connecting the design to the backend follows [docs/design-integration.md](docs/design-integration.md).
+
+The app and mockup use the selected JP seal and option-04 Japita wordmark. Current branding assets and their provenance are documented in [mockup/assets/README.md](mockup/assets/README.md).
 
 The connected restaurant menu supports adding dishes and saving their ingredients on the backend; those ingredients also populate My suppliers filters. Approved flat drawings replace product photos. Unknown foods queue background generation through the existing AMD model settings, with validated SVG and a packaging fallback. The connected `/drawings-review` page manages the cache; the standalone [library preview](mockup/drawings-preview.html) shows the approved artwork. See [docs/product-drawings.md](docs/product-drawings.md) for setup, persistence and verification boundaries.
 

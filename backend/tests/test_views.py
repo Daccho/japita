@@ -66,7 +66,7 @@ def test_basket_view_suggests_and_localizes(store):
     assert sel["total_text"] == "$555.67"
     assert sel["lines"][0]["qty_text"] == "77 × 1 kg = 77 kg"
     assert sel["lines"][0]["badge"] == {"text": "Late", "warn": True}
-    assert sel["approval"]["state"] == "none" and sel["can_approve"]
+    assert sel["approval"]["state"] == "none" and not sel["can_approve"]  # late plans cannot be approved
     assert sel["tradeoffs"] and all(x["outcome"] not in x["text"] for x in sel["tradeoffs"])
     excluded = {x["offer_id"]: x["reasons"] for x in v["excluded"]}
     assert excluded["O-noo-3"] == ["Low hydration (30% or less), Hakata style: not stated"]
@@ -82,7 +82,8 @@ def test_suggested_prefers_on_time_then_lowest_cost():
     assert views.suggested_basket({"baskets": [{"kind": "baseline", "also": [], "lines": []}]}) is None
 
 
-def test_approval_then_settled_mode(store):
+def test_approval_then_settled_mode(covered_store):
+    store = covered_store
     orders.approve_basket(store, "baseline")
     v = views.basket_view(store, "it", Money("it"))
     assert v["selected"]["approval"]["state"] == "approved"
@@ -97,6 +98,8 @@ def test_new_product_from_proposal_is_marked_and_savings_explained(store):
                                              "attributes": {"contains_kansui": True, "hydration_pct": 27, "fresh": True}})
     portal.apply_update(store, offer["id"])
     assert store.offer(offer["id"])["from_supplier_proposal"]
+    assert not views.calc.orderability(store, offer["id"])["orderable"]  # price proposal is not stock confirmation
+    store.offer(offer["id"]).update(availability_status="confirmed", availability_source="Fictional supplier stock confirmation")
     store.offer(offer["id"])["applied_at"] = "2026-10-18T10:00:00+00:00"
     v = views.basket_view(store, "en", Money("en"), kind="lowest_cost")
     line = next(ln for ln in v["selected"]["lines"] if ln["offer_id"] == offer["id"])
@@ -227,7 +230,8 @@ def test_portal_rejects_out_of_range_values(store):
         portal.propose_update(store, "S3", "O-kik-2", {"attributes": {"cut": "cubes"}})
 
 
-def test_delivery_change_to_the_same_date_is_rejected(store):
+def test_delivery_change_to_the_same_date_is_rejected(covered_store):
+    store = covered_store
     orders.approve_basket(store, "baseline")
     po = store.data["purchase_orders"][0]
     orders.submit_order(store, po["id"], "k1")

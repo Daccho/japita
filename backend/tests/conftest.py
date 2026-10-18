@@ -18,6 +18,21 @@ def fixed_rates():
 
 
 @pytest.fixture
+def covered_store():
+    """A feasible order plan: cancel delayed arrivals and allow fresh orders on the next matching day."""
+    from pathlib import Path
+    from japita.store import Store
+    store = Store.load(Path(__file__).parent / "fixtures/kumo.json")
+    for supplier in store.suppliers.values():
+        supplier.update(lead_time_days=0, delivery_days=["mon", "tue", "wed", "thu", "fri", "sat", "sun"])
+    for delivery in store.week.get("deliveries", []):
+        if delivery["status"] == "delayed":
+            delivery["status"] = "cancelled"
+            delivery.pop("revised_date", None)
+    return store
+
+
+@pytest.fixture
 def sign_in_supplier():
     """Sign a TestClient in as the supplier account for `supplier_id` (created on first use)."""
     from sqlalchemy import select

@@ -15,7 +15,8 @@ from typing import Any, Literal
 
 from fastapi import FastAPI, File, Header, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+from datetime import date
 
 from . import auth, calc, fx, jobs, portal, repo, rules, views
 from .agent import run_agent
@@ -97,6 +98,12 @@ class RecipeLine(In):
     unit: Literal["g", "ml"]
     per_item: dict[str, float] = Field(description="Quantity per serving for each menu item, e.g. half kaedama 60 g")
 
+    @model_validator(mode="after")
+    def positive_quantities(self):
+        if any(q < 0 for q in self.per_item.values()):
+            raise ValueError("Recipe quantities must be non-negative")
+        return self
+
 
 class Recipe(In):
     name: str = ""
@@ -136,6 +143,32 @@ class Week(In):
     deliveries: list[Delivery] = []
     stock: dict[str, Stock]
 
+    @model_validator(mode="after")
+    def valid_plan(self):
+        if len(self.dates) != 2 or self.dates[0] > self.dates[1]:
+            raise ValueError("Enter a start and end date")
+        for value in [*self.dates, *([self.as_of] if self.as_of else [])]:
+            date.fromisoformat(value)
+        dates = [d.date for d in self.days]
+        if dates != sorted(set(dates)) or any(not self.dates[0] <= d <= self.dates[1] for d in dates):
+            raise ValueError("Daily rows must be unique, ordered and inside the week")
+        if self.days:
+            expected = (date.fromisoformat(self.dates[1]) - date.fromisoformat(self.dates[0])).days + 1
+            if len(dates) != expected:
+                raise ValueError("Enter servings for every date in the purchasing week")
+            self.servings = {key: sum(d.servings.get(key, 0) for d in self.days)
+                             for key in set().union(*(d.servings for d in self.days))}
+        if any(n < 0 for n in self.servings.values()) or any(n < 0 for d in self.days for n in d.servings.values()):
+            raise ValueError("Servings must be non-negative")
+        for stock in self.stock.values():
+            if stock.usable_until:
+                date.fromisoformat(stock.usable_until)
+        for delivery in self.deliveries:
+            for value in (delivery.date, delivery.revised_date, delivery.usable_until):
+                if value:
+                    date.fromisoformat(value)
+        return self
+
 
 class Supplier(In):
     id: str
@@ -146,6 +179,9 @@ class Supplier(In):
     shipping_eur: float | None = Field(default=None, description="null = unknown, never treated as zero")
     delivery_days: list[Day] = []
     lead_time_days: int = Field(default=1, ge=0)
+    supplier_country: str | None = Field(default=None, pattern=r"^[A-Z]{2}$")
+    dispatch_country: str | None = Field(default=None, pattern=r"^[A-Z]{2}$")
+    geography_source: str | None = None
 
 
 class Offer(In):
@@ -162,6 +198,10 @@ class Offer(In):
     attributes: dict[str, Any] = {}
     evidence: dict[str, str | None] = {}
     document: str | None = None
+    availability_status: Literal["unknown", "confirmed", "unavailable"] = "unknown"
+    availability_source: str | None = None
+    available_qty: float | None = Field(default=None, ge=0)
+    valid_until: date | None = None
 
 
 class Reply(BaseModel):
@@ -180,10 +220,36 @@ class ApplyReply(BaseModel):
     value: Any = Field(default=None, description="Required only when the two reads disagreed or found nothing")
 
 
+class PurchasingTerms(BaseModel):
+    availability_status: Literal["unknown", "confirmed", "unavailable"] = "unknown"
+    availability_source: str | None = Field(default=None, max_length=2000)
+    available_qty: float | None = Field(default=None, ge=0)
+    valid_until: date | None = None
+
+
+class Geography(BaseModel):
+    supplier_country: str | None = Field(default=None, pattern=r"^[A-Z]{2}$")
+    dispatch_country: str | None = Field(default=None, pattern=r"^[A-Z]{2}$")
+    geography_source: str | None = Field(default=None, max_length=1000)
+
+
+class ProfileContext(BaseModel):
+    restaurant_details: dict[str, str] | None = None
+    links: dict[str, str] | None = None
+
+
+class ChefAssessment(BaseModel):
+    approved: bool
+    note: str = Field(min_length=1, max_length=1000)
+
+
 class Question(BaseModel):
     question: str
-    profile_id: str | None = None  # the restaurant's active profile when absent
-    lang: Literal["it", "en"] = Field(default="it", description="Language of the drafts list in the result")
+    profile_id: str | None = None
+    conversation_id: str | None = Field(default=None, max_length=80)
+    offer_id: str | None = None
+    basket_kind: str | None = None
+    lang: Literal["it", "en"] = "it"
     # "evolus": Evolus main agent (our Gemma on AMD) drives the loop; "direct": call the model endpoint directly
     via: Literal["evolus", "direct"] = "evolus" if os.environ.get("EVOLUS_AGENT_ID") else "direct"
 
@@ -255,8 +321,9 @@ def put_profile(profile_id: str, body: Profile, request: Request):
 
 
 @app.put("/recipe")
-def put_recipe(body: Recipe):
+def put_recipe(body: Recipe, profile_id: str | None = None, if_match: str | None = Header(default=None)):
     data = repo.load_state()
+    _check_input_version(data, profile_id, if_match)
     recipe = _dump(body)
     if "menu_items" not in recipe and "menu_items" in data.get("recipe", {}):
         recipe["menu_items"] = data["recipe"]["menu_items"]
@@ -268,11 +335,66 @@ def put_recipe(body: Recipe):
 
 
 @app.put("/week")
-def put_week(body: Week):
+def put_week(body: Week, profile_id: str | None = None, if_match: str | None = Header(default=None)):
     data = repo.load_state()
+    _check_input_version(data, profile_id, if_match)
+    units = {line["ingredient"]: line["unit"] for line in data["recipe"]["lines"]}
+    if set(units) - set(body.stock) or any(units.get(ing) != entry.unit for ing, entry in body.stock.items()) or any(
+            units.get(dl.ingredient) != dl.unit or dl.supplier_id not in data["suppliers"] for dl in body.deliveries):
+        raise AppError(422, "invalid_input", "Stock and deliveries must use known ingredients, suppliers and recipe units")
     data["week"] = _dump(body)
     repo.save_state(data)
     return data["week"]
+
+
+def _check_input_version(data: dict, profile_id: str | None, expected: str | None) -> None:
+    from .context import input_version
+    pid = profile_id or next(iter(data["profiles"]))
+    if pid not in data["profiles"]:
+        raise AppError(404, "not_found", "Unknown profile")
+    if expected and input_version(Store(data, pid)) != expected:
+        raise AppError(409, "conflict", "Purchasing inputs changed; reload before saving")
+
+
+@app.patch("/profiles/{profile_id}/context")
+def put_profile_context(profile_id: str, body: ProfileContext):
+    data = repo.load_state()
+    if profile_id not in data["profiles"]:
+        raise AppError(404, "not_found", "Unknown profile")
+    data["profiles"][profile_id].update(body.model_dump(exclude_none=True))
+    repo.save_state(data)
+    return data["profiles"][profile_id]
+
+
+@app.put("/offers/{offer_id}/purchasing-terms")
+def put_purchasing_terms(offer_id: str, body: PurchasingTerms):
+    store = _store()
+    offer = store.offer(offer_id)
+    offer.update(_dump(body))
+    repo.save_state(store.data)
+    return offer
+
+
+@app.put("/offers/{offer_id}/chef-assessment")
+def put_chef_assessment(offer_id: str, body: ChefAssessment):
+    from .store import _now
+    store = _store()
+    offer = store.offer(offer_id)
+    offer["attributes"]["chef_approved"] = body.approved
+    offer["evidence"]["chef_approved"] = f"[OWNER ASSESSMENT {_now()}] {body.note.strip()}"
+    store.review_flags.get(offer_id, {}).pop("chef_approved", None)
+    repo.save_state(store.data)
+    return offer
+
+
+@app.put("/suppliers/{supplier_id}/geography")
+def put_supplier_geography(supplier_id: str, body: Geography):
+    data = repo.load_state()
+    if supplier_id not in data["suppliers"]:
+        raise AppError(404, "not_found", "Unknown supplier")
+    data["suppliers"][supplier_id].update(_dump(body))
+    repo.save_state(data)
+    return data["suppliers"][supplier_id]
 
 
 @app.get("/suppliers")
@@ -401,20 +523,53 @@ def get_evidence(offer_id: str, profile_id: str | None = None):
 def answer_question(body: Question) -> dict:
     """The agent run itself (synchronous). Saves clarification drafts and logs model calls."""
     store = _store(body.profile_id)
+    from .advice import brief, validate_explanation
+    from .context import input_version
+    from .store import _now
+    body.profile_id = store.profile_id
+    version = input_version(store)
+    previous_ids = {c["id"] for c in store.clarifications}
+    store.advisor_context = {"offer_id": body.offer_id, "basket_kind": body.basket_kind,
+                             "restaurant_details": store.data.get("restaurant_profile", {}),
+                             "links": store.data.get("restaurant_links", {})}
+    if body.offer_id:
+        store.offer(body.offer_id)
+    turns = sorted([t for t in store.data.get("advisor_turns", [])
+                    if body.conversation_id and t.get("conversation_id") == body.conversation_id
+                    and t.get("profile_id") == body.profile_id], key=lambda t: t["created_at"])[-4:]
+    history = [message for turn in turns for message in (
+        {"role": "user", "content": turn["question"]},
+        {"role": "assistant", "content": "Historical decision, recheck current facts: " + str(turn.get("decision", {}))})]
+    message = body.question + "\nCurrent screen selection (context only): " + str(store.advisor_context)
     if body.via == "evolus":
         agent = EvolusAgent()
-        result = run_agent_evolus(agent, store, body.question)
+        result = run_agent_evolus(agent, store, message, history=history)
         calls = agent.calls
     else:
         llm = LLM()
-        result = run_agent(llm, store, body.question)
+        result = run_agent(llm, store, message, history=history)
         calls = llm.calls
     views.mark_not_needed(store)
-    repo.save_state(store.data)  # the agent may have saved clarification drafts
+    decision = brief(store)
+    explanation = validate_explanation(result.answer, store, decision)
+    changed = input_version(_store(body.profile_id)) != version
+    repo.save_advisor_run([] if changed else [c for c in store.clarifications if c["id"] not in previous_ids], {
+        "profile_id": body.profile_id, "conversation_id": body.conversation_id, "question": body.question,
+        "created_at": _now(), "input_version": version, "explanation": explanation,
+        "decision": {"recommended": decision["recommended"], "context": store.advisor_context},
+    })
     repo.log_calls(calls, f"agent:{body.via}")
-    return {"via": body.via, "answer": views.clean_answer(result.answer, views.answer_names(store)),
-            "answer_raw": result.answer, "steps": result.steps, "clarifications": store.clarifications,
-            "drafts": views.drafts_view(store, store.clarifications, body.lang)}
+    current = _store(body.profile_id)
+    return {"via": body.via, "answer": "", "steps": result.steps, "brief": decision,
+            "input_version": version, "stale": input_version(current) != version,
+            "explanation": explanation, "clarifications": current.clarifications,
+            "drafts": views.drafts_view(current, current.clarifications, body.lang)}
+
+
+@app.get("/advisor/brief")
+def advisor_brief(profile_id: str | None = None):
+    from .advice import brief
+    return brief(_store(profile_id))
 
 
 @app.post("/agent/ask", status_code=202)
@@ -639,6 +794,10 @@ app.include_router(drawings_router)
 from .menu_api import router as menu_router, views_router as menu_views_router  # noqa: E402
 
 app.include_router(menu_router)
+
+from .catalog import router as catalog_router  # noqa: E402
+
+app.include_router(catalog_router)
 app.include_router(menu_views_router)
 
 from .views_api import router as views_router  # noqa: E402

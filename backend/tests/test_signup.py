@@ -141,3 +141,14 @@ def test_demo_supplier_sees_only_the_demo_restaurant(app):
                  headers={"origin": APP})
         assert [r["name"] for r in sup.get("/auth/me").json()["restaurants"]] == ["Kumo Ramen Milano"]
         assert sup.get("/portal/me").status_code == 200
+
+
+def test_advisor_drafts_are_saved_in_the_callers_workspace(app):
+    repo.save_state(repo.blank_state("Osaka Bar Torino"), "w-osaka")
+    offer = repo.load_state()["offers"][0]
+    draft = {"offer_id": offer["id"], "field": "not_in_offer", "text_ja": "?", "reason": "x", "state": "draft"}
+    before = repo.load_state("w-osaka")
+    with repo.use_workspace(repo.DEFAULT_WORKSPACE):
+        repo.save_advisor_run([draft], {"profile_id": "kumo-authentic", "created_at": "2026-10-18T00:00:00"})
+    assert any(c["offer_id"] == offer["id"] for c in repo.load_state()["clarifications"])
+    assert repo.load_state("w-osaka") == before

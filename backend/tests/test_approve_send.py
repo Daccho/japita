@@ -17,7 +17,8 @@ def store():
     return Store.load(FIXTURE)
 
 
-def test_approve_and_send_is_idempotent(store):
+def test_approve_and_send_is_idempotent(covered_store):
+    store = covered_store
     key = orders.send_key(store, "baseline")
     r = orders.approve_and_send(store, "baseline", key)
     assert r["purchase_orders"] and all(po["state"] == "submitted" for po in r["purchase_orders"])
@@ -35,7 +36,8 @@ def test_basket_view_offers_one_send_step(store):
     assert all(ln["total_text"].startswith("$") for ln in c["lines"]) and c["confirm_text"] == "Send orders"
 
 
-def test_switching_profile_makes_unsent_approval_stale(store):
+def test_switching_profile_makes_unsent_approval_stale(covered_store):
+    store = covered_store
     orders.approve_basket(store, "baseline")
     assert not orders.approval_status(store)["stale"]
     restaurant.set_active_profile(store.data, "kumo-value")
@@ -53,7 +55,8 @@ def test_switching_profile_makes_unsent_approval_stale(store):
     assert po["state"] == "cancelled" and not orders.approval_status(value)["stale"]
 
 
-def test_unsent_order_can_be_sent_again(store):
+def test_unsent_order_can_be_sent_again(covered_store):
+    store = covered_store
     orders.approve_basket(store, "baseline")
     po = views.basket_view(store, "en", Money("en"))["orders"][0]
     assert po["can_submit"] and po["submit_text"] == "Send again"
