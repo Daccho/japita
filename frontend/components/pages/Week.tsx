@@ -62,6 +62,17 @@ export default function Week({ initial }: { initial: WeekView | null }) {
       <PageHeader kicker={v.kicker} title={L("wk.title")} sub={v.sub} actions={reviewBasket(t("review.basket"))} />
       <div className="jp-columns">
         <div className="jp-stack">
+          {v.approval_notice && (
+            <div className="jp-alert" role="status">
+              <TriangleAlert aria-hidden />
+              <div>
+                <h3>{v.approval_notice.text}</h3>
+                <Link href={v.approval_notice.href} className="jp-action">
+                  {v.approval_notice.action}
+                </Link>
+              </div>
+            </div>
+          )}
           {v.alerts.map((a) => (
             <div key={a.id} className="jp-alert" role="status">
               <TriangleAlert aria-hidden />

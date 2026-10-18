@@ -177,6 +177,7 @@ export type DayView = {
 };
 
 export type WeekView = Money & {
+  approval_notice?: { text: string; action: string; href: string } | null;
   kicker: string;
   sub: string;
   alerts: { id: string; ingredient: string; title: string; body: string; action: string; href: string }[];
