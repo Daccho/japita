@@ -77,6 +77,8 @@ PROTOCOL = """You are running inside the Japita app. You can use these tools; th
 Reply with exactly one JSON object and nothing else:
 - To call tools: {{"action": "call", "calls": [{{"tool": "<name>", "arguments": {{...}}}}]}}
 - To give the final answer: {{"action": "answer", "text": "<JSON string conforming to the final-answer schema in the operating rules>"}}
+In the final answer, recommended_kind names the plan from get_purchase_brief "plans" that best matches the owner's
+request (cheapest -> lowest_cost, fewest deliveries -> fewest_suppliers, on time -> on_time).
 Every number must come from a tool result."""
 
 

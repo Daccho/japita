@@ -572,7 +572,9 @@ def answer_question(body: Question) -> dict:
     current = _store(body.profile_id)
     return {"via": body.via, "answer": "", "steps": result.steps, "brief": decision,
             "input_version": version, "stale": input_version(current) != version,
-            "explanation": {**explanation, "evidence": views.evidence_view(current, explanation["evidence"], body.lang)}, "clarifications": current.clarifications,
+            "explanation": {**explanation, "evidence": views.evidence_view(current, explanation["evidence"], body.lang)},
+            "answer_view": views.advisor_answer_view(current, explanation, body.lang, Money(body.lang)),
+            "clarifications": current.clarifications,
             "drafts": views.drafts_view(current, current.clarifications, body.lang)}
 
 
