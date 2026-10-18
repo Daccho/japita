@@ -126,8 +126,10 @@ export default function MenuSheet({ initial }: { initial: MenuView | null }) {
           </button>
         )}
         <header className="jp-menu-masthead">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={v.masthead.logo_url} alt="" width={58} height={58} />
+          {v.masthead.avatar.url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={v.masthead.avatar.url} alt="" width={58} height={58} />
+          )}
           <h2 className="jp-menu-restaurant">{v.masthead.name}</h2>
           <p>{v.masthead.subtitle}</p>
           <span className="jp-menu-label">{L("mn.label")}</span>

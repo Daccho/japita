@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { Pencil } from "lucide-react";
-import { errorText, sendJson, type RestaurantProfileView } from "@/lib/api";
+import { errorCodeOf, errorText, sendDelete, sendForm, sendJson, type RestaurantProfileView } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useBump, useToast, useView } from "@/components/live";
 import { Avatar } from "@/components/AppShell";
+import { LogoControl } from "@/components/LogoControl";
 
 // The restaurant's own description, saved on the server.
 export default function Overview({ initial }: { initial: RestaurantProfileView | null }) {
@@ -17,6 +18,17 @@ export default function Overview({ initial }: { initial: RestaurantProfileView |
   const [busy, setBusy] = useState(false);
   if (!v) return null;
   const L = (k: string) => v.labels[k] ?? k;
+  // Logo errors use the page's own texts; other failures the shared error messages.
+  const logoError = (err: unknown) => {
+    const key = `err.${errorCodeOf(err)}`;
+    toast(v.labels[key] ?? errorText(err, t), "error");
+    throw err;
+  };
+  const logoDone = (next: RestaurantProfileView, message: string) => {
+    setData(next);
+    toast(message);
+    bump(); // header avatar
+  };
 
   if (editing)
     return (
@@ -31,10 +43,7 @@ export default function Overview({ initial }: { initial: RestaurantProfileView |
             const values = Object.fromEntries(v.fields.map((f) => [f.key, String(form.get(f.key) ?? "").trim()]));
             setBusy(true);
             try {
-              const next = await sendJson<RestaurantProfileView>("PUT", `/restaurant/profile?lang=${lang}`, {
-                values,
-                logo_url: String(form.get("logo_url") ?? "").trim(),
-              });
+              const next = await sendJson<RestaurantProfileView>("PUT", `/restaurant/profile?lang=${lang}`, { values });
               setData(next);
               setEditing(false);
               toast(t("ov.saved"));
@@ -56,10 +65,6 @@ export default function Overview({ initial }: { initial: RestaurantProfileView |
               )}
             </label>
           ))}
-          <label className="jp-field">
-            {t("ov.logo")}
-            <input name="logo_url" defaultValue={v.logo_url ?? ""} maxLength={400} />
-          </label>
           <div className="jp-form-actions">
             <button type="submit" className="jp-action jp-primary" disabled={busy}>
               {L("ov.save")}
@@ -100,6 +105,39 @@ export default function Overview({ initial }: { initial: RestaurantProfileView |
             </div>
           ))}
         </dl>
+      </section>
+      <section className="jp-panel">
+        <LogoControl
+          avatar={v.avatar}
+          name={v.name}
+          hasLogo={v.has_logo}
+          texts={{
+            title: L("ov.logo"),
+            upload: L("ov.logoUpload"),
+            replace: L("ov.logoReplace"),
+            remove: L("ov.logoRemove"),
+            hint: L("ov.logoHint"),
+            drop: L("ov.logoDrop"),
+            uploading: L("ov.logoUploading"),
+            tooLarge: L("err.logo_too_large"),
+            unsupported: L("err.logo_unsupported_type"),
+          }}
+          onError={(m) => toast(m, "error")}
+          onUpload={async (file) => {
+            const form = new FormData();
+            form.append("file", file);
+            await sendForm<RestaurantProfileView>(`/restaurant/logo?lang=${lang}`, form).then(
+              (next) => logoDone(next, L("ov.logoSaved")),
+              logoError,
+            );
+          }}
+          onRemove={async () => {
+            await sendDelete<RestaurantProfileView>(`/restaurant/logo?lang=${lang}`).then(
+              (next) => logoDone(next, L("ov.logoRemoved")),
+              logoError,
+            );
+          }}
+        />
       </section>
       <section className="jp-panel">
         <details className="jp-source">

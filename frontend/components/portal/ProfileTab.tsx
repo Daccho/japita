@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { Pencil } from "lucide-react";
-import { portalApi, type Day, type ProfileUpdate, type SupplierProfile } from "@/lib/portal";
+import { portalApi, portalMessage, type Day, type ProfileUpdate, type SupplierProfile } from "@/lib/portal";
 import { Avatar } from "@/components/AppShell";
+import { LogoControl } from "@/components/LogoControl";
 import { errorMessage } from "./format";
 import { useLang } from "./i18n";
 import { PendingPanel } from "./ProductsTab";
@@ -11,7 +12,7 @@ import { Button, Card, ErrorBox, Field, NoteInput, UnitInput } from "./ui";
 import type { TabProps } from "./types";
 
 const DAYS: Day[] = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
-const TEXT_FIELDS = ["name", "country", "address", "city", "contact_name", "email", "phone", "logo_url"] as const;
+const TEXT_FIELDS = ["name", "country", "address", "city", "contact_name", "email", "phone"] as const;
 type TextField = (typeof TEXT_FIELDS)[number];
 
 function useLabels() {
@@ -24,13 +25,12 @@ function useLabels() {
     contact_name: t.contactName,
     email: t.email,
     phone: t.phone,
-    logo_url: t.logoUrl,
   };
   return { ...text, delivery_days: t.deliveryDays, min_order_eur: t.minOrder, shipping_eur: t.shippingFee, lead_time_days: t.leadTime };
 }
 
 export function ProfileTab({ view, onView, notify }: TabProps) {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const labels = useLabels();
   const [editing, setEditing] = useState(false);
   const p = view.profile;
@@ -59,6 +59,41 @@ export function ProfileTab({ view, onView, notify }: TabProps) {
         <dl className="jp-kv" style={{ marginTop: 12 }}>
           {TEXT_FIELDS.map(text)}
         </dl>
+      </Card>
+      <Card>
+        <LogoControl
+          avatar={view.supplier_avatar}
+          name={p.name}
+          hasLogo={!!view.supplier_avatar?.url}
+          texts={{
+            title: t.logo,
+            upload: t.logoUpload,
+            replace: t.logoReplace,
+            remove: t.logoRemove,
+            hint: t.logoHint,
+            drop: t.logoDrop,
+            uploading: t.logoUploading,
+            tooLarge: portalMessage("logo_too_large", lang),
+            unsupported: portalMessage("logo_unsupported_type", lang),
+          }}
+          onError={(m) => notify(m, "error")}
+          onUpload={async (file) => {
+            try {
+              onView(await portalApi.uploadLogo(file));
+              notify(t.logoSaved);
+            } catch (e) {
+              notify(errorMessage(e, lang, t.genericError), "error");
+            }
+          }}
+          onRemove={async () => {
+            try {
+              onView(await portalApi.removeLogo());
+              notify(t.logoRemoved);
+            } catch (e) {
+              notify(errorMessage(e, lang, t.genericError), "error");
+            }
+          }}
+        />
       </Card>
       <Card>
         <h2>{t.profileDelivery}</h2>
@@ -147,7 +182,7 @@ function ProfileForm({ view, onView, notify, onClose }: Pick<TabProps, "view" | 
 
   const input = (k: TextField, type = "text", note?: string) => (
     <Field key={k} label={labels[k]} note={note}>
-      <input type={type} value={text[k]} maxLength={k === "logo_url" ? 400 : 200} onChange={(e) => setText({ ...text, [k]: e.target.value })} />
+      <input type={type} value={text[k]} maxLength={200} onChange={(e) => setText({ ...text, [k]: e.target.value })} />
     </Field>
   );
 
@@ -166,7 +201,6 @@ function ProfileForm({ view, onView, notify, onClose }: Pick<TabProps, "view" | 
           {input("email", "email")}
           {input("phone", "tel")}
         </div>
-        {input("logo_url", "url", t.logoUrlHint)}
         <div className="jp-field">
           <span>{labels.delivery_days}</span>
           <div className="jp-portal-days">

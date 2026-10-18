@@ -1790,3 +1790,12 @@
   .jp .jp-app .jp-login-card-choice .jp-login-role span { justify-items:start; }
 }
 @media (prefers-reduced-motion: reduce) { .jp .jp-app .jp-login-drawings img { animation:none; } }
+/* Logo upload: avatar (also a drop target) beside the buttons. */
+.jp .jp-logo-control { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+.jp .jp-logo-drop { position:relative; display:inline-grid; border-radius:50%; outline:2px dashed transparent; outline-offset:4px; }
+.jp .jp-logo-drop.is-over { outline-color:var(--aj-ink); }
+.jp .jp-logo-busy { position:absolute; inset:0; display:grid; place-items:center; border-radius:50%; background:rgb(255 255 255 / 0.6); }
+.jp .jp-logo-busy svg { width:22px; height:22px; }
+.jp .jp-logo-body { display:grid; gap:8px; min-width:0; flex:1 1 200px; }
+.jp .jp-logo-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.jp .jp-logo-hint { margin:0; font-size:12px; }

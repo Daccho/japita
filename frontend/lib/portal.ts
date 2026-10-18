@@ -113,7 +113,6 @@ export type SupplierProfile = {
   contact_name: string | null;
   email: string | null;
   phone: string | null;
-  logo_url?: string | null;
   delivery_days: Day[] | null;
   min_order_eur: number | null;
   shipping_eur: number | null;
@@ -221,6 +220,9 @@ const MESSAGES: Record<string, [string, string]> = {
   network: ["サーバーに接続できません。起動中の可能性があります。1分ほどしてからもう一度お試しください。", "Cannot reach the server. It may be starting up; please try again in a minute."],
   delivery_date_before_planning: ["納品日は発注の基準日より前には設定できません。別の日付をお選びください。", "The delivery date cannot be before the order's planning date. Please choose another date."],
   same_delivery_date: ["現在の納品日と同じです。別の日付をお選びください。", "That is the current delivery date. Please choose another date."],
+  logo_too_large: ["画像が2 MBを超えています。小さいファイルを選んでください。", "This image is larger than 2 MB. Please choose a smaller file."],
+  logo_unsupported_type: ["PNG・JPEG・WebPの画像を選んでください。", "Please choose a PNG, JPEG or WebP image."],
+  logo_invalid_image: ["画像を読み込めませんでした。別のファイルを選んでください。", "This image could not be read. Please choose another file."],
   forbidden: ["この操作はサプライヤーアカウントでのみ行えます。", "Only the supplier account can do this."],
   invalid_url: ["URLの形式が正しくありません。https:// で始まるURLを入力してください。", "The URL is invalid. Please enter a URL starting with https://."],
   invalid_date: ["日付の形式が正しくありません。カレンダーから選び直してください。", "The date format is invalid. Please pick the date again."],
@@ -244,6 +246,9 @@ const MESSAGES: Record<string, [string, string]> = {
   not_found: ["ページが見つかりません。リンクをご確認ください。", "Page not found. Please check the link."],
   internal: ["送信できませんでした。しばらくしてからもう一度お試しください。", "Could not send. Please try again in a moment."],
 };
+
+/** The supplier-facing message for an error code. */
+export const portalMessage = (code: string, lang: "ja" | "en") => (MESSAGES[code] ?? MESSAGES.internal)[lang === "en" ? 1 : 0];
 
 function toError(status: number, code: string): PortalError {
   const fallback = status === 409 ? "conflict" : status === 404 ? "not_found" : status === 422 ? "invalid_input" : "internal";
@@ -302,5 +307,11 @@ export const portalApi = {
   updateProduct: (offerId: string, body: ProductUpdate) => call<PortalView>(`/portal/me/products/${t(offerId)}`, post(body)),
   newProduct: (body: NewProduct) => call<PortalView>(`/portal/me/products`, post(body)),
   updateProfile: (body: ProfileUpdate) => call<PortalView>(`/portal/me/profile`, post(body)),
+  uploadLogo: (file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return call<PortalView>(`/portal/me/logo`, { method: "POST", body: form });
+  },
+  removeLogo: () => call<PortalView>(`/portal/me/logo`, { method: "DELETE" }),
   forms: (ingredient: string) => call<FormsLookup>(`/portal/me/forms?ingredient=${t(ingredient)}`),
 };
