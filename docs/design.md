@@ -34,10 +34,12 @@ Code: `frontend/app/globals.css` (`--aj-*` tokens on `:root`, the Ajitama layer 
 - **Inputs:** 2px ink border, radius 10, white, 500 weight; selects add the `0 2px 0` edge and bold text; placeholders muted; 16px text on touch. Focus everywhere: `2px solid chili`, offset 2px.
 - **Badges:** radius 6, 12px bold. Default yolk-tint/ink; warning chili-tint/chili-text; neutral line/muted; Required preference badges ink/white; counts are ink chips; the unread bell count is a chili circle with a 2px ink ring.
 - **Cards and lists:** white, 2px ink border, radius 12 (supplier list 14) and light internal dividers. Expanded supplier rows use detail-bg and a dashed top line; nested offer cards stay white. Draft/proposal panels yolk-tint; missing terms chili.
-- **Header:** yolk background, 2px ink bottom border, restaurant artwork unchanged. The small native flat Japita logo sits directly on yellow, before the divider and restaurant identity; see `mockup/assets/README.md`.
-- **Navigation:** white rail with a 2px ink divider; items 42px high, bold 15px, 19px Lucide icons; active item = yolk-tint surface only (no red marker).
+- **Header:** yolk background, 2px ink bottom border. The small native flat Japita logo sits directly on yellow at the left; the language toggle, notification bell, Menu button and account avatar sit at the right, on both sides; see `mockup/assets/README.md`.
+- **Navigation:** no side rail on any screen size, on both sides. The section list opens from the **Menu** button at the right of the header (lines icon, label hidden on phones, total count chip): a dropdown panel (white, 2px ink border, radius 16, `7px 7px 0` shadow; full width under the header on ≤700px) with one 42px row per section (19px Lucide icon, bold 15px label, ink count chip); the current section has the yolk-tint surface. It closes on selection, outside click and Escape; the button carries `aria-expanded`/`aria-controls` and the rows are links.
+- **Account menu:** the account avatar (logo, or initials on a yolk circle with an ink ring) and name sit at the far right of the header (name hidden on ≤900px). It opens the same dropdown treatment with the account name and place, **Profile** (restaurant profile / supplier company profile), the language toggle on phones, and **Sign out**. The language toggle and the notification bell stay in the header on desktop.
+- **Page body:** full width up to 1240px, centred; 16px side padding on phones. Section state that matters (profile tabs, supplier view, chosen order plan, portal tab) lives in the address query.
 - **Advisor:** 56px yolk bubble with 2.5px ink border and `0 4px 0` edge; popup white with 2px ink border, 16px radius, `7px 7px 0` shadow, yolk header; suggested-basket block is yolk-tint.
-- **Notifications popover / toasts:** same popup treatment (flat on ≤700px); toasts yolk-tint with a 3px ink left bar; errors chili-text bold.
+- **Notifications popover / toasts:** same popup treatment (full width under the header on ≤700px); toasts float at the bottom, yolk-tint with a 3px ink left bar; error toasts chili-tint with chili-text bold. Both sides use the same bell (server feed, read state per account) and toasts.
 - **Printed menu:** square white paper, 1px menu-ink border with an inset double frame, centered Bodoni masthead, italic section titles between rules, dotted leaders before prices; edit controls square and flat.
 - **7-day stock strip:** each day is a button; tapping opens that day's figures below (demand, start, arrivals with supplier and status, expired, used, shortfall, end stock); the selected day is ink. At ≤480px tiles show weekday + status icon only.
 - **Supplier portal:** same tokens via Tailwind (`bg-aj-yolk`, `border-aj-ink`, `shadow-aj-control`, `font-aj-display`); yolk header, outlined pressed-edge tabs, white ink-bordered cards, mobile-first single column.
@@ -48,8 +50,8 @@ Code: `frontend/app/globals.css` (`--aj-*` tokens on `:root`, the Ajitama layer 
 - Keep the current layout geometry, breakpoints (900/700/480px) and wrapping; control heights are minimums.
 - Keep Lucide icons and Kumo artwork. The user's subsequent logo redesign and approved product drawing library are active. See [product drawings](product-drawings.md).
 - Light Ajitama palette regardless of OS appearance (G2). No red selection markers in navigation (G6).
-- Actions stay beside page titles (not in the header). Advisor keeps its position logic and icons; no unread badge or chat icon is added.
+- Page actions stay beside page titles (not in the header). Advisor keeps its position logic and icons; no unread badge or chat icon is added.
 - Pending tint/red bar only for a real "candidate with pending terms" state; never relabel suppliers.
 - One printed menu design only; no menu theme picker.
 - Text contrast meets 4.5:1 on every surface (lowest: unread count 4.64:1).
-- No technical details (model, backend, IDs) in the UI.
+- No technical details (model, backend, IDs) and no meta notes (exchange rates, data sources, timings) in the UI: only product-relevant information.
