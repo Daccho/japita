@@ -204,6 +204,29 @@ export type WeekView = Money & {
   };
 };
 
+export type ImportCheckItem = {
+  rule_id: string;
+  outcome: "ok" | "info" | "needs_review" | "missing_document";
+  outcome_text: string;
+  tone: "ok" | "warning" | "neutral";
+  title: string;
+  explanation: string;
+  missing_text: string | null;
+  source: { label: string; title: string; url: string; accessed_text: string };
+  question_text: string | null;
+  ask: { label: string; question: string } | null;
+};
+
+/** An offer's import and labelling checks (decision support, never a clearance). */
+export type ImportChecks = {
+  show: boolean;
+  label: string;
+  chip_text: string | null;
+  tone: "ok" | "warning" | "neutral" | null;
+  note: string;
+  checks: ImportCheckItem[];
+};
+
 export type PlanLine = {
   offer_id: string;
   product: string;
@@ -216,6 +239,7 @@ export type PlanLine = {
   is_new: boolean;
   new_text: string | null;
   drawing?: DrawingReference | null;
+  import_checks?: ImportChecks | null;
 };
 
 export type BasketView = Money & {
@@ -359,6 +383,7 @@ export type OfferCardView = {
   status: { key: string; text: string; warn: boolean } | null;
   checks: { kind: string; ok: boolean; missing: boolean; text: string; hint: string | null; who_text: string | null }[];
   proposal: (Proposal & { is_new: boolean }) | null;
+  import_checks?: ImportChecks | null;
   is_new: boolean;
   new_text: string | null;
 };

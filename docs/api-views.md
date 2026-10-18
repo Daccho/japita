@@ -171,7 +171,12 @@ EU import and labelling rule checks for every offer, from the sourced ruleset in
 
 `ImportSummary`: `{ "counts": { "ok", "info", "needs_review", "missing_document" }, "worst" | null, "worst_text" | null,
 "attention" (needs_review + missing_document), "blocks_order" }`. Each offer in `/views/suppliers/{id}` and each
-selected plan line in `/views/basket` carries `import_checks: ImportSummary`. The checks do not change plan
+selected plan line in `/views/basket` carries `import_checks: ImportSummary & { "show", "label", "chip_text", "tone":
+"ok" | "warning" | "neutral" | null, "note", "checks": [{ "rule_id", "outcome", "outcome_text", "tone", "title",
+"explanation", "missing_text" | null, "source": { "label", "title", "url", "accessed_text" }, "question_text" | null,
+"ask": null | { "label", "question" } }] }`, checks worst first. `ask.question` goes to the advisor, which drafts the
+supplier clarification for a field the supplier portal can answer; when a question for that offer and field is already
+open, `question_text` gives its state instead. The checks do not change plan
 feasibility, except that a `missing_document` for a rule marked `blocks_order` makes the offer not orderable (reason code
 `import_document_missing`); no rule in the current ruleset is marked `blocks_order`.
 

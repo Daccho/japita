@@ -56,6 +56,11 @@ def _loc(texts: dict, lang: str) -> str:
     return texts.get(_lang(lang)) or texts["en"]
 
 
+def disclaimer(lang: str, accessed: str | None = None) -> str:
+    """The decision-support note; `accessed` is the date as shown (the ruleset's ISO date by default)."""
+    return DISCLAIMER[_lang(lang)].format(accessed=accessed or load_rules()["accessed"])
+
+
 def field_name(path: str) -> str:
     """The bare field name of a condition path, e.g. "attributes.origin_statement" -> "origin_statement"."""
     return path.split(".", 1)[-1]
@@ -189,7 +194,7 @@ def import_checks_view(store: Store, lang: str) -> dict:
                        "is_restaurant_ingredient": o["ingredient"] in store.profile["ingredients"],
                        "checks": checks, "summary": summarize(checks, lang)})
     return {"lang": _lang(lang), "accessed": data["accessed"],
-            "disclaimer": DISCLAIMER[_lang(lang)].format(accessed=data["accessed"]),
+            "disclaimer": disclaimer(lang, data["accessed"]),
             "outcome_texts": OUTCOME_TEXT[_lang(lang)],
             "rules": [{"rule_id": r["id"], "title": _loc(r["title"], lang),
                        "source": {"title": r["source"]["title"], "url": r["source"]["url"],

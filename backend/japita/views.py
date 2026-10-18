@@ -12,7 +12,7 @@ from . import calc, orders, restaurant, rules, stock
 from .avatar import avatar
 from .drawings import offer_drawing
 from .store import Store, active_profile_id
-from .textfmt import (Money, date_range, day, label, profile_label, qty, t, time_short,
+from .textfmt import (Money, date_range, day, label, long_day, profile_label, qty, t, time_short,
                       unit_price, value_text, weekday_long, weekday_name)
 
 KIND_ORDER = ["baseline", "on_time", "lowest_cost", "best_fit", "fewest_suppliers"]
@@ -167,6 +167,45 @@ def po_view(store: Store, po: dict, lang: str, money: Money, can_submit: bool) -
     }
 
 
+IMPORT_TONE = {"ok": "ok", "info": "neutral", "needs_review": "warning", "missing_document": "warning"}
+OPEN_QUESTION_STATES = ("draft", "sent", "supplier_replied")
+
+
+def import_checks(store: Store, offer: dict, lang: str) -> dict:
+    """An offer's import and labelling checks for an offer card or a plan line: the summary, the chip text and tone,
+    and each check worst first with its source. A field the supplier can answer carries the advisor question that
+    drafts a supplier clarification, or the state of the question already open for it."""
+    checks = rules.evaluate_offer(offer, store.suppliers[offer["supplier_id"]], lang)
+    summary = rules.summarize(checks, lang)
+    asked = {c["field"]: c["state"] for c in store.clarifications
+             if c["offer_id"] == offer["id"] and c["state"] in OPEN_QUESTION_STATES}
+    supplier = _sup(store, offer["supplier_id"])
+    items = []
+    for c in sorted(checks, key=lambda c: -rules.RANK[c["outcome"]]):
+        field = c.get("missing_field")
+        answerable = field is not None and rules.field_spec(field) is not None
+        ask = None
+        if answerable and field not in asked:
+            ask = {"label": t(lang, "bk.askAdvisor"),
+                   "question": t(lang, "ic.askQuestion", product=offer["product"], supplier=supplier,
+                                 field=c["missing_field_label"])}
+        items.append({
+            "rule_id": c["rule_id"], "outcome": c["outcome"], "outcome_text": c["outcome_text"],
+            "tone": IMPORT_TONE[c["outcome"]], "title": c["title"], "explanation": c["explanation"],
+            "missing_text": t(lang, "ic.missing", field=c["missing_field_label"]) if field else None,
+            "source": {"label": t(lang, "ic.source"), "title": c["source"]["title"], "url": c["source"]["url"],
+                       "accessed_text": t(lang, "ic.accessed", date=long_day(c["source"]["accessed"], lang))},
+            "question_text": t(lang, f"cl.{asked[field]}") if answerable and field in asked else None,
+            "ask": ask,
+        })
+    worst = summary["worst"]
+    return {**summary, "show": bool(checks), "label": t(lang, "ic.label"),
+            "chip_text": f"{t(lang, 'ic.label')} · {summary['worst_text']}" if worst else None,
+            "tone": IMPORT_TONE[worst] if worst else None,
+            "note": rules.disclaimer(lang, long_day(rules.load_rules()["accessed"], lang)),
+            "checks": items}
+
+
 def _plan_line(store: Store, ln: dict, lang: str, money: Money, new: set[str]) -> dict:
     timing = t(lang, "bk.arrives", date=day(ln["earliest_delivery"], lang)) if ln.get("earliest_delivery") \
         else t(lang, "bk.noDate")
@@ -181,7 +220,7 @@ def _plan_line(store: Store, ln: dict, lang: str, money: Money, new: set[str]) -
     offer = next((o for o in store.offers if o["id"] == ln["offer_id"]), None)
     return {"offer_id": ln["offer_id"], "product": ln["product"], "ingredient": ln["ingredient"],
             "drawing": offer_drawing(offer) if offer else None,
-            "import_checks": rules.check_offer(store, ln["offer_id"], lang)["summary"],
+            "import_checks": import_checks(store, offer, lang) if offer else None,
             "ingredient_label": _ing(lang, ln["ingredient"]), "supplier": _sup(store, ln["supplier_id"]),
             "qty_text": f"{ln['packs']} × {qty(ln['pack_size'], ln['unit'])} = {qty(ln['purchase_qty'], ln['unit'])}",
             "detail_text": f"{_ing(lang, ln['ingredient'])} · {_sup(store, ln['supplier_id'])} · {ln['packs']} × "
@@ -744,7 +783,7 @@ def offer_card(store: Store, o: dict, lang: str, money: Money, new: set[str]) ->
         "image_alt": f"{t(lang, 'of.illustrative')}: {_ing(lang, o['ingredient'])}",
         "image_caption": t(lang, "of.illustrative"),
         "status": status, "checks": checks, "proposal": proposal,
-        "import_checks": rules.check_offer(store, o["id"], lang)["summary"],
+        "import_checks": import_checks(store, o, lang),
         "is_new": is_new, "new_text": t(lang, "plan.new") if is_new else None,
     }
 
