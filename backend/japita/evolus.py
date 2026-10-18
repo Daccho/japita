@@ -77,7 +77,7 @@ PROTOCOL = """You are running inside the Japita app. You can use these tools; th
 Reply with exactly one JSON object and nothing else:
 - To call tools: {{"action": "call", "calls": [{{"tool": "<name>", "arguments": {{...}}}}]}}
 - To give the final answer: {{"action": "answer", "text": "<JSON string conforming to the final-answer schema in the operating rules>"}}
-Call tools before answering; every number in the answer must come from a tool result."""
+Every number must come from a tool result."""
 
 
 class EvolusAgent:
@@ -148,7 +148,8 @@ def run_agent_evolus(agent: EvolusAgent, store: Store, user_message: str, max_st
     # Repeat the operating rules so behavior does not depend on the agent instructions saved in the Evolus UI.
     message = (f"Operating rules:\n{SYSTEM_PROMPT}\n\n" + PROTOCOL.format(tools=_tool_catalog())
                + f"\n\nPrevious conversation (context only; recheck all current facts):\n{json.dumps(history or [], ensure_ascii=False)}"
-               + f"\n\nOwner's request:\n{user_message}")
+               + f"\n\nOwner's request:\n{user_message}"
+               + f"\n\nResult of get_purchase_brief (already called by the app):\n{call_tool(store, 'get_purchase_brief', {})}")
     retried = nudged = False
     for _ in range(max_steps):
         reply = agent.send(message)
@@ -165,8 +166,7 @@ def run_agent_evolus(agent: EvolusAgent, store: Store, user_message: str, max_st
             continue
         retried = False
         if action["action"] == "answer":
-            nudge = None if nudged or not any(s.get("name") in ("calculate_baskets", "get_purchase_brief") for s in steps) \
-                else missing_drafts_nudge(store)
+            nudge = None if nudged else missing_drafts_nudge(store)
             if nudge:
                 nudged = True
                 message = nudge + "\nReply with one JSON object as specified."
