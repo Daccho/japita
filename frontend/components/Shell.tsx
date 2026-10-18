@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import { CalendarDays, Loader2, ShoppingBasket, SlidersHorizontal, Store } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import { LangToggle, useDates, useI18n, type Key } from "@/lib/i18n";
-import { PROFILES, useWorkspace } from "@/components/workspace";
+import { useWorkspace } from "@/components/workspace";
 import { suggestedBasket } from "@/components/helpers";
 import AdvisorDock from "@/components/Advisor";
 import { useAccount } from "@/components/AuthGate";
@@ -53,7 +53,7 @@ function FirstLoad() {
 export default function Shell({ children }: { children: ReactNode }) {
   const { t } = useI18n();
   const path = usePathname();
-  const { data, profileId, setProfileId } = useWorkspace();
+  const { data } = useWorkspace();
   const lines = suggestedBasket(data?.baskets)?.lines.length;
   const { user } = useAccount();
   const signOut = () =>
@@ -64,19 +64,7 @@ export default function Shell({ children }: { children: ReactNode }) {
   return (
     <AppShell
       homeHref="/restaurants"
-      controls={
-        <>
-          <div className="jp-segment" role="group" aria-label={t("profile.switch")}>
-            <span className="jp-segment-label">{t("profile.switch")}</span>
-            {PROFILES.map((p) => (
-              <button key={p} type="button" aria-pressed={profileId === p} onClick={() => setProfileId(p)}>
-                {t(`profile.${p}` as Key)}
-              </button>
-            ))}
-          </div>
-          <LangToggle />
-        </>
-      }
+      controls={<LangToggle />}
       account={{ name: user.display_name, signOutLabel: t("au.logout"), onSignOut: signOut }}
       navLabel="Main navigation"
       nav={NAV.map(({ href, key, icon }) => ({

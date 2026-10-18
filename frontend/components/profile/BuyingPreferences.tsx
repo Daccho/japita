@@ -5,12 +5,47 @@ import Link from "next/link";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { api, errorText, type BasketResult, type Day, type Profile, type Rule } from "@/lib/api";
 import { useDates, useI18n, useLabel, type Key } from "@/lib/i18n";
-import { useWorkspace } from "@/components/workspace";
-import { findBasket } from "@/components/helpers";
+import { PROFILES, useWorkspace } from "@/components/workspace";
+import { findBasket, suggestedBasket } from "@/components/helpers";
 import { InfoTip } from "@/components/InfoTip";
 
 const DAYS: Day[] = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 const cheapest = (r: BasketResult) => findBasket(r, "lowest_cost")?.delivered_total_eur ?? null;
+
+// Purchasing priority: which profile (rule set) plans the week. Switching shows the effect on the suggested plan.
+function PurchasingPriority() {
+  const { t, money } = useI18n();
+  const { data, profileId, setProfileId } = useWorkspace();
+  const [impact, setImpact] = useState<{ to: string; before: number | null; after: number | null | undefined } | null>(null);
+  const choose = (id: string) => {
+    if (id === profileId) return;
+    const before = suggestedBasket(data?.baskets)?.delivered_total_eur ?? null;
+    setImpact({ to: id, before, after: undefined });
+    setProfileId(id);
+    api
+      .baskets(id)
+      .then((b) => setImpact((cur) => (cur?.to === id ? { ...cur, after: suggestedBasket(b)?.delivered_total_eur ?? null } : cur)))
+      .catch(() => setImpact(null));
+  };
+  return (
+    <section className="jp-panel" style={{ marginBottom: 18 }}>
+      <h2>{t("by.mode")}</h2>
+      <div className="jp-basket-options" role="group" aria-label={t("by.mode")} style={{ marginTop: 14 }}>
+        {PROFILES.map((id) => (
+          <button key={id} type="button" className="jp-basket-option" style={{ display: "grid", gap: 4 }} aria-pressed={profileId === id} onClick={() => choose(id)}>
+            <span style={{ fontWeight: 700, fontSize: 15 }}>{t(`by.mode.${id}` as Key)}</span>
+            <small>{t(`by.modeNote.${id}` as Key)}</small>
+          </button>
+        ))}
+      </div>
+      {impact && (
+        <p className="jp-toast" role="status">
+          {impact.after === undefined ? t("by.modeLoading") : t("by.modeImpact", { a: money(impact.before, "—"), b: money(impact.after, "—") })}
+        </p>
+      )}
+    </section>
+  );
+}
 
 // The active profile's real purchasing rules (backend). Moving a rule and saving recalculates every basket.
 export default function BuyingPreferences() {
@@ -75,10 +110,12 @@ export default function BuyingPreferences() {
   );
 
   return (
+    <>
+    <PurchasingPriority />
     <section className="jp-panel">
       <div className="jp-line-head">
         <h2>{t("by.title")}</h2>
-        <span className="jp-badge">{t("by.badge", { name: t(`profile.${profileId}` as Key) })}</span>
+        <span className="jp-badge">{t("by.badge", { name: t(`by.mode.${profileId}` as Key) })}</span>
       </div>
       <p className="jp-section-note">{t("by.note")}</p>
       {Object.entries(p.ingredients).map(([ing, rules]) => (
@@ -157,5 +194,6 @@ export default function BuyingPreferences() {
       </div>
       {msg && <p className="jp-toast">{msg}</p>}
     </section>
+    </>
   );
 }

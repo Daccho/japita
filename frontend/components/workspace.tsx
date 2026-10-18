@@ -83,6 +83,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     if (saved) setData(saved);
   }, [profileId]);
 
+  // The active purchasing priority (profile) is chosen in Restaurant profile → Buying preferences and kept in
+  // this browser. This setter is the one place to persist it elsewhere.
   const setProfileId = (id: string) => {
     setProfileState(id);
     try {
