@@ -42,6 +42,19 @@ def approve_basket(body: ApproveBasket):
             "purchase_orders": [p for p in store.data["purchase_orders"] if p["approval_id"] == approval["id"]]}
 
 
+@router.post("/baskets/approve-and-send")
+def approve_and_send(body: ApproveBasket, idempotency_key: str = Header(..., alias="Idempotency-Key")):
+    """Human action: approve the plan and send all its supplier orders at once. The same key returns the same
+    result."""
+    store = _store(body.profile_id)
+    try:
+        result = orders.approve_and_send(store, body.kind, idempotency_key)
+    except ValueError as e:
+        raise from_value_error(e, 409)
+    repo.save_state(store.data)
+    return result
+
+
 @router.get("/baskets/approval")
 def basket_approval(profile_id: str | None = None):
     """Latest approval; `stale` is true when the basket changed since and needs approving again."""

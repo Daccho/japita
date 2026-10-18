@@ -46,6 +46,7 @@ Header, navigation and footer for every restaurant page.
                          "detail": [{ "label", "value", "warn", "sub"? }],
                          "arrivals": [{ "supplier", "text", "warn" }] }] }],
   "orders": [PurchaseOrderView], "orders_empty_text" | null,
+  "approval_notice": null | { "text", "action", "href" },   // a stale approval with unsent orders
   "spending": { "committed_text", "used_pct", "sent_text" | null, "remaining_text", "planned_text" | null },
   "suggested": null | { "kind", "title", "total_text", "timing_text",
                         "lines": [{ "ingredient_label", "supplier" }], "action": { "label", "href" } } }
@@ -57,7 +58,9 @@ Header, navigation and footer for every restaurant page.
 { "id", "supplier", "state", "state_text", "badge": "ok" | "warning" | "neutral",
   "lines": [{ "offer_id", "text" }], "delivery_date", "delivery_text", "total_text",
   "changes": [{ "text", "note" | null }], "note" | null, "note_label",
-  "can_submit", "submit_key", "submit_text", "sending_text" }   // send submit_key as the Idempotency-Key header
+  "can_submit", "submit_key", "submit_text", "sending_text" }
+// can_submit: approved but not sent (a send that failed); submit_text "Send again" / "Invia di nuovo";
+// send submit_key as the Idempotency-Key header of POST /purchase-orders/{id}/submit
 ```
 
 ## GET /views/basket?kind=
@@ -79,12 +82,26 @@ one (on time, else lowest cost, else first).
       "total_text", "total_eur", "goods_shipping_text", "budget_pct", "within_budget", "remaining_eur",
       "vs_baseline_eur", "budget_text", "savings_text" | null,          // "EuroAsia Foods B.V.'s new product saves $55.93"
       "approval": { "state": "approved" | "stale" | "other" | "none", "text" | null },
-      "can_approve", "approve_text", "approving_text" },
+      // stale text: "Purchasing priority changed — approve again" (approved under another active profile) or
+      // "The plan changed since approval. …"
+      "can_approve", "approve_text", "approving_text",    // "Approve and send to suppliers", "Sending…"
+      "send_key",                                        // Idempotency-Key for POST /baskets/approve-and-send
+      "confirm": { "title", "text": "Send 3 orders: Tokyo Shokuhin $100.71, …?", "lines": [{ "supplier", "total_text" }],
+                   "confirm_text", "cancel_text" } },
   "settled": null | { "title", "approved_text", "note", "lines": [{ "offer_id", "product", "detail_text", "cost_text" }],
                       "total_text" },
   "orders": [PurchaseOrderView],          // the approval's orders, not cancelled
   "excluded": [{ "offer_id", "product", "supplier", "reasons": ["Brewed in Japan: not met", "Shipping cost unknown"] }] }
 ```
+
+`POST /baskets/approve-and-send` `{ "kind", "profile_id"? }` with header `Idempotency-Key: <selected.send_key>` approves
+the plan and sends every supplier order in one request; the same key returns the same `{ "approval", "purchase_orders" }`
+without duplicates. Sent orders appear in each supplier's notifications. `POST /baskets/approve` and
+`POST /purchase-orders/{id}/submit` keep working.
+
+There is one current approval for the restaurant. `GET /baskets/approval` returns it whichever profile made it, with
+`stale` and `stale_reason` (`"profile"` when the active profile in `/restaurant/settings` differs, `"changed"` when the
+plan changed). Orders of a stale approval cannot be sent; approving again cancels its unsent orders.
 
 A line is "New" when its product joined the catalog from a supplier proposal (`from_supplier_proposal`, set when the
 restaurant applies a new product) during the current purchasing cycle (`applied_at` from 7 days before the week starts

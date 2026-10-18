@@ -138,9 +138,9 @@ def po_view(store: Store, po: dict, lang: str, money: Money, can_submit: bool) -
                      "note": (c.get("note_translations") or {}).get(lang)} for c in po.get("delivery_changes", [])],
         "note": (ack.get("note_translations") or {}).get(lang),
         "note_label": t(lang, "po.note"),
-        "can_submit": po["state"] == "approved" and can_submit,
+        "can_submit": po["state"] == "approved" and can_submit,  # approved but not sent: a send that failed
         "submit_key": f"{po['id']}-{po['approval_id']}",
-        "submit_text": t(lang, "po.submit"), "sending_text": t(lang, "po.sending"),
+        "submit_text": t(lang, "po.resend"), "sending_text": t(lang, "po.sending"),
     }
 
 
@@ -164,6 +164,20 @@ def _plan_line(store: Store, ln: dict, lang: str, money: Money, new: set[str]) -
                            f"{qty(ln['pack_size'], ln['unit'])} = {qty(ln['purchase_qty'], ln['unit'])}",
             "timing_text": timing, "cost_text": money(ln["cost_eur"]), "badge": badge,
             "is_new": is_new, "new_text": t(lang, "plan.new") if is_new else None}
+
+
+def stale_text(approval: dict, lang: str) -> str:
+    return t(lang, "bk.staleProfile" if approval.get("stale_reason") == "profile" else "bk.stale")
+
+
+def send_confirm(basket: dict, lang: str, money: Money) -> dict:
+    """The confirmation before approving and sending: one line per supplier order with its delivered total."""
+    lines = [{"supplier": s["name"], "total_text": money(round(s["subtotal_eur"] + (s["shipping_eur"] or 0), 2))}
+             for s in basket["suppliers"]]
+    listing = ", ".join(f"{ln['supplier']} {ln['total_text']}" for ln in lines)
+    text = t(lang, "bk.confirmText1", list=listing) if len(lines) == 1 else t(lang, "bk.confirmText", n=len(lines), list=listing)
+    return {"title": t(lang, "bk.confirmTitle"), "text": text, "lines": lines,
+            "confirm_text": t(lang, "bk.confirmSend"), "cancel_text": t(lang, "cancel")}
 
 
 def basket_view(store: Store, lang: str, money: Money, kind: str | None = None) -> dict:
@@ -208,8 +222,8 @@ def basket_view(store: Store, lang: str, money: Money, kind: str | None = None) 
             budget_text += f" {t(lang, 'bk.vsBaseline', d=money.signed(vs))}."
         if is_approved:
             appr = {"state": "approved", "text": f"{t(lang, 'bk.approvedThis')} · {time_short(approval['approved_at'], lang)}"}
-        elif approval and approval["stale"] and approved_b is selected:
-            appr = {"state": "stale", "text": t(lang, "bk.stale")}
+        elif approval and approval["stale"] and (approval.get("stale_reason") == "profile" or approved_b is selected):
+            appr = {"state": "stale", "text": stale_text(approval, lang)}
         elif approval and not approval["stale"]:
             appr = {"state": "other", "text": t(lang, "bk.approvedOther", k=label(lang, "kind", approval["kind"]))}
         else:
@@ -226,7 +240,9 @@ def basket_view(store: Store, lang: str, money: Money, kind: str | None = None) 
             "remaining_eur": round(budget - total, 2), "vs_baseline_eur": vs, "budget_text": budget_text,
             "savings_text": savings.get(selected["kind"]),
             "approval": appr, "can_approve": not is_approved,
-            "approve_text": t(lang, "bk.approve"), "approving_text": t(lang, "bk.approving"),
+            "approve_text": t(lang, "bk.approveSend"), "approving_text": t(lang, "bk.sendingAll"),
+            "send_key": orders.send_key(store, selected["kind"]),
+            "confirm": send_confirm(selected, lang, money),
         }
 
     settled_view = None
@@ -388,6 +404,10 @@ def week_view(store: Store, lang: str, money: Money) -> dict:
         "needs": rows,
         "orders": [po_view(store, po, lang, money, can_submit) for po in pos],
         "orders_empty_text": None if pos else t(lang, "wk.noOrders"),
+        "approval_notice": {"text": stale_text(approval, lang), "action": t(lang, "wk.reapprove"),
+                            "href": "/restaurants/basket"}
+        if approval and approval["stale"] and any(po["approval_id"] == approval["id"] and po["state"] == "approved"
+                                                  for po in store.data["purchase_orders"]) else None,
         "spending": {
             "committed_text": money(spend["committed_eur"]),
             "used_pct": round(min(100.0, spend["committed_eur"] / budget * 100), 1),
