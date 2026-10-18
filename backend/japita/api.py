@@ -584,7 +584,7 @@ def advisor_brief(profile_id: str | None = None):
 
 @app.post("/agent/ask", status_code=202)
 def ask_agent(body: Question, request: Request):
-    """Start the agent in the background; poll GET /jobs/{job_id} for the answer (60-170 s is normal)."""
+    """Start the agent in the background; poll GET /jobs/{job_id} for the answer (30-60 s is normal)."""
     _store(body.profile_id)  # a wrong profile fails now, not inside the job
     return jobs.start("agent", lambda: answer_question(body), getattr(request.state, "user_id", None))
 

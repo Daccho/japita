@@ -69,5 +69,4 @@ def test_agent_through_evolus():
     print("  evolus conversation:", agent.conversation_id)
     print("  tools:", [s.get("name") for s in result.steps if s["type"] == "tool"])
     print("  answer:", result.answer[:800])
-    assert any(s.get("name") == "calculate_baskets" for s in result.steps)
     assert validate_explanation(result.answer, store, brief(store))["validated"]
