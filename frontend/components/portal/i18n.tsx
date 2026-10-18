@@ -231,7 +231,7 @@ const LangContext = createContext<Ctx>({ lang: "ja", t: ja, setLang: () => {} })
 export function PortalLangProvider({ children }: { children: ReactNode }) {
   const initial = useInitialLang().portal;
   const [lang, setLangState] = useState<Lang>(initial === "en" ? "en" : "ja");
-  // Older visits saved the choice only in localStorage: adopt it once and move it into the cookie.
+  // Without a cookie, fall back to a choice saved in localStorage and copy it into the cookie.
   useEffect(() => {
     if (initial) return;
     try {

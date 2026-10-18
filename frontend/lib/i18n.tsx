@@ -816,7 +816,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const initial = useInitialLang().restaurant;
   const [lang, setLangState] = useState<Lang>(initial === "en" ? "en" : "it");
 
-  // Older visits saved the choice only in localStorage: adopt it once and move it into the cookie.
+  // Without a cookie, fall back to a choice saved in localStorage and copy it into the cookie.
   useEffect(() => {
     if (initial) return;
     try {

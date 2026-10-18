@@ -65,9 +65,11 @@ def engine():
         url = re.sub(r"^postgres(ql)?://", "postgresql+psycopg://", url)
         _engine = create_engine(url, pool_pre_ping=True)
         Base.metadata.create_all(_engine)
-        if _engine.dialect.name == "postgresql":  # column added after the table first shipped
+        if _engine.dialect.name == "postgresql":
             with _engine.begin() as conn:
                 conn.exec_driver_sql("ALTER TABLE llm_calls ADD COLUMN IF NOT EXISTS evolus_conversation_id VARCHAR")
+                conn.exec_driver_sql("DROP TABLE IF EXISTS webauthn_challenges, passkeys CASCADE")
+                conn.exec_driver_sql("ALTER TABLE IF EXISTS users DROP COLUMN IF EXISTS webauthn_user_id")
     return _engine
 
 

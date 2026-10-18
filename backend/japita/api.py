@@ -33,7 +33,11 @@ app.include_router(auth.router)
 
 @app.on_event("startup")
 def _demo_accounts() -> None:
-    created = auth.ensure_demo_accounts()  # no-op unless DEMO_ACCOUNTS=1
+    try:
+        created = auth.ensure_demo_accounts()  # no-op unless DEMO_ACCOUNTS=1
+    except Exception:
+        logging.getLogger("japita.auth").exception("demo accounts could not be prepared")
+        return
     if created:
         logging.getLogger("japita.auth").info("demo accounts ready: %s", ", ".join(created))
 app.include_router(jobs.router)
