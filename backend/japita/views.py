@@ -891,7 +891,9 @@ def clean_answer(raw: str, names: dict[str, str]) -> str:
     body = m.group(1) if m else text
     if body.startswith("{"):
         try:
-            parsed = json.loads(re.sub(r'\\(?!["\\/bfnrtu])', r"\\\\", body))
+            fixed = re.sub(r"\\(.)", lambda e: e.group(0) if e.group(1) in '"\\/bfnrtu' else "\\\\" + e.group(1),
+                           body, flags=re.S)
+            parsed = json.loads(fixed)
             if isinstance(parsed.get("text"), str):
                 text = parsed["text"]
             elif isinstance(parsed.get("answer"), str):
