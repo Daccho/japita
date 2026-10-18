@@ -41,7 +41,7 @@ def pack_word(ingredient: str, count: float, lang: str) -> str:
 
 
 PROFILE_LABELS = {"name": "companyName", "country": "country", "address": "address", "city": "city",
-                  "contact_name": "contactName", "email": "email", "phone": "phone", "logo_url": "logoUrl",
+                  "contact_name": "contactName", "email": "email", "phone": "phone",
                   "delivery_days": "deliveryDays", "min_order_eur": "minOrder", "shipping_eur": "shippingFee",
                   "lead_time_days": "leadTime"}
 
@@ -74,7 +74,7 @@ def pending_profile_view(pending: dict | None, lang: str, money: Money) -> dict 
     return {"title": pt(lang, "pendingReview"),
             "sent_text": pt(lang, "sentAt", when=portal_time(pending.get("submitted_at"), lang)), "body": None,
             "changes": [{"label": pt(lang, PROFILE_LABELS.get(k, k)), "value": _profile_change_text(k, v, lang, money)}
-                        for k, v in pending["changes"].items()],
+                        for k, v in pending["changes"].items() if k in PROFILE_LABELS],
             "note_ja": pending.get("note_ja")}
 
 

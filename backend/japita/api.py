@@ -814,6 +814,10 @@ from .views_api import router as views_router  # noqa: E402
 
 app.include_router(views_router)
 
+from .logos import router as logos_router  # noqa: E402
+
+app.include_router(logos_router)
+
 from .rules_api import router as rules_router  # noqa: E402
 
 app.include_router(rules_router)

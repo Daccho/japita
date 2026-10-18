@@ -19,8 +19,8 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 from dotenv import load_dotenv
-from sqlalchemy import (JSON, Boolean, Column, DateTime, Integer, String, UniqueConstraint, create_engine, delete,
-                        func, select, update)
+from sqlalchemy import (JSON, Boolean, Column, DateTime, Integer, LargeBinary, String, UniqueConstraint, create_engine,
+                        delete, func, or_, select, update)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Session
 
@@ -123,6 +123,20 @@ class RuleSet(Base):
     created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
 
 
+class Logo(Base):
+    """The current uploaded logo of a restaurant (owner_id = its workspace) or a supplier (owner_id = supplier ID),
+    stored as re-encoded WebP. One row per owner; restaurant state saves and seeding never touch it."""
+    __tablename__ = "logos"
+    id = Column(String, primary_key=True)  # derived from owner and content, so it changes with every new image
+    owner_kind = Column(String, nullable=False)  # "restaurant" or "supplier"
+    owner_id = Column(String, nullable=False)
+    content_type = Column(String, nullable=False)
+    bytes = Column(LargeBinary, nullable=False)
+    sha256 = Column(String, nullable=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    __table_args__ = (UniqueConstraint("owner_kind", "owner_id"),)
+
+
 _engine = None
 _engine_lock = threading.Lock()
 
@@ -150,7 +164,7 @@ def engine():
                 Base.metadata.create_all(initialized)
                 if initialized.dialect.name == "postgresql":  # columns added after the tables first shipped
                     with initialized.begin() as conn:
-                        conn.exec_driver_sql("ALTER TABLE users ADD COLUMN IF NOT EXISTS workspace VARCHAR")
+                        conn.exec_driver_sql("ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS workspace VARCHAR")
                         conn.exec_driver_sql("ALTER TABLE llm_calls ADD COLUMN IF NOT EXISTS evolus_conversation_id VARCHAR")
                         conn.exec_driver_sql("DROP TABLE IF EXISTS webauthn_challenges, passkeys CASCADE")
                         conn.exec_driver_sql("ALTER TABLE IF EXISTS users DROP COLUMN IF EXISTS webauthn_user_id")
@@ -177,6 +191,7 @@ def load_state(workspace: str | None = None) -> dict:
         data[key].sort(key=lambda x: int(re.sub(r"\D", "", x["id"]) or 0))
     for sup in directory_suppliers():
         data["suppliers"].setdefault(sup["id"], {**sup, "relationship": "candidate", "account_status": "pending"})
+    data["logos"] = logo_ids(workspace)  # read-only here: save_state never writes it
     return data
 
 
@@ -251,9 +266,12 @@ def is_empty(workspace: str | None = None) -> bool:
 
 
 def seed(path: Path, workspace: str | None = None) -> None:
+    """Replace the workspace's state with a fixture; the restaurant logo becomes the fixture's (see logos)."""
+    from .logos import seed_fixture_logo
     data = json.loads(Path(path).read_text(encoding="utf-8"))
     data.pop("_notice", None)
     save_state(data, workspace)
+    seed_fixture_logo(path, workspace)
 
 
 def workspaces() -> list[str]:
@@ -316,6 +334,50 @@ def blank_state(name: str, location: str = "") -> dict:
                                "menuPrice": "", "make": "", "buy": "", "ownerNotes": ""},
         "suppliers": {}, "offers": [],
     }
+
+
+# --- logos ------------------------------------------------------------------------------------------
+
+def logo_ids(workspace: str) -> dict:
+    """Logo ids for one workspace: {"restaurant": id or None, "suppliers": {supplier ID: id}}."""
+    out: dict = {"restaurant": None, "suppliers": {}}
+    with Session(engine()) as s:
+        rows = s.execute(select(Logo.id, Logo.owner_kind, Logo.owner_id).where(or_(
+            (Logo.owner_kind == "restaurant") & (Logo.owner_id == workspace), Logo.owner_kind == "supplier")))
+        for logo_id, kind, owner in rows:
+            if kind == "restaurant":
+                out["restaurant"] = logo_id
+            else:
+                out["suppliers"][owner] = logo_id
+    return out
+
+
+def put_logo(owner_kind: str, owner_id: str, content: bytes, content_type: str) -> str:
+    """Store `content` as the owner's logo, replacing any previous one. Returns the logo id."""
+    import hashlib
+    sha = hashlib.sha256(content).hexdigest()
+    logo_id = hashlib.sha256(f"{owner_kind}:{owner_id}:{sha}".encode()).hexdigest()[:32]
+    with Session(engine()) as s, s.begin():
+        row = s.scalar(select(Logo).where(Logo.owner_kind == owner_kind, Logo.owner_id == owner_id))
+        if row is not None and row.id == logo_id:
+            return logo_id
+        if row is not None:
+            s.delete(row)
+            s.flush()
+        s.add(Logo(id=logo_id, owner_kind=owner_kind, owner_id=owner_id, content_type=content_type, bytes=content,
+                   sha256=sha))
+    return logo_id
+
+
+def delete_logo(owner_kind: str, owner_id: str) -> bool:
+    with Session(engine()) as s, s.begin():
+        return s.execute(delete(Logo).where(Logo.owner_kind == owner_kind, Logo.owner_id == owner_id)).rowcount > 0
+
+
+def get_logo(logo_id: str) -> tuple[str, bytes] | None:
+    with Session(engine()) as s:
+        row = s.get(Logo, logo_id)
+        return (row.content_type, row.bytes) if row else None
 
 
 def directory_suppliers() -> list[dict]:

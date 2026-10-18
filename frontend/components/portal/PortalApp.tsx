@@ -149,7 +149,7 @@ function Portal({
         name
           ? {
               name,
-              avatar: me?.avatar ?? view?.supplier_avatar,
+              avatar: view?.supplier_avatar ?? me?.avatar,
               place: me?.place_text ?? view?.for_restaurant_text,
               signOutLabel: t.signOut,
               menuLabel: t.account,
@@ -161,7 +161,7 @@ function Portal({
       navLabel={t.navLabel}
       menuLabel={t.menu}
       nav={nav}
-      sidebarFoot={name ? { name, place: me?.place_text ?? view?.for_restaurant_text, avatar: me?.avatar ?? view?.supplier_avatar } : null}
+      sidebarFoot={name ? { name, place: me?.place_text ?? view?.for_restaurant_text, avatar: view?.supplier_avatar ?? me?.avatar } : null}
     >
       <div className="jp-portal-page">
       {!view || !section || !props ? (

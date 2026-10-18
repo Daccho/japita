@@ -5,6 +5,7 @@ import { errorText } from "@/lib/api";
 import { purchasingApi as api, type Offer, type Supplier } from "@/lib/purchasing";
 import { useI18n } from "@/lib/i18n";
 import { useWorkspace } from "@/components/workspace";
+import { Req, WorkspaceRequiredLegend } from "@/components/Required";
 
 export default function OfferTerms({ offer, supplier }: { offer: Offer; supplier: Supplier }) {
   const { t } = useI18n();
@@ -17,8 +18,9 @@ export default function OfferTerms({ offer, supplier }: { offer: Offer; supplier
       try { await api.chefAssessment(offer.id, form.get("approved") === "true", String(form.get("note"))); await refresh(); setMessage(t("plan.saved")); }
       catch (err) { setMessage(errorText(err, t)); } finally { setBusy(false); }
     }}>
-      <label className="jp-field">{t("field.chef_approved")}<select name="approved" defaultValue={offer.attributes.chef_approved === false ? "false" : "true"}><option value="true">{t("yes")}</option><option value="false">{t("no")}</option></select></label>
-      <label className="jp-field">{t("adv.ownerAction")}<textarea name="note" required maxLength={1000} /></label>
+      <WorkspaceRequiredLegend />
+      <label className="jp-field"><span>{t("field.chef_approved")}<Req /></span><select name="approved" required aria-required defaultValue={offer.attributes.chef_approved === false ? "false" : "true"}><option value="true">{t("yes")}</option><option value="false">{t("no")}</option></select></label>
+      <label className="jp-field"><span>{t("adv.ownerAction")}<Req /></span><textarea name="note" required aria-required maxLength={1000} /></label>
       <button className="jp-action" disabled={busy}>{t("catalog.saveTerms")}</button>
     </form>}
     <form className="jp-source-body" onSubmit={async (e) => {

@@ -65,6 +65,12 @@ export const getJson = <R,>(path: string) => request<R>(path);
 export const sendJson = <R,>(method: "POST" | "PUT" | "PATCH", path: string, body?: unknown, headers: Record<string, string> = {}) =>
   request<R>(path, body === undefined ? { method, headers } : json(method, body, headers));
 
+/** POST a multipart form (file uploads); resolves with the response body. */
+export const sendForm = <R,>(path: string, form: FormData) => request<R>(path, { method: "POST", body: form });
+
+/** DELETE; resolves with the response body. */
+export const sendDelete = <R,>(path: string) => request<R>(path, { method: "DELETE" });
+
 // On sign-out or an expired session: forget anything older versions of the app kept in this browser.
 export const purchasingRequest = request;
 export const runPurchasingJob = runJob;
@@ -429,8 +435,8 @@ export type RestaurantProfileView = {
   values: Record<string, string>;
   name: string;
   subtitle: string;
-  logo_url?: string | null;
   avatar?: Avatar | null;
+  has_logo: boolean;
   facts: { label: string; value: string }[];
   questionnaire: { label: string; value: string }[];
   fields: { key: string; label: string; multiline: boolean; max_length: number }[];
@@ -458,7 +464,7 @@ export type MenuDish = {
 export type MenuView = {
   lang: string;
   items: MenuDish[];
-  masthead: { name: string; subtitle: string; logo_url: string };
+  masthead: { name: string; subtitle: string; avatar: Avatar };
   groups: { key: MenuDish["group"]; title: string }[];
   prices: Record<string, string>;
   planning: { title: string; note: string; rows: { id: string; summary: string; ingredients: string[]; uses_text: string }[] };

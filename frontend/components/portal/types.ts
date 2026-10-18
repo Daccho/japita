@@ -5,5 +5,5 @@ export type TabProps = {
   /** Replace the view with the refreshed one a POST returned. */
   onView: (v: PortalView) => void;
   /** Show a short success message. */
-  notify: (message: string) => void;
+  notify: (message: string, tone?: "ok" | "error") => void;
 };

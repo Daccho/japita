@@ -7,6 +7,7 @@ import Image from "next/image";
 import { AppHeader } from "@/components/AppShell";
 import { useInitialLang } from "@/lib/initial-lang";
 import { LANG_COOKIE, LOGIN_LANG_COOKIE, PORTAL_LANG_COOKIE, saveLangCookie } from "@/lib/lang-cookies";
+import { Req, RequiredLegend } from "@/components/Required";
 import { AuthError, login, me, safeNext, signup, type Me, type Role } from "@/lib/auth";
 
 // Library drawings of what Japanese kitchens in Europe buy, shown on the role choice.
@@ -19,7 +20,7 @@ type Msg =
   | "submit" | "signingIn" | "invalid" | "throttled" | "offline"
   | "newHere" | "create" | "haveAccount" | "signIn" | "signupTitle" | "restaurantName" | "supplierName" | "city"
   | "country" | "contactName" | "email" | "idHint" | "passwordHint" | "creating" | "restaurantStart"
-  | "supplierStart" | "taken" | "weak" | "badId" | "tooMany";
+  | "supplierStart" | "taken" | "weak" | "badId" | "tooMany" | "required";
 
 // The entry page speaks all three languages of the product: English (default), Italian, Japanese.
 const DICT: Record<LoginLang, Record<Msg, string>> = {
@@ -41,6 +42,7 @@ const DICT: Record<LoginLang, Record<Msg, string>> = {
     taken: "This login ID is already in use.", weak: "The password needs at least 8 characters.",
     badId: "Use 3–64 lowercase letters, digits, '.', '_' or '-'.",
     tooMany: "Too many new accounts from this network. Try again later.",
+    required: "Required",
   },
   it: {
     tagline: "Gli acquisti per i ristoranti giapponesi in Europa",
@@ -60,6 +62,7 @@ const DICT: Record<LoginLang, Record<Msg, string>> = {
     taken: "Questo ID di accesso è già in uso.", weak: "La password deve avere almeno 8 caratteri.",
     badId: "Usa 3–64 lettere minuscole, cifre, '.', '_' o '-'.",
     tooMany: "Troppi nuovi account da questa rete. Riprova più tardi.",
+    required: "Obbligatorio",
   },
   ja: {
     tagline: "ヨーロッパの日本食レストランの仕入れを、ひとつに",
@@ -79,6 +82,7 @@ const DICT: Record<LoginLang, Record<Msg, string>> = {
     taken: "このログインIDはすでに使われています。", weak: "パスワードは8文字以上にしてください。",
     badId: "英小文字・数字・「.」「_」「-」で3〜64文字にしてください。",
     tooMany: "このネットワークからの新規作成が多すぎます。しばらくしてからお試しください。",
+    required: "必須",
   },
 };
 
@@ -179,9 +183,13 @@ function LoginForm({ initialRole, initialMode }: { initialRole: Role | null; ini
 
   const field = (key: keyof SignupFields, label: Msg, props: { required?: boolean; type?: string; autoComplete?: string; maxLength: number }) => (
     <label className="jp-field" key={key}>
-      {t(label)}
+      <span>
+        {t(label)}
+        {props.required && <Req />}
+      </span>
       <input
         name={key} type={props.type ?? "text"} autoComplete={props.autoComplete} required={props.required}
+        aria-required={props.required || undefined}
         maxLength={props.maxLength} value={fields[key]} onChange={(e) => setFields({ ...fields, [key]: e.target.value })}
       />
     </label>
@@ -277,24 +285,31 @@ function LoginForm({ initialRole, initialMode }: { initialRole: Role | null; ini
                 <h1>{t("signupTitle")}</h1>
                 <p className="jp-login-note">{t(role === "restaurant" ? "restaurantStart" : "supplierStart")}</p>
                 <form onSubmit={submitSignup} noValidate>
+                  <RequiredLegend text={t("required")} />
                   {field("name", role === "restaurant" ? "restaurantName" : "supplierName", { required: true, autoComplete: "organization", maxLength: 120 })}
                   {field("city", "city", { autoComplete: "address-level2", maxLength: 80 })}
                   {field("country", "country", { autoComplete: "country-name", maxLength: 60 })}
                   {role === "supplier" && field("contact_name", "contactName", { autoComplete: "name", maxLength: 120 })}
                   {role === "supplier" && field("email", "email", { type: "email", autoComplete: "email", maxLength: 200 })}
                   <label className="jp-field">
-                    {t("id")}
+                    <span>
+                      {t("id")}
+                      <Req />
+                    </span>
                     <input
-                      name="username" autoComplete="username" autoCapitalize="none" spellCheck={false} required
+                      name="username" autoComplete="username" autoCapitalize="none" spellCheck={false} required aria-required
                       maxLength={64} value={username} onChange={(e) => setUsername(e.target.value.toLowerCase())}
                       aria-describedby="signup-id-hint"
                     />
                     <small id="signup-id-hint" className="jp-muted">{t("idHint")}</small>
                   </label>
                   <label className="jp-field">
-                    {t("password")}
+                    <span>
+                      {t("password")}
+                      <Req />
+                    </span>
                     <input
-                      name="password" type="password" autoComplete="new-password" required minLength={8} maxLength={1024}
+                      name="password" type="password" autoComplete="new-password" required aria-required minLength={8} maxLength={1024}
                       value={password} onChange={(e) => setPassword(e.target.value)} aria-describedby="signup-pw-hint"
                     />
                     <small id="signup-pw-hint" className="jp-muted">{t("passwordHint")}</small>
@@ -317,17 +332,24 @@ function LoginForm({ initialRole, initialMode }: { initialRole: Role | null; ini
             <>
             <h1>{t("title")}</h1>
             <form onSubmit={submit} noValidate>
+              <RequiredLegend text={t("required")} />
               <label className="jp-field">
-                {t("id")}
+                <span>
+                  {t("id")}
+                  <Req />
+                </span>
                 <input
-                  name="username" autoComplete="username" autoCapitalize="none" spellCheck={false} required
+                  name="username" autoComplete="username" autoCapitalize="none" spellCheck={false} required aria-required
                   maxLength={64} value={username} onChange={(e) => setUsername(e.target.value)}
                 />
               </label>
               <label className="jp-field">
-                {t("password")}
+                <span>
+                  {t("password")}
+                  <Req />
+                </span>
                 <input
-                  name="password" type="password" autoComplete="current-password" required maxLength={1024}
+                  name="password" type="password" autoComplete="current-password" required aria-required maxLength={1024}
                   value={password} onChange={(e) => setPassword(e.target.value)}
                 />
               </label>
