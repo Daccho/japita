@@ -1558,3 +1558,7 @@
 .jp .jp-app .jp-login-role svg { color:var(--aj-ink); }
 .jp .jp-app .jp-login-role strong { font-weight:var(--aj-weight-bold); }
 .jp .jp-app .jp-login-note { color:var(--aj-muted); }
+
+/* Not-found page (app/not-found.tsx): the sign-in card with a large display-font code. */
+.jp .jp-app .jp-not-found .jp-not-found-code { font-family:var(--aj-font-display); font-size:72px; line-height:1; color:var(--aj-ink); margin:0; }
+.jp .jp-app .jp-not-found a.jp-action { text-decoration:none; }
