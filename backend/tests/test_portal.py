@@ -53,3 +53,19 @@ def test_new_product_is_ignored_until_applied_and_dropped_on_reject():
     assert offer["id"] not in {o["id"] for o in eligible["noodles"]} | {e["offer_id"] for e in excluded}
     portal.reject_update(store, offer["id"])
     assert offer["id"] not in {o["id"] for o in store.offers}
+
+
+def test_new_product_ingredient_is_free_text():
+    store = Store.load(FIXTURE)
+    known = portal.propose_new(store, "S3", {"ingredient": "麺", "product": "冷凍麺 5kg", "unit": "g", "pack_size": 5000,
+                                             "price_eur": 1.0, "origin_route": "japan",
+                                             "attributes": {"hydration_pct": 26}})
+    assert known["ingredient"] == "noodles" and known["attributes"]["hydration_pct"] == 26.0
+    other = portal.propose_new(store, "S3", {"ingredient": "白味噌", "product": "白味噌 1kg", "unit": "g",
+                                             "pack_size": 1000, "price_eur": 6.0, "origin_route": "japan"})
+    assert other["ingredient"] == "白味噌" and other["attributes"] == {}
+    eligible, _ = calc.eligible_offers(store)
+    assert "白味噌" not in eligible  # not one of the restaurant's ingredients
+    with pytest.raises(ValueError):
+        portal.propose_new(store, "S3", {"ingredient": "白味噌", "product": "x", "unit": "g", "pack_size": 1,
+                                         "price_eur": 1, "origin_route": "japan", "attributes": {"hydration_pct": 1}})

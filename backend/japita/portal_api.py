@@ -33,7 +33,7 @@ class ProductUpdate(BaseModel):
 
 
 class NewProduct(BaseModel):
-    ingredient: str
+    ingredient: str = Field(min_length=1, max_length=60, description="Free text; matched to the restaurant's ingredients")
     product: str = Field(min_length=1)
     unit: Literal["g", "ml"]
     pack_size: float = Field(gt=0)

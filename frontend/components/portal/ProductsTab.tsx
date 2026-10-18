@@ -301,9 +301,13 @@ function UnitInput({ value, onChange, unit }: { value: string; onChange: (v: str
 function NewProductForm({ view, token, onView, notify, onClose }: TabProps & { onClose: () => void }) {
   const { t, lang } = useLang();
   const ingredients = Object.keys(view.new_product_forms);
-  const [ingredient, setIngredient] = useState(ingredients[0] ?? "");
+  const known = (key: string) => [key, view.ingredient_ja[key], view.ingredient_en?.[key]].filter(Boolean) as string[];
+  const [ingredientText, setIngredientText] = useState("");
+  // Free text; when it names one of the restaurant's ingredients, that ingredient's spec fields are offered.
+  const ingredient =
+    ingredients.find((k) => known(k).some((n) => n.toLowerCase() === ingredientText.trim().toLowerCase())) ?? "";
   const [name, setName] = useState("");
-  const [unit, setUnit] = useState<"g" | "ml">(ingredients[0] === "soy_sauce" ? "ml" : "g");
+  const [unit, setUnit] = useState<"g" | "ml">("g");
   const [pack, setPack] = useState("");
   const [price, setPrice] = useState("");
   const [origin, setOrigin] = useState<Origin>("japan");
@@ -313,14 +317,16 @@ function NewProductForm({ view, token, onView, notify, onClose }: TabProps & { o
   const [error, setError] = useState<string | null>(null);
   const form = view.new_product_forms[ingredient] ?? [];
 
-  const pickIngredient = (ing: string) => {
-    setIngredient(ing);
-    setUnit(ing === "soy_sauce" ? "ml" : "g");
+  const typeIngredient = (text: string) => {
+    setIngredientText(text);
+    const key = ingredients.find((k) => known(k).some((n) => n.toLowerCase() === text.trim().toLowerCase()));
+    if (key) setUnit(key === "soy_sauce" ? "ml" : "g");
     setValues({});
   };
 
   const submit = async () => {
     setError(null);
+    if (!ingredientText.trim()) return setError(t.enterIngredient);
     if (!name.trim()) return setError(t.enterProductName);
     const packN = parseAmount(pack, false);
     if (packN === null) return setError(t.invalidPack);
@@ -337,7 +343,7 @@ function NewProductForm({ view, token, onView, notify, onClose }: TabProps & { o
     try {
       onView(
         await portalApi.newProduct(token, {
-          ingredient,
+          ingredient: ingredientText.trim(),
           product: name.trim(),
           unit,
           pack_size: packN,
@@ -377,13 +383,20 @@ function NewProductForm({ view, token, onView, notify, onClose }: TabProps & { o
       <div className="mt-4 space-y-4">
         <div>
           <Label>{t.ingredient}</Label>
-          <div className="grid grid-cols-3 gap-2">
+          <input
+            value={ingredientText}
+            onChange={(e) => typeIngredient(e.target.value)}
+            list="japita-ingredients"
+            className={inputClass}
+            placeholder={t.ingredientPlaceholder}
+            maxLength={60}
+          />
+          <datalist id="japita-ingredients">
             {ingredients.map((ing) => (
-              <button key={ing} type="button" onClick={() => pickIngredient(ing)} className={segment(ing === ingredient)}>
-                {ingredientName(ing, lang, { ja: view.ingredient_ja[ing], en: view.ingredient_en?.[ing] })}
-              </button>
+              <option key={ing} value={ingredientName(ing, lang, { ja: view.ingredient_ja[ing], en: view.ingredient_en?.[ing] })} />
             ))}
-          </div>
+          </datalist>
+          {ingredientText.trim() && !ingredient && <p className="mt-1 text-xs text-aj-muted">{t.ingredientOther}</p>}
         </div>
         <label className="block">
           <Label>{t.productName}</Label>

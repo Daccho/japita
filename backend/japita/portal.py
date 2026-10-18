@@ -64,10 +64,26 @@ def propose_update(store: Store, supplier_id: str, offer_id: str, changes: dict)
     return offer
 
 
+def match_ingredient(store: Store, text: str) -> str | None:
+    """The restaurant's ingredient key a supplier's free-text name refers to (key, Japanese or English name)."""
+    t = text.strip().casefold()
+    for key in store.profile["ingredients"]:
+        names = {key, key.replace("_", " "), INGREDIENT_JA.get(key, ""), INGREDIENT_EN.get(key, "")}
+        if t in {n.casefold() for n in names if n}:
+            return key
+    return None
+
+
 def propose_new(store: Store, supplier_id: str, data: dict) -> dict:
-    if data["ingredient"] not in store.profile["ingredients"]:
-        raise DomainError("unknown_ingredient", f"unknown ingredient {data['ingredient']!r}")
-    values, evidence = _typed_attributes(store, data["ingredient"], data.get("attributes") or {})
+    name = data["ingredient"].strip()
+    if not name:
+        raise DomainError("invalid_input", "ingredient is required")
+    key = match_ingredient(store, name)
+    if key is None and data.get("attributes"):
+        raise DomainError("unknown_field", "spec fields are only available for the restaurant's ingredients")
+    ingredient = key or name
+    values, evidence = _typed_attributes(store, key, data.get("attributes") or {}) if key else ({}, {})
+    data = {**data, "ingredient": ingredient}
     n = 1 + sum(1 for o in store.offers if o["id"].startswith("O-new-"))
     offer = {
         "id": f"O-new-{n}", "supplier_id": supplier_id, "ingredient": data["ingredient"], "product": data["product"],
