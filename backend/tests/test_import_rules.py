@@ -60,6 +60,9 @@ def test_every_rule_is_complete_and_sourced():
         assert src["title"] and src["url"].startswith("https://"), r["id"]
         assert date.fromisoformat(src["accessed"]) == date(2026, 10, 18), r["id"]
         assert re.match(r"https://(eur-lex\.europa\.eu|trade\.ec\.europa\.eu|ec\.europa\.eu)/", src["url"]), r["id"]
+        for jp in r.get("japan_sources", []):
+            assert jp["title"] and date.fromisoformat(jp["accessed"]) == date(2026, 10, 18), r["id"]
+            assert re.match(r"https://www\.(customs|maff)\.go\.jp/", jp["url"]), r["id"]
         assert r["when_unknown"] in ("needs_review", "skip")
         assert isinstance(r["blocks_order"], bool)
         if r["checks"]:

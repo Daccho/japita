@@ -35,10 +35,10 @@ REQUIRED_TEXTS = ("title", "explanation")
 COLUMNS = ["id", "applies_when", "when_unknown", "checks", "outcome", "outcome_met", "outcome_unmet",
            "blocks_order", "supplier_question_field",
            *[f"{k}_{lang}" for k in TEXT_KEYS for lang in rules.LANGS],
-           "source_title", "source_url", "source_accessed"]
+           "source_title", "source_url", "source_accessed", "japan_sources"]
 RULE_KEYS = {"id", "title", "applies_when", "when_unknown", "checks", "outcome", "outcome_met", "outcome_unmet",
              "blocks_order", "supplier_question_field", "explanation", "explanation_met", "explanation_unknown",
-             "source"}
+             "source", "japan_sources"}
 DOC_KEYS = {"_notice", "version", "accessed", "eu_countries", "fields", "rules"}
 OPS = ("eq", "in", "not_in", "contains_any")
 LIST_OPS = ("in", "not_in", "contains_any")
@@ -164,7 +164,30 @@ def rule_to_row(rule: dict) -> dict[str, str]:
     source = rule.get("source") or {}
     row.update(source_title=source.get("title") or "", source_url=source.get("url") or "",
                source_accessed=source.get("accessed") or "")
+    row["japan_sources"] = json.dumps(rule["japan_sources"], ensure_ascii=False) if rule.get("japan_sources") else ""
     return row
+
+
+def _japan_sources(text: str) -> tuple[list, list[str]]:
+    """Parse the japan_sources cell: a JSON list of {"title", "url", "accessed"}."""
+    try:
+        items = json.loads(text)
+    except ValueError:
+        items = None
+    if not (isinstance(items, list) and all(isinstance(i, dict) for i in items)):
+        return [], ['japan_sources must be a JSON list such as [{"title": "...", "url": "https://...", '
+                    '"accessed": "YYYY-MM-DD"}]']
+    errs = []
+    for i in items:
+        url = urlparse(str(i.get("url") or ""))
+        if not i.get("title") or url.scheme != "https" or not url.netloc:
+            errs.append("every Japanese source needs a title and an https:// URL")
+        try:
+            if date.fromisoformat(str(i.get("accessed"))) > rules.today():
+                errs.append("a Japanese source's accessed date is in the future")
+        except ValueError:
+            errs.append("a Japanese source's accessed date must be YYYY-MM-DD")
+    return [{"title": i.get("title"), "url": i.get("url"), "accessed": i.get("accessed")} for i in items], errs
 
 
 def row_to_rule(row: dict[str, str], doc: dict, paths: set[str]) -> tuple[dict, list[tuple[str, str, str]]]:
@@ -251,6 +274,11 @@ def row_to_rule(row: dict[str, str], doc: dict, paths: set[str]) -> tuple[dict, 
     except ValueError:
         errs.append(("source_accessed", "invalid_accessed_date",
                      "source_accessed must be the date a person checked the source, as YYYY-MM-DD"))
+
+    if cell["japan_sources"]:
+        jp, jp_errs = _japan_sources(cell["japan_sources"])
+        rule["japan_sources"] = jp
+        errs += [("japan_sources", "invalid_source_url", m) for m in jp_errs]
 
     for col in [f"{k}_{lang}" for k in TEXT_KEYS for lang in rules.LANGS] + ["source_title"]:
         for pattern in FORBIDDEN_CLAIMS:

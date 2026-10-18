@@ -71,7 +71,19 @@
         "title": "EU-Japan Economic Partnership Agreement | Access2Markets (European Commission)",
         "url": "https://trade.ec.europa.eu/access-to-markets/en/content/eu-japan-economic-partnership-agreement",
         "accessed": "2026-10-18"
-      }
+      },
+      "japan_sources": [
+        {
+          "title": "日EU経済連携協定 | EPA・原産地規則ポータル（税関 Japan Customs）",
+          "url": "https://www.customs.go.jp/roo/information/eu.htm",
+          "accessed": "2026-10-18"
+        },
+        {
+          "title": "EPAの自己申告制度を利用した日本からの輸出について（税関 Japan Customs）",
+          "url": "https://www.customs.go.jp/roo/information/epa/epa_ex.html",
+          "accessed": "2026-10-18"
+        }
+      ]
     },
     {
       "id": "eu-fic-language",
@@ -151,9 +163,9 @@
       "blocks_order": false,
       "supplier_question_field": "animal_ingredients",
       "explanation": {
-        "en": "This product ships from outside the EU and contains ingredients of animal origin (such as egg, meat, dairy or fish). Products of this kind may need official controls at an EU border control post and an official certificate. Delegated Regulation (EU) 2021/630 exempts only certain lower-risk composite products: shelf-stable products without processed meat that are listed in its Annex and meet its conditions. Products that need chilled or frozen transport or storage are not shelf-stable under that definition. Check the requirements with the supplier and the importer before ordering.",
-        "it": "Questo prodotto viene spedito da fuori UE e contiene ingredienti di origine animale (per esempio uova, carne, latticini o pesce). Prodotti di questo tipo possono richiedere controlli ufficiali in un posto di controllo frontaliero UE e un certificato ufficiale. Il Regolamento delegato (UE) 2021/630 esenta solo alcuni prodotti composti a basso rischio: prodotti stabili a temperatura ambiente senza carne trasformata, elencati nel suo allegato e conformi alle sue condizioni. I prodotti che richiedono trasporto o conservazione refrigerati o surgelati non sono stabili a temperatura ambiente secondo quella definizione. Verifica i requisiti con il fornitore e l'importatore prima di ordinare.",
-        "ja": "この商品はEU域外から発送され、動物由来の原材料（卵、肉、乳製品、魚など）を含みます。このような商品は、EUの国境管理所での公的検査や公的証明書が必要になる場合があります。委任規則（EU）2021/630が検査を免除するのは、附属書に記載され条件を満たす、加工肉を含まない常温保存可能な複合製品など一部の低リスク製品だけです。冷蔵・冷凍での輸送や保管が必要な商品は、その定義では常温保存可能ではありません。発注前にサプライヤーと輸入者に要件を確認してください。"
+        "en": "This product ships from outside the EU and contains ingredients of animal origin (such as egg, meat, dairy or fish). Products of this kind may need official controls at an EU border control post and an official certificate. Delegated Regulation (EU) 2021/630 exempts only certain lower-risk composite products: shelf-stable products without processed meat that are listed in its Annex and meet its conditions. Products that need chilled or frozen transport or storage are not shelf-stable under that definition. For composite products exported from Japan, Japan's Ministry of Agriculture (MAFF) tells exporters that each shipment needs either an official certificate or the exporter's private attestation, depending on the product. Check the requirements with the supplier and the importer before ordering.",
+        "it": "Questo prodotto viene spedito da fuori UE e contiene ingredienti di origine animale (per esempio uova, carne, latticini o pesce). Prodotti di questo tipo possono richiedere controlli ufficiali in un posto di controllo frontaliero UE e un certificato ufficiale. Il Regolamento delegato (UE) 2021/630 esenta solo alcuni prodotti composti a basso rischio: prodotti stabili a temperatura ambiente senza carne trasformata, elencati nel suo allegato e conformi alle sue condizioni. I prodotti che richiedono trasporto o conservazione refrigerati o surgelati non sono stabili a temperatura ambiente secondo quella definizione. Per i prodotti composti esportati dal Giappone, il Ministero dell'agricoltura giapponese (MAFF) indica che ogni spedizione richiede un certificato ufficiale o un'autodichiarazione dell'esportatore, a seconda del prodotto. Verifica i requisiti con il fornitore e l'importatore prima di ordinare.",
+        "ja": "この商品はEU域外から発送され、動物由来の原材料（卵、肉、乳製品、魚など）を含みます。このような商品は、EUの国境管理所での公的検査や公的証明書が必要になる場合があります。委任規則（EU）2021/630が検査を免除するのは、附属書に記載され条件を満たす、加工肉を含まない常温保存可能な複合製品など一部の低リスク製品だけです。冷蔵・冷凍での輸送や保管が必要な商品は、その定義では常温保存可能ではありません。日本から輸出される混合食品について、農林水産省は、商品に応じて公的証明書または輸出者による自己宣誓書の添付が必要だと案内しています。発注前にサプライヤーと輸入者に要件を確認してください。"
       },
       "explanation_unknown": {
         "en": "It is not recorded where this product ships from or whether it contains ingredients of animal origin (such as egg, meat, dairy or fish). If it ships from outside the EU with such ingredients, it may need official border controls and a certificate (Delegated Regulation (EU) 2021/630). Ask the supplier. Plain wheat noodles without animal ingredients are not affected by this check.",
@@ -164,7 +176,19 @@
         "title": "Commission Delegated Regulation (EU) 2021/630 on composite products exempted from official controls at border control posts (EUR-Lex), Articles 2(2) and 3(1) and Annex",
         "url": "https://eur-lex.europa.eu/eli/reg_del/2021/630/oj/eng",
         "accessed": "2026-10-18"
-      }
+      },
+      "japan_sources": [
+        {
+          "title": "EUにおける新たな混合食品規制への対応について（農林水産省）",
+          "url": "https://www.maff.go.jp/j/shokusan/export/EU.html",
+          "accessed": "2026-10-18"
+        },
+        {
+          "title": "EU向け混合食品を輸出する際の必要な手続きを教えてほしい（農林水産省 輸出FAQ）",
+          "url": "https://www.maff.go.jp/j/shokusan/export/e_faq/process_food/answer02.html",
+          "accessed": "2026-10-18"
+        }
+      ]
     },
     {
       "id": "eu-jp-post-fukushima-lifted",
@@ -187,7 +211,14 @@
         "title": "Commission Implementing Regulation (EU) 2023/1453 repealing Implementing Regulation (EU) 2021/1533 (EUR-Lex)",
         "url": "https://eur-lex.europa.eu/eli/reg_impl/2023/1453/oj/eng",
         "accessed": "2026-10-18"
-      }
+      },
+      "japan_sources": [
+        {
+          "title": "東京電力福島第一原子力発電所事故及びALPS処理水の海洋放出に伴う諸外国・地域の輸入規制への対応（農林水産省）",
+          "url": "https://www.maff.go.jp/j/export/e_info/hukushima_kakukokukensa.html",
+          "accessed": "2026-10-18"
+        }
+      ]
     },
     {
       "id": "eu-taric-pointer",

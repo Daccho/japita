@@ -171,8 +171,17 @@ def holds(cond: dict, offer: dict, supplier: dict, data: dict) -> bool | None:
     raise ValueError(f"unknown op {op!r}")
 
 
+def _ref(src: dict) -> dict:
+    return {"title": src["title"], "url": src["url"], "accessed": src["accessed"]}
+
+
 def _source(rule: dict) -> dict:
-    return {"title": rule["source"]["title"], "url": rule["source"]["url"], "accessed": rule["source"]["accessed"]}
+    return _ref(rule["source"])
+
+
+def _japan_sources(rule: dict) -> list[dict]:
+    """Japanese official pages (customs, ministry) on the exporter's side of the same requirement; may be empty."""
+    return [_ref(s) for s in rule.get("japan_sources", [])]
 
 
 def _result(rule: dict, data: dict, outcome: str, explanation: str, lang: str,
@@ -180,6 +189,7 @@ def _result(rule: dict, data: dict, outcome: str, explanation: str, lang: str,
     accessed = rule["source"]["accessed"]
     out = {"rule_id": rule["id"], "outcome": outcome, "outcome_text": OUTCOME_TEXT[_lang(lang)][outcome],
            "title": _loc(rule["title"], lang), "explanation": explanation, "source": _source(rule),
+           "japan_sources": _japan_sources(rule),
            "blocks_order": bool(rule.get("blocks_order")) and outcome == "missing_document",
            "rule_set_version": data.get("version"), "accessed": accessed, "stale": is_stale(accessed)}
     if missing_field:
@@ -249,6 +259,7 @@ def import_checks_view(store: Store, lang: str) -> dict:
                        "is_restaurant_ingredient": o["ingredient"] in store.profile["ingredients"],
                        "checks": checks, "summary": summarize(checks, lang)})
     rule_rows = [{"rule_id": r["id"], "title": _loc(r["title"], lang), "source": _source(r),
+                  "japan_sources": _japan_sources(r),
                   "accessed": r["source"]["accessed"], "stale": is_stale(r["source"]["accessed"])}
                  for r in data["rules"]]
     return {"lang": _lang(lang), "accessed": data["accessed"],
