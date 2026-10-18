@@ -10,6 +10,7 @@ from .avatar import avatar
 from .drawings import offer_drawing
 from .errors import DomainError
 from .forms import FIELD_FORM_JA, INGREDIENT_EN, INGREDIENT_JA, coerce, display_ja, form, in_range, spec_fields
+from .drawings_library import ingredient_key
 from .store import Store, _now
 
 OWNER_ONLY_FIELDS = {"chef_approved"}  # decided inside the restaurant, never entered by a supplier
@@ -92,7 +93,7 @@ def propose_new(store: Store, supplier_id: str, data: dict) -> dict:
     key = match_ingredient(store, name)
     if key is None and data.get("attributes"):
         raise DomainError("unknown_field", "spec fields are only available for the restaurant's ingredients")
-    ingredient = key or name
+    ingredient = key or ingredient_key(name)
     values, evidence = _typed_attributes(store, key, data.get("attributes") or {}) if key else ({}, {})
     data = {**data, "ingredient": ingredient}
     n = 1 + sum(1 for o in store.offers if o["id"].startswith("O-new-"))

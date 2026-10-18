@@ -77,6 +77,10 @@ def label(lang: str, prefix: str, key: str) -> str:
     """Catalog label such as ing.noodles; unknown keys read as the key with spaces."""
     full = f"{prefix}.{key}"
     s = t(lang, full)
+    if s == full and prefix == "ing":
+        from .drawings_library import ingredient_names
+        names = ingredient_names().get(key, {}).get("labels", {})
+        return names.get(lang) or names.get("en") or key.replace("_", " ")
     return key.replace("_", " ") if s == full else s
 
 

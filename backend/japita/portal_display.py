@@ -124,7 +124,7 @@ def decorate(store, view: dict, lang: str = "ja", money: Money | None = None) ->
             c["from_text"], c["to_text"] = portal_day(c["from"], lang), portal_day(c["to"], lang)
             c["at_text"] = portal_time(c.get("at"), lang)
 
-    origin = {"japan": "originJapan", "europe": "originEurope", "italy": "originItaly"}
+    origin = {"japan": "originJapan", "europe": "originEurope", "italy": "originItaly", "unknown": "originUnknown"}
     for p in view["products"]:
         fields = {f["field"]: f for f in p["form"]}
         mine = p["ingredient"] in own

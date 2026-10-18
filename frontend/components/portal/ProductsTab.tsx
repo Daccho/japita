@@ -13,7 +13,7 @@ import type { TabProps } from "./types";
 type Values = Record<string, string | boolean | null>;
 type T = ReturnType<typeof useLang>["t"];
 
-const ORIGINS: Origin[] = ["japan", "europe", "italy"];
+const ORIGINS: Origin[] = ["unknown", "japan", "europe", "italy"];
 
 function initialValues(form: FormField[], attributes: Record<string, unknown>): Values {
   const out: Values = {};
@@ -275,7 +275,7 @@ function NewProductForm({ view, onView, notify, onClose }: TabProps & { onClose:
   const [unit, setUnit] = useState<"g" | "ml">("g");
   const [pack, setPack] = useState("");
   const [price, setPrice] = useState("");
-  const [origin, setOrigin] = useState<Origin>("japan");
+  const [origin, setOrigin] = useState<Origin>("unknown");
   const [values, setValues] = useState<Values>({});
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
@@ -311,7 +311,7 @@ function NewProductForm({ view, onView, notify, onClose }: TabProps & { onClose:
     };
   }, [ingredientText]);
 
-  const originLabel: Record<Origin, string> = { japan: t.originJapan, europe: t.originEurope, italy: t.originItaly };
+  const originLabel: Record<Origin, string> = { japan: t.originJapan, europe: t.originEurope, italy: t.originItaly, unknown: t.originUnknown };
   const names = Object.keys(view.ingredient_ja).map((k) => (lang === "en" ? view.ingredient_en?.[k] : view.ingredient_ja[k]) ?? k);
 
   const submit = async () => {

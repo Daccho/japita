@@ -8,6 +8,7 @@ from typing import Any, Callable
 
 from . import calc, rules, stock
 from .store import Store
+from .drawings_library import ingredient_names
 
 
 def _profile(store: Store) -> dict:
@@ -85,7 +86,7 @@ def _p(props: dict, required: list[str] | None = None) -> dict:
     return {"type": "object", "properties": props, "required": required or []}
 
 
-INGREDIENT = {"type": "string", "enum": ["noodles", "soy_sauce", "kikurage"]}
+INGREDIENT = {"type": "string", "enum": sorted(ingredient_names())}
 
 TOOLS: dict[str, tuple[Callable[..., Any], str, dict]] = {
     "get_purchase_brief": (

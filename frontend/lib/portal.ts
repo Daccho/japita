@@ -66,7 +66,7 @@ export type PortalOrder = {
   can_change_delivery: boolean;
 };
 
-export type Origin = "japan" | "europe" | "italy";
+export type Origin = "japan" | "europe" | "italy" | "unknown";
 
 export type Drawing = import("@/lib/drawings").DrawingReference;
 

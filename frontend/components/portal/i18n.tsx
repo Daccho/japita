@@ -152,6 +152,7 @@ const ja = {
   originJapan: "日本から輸入",
   originEurope: "欧州内",
   originItaly: "イタリア国内",
+  originUnknown: "原産地・仕入経路は未入力",
 };
 
 type Dict = typeof ja;
@@ -296,6 +297,7 @@ const en: Dict = {
   originJapan: "Imported from Japan",
   originEurope: "Within Europe",
   originItaly: "Within Italy",
+  originUnknown: "Origin and sourcing route not entered",
 };
 
 const DICTS: Record<Lang, Dict> = { ja, en };

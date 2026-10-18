@@ -2,7 +2,9 @@
 
 ## Current review stage
 
-The user approved the revised library on 18 October, then explicitly approved the two automatic-drawing tables. The library has **59 native SVG drawings**: 45 requested ingredient drawings, 12 generic packaging drawings, and two additions for the current catalog (kikurage bag and fresh-noodle crate). These drawings now replace product photos in existing slots; no new image slots were added.
+The user reviewed and approved all 119 new ingredient drawings and their fictional catalog additions on 18 October 2026. They are included in the active shared library and demo fixture; no further artwork approval is pending for this expansion.
+
+The user approved the revised library on 18 October, then explicitly approved the two automatic-drawing tables. It now has **178 native SVG drawings**, covering **163 distinct ingredients** plus 12 generic packaging drawings and three additional ingredient/form variants. The original 59 drawings are preserved; the user subsequently approved expanding both illustrations and the fictional supplier catalog across cuisines, without adding a new browsing interface. The 119 additions cover vegetables, mushrooms, fruit, herbs, meat/seafood, dairy, grains/legumes, pantry staples and spices/nuts. These drawings replace product photos in existing slots; no new image slots were added.
 
 The user requested clearer depictions of noodles, udon, rice, chili oil, ginger, menma, proteins, garlic, shiitake, sprouts and corn. Eighteen drawings were revised, including matching noodle variants. Pork and chicken have animal cues; eggs use an open carton and salmon uses a whole-fish depiction. The review marks those drawings **Revised**.
 
@@ -23,6 +25,24 @@ The current logo is documented in `mockup/assets/README.md`. The single shared R
 The user separately approved saving dishes and their ingredient lists on the backend. `GET/PUT /menu` stores them as `recipe.menu_items` in the existing recipe JSON document, without a new menu table. `GET /state` includes the assembled menu and ingredient filter options. Existing purchased recipe quantities remain separate and unchanged; listing an ingredient does not invent a per-serving amount or an offer.
 
 Exact normalized English, Italian, romaji and Japanese library aliases produce stable ingredient keys. Unknown names retain their own normalized keys. The supplier filter combines saved menu ingredients with existing profile ingredient requirements. A new ingredient can have no matching supplier in the recorded catalog. The mockup mirrors adding dishes and filter options using local preview state only; it does not write to the backend.
+
+The additions have English, Italian and Japanese labels/aliases in the canonical manifest. Catalog interpretation, explicit ingredient/name searches, existing supplier search and supplier ingredient labels reuse that vocabulary. Supplier proposals normalize recognized ingredient names to the same keys. This broadens the bounded catalog; it does not introduce live supplier discovery or translate unrecorded specifications.
+
+## Expanded fictional product catalog
+
+`backend/tests/fixtures/kumo.json` includes one illustrative product per new ingredient (119 products, distributed across nine clearly named **Demo** candidate suppliers). New products carry `[DEMO]` in their displayed names; packs and EUR prices are invented examples, not market quotes. Availability, shipping, delivery days, geography, origin and sourcing route are unconfirmed/unentered. Accounts remain pending and none of these products is orderable. An explicit `unknown` sourcing route is supported by the API, owner view and supplier portal rather than assigning a country. The existing three purchased ingredients, restaurant menu, priorities, stock and ramen basket calculations are unchanged.
+
+Fresh seeds include the expanded catalog. Existing databases require the additive importer, which inserts only missing `S-lib-*` and `O-lib-*` records in a transaction and preserves existing records, owner edits, orders and approvals:
+
+```powershell
+# From backend/. Select an isolated local database explicitly; do not inherit the root .env database.
+$env:DATABASE_URL = 'postgresql+psycopg://japita:japita@localhost:5432/japita'
+.\.venv\Scripts\python.exe -m japita.demo_catalog
+```
+
+The importer is idempotent and does not reset the database. No deployed or existing owner database was modified as part of this expansion. The standalone workspace still has its separate small fictional supplier directory; its ingredient aliases and existing drawing-review export are refreshed from the shared library.
+
+Expansion verification: 192 offline backend tests passed (three live tests deselected); TypeScript, lint, the production build and mockup consistency checks passed. All new artwork was rendered into six review sheets and checked at 48px and a larger size; the existing standalone review also exports it at 48px and 128px. Tests cover multilingual matching, unknown geography, pending supplier proposals, blocked orderability, preserved basket totals and idempotent imports that retain owner edits. Live AMD interpretation and any deployed database remain outside this local check.
 
 ## Automatic generation
 

@@ -20,6 +20,9 @@ Ready-to-render, localized data. Pages print the texts as they are; they never c
   (legal forms such as B.V., S.r.l., GmbH skipped) for a round badge.
 - **Drawing:** `DrawingReference` `{ "key", "source": "library" | "generated" | "fallback", "state", "needs_drawing",
   "tree" }`, rendered by `components/ProductDrawing.tsx`. Views read cached art only; they never start a model call.
+- **Unknown sourcing route:** offers and supplier proposals accept `origin_route: "unknown"`; views show a localized
+  "Origin and sourcing route not entered" label. A missing country is never filled from this value. The broader
+  ingredient vocabulary and additive fictional catalog are documented in [product drawings](product-drawings.md).
 
 ## GET /views/shell
 

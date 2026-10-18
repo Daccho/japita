@@ -193,7 +193,7 @@ class Offer(In):
     pack_size: float = Field(gt=0)
     price_eur: float = Field(ge=0)
     offer_date: str
-    origin_route: Literal["japan", "europe", "italy"]
+    origin_route: Literal["japan", "europe", "italy", "unknown"]
     comparison_group: str
     attributes: dict[str, Any] = {}
     evidence: dict[str, str | None] = {}

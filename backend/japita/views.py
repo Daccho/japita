@@ -11,6 +11,7 @@ from datetime import date, timedelta
 from . import calc, orders, restaurant, rules, stock
 from .avatar import avatar
 from .drawings import offer_drawing
+from .drawings_library import ingredient_names
 from .store import Store, active_profile_id
 from .textfmt import (Money, date_range, day, label, profile_label, qty, t, time_short,
                       unit_price, value_text, weekday_long, weekday_name)
@@ -564,6 +565,7 @@ def haystack(sup: dict, offers: list[dict]) -> str:
     parts = [sup["name"]]
     for o in offers:
         parts += [o["product"], o["ingredient"].replace("_", " ")]
+        parts += ingredient_names().get(o["ingredient"], {}).get("aliases", [])
         parts += [label(lg, "ing", o["ingredient"]) for lg in ("en", "it")]
         parts += [label(lg, "route", o["origin_route"]) for lg in ("en", "it")]
         if o["ingredient"] == "noodles":

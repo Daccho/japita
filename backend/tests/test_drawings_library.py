@@ -6,7 +6,7 @@ from japita.drawings_library import ROOT, drawing_svg, ingredient_key, library, 
 
 def test_complete_starter_library_and_shared_style():
     drawings = library()["drawings"]
-    assert len(drawings) == 59
+    assert len(drawings) == 178
     assert len({d["key"] for d in drawings}) == len(drawings)
     assert len([d for d in drawings if d["ingredient"] == "generic"]) == 12
     for drawing in drawings:

@@ -49,7 +49,7 @@ export type Offer = {
   pack_size: number;
   price_eur: number;
   offer_date: string;
-  origin_route: "japan" | "europe" | "italy";
+  origin_route: "japan" | "europe" | "italy" | "unknown";
   comparison_group: string;
   attributes: Record<string, unknown>;
   evidence: Record<string, string | null>;
