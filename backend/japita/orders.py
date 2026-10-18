@@ -161,11 +161,14 @@ def supplier_change_delivery(store: Store, supplier_id: str, po_id: str, deliver
 
 
 def spending(store: Store) -> dict:
-    """Planned (latest approved basket) versus committed (acknowledged simulated orders). Not payments."""
-    committed = round(sum(po["total_eur"] for po in store.data["purchase_orders"]
-                          if po["state"] in ("submitted", "acknowledged")), 2)
+    """Planned (latest approved basket), committed (orders the supplier accepted) and sent (orders waiting for the
+    supplier). Not payments."""
+    def total(state: str) -> float:
+        return round(sum(po["total_eur"] for po in store.data["purchase_orders"] if po["state"] == state), 2)
+
+    committed, sent = total("acknowledged"), total("submitted")
     status = approval_status(store)
     budget = store.profile["weekly_budget_eur"]
     return {"budget_eur": budget, "planned_eur": status["delivered_total_eur"] if status else None,
-            "committed_eur": committed, "remaining_eur": round(budget - committed, 2),
-            "note": "Committed spending covers accepted orders; payments are handled outside Japita."}
+            "committed_eur": committed, "sent_eur": sent, "remaining_eur": round(budget - committed, 2),
+            "note": "Committed spending covers orders the supplier accepted; payments are handled outside Japita."}
