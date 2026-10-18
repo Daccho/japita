@@ -37,7 +37,7 @@ export default function DrawingsReview() {
   };
   const groups = [...new Set(library?.drawings.map((d) => d.group) ?? [])];
   return <main className="jp jp-drawings-review">
-    <header><img src="/japita-logo-ajitama-flat.svg" alt="Japita" width="128" height="92" /><p>Japita · illustration review</p><h1>Product drawing library</h1><p>{library ? `${library.drawings.length} drawings` : "Loading library…"} · 48px and 128px</p>
+    <header><img src="/japita-logo-jp.webp" alt="Japita" width="160" height="48" style={{ objectFit: "contain" }} /><p>Japita · illustration review</p><h1>Product drawing library</h1><p>{library ? `${library.drawings.length} drawings` : "Loading library…"} · 48px and 128px</p>
       <label className="jp-drawing-admin">Review key <input type="password" autoComplete="off" value={adminKey} onChange={(e) => setAdminKey(e.target.value)} placeholder="Enter admin key to manage drawings" /></label>
       {!library?.admin_enabled && <p>Management actions are disabled until ADMIN_KEY is configured on the API.</p>}
       <p>Approved library drawings are active. New foods reuse matching artwork or generate in the background.</p>

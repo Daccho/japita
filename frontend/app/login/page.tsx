@@ -111,7 +111,7 @@ function LoginForm() {
         </div>
       </div>
       <section className="jp-panel jp-login-card">
-        <Image className="jp-brand-logo" src="/japita-logo.png" alt="Japita" width={112} height={56} priority />
+        <Image className="jp-brand-logo" src="/japita-logo-jp.webp" alt="Japita" width={1024} height={302} sizes="204px" priority />
         {!role ? (
           <>
             <h1>{t("who")}</h1>
