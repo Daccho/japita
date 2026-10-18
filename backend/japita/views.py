@@ -561,7 +561,7 @@ STOP = set(("find show me i want would like looking for need search suppliers su
 
 def haystack(sup: dict, offers: list[dict]) -> str:
     """Words a restaurant might type (EN/IT), mapped onto catalog facts."""
-    parts = [sup["name"]]
+    parts = [sup["name"], sup.get("city") or "", sup.get("country") or ""]
     for o in offers:
         parts += [o["product"], o["ingredient"].replace("_", " ")]
         parts += [label(lg, "ing", o["ingredient"]) for lg in ("en", "it")]

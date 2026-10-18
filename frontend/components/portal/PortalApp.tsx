@@ -22,7 +22,16 @@ export type PortalMe = {
   role: "restaurant" | "supplier";
   avatar?: AvatarData | null;
   place_text?: string | null;
+  /** Restaurants that list this supplier; the portal shows the current one. */
+  restaurants?: { workspace: string; name: string; current: boolean }[];
 };
+
+// The supplier picks which restaurant's requests, orders and products the portal shows. The API reads the choice
+// from this cookie and ignores a restaurant that does not list the supplier.
+function chooseRestaurant(workspace: string) {
+  document.cookie = `japita_supplier_restaurant=${encodeURIComponent(workspace)}; path=/; max-age=31536000; samesite=lax`;
+  window.location.reload();
+}
 
 const TABS = PORTAL_TABS;
 const ICONS: Record<PortalTab, NavItem["icon"]> = {
@@ -118,7 +127,24 @@ function Portal({
   return (
     <AppShell
       homeHref="/suppliers"
-      controls={<LangSegment langs={["ja", "en"] as const} value={lang} onChange={setLang} />}
+      controls={
+        <>
+          {(me?.restaurants?.length ?? 0) > 1 && (
+            <label className="jp-portal-switch">
+              <select
+                aria-label={t.restaurant}
+                value={me?.restaurants?.find((r) => r.current)?.workspace}
+                onChange={(e) => chooseRestaurant(e.target.value)}
+              >
+                {me?.restaurants?.map((r) => (
+                  <option key={r.workspace} value={r.workspace}>{r.name}</option>
+                ))}
+              </select>
+            </label>
+          )}
+          <LangSegment langs={["ja", "en"] as const} value={lang} onChange={setLang} />
+        </>
+      }
       account={
         name
           ? {

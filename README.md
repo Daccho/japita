@@ -11,7 +11,7 @@ Built for the [AMD Developer Hackathon ACT III](https://lablab.ai/ai-hackathons/
 
 ## Try it
 
-Open https://japita.vercel.app, choose a language (EN / IT / 日本語), choose **Restaurant** or **Supplier**, and sign in. The password equals the login ID.
+Open https://japita.vercel.app, choose a language (EN / IT / 日本語), choose **Restaurant** or **Supplier**, and sign in. The password equals the login ID. **Create an account** on the same page opens a new restaurant with its own empty workspace, or registers a new supplier that every restaurant can find under Discover.
 
 | Login ID | Side | Opens |
 | --- | --- | --- |

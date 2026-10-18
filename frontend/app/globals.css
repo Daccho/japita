@@ -1542,6 +1542,10 @@
 .jp .jp-login-submit { width:100%; padding:12px; font-size:14px; }
 .jp .jp-login-note { font-size:12px; margin:0; }
 .jp .jp-login-card .jp-error { margin:0 0 14px; }
+.jp .jp-login-switch { padding:0; border:0; background:none; color:inherit; font:inherit; font-weight:600; text-decoration:underline; text-underline-offset:2px; cursor:pointer; }
+.jp .jp-login-card .jp-field small { display:block; margin-top:4px; font-size:12px; }
+.jp .jp-portal-switch { display:flex; align-items:center; min-width:0; font-size:13px; }
+.jp .jp-portal-switch select { font:inherit; padding:4px 8px; max-width:100%; }
 .jp .jp-account { display:flex; align-items:center; gap:8px; font-size:12px; }
 
 /* Sign-in page in the Ajitama style: yolk band, ink-bordered card, pressed-edge role choices. */
@@ -1663,3 +1667,6 @@
 .jp .jp-app .jp-portal-product-head { display:flex; align-items:flex-start; gap:12px; min-width:0; }
 .jp .jp-app .jp-portal-product-drawing { display:grid; place-items:center; flex-shrink:0; width:64px; height:64px; border:var(--aj-border-strong); border-radius:var(--aj-radius-card); background:var(--aj-yolk-tint); }
 .jp .jp-app .jp-top-controls-always { display:flex; align-items:center; gap:10px; }
+/* Not-found page (app/not-found.tsx): the sign-in card with a large display-font code. */
+.jp .jp-app .jp-not-found .jp-not-found-code { font-family:var(--aj-font-display); font-size:72px; line-height:1; color:var(--aj-ink); margin:0; }
+.jp .jp-app .jp-not-found a.jp-action { text-decoration:none; }
