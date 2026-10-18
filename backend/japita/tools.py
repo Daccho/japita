@@ -6,7 +6,7 @@ Human-only actions (approving messages, baskets, orders) are deliberately not to
 import json
 from typing import Any, Callable
 
-from . import calc, stock
+from . import calc, rules, stock
 from .store import Store
 
 
@@ -61,6 +61,14 @@ def _check_evidence(store: Store, offer_id: str) -> dict:
     return calc.check_evidence(store, offer_id)
 
 
+def _check_import_rules(store: Store, offer_id: str) -> dict:
+    result = rules.check_offer(store, offer_id, "en")
+    return {**result,
+            "note": "Deterministic rule outcomes with official sources (accessed " + rules.load_rules()["accessed"]
+                    + "). Decision support only: report the outcomes and sources; never say the offer is legally "
+                      "or customs cleared. For missing_field, draft_clarification can ask the supplier."}
+
+
 def _calculate_baskets(store: Store) -> dict:
     return calc.calculate_baskets(store)
 
@@ -109,6 +117,13 @@ TOOLS: dict[str, tuple[Callable[..., Any], str, dict]] = {
     "check_evidence": (
         _check_evidence,
         "Rule outcomes (ok, fail, needs_review, missing_evidence) for one offer against the restaurant's requirements, with the inputs used.",
+        _p({"offer_id": {"type": "string"}}, ["offer_id"]),
+    ),
+    "check_import_rules": (
+        _check_import_rules,
+        "EU import and labelling rule checks for one offer, computed in code from a sourced ruleset: each result has "
+        "rule_id, outcome (ok, info, needs_review, missing_document), title, explanation, source {title, url, accessed} "
+        "and, when the supplier can answer, missing_field for draft_clarification. Not a clearance.",
         _p({"offer_id": {"type": "string"}}, ["offer_id"]),
     ),
     "get_stock_timeline": (

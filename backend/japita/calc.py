@@ -8,6 +8,7 @@ import itertools
 import math
 import statistics
 
+from . import rules
 from . import stock as stock_mod
 from .store import OWNER_DECIDED_FIELDS, Store
 
@@ -130,6 +131,9 @@ def orderability(store: Store, offer_id: str) -> dict:
     if not set(sup["delivery_days"]) & set(store.profile["accepted_delivery_days"]):
         reasons.append("no delivery day matches the restaurant's accepted days")
         codes.append("no_delivery_day")
+    for check in rules.blocking(store, offer_id):
+        reasons.append(f"import document missing: {check['title']}")
+        codes.append("import_document_missing")
     return {"orderable": not reasons, "reasons": reasons, "codes": codes}
 
 
