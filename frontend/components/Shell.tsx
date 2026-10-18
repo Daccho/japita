@@ -116,10 +116,14 @@ export default function Shell({ children }: { children: ReactNode }) {
               ))}
             </nav>
             <div className="jp-sidebar-foot">
-              Kumo Ramen
+              {user.display_name}
               <br />
-              {t("side.place")}
-              <br />
+              {user.username === "kumo-milano" && (
+                <>
+                  {t("side.place")}
+                  <br />
+                </>
+              )}
               <br />
               {t("side.demo")}
             </div>
