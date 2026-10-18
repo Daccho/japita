@@ -1,5 +1,6 @@
 """Shell view, avatars and product drawings in the view data."""
 
+import base64
 from pathlib import Path
 
 import pytest
@@ -38,6 +39,19 @@ def test_logo_url_validation(store):
     with pytest.raises(DomainError) as e:
         restaurant.set_logo_url(store.data, "ftp://x")
     assert e.value.code == "invalid_url"
+
+
+def test_uploaded_logo_data(store):
+    icon = "data:image/webp;base64," + base64.b64encode(b"RIFF....WEBP").decode()
+    assert restaurant.set_logo_url(store.data, icon) == icon
+    for bad in ("data:image/svg+xml;base64,PHN2Zz4=", "data:image/png;base64,not base64!",
+                "data:image/png;base64," + "A" * avatar.LOGO_DATA_MAX):
+        with pytest.raises(DomainError) as e:
+            restaurant.set_logo_url(store.data, bad)
+        assert e.value.code == "invalid_image"
+    # Supplier logos stay URLs only.
+    with pytest.raises(DomainError):
+        avatar.clean_logo_url(icon)
 
 
 def test_shell_view(covered_store):
