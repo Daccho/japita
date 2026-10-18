@@ -9,6 +9,8 @@ import unicodedata
 from datetime import date, timedelta
 
 from . import calc, orders, restaurant, stock
+from .avatar import avatar
+from .drawings import offer_drawing
 from .store import Store, active_profile_id
 from .textfmt import (Money, date_range, day, label, profile_label, qty, t, time_short,
                       unit_price, value_text, weekday_long, weekday_name)
@@ -394,6 +396,28 @@ def week_view(store: Store, lang: str, money: Money) -> dict:
     }
 
 
+# --- shell (header, navigation, footer) ---------------------------------------------------------------
+
+BOWLS = ("tonkotsu", "set_full", "set_kaedama", "veggie_miso")
+
+
+def account_view(store: Store, lang: str) -> dict:
+    name = store.profile.get("name", "")
+    return {"name": name, "avatar": avatar(restaurant.logo_url(store.data), name), "place_text": t(lang, "side.place")}
+
+
+def shell_view(store: Store, lang: str, money: Money) -> dict:
+    dates = store.week.get("dates") or []
+    bowls = sum(store.week.get("servings", {}).get(k, 0) for k in BOWLS)
+    week_text = t(lang, "foot.week", dates=date_range(dates[0], dates[1], lang), bowls=f"{bowls:,}") \
+        if len(dates) == 2 else None
+    suggested = suggested_basket(calc.calculate_baskets(store))
+    return {"lang": lang, "account": account_view(store, lang),
+            "footer": {"week_text": week_text, "fx_note": money.note()},
+            "nav_counts": {"basket": len(suggested["lines"]) if suggested else 0},
+            "labels": labels(lang, "nav.week", "nav.suppliers", "nav.basket", "nav.profile", "au.logout", "workspace")}
+
+
 # --- notifications ----------------------------------------------------------------------------------
 
 def notification_items(store: Store, lang: str) -> list[dict]:
@@ -486,15 +510,6 @@ STOP = set(("find show me i want would like looking for need search suppliers su
             "i gli le di da con e o per fornitore fornitori prodotti prodotto che del della dei delle in").split())
 
 
-def offer_image(o: dict) -> str | None:
-    """Illustrative product photo (does not establish product specifications)."""
-    if o["ingredient"] == "noodles":
-        return "/frozen-noodles.webp" if o["attributes"].get("fresh") is False else "/fresh-noodles.webp"
-    if o["ingredient"] == "soy_sauce":
-        return "/soy-sauce.webp"
-    return None
-
-
 def haystack(sup: dict, offers: list[dict]) -> str:
     """Words a restaurant might type (EN/IT), mapped onto catalog facts."""
     parts = [sup["name"]]
@@ -565,13 +580,13 @@ def suppliers_view(store: Store, lang: str, money: Money, view: str = "existing"
     out = []
     for s, offers in rows:
         best = cheapest(offers)
-        img = next((offer_image(o) for o in offers if offer_image(o)), None)
         pending = any(o.get("pending_update") for o in offers) or bool(s.get("pending_profile"))
         out.append({
             "id": s["id"], "name": s["name"],
             "status_text": f"{t(lang, 'rel.' + s['relationship'])} · {t(lang, 'acct.' + s['account_status'])}",
             "pending": pending, "pending_text": t(lang, "pp.title") if pending else None,
-            "image": img, "image_alt": t(lang, "of.illustrative"),
+            "avatar": avatar(s.get("logo_url"), s["name"]),
+            "drawing": offer_drawing(offers[0]) if offers else None, "image_alt": t(lang, "of.illustrative"),
             "product": offers[0]["product"] if offers else "—",
             "product_count": len(offers),
             "product_count_text": t(lang, "sup.product1") if len(offers) == 1 else t(lang, "sup.products", n=len(offers)),
@@ -668,14 +683,13 @@ def offer_card(store: Store, o: dict, lang: str, money: Money, new: set[str]) ->
                     "note": (p.get("note_translations") or {}).get(lang), "note_label": t(lang, "pp.note"),
                     "note_ja": p.get("note_ja"), "note_ja_label": t(lang, "pp.original"),
                     "apply_text": t(lang, "pp.apply"), "reject_text": t(lang, "pp.reject")}
-    img = offer_image(o)
     is_new = o["id"] in new
     return {
         "id": o["id"], "ingredient": o["ingredient"], "ingredient_label": _ing(lang, o["ingredient"]),
         "is_restaurant_ingredient": own, "product": o["product"],
         "origin_text": label(lang, "route", o["origin_route"]), "date_text": t(lang, "of.date", d=day(o["offer_date"], lang)),
         "pack_text": t(lang, "of.pack", size=qty(o["pack_size"], o["unit"]), price=money(o["price_eur"])),
-        "unit_price_text": unit_price(o, money), "image": img,
+        "unit_price_text": unit_price(o, money), "drawing": offer_drawing(o),
         "image_alt": f"{t(lang, 'of.illustrative')}: {_ing(lang, o['ingredient'])}",
         "image_caption": t(lang, "of.illustrative"),
         "status": status, "checks": checks, "proposal": proposal,
@@ -683,7 +697,7 @@ def offer_card(store: Store, o: dict, lang: str, money: Money, new: set[str]) ->
     }
 
 
-def supplier_detail_view(store: Store, sid: str, lang: str, money: Money, portal_url: str | None) -> dict:
+def supplier_detail_view(store: Store, sid: str, lang: str, money: Money) -> dict:
     s = store.suppliers[sid]
     terms = t(lang, "sup.terms", m=money(s["min_order_eur"]),
               s=t(lang, "sup.shipUnknown") if s["shipping_eur"] is None else money(s["shipping_eur"]),
@@ -704,8 +718,9 @@ def supplier_detail_view(store: Store, sid: str, lang: str, money: Money, portal
     new = new_offer_ids(store)
     return {
         "lang": lang, **money_meta(money), "id": sid, "name": s["name"], "relationship": s["relationship"],
-        "terms_text": terms, "portal_url": portal_url,
-        "labels": labels(lang, "sup.link", "sup.copied", "pp.applied", "pp.rejected", "pp.profileApplied"),
+        "avatar": avatar(s.get("logo_url"), s["name"]),
+        "terms_text": terms,
+        "labels": labels(lang, "pp.applied", "pp.rejected", "pp.profileApplied"),
         "profile_proposal": profile_proposal,
         "offers": [offer_card(store, o, lang, money, new) for o in store.offers if o["supplier_id"] == sid],
     }
@@ -713,7 +728,7 @@ def supplier_detail_view(store: Store, sid: str, lang: str, money: Money, portal
 
 # --- clarifications ---------------------------------------------------------------------------------
 
-def clarifications_view(store: Store, lang: str, portal_urls: dict[str, str]) -> dict:
+def clarifications_view(store: Store, lang: str) -> dict:
     offers = {o["id"]: o for o in store.offers}
     badge = {"draft": "warning", "sent": "neutral", "supplier_replied": "warning", "replied": "ok"}
     items = []
@@ -742,7 +757,6 @@ def clarifications_view(store: Store, lang: str, portal_urls: dict[str, str]) ->
             "reason": (c.get("reason_translations") or {}).get(lang) or c.get("reason", ""),
             "question_ja": c["text_ja"], "translation": (c.get("translations") or {}).get(lang),
             "can_approve": c["state"] == "draft",
-            "portal_url": portal_urls.get(sid) if c["state"] != "draft" and sid else None,
             "waiting_text": t(lang, "cl.waiting") if c["state"] == "sent" else None,
             "reply": {"translation": (reply.get("translations") or {}).get(lang), "text_ja": reply["text_ja"]} if reply else None,
             "value_text": value_line, "choose_text": choose, "choices": choices,
@@ -750,7 +764,7 @@ def clarifications_view(store: Store, lang: str, portal_urls: dict[str, str]) ->
         })
     return {"lang": lang,
             "labels": labels(lang, "cl.title", "cl.question", "cl.translation", "cl.approve", "cl.approveNote",
-                             "cl.link", "cl.copy", "cl.copied", "cl.reply", "cl.replyJa", "cl.impact", "nt.open"),
+                             "cl.reply", "cl.replyJa", "cl.impact", "nt.open"),
             "empty_text": None if items else t(lang, "cl.none"), "items": items}
 
 
@@ -851,8 +865,10 @@ def restaurant_profile_view(store: Store, lang: str) -> dict:
     def fact(key, value):
         return {"label": t(lang, key), "value": value or t(lang, "ov.notEntered")}
 
+    name = store.profile.get("name", "")
+    logo = restaurant.logo_url(store.data)
     return {
-        "lang": lang, "values": v, "name": store.profile.get("name", ""),
+        "lang": lang, "values": v, "name": name, "logo_url": logo, "avatar": avatar(logo, name),
         "subtitle": f"{v['location']} · {t(lang, 'ov.seatsShort', n=v['seats'])}",
         "facts": [fact("ov.concept", v["concept"]), fact("ov.guests", v["positioning"]), fact("ov.prices", v["menuPrice"]),
                   fact("ov.make", v["make"]), fact("ov.buy", v["buy"])],

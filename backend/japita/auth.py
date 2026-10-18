@@ -217,6 +217,7 @@ def _me(s: Session, user: User) -> dict:
         "display_name": user.display_name,
         "role": user.role,
         "has_password": bool(user.password_hash),
+        **({"supplier_id": user.supplier_id} if user.role == "supplier" else {}),
     }
 
 
@@ -274,7 +275,28 @@ def me(request: Request):
         out = _me(s, user)
     if out["role"] == "restaurant":
         out.update(_workspace_defaults(request))
+    out.update(_account_display(request, out))
     return out
+
+
+def _account_display(request: Request, me: dict) -> dict:
+    """Avatar and the second sidebar line: the restaurant's place (restaurant language) or, for a supplier,
+    "For <restaurant>" in the portal language."""
+    from .avatar import avatar
+    from .textfmt import lang_from_request, portal_lang, pt, restaurant_lang, t
+    from . import restaurant
+
+    data = repo.load_state()
+    if me["role"] == "restaurant":
+        pid = (data.get("restaurant_settings") or {}).get("active_profile_id")
+        name = data["profiles"].get(pid, next(iter(data["profiles"].values()), {})).get("name", me["display_name"])
+        lang = restaurant_lang(lang_from_request(request))
+        return {"avatar": avatar(restaurant.logo_url(data), name), "place_text": t(lang, "side.place")}
+    sup = data["suppliers"].get(me.get("supplier_id") or "", {})
+    restaurant_name = next(iter(data["profiles"].values()), {}).get("name", "")
+    lang = portal_lang(lang_from_request(request, portal=True))
+    return {"avatar": avatar(sup.get("logo_url"), sup.get("name") or me["display_name"]),
+            "place_text": pt(lang, "forRestaurant", r=restaurant_name)}
 
 
 @router.get("/supplier/portal")

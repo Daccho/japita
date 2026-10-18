@@ -270,7 +270,7 @@
    "cl.link": "Supplier portal",
    "cl.copy": "Copy link",
    "cl.copied": "Copied",
-   "cl.waiting": "Waiting for the supplier's answer.",
+   "cl.waiting": "Sent to the supplier's portal · waiting for reply",
    "cl.reply": "Supplier reply (translated)",
    "cl.replyJa": "Original reply (Japanese)",
    "cl.value": "Value read from the reply: {v}",
@@ -424,7 +424,8 @@
    "err.supplier_has_offers": "This supplier still has products. Remove them first.",
    "err.too_many_attempts": "Too many attempts. Wait a few minutes and try again.",
    "err.invalid_credentials": "Login ID or password is not correct.",
-   "bk.conflict": "No eligible offer for: {list}. Ask which constraint may change."
+   "bk.conflict": "No eligible offer for: {list}. Ask which constraint may change.",
+   "pf.logo_url": "Logo"
   },
   "it": {
    "workspace": "Spazio di lavoro del ristorante",
@@ -696,7 +697,7 @@
    "cl.link": "Portale del fornitore",
    "cl.copy": "Copia link",
    "cl.copied": "Copiato",
-   "cl.waiting": "In attesa della risposta del fornitore.",
+   "cl.waiting": "Inviata al portale del fornitore · in attesa di risposta",
    "cl.reply": "Risposta del fornitore (tradotta)",
    "cl.replyJa": "Risposta originale (giapponese)",
    "cl.value": "Valore letto dalla risposta: {v}",
@@ -850,7 +851,8 @@
    "err.supplier_has_offers": "Questo fornitore ha ancora prodotti. Rimuovili prima.",
    "err.too_many_attempts": "Troppi tentativi. Attendi qualche minuto e riprova.",
    "err.invalid_credentials": "ID di accesso o password non corretti.",
-   "bk.conflict": "Nessuna offerta idonea per: {list}. Chiedi quale vincolo può cambiare."
+   "bk.conflict": "Nessuna offerta idonea per: {list}. Chiedi quale vincolo può cambiare.",
+   "pf.logo_url": "Logo"
   }
  },
  "portal": {
@@ -1017,7 +1019,9 @@
    "err.owner_only_field": "この項目は店舗が判断します。",
    "err.unknown_field": "この項目は入力できません。",
    "err.invalid_currency": "通貨が正しくありません。",
-   "err.internal": "送信できませんでした。もう一度お試しください。"
+   "err.internal": "送信できませんでした。もう一度お試しください。",
+   "logoUrl": "ロゴ画像のURL",
+   "logoUrlHint": "画像のURL（https://…）。空欄でロゴなし"
   },
   "en": {
    "tabRequests": "Requests",
@@ -1182,7 +1186,9 @@
    "err.owner_only_field": "This detail is decided by the restaurant.",
    "err.unknown_field": "This field cannot be entered.",
    "err.invalid_currency": "Unsupported currency.",
-   "err.internal": "Could not send. Please try again."
+   "err.internal": "Could not send. Please try again.",
+   "logoUrl": "Logo image URL",
+   "logoUrlHint": "Image URL (https://…). Leave empty for no logo"
   }
  },
  "profiles": {

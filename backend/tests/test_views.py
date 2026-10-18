@@ -157,7 +157,7 @@ def test_supplier_detail_lists_other_ingredients_with_a_reason(store):
                                      "price_eur": 8, "origin_route": "japan"})
     offer = store.offers[-1]
     portal.apply_update(store, offer["id"])
-    v = views.supplier_detail_view(store, "S3", "en", Money("en"), "http://x/supplier/portal/t")
+    v = views.supplier_detail_view(store, "S3", "en", Money("en"))
     card = next(o for o in v["offers"] if o["id"] == offer["id"])
     assert card["status"]["text"] == "Not one of the restaurant's ingredients" and card["checks"] == []
     noodles = next(o for o in v["offers"] if o["id"] == "O-noo-3")
@@ -166,7 +166,7 @@ def test_supplier_detail_lists_other_ingredients_with_a_reason(store):
 
 def test_proposal_diffs(store):
     portal.propose_update(store, "S3", "O-noo-3", {"price_eur": 3.6, "attributes": {"hydration_pct": 27}})
-    card = next(o for o in views.supplier_detail_view(store, "S3", "it", Money("it"), None)["offers"] if o["id"] == "O-noo-3")
+    card = next(o for o in views.supplier_detail_view(store, "S3", "it", Money("it"))["offers"] if o["id"] == "O-noo-3")
     labels = [c["label"] for c in card["proposal"]["changes"]]
     assert labels[0] == "Prezzo" and plain(card["proposal"]["changes"][0]["to"]) == "3,60 €"
 
@@ -272,7 +272,7 @@ def test_view_endpoints_respond(client):
                  "/views/suppliers/S3", "/views/clarifications", "/views/profile", "/restaurant/profile",
                  "/restaurant/links", "/restaurant/settings"):
         assert client.get(path + ("&" if "?" in path else "?") + "lang=en").status_code == 200, path
-    assert client.get("/views/suppliers/S3").json()["portal_url"].startswith(f"{APP}/supplier/portal/")
+    assert "portal_url" not in client.get("/views/suppliers/S3").json()
 
 
 def test_settings_switch_the_default_profile(client):

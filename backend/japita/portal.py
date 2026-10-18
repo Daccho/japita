@@ -5,6 +5,9 @@ Suppliers never change restaurant data directly: product updates and new product
 
 import secrets
 
+from . import restaurant
+from .avatar import avatar
+from .drawings import offer_drawing
 from .errors import DomainError
 from .forms import FIELD_FORM_JA, INGREDIENT_EN, INGREDIENT_JA, coerce, display_ja, form, in_range, spec_fields
 from .store import Store, _now
@@ -13,7 +16,7 @@ OWNER_ONLY_FIELDS = {"chef_approved"}  # decided inside the restaurant, never en
 
 # Supplier profile fields a supplier can propose changes to; the restaurant applies or rejects them.
 PROFILE_TEXT_FIELDS = ("name", "country", "address", "city", "contact_name", "email", "phone")
-PROFILE_FIELDS = (*PROFILE_TEXT_FIELDS, "delivery_days", "min_order_eur", "shipping_eur", "lead_time_days")
+PROFILE_FIELDS = (*PROFILE_TEXT_FIELDS, "logo_url", "delivery_days", "min_order_eur", "shipping_eur", "lead_time_days")
 DAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
 
 
@@ -155,6 +158,11 @@ def propose_profile(store: Store, supplier_id: str, changes: dict) -> dict:
             value = str(value).strip()
             if field == "name" and not value:
                 raise DomainError("invalid_input", "name is required", 422)
+        elif field == "logo_url":
+            from .avatar import clean_logo_url
+            value = clean_logo_url(value)
+            if value is None and not sup.get("logo_url"):
+                continue
         elif field == "delivery_days":
             if any(d not in DAYS for d in value):
                 raise DomainError("invalid_value", "unknown delivery day", 422)
@@ -222,9 +230,13 @@ def view(store: Store, sup: dict, lang: str = "ja", money=None) -> dict:
                  "offer_date": o["offer_date"], "origin_route": o["origin_route"],
                  "attributes": {k: v for k, v in o["attributes"].items() if k not in OWNER_ONLY_FIELDS},
                  "pending_update": o.get("pending_update"), "pending_new": bool(o.get("pending_new")),
-                 "form": product_form(store, o["ingredient"])}
+                 "form": product_form(store, o["ingredient"]), "drawing": offer_drawing(o)}
                 for o in store.offers if o["supplier_id"] == sup["id"]]
-    out = {"restaurant": store.profile["name"], "supplier": {"id": sup["id"], "name": sup["name"]},
+    restaurant_name = store.profile["name"]
+    out = {"restaurant": restaurant_name, "restaurant_name": restaurant_name,
+           "restaurant_avatar": avatar(restaurant.logo_url(store.data), restaurant_name),
+           "supplier_avatar": avatar(sup.get("logo_url"), sup["name"]),
+           "supplier": {"id": sup["id"], "name": sup["name"]},
            "profile": profile(sup), "pending_profile": sup.get("pending_profile"),
            "requests": requests, "orders": orders, "products": products,
            "new_product_forms": {ing: product_form(store, ing) for ing in store.profile["ingredients"]},

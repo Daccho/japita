@@ -1,5 +1,5 @@
 """Restaurant pages the owner edits: overview text, public links and settings. Stored as singletons in the
-state (`restaurant_profile`, `restaurant_links`, `restaurant_settings`); defaults apply until saved."""
+state (`restaurant_profile`, `restaurant_links`, `restaurant_settings` with the active profile and logo); defaults apply until saved."""
 
 from urllib.parse import urlsplit
 
@@ -88,6 +88,22 @@ def set_links(data: dict, values: dict) -> dict:
         out[key] = url
     data["restaurant_links"] = out
     return out
+
+
+DEFAULT_LOGO_URL = "/kumo-demo-logo.webp"
+
+
+def logo_url(data: dict) -> str:
+    return (data.get("restaurant_settings") or {}).get("logo_url") or DEFAULT_LOGO_URL
+
+
+def set_logo_url(data: dict, url: str | None) -> str:
+    """Save the restaurant logo; an empty value restores the default logo."""
+    from .avatar import clean_logo_url
+    settings = {k: v for k, v in (data.get("restaurant_settings") or {}).items() if k != "logo_url"}
+    cleaned = clean_logo_url(url)
+    data["restaurant_settings"] = {**settings, **({"logo_url": cleaned} if cleaned else {})}
+    return logo_url(data)
 
 
 def set_active_profile(data: dict, profile_id: str) -> dict:

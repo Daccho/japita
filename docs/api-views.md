@@ -11,6 +11,21 @@ Ready-to-render, localized data. Pages print the texts as they are; they never c
 - **Profile:** `?profile_id=`, else the restaurant's active profile (`GET/PUT /restaurant/settings`).
 - **Errors:** `{"error": {"code", "message"}, "detail"}`; `message` is localized when the request names a language.
 - **Labels:** each view has `labels: {catalog key: text}` for the page's static headings and buttons.
+- **Avatar:** `{ "url": string | null, "initials": "HS" }`: a logo URL when set, else 1–2 letters from the name
+  (legal forms such as B.V., S.r.l., GmbH skipped) for a round badge.
+- **Drawing:** `DrawingReference` `{ "key", "source": "library" | "generated" | "fallback", "state", "needs_drawing",
+  "tree" }`, rendered by `components/ProductDrawing.tsx`. Views read cached art only; they never start a model call.
+
+## GET /views/shell
+
+Header, navigation and footer for every restaurant page.
+
+```jsonc
+{ "lang", "account": { "name", "avatar", "place_text" },          // "42 seats · Milan"
+  "footer": { "week_text" | null, "fx_note" | null },              // "19 Oct – 25 Oct 2026 · 1,234 planned bowls"
+  "nav_counts": { "basket" },                                       // lines in the suggested plan, 0 when none
+  "labels": { "nav.week", "nav.suppliers", "nav.basket", "nav.profile", "au.logout", "workspace" } }
+```
 
 ## GET /views/week
 
@@ -91,20 +106,18 @@ Search: EN/IT synonyms, stop words, five-letter prefix matching. Sorts: `name-as
   "filters": { "q", "ingredient", "name", "sort", "active_count", "active_text", "note",
                "ingredients": [{ "value", "label" }], "sorts": [{ "value", "label" }], "show_name", "show_search" },
   "show_results", "count_text" | null, "empty": null | { "title", "body" }, "search_empty": null | { "title", "body" },
-  "rows": [{ "id", "name", "status_text", "pending", "pending_text", "image", "image_alt", "product",
+  "rows": [{ "id", "name", "avatar", "status_text", "pending", "pending_text", "drawing" | null, "image_alt", "product",
              "product_count", "product_count_text", "price_text", "price_pack_text", "cheapest_unit_eur" }] }
 ```
 
 ## GET /views/suppliers/{id}
 
-Creates the portal token when missing.
-
 ```jsonc
-{ "lang", "currency", "fx_note", "id", "name", "relationship", "terms_text", "portal_url", "labels",
+{ "lang", "currency", "fx_note", "id", "name", "avatar", "relationship", "terms_text", "labels",
   "profile_proposal": null | { "title", "changes": [{ "field", "label", "from", "to" }], "note", "note_label",
                                "note_ja", "note_ja_label", "apply_text", "reject_text" },
   "offers": [{ "id", "ingredient", "ingredient_label", "is_restaurant_ingredient", "product", "origin_text",
-               "date_text", "pack_text", "unit_price_text", "image", "image_alt", "image_caption",
+               "date_text", "pack_text", "unit_price_text", "drawing", "image_alt", "image_caption",
                "status": { "key": "ok" | "notOrderable" | "missing_evidence" | "fails_mandatory" | "needs_review"
                                   | "new" | "not_ingredient", "text", "warn" },
                "checks": [{ "kind": "required" | "preferred" | "orderability", "field", "ok", "missing", "text",
@@ -122,7 +135,8 @@ Products for ingredients the restaurant does not buy stay listed with status `no
 ```jsonc
 { "lang", "labels", "empty_text" | null,
   "items": [{ "id", "product", "supplier", "state", "state_text", "badge", "field", "field_label", "reason",
-              "question_ja", "translation", "can_approve", "portal_url" | null, "waiting_text" | null,
+              "question_ja", "translation", "can_approve",
+              "waiting_text" | null,                   // "Sent to the supplier's portal · waiting for reply"
               "reply": null | { "translation", "text_ja" }, "value_text" | null, "choose_text" | null,
               "choices": [{ "value", "label" }],      // POST /clarifications/{id}/apply with {"value": value}
               "applied_text" | null }] }
@@ -157,11 +171,13 @@ PUT `{ "active_profile_id" }` (404 for an unknown id). Both return
 
 ## GET/PUT /restaurant/profile
 
-PUT `{ "values": { description, concept, positioning, location, seats, menuPrice, make, buy, ownerNotes } }` (partial;
-multi-line fields ≤ 1200, others ≤ 160 characters).
+PUT `{ "values"?: { description, concept, positioning, location, seats, menuPrice, make, buy, ownerNotes },
+"logo_url"?: string }` (partial; multi-line fields ≤ 1200, others ≤ 160 characters). `logo_url` is a site path
+(`/kumo-demo-logo.webp`, not `//host`) or an http(s) URL without credentials, ≤ 400 characters (`invalid_url`); an
+empty value restores the default `/kumo-demo-logo.webp`.
 
 ```jsonc
-{ "lang", "values", "name", "subtitle", "facts": [{ "label", "value" }], "questionnaire": [{ "label", "value" }],
+{ "lang", "values", "name", "logo_url", "avatar", "subtitle", "facts": [{ "label", "value" }], "questionnaire": [{ "label", "value" }],
   "fields": [{ "key", "label", "multiline", "max_length" }], "labels" }
 ```
 
@@ -177,8 +193,12 @@ an empty value removes one. URLs: http(s), no credentials, ≤ 400 characters (e
 
 ## GET /auth/me
 
-Restaurant accounts also get `{ "lang", "active_profile_id", "default_profile_id", "profiles": [{ "id", "label",
-"description", "active" }] }` (labels in `?lang=it|en|ja`, else the language cookie).
+Every account gets `{ "username", "display_name", "role", "has_password", "avatar", "place_text" }`; supplier
+accounts add `supplier_id`. Restaurant accounts also get `{ "lang", "active_profile_id", "default_profile_id",
+"profiles": [{ "id", "label", "description", "active" }] }` (labels in `?lang=it|en|ja`, else the language cookie).
+`place_text`: restaurant → the place line (`42 seats · Milan`, restaurant language); supplier → `For Kumo Ramen Milano`
+/ `Kumo Ramen Milano 様向け` (portal language: `?lang=ja|en` or `japita_portal_lang`, default `ja`). The supplier's
+avatar uses its `logo_url` when the restaurant applied one.
 
 ## POST /agent/ask → GET /jobs/{id} result
 
@@ -188,7 +208,7 @@ The request takes `lang: it | en` for the drafts; `profile_id` defaults to the a
 
 ## Supplier portal: GET /portal/{token}?lang=ja|en
 
-The existing view plus: `lang`, `currency`, `fx_note`, `default_tab`, `counts: { requests, orders, products, profile }`,
+The existing view plus: `restaurant_name`, `restaurant_avatar`, `supplier_avatar`, `lang`, `currency`, `fx_note`, `default_tab`, `counts: { requests, orders, products, profile }`,
 `tabs: [{ id, label, intro, count }]`, `product_groups: [{ ingredient, title, product_ids }]`, `for_restaurant_text`,
 `empty: { requests | orders | products: { title, body } }`, `profile_view: { min_order_text, shipping_text,
 min_order_amount, shipping_amount, delivery_days_text, lead_time_text }`. Requests and orders are sorted (open first,
@@ -196,7 +216,9 @@ newest first). Each request adds `state_text, question, sent_text, label, hint`;
 received_text, state_text, badge, delivery_label, delivery_text, goods_text, shipping_text, total_text, accepted_text,
 can_accept, can_change_delivery`, lines add `ingredient_name, pack_word (本/袋/bottle/bag), qty_text, cost_text`,
 changes add `from_text, to_text, at_text`; each product adds `ingredient_name, is_restaurant_ingredient,
-not_ingredient_text, price_text, price_amount, pack_text, origin_text, updated_text, attribute_rows, pending_view`.
+not_ingredient_text, price_text, price_amount, pack_text, origin_text, updated_text, attribute_rows, pending_view,
+drawing`. The profile includes `logo_url`; `POST …/profile` accepts `logo_url` (same rules as the restaurant logo;
+empty removes it) as part of the profile proposal the restaurant applies or rejects.
 Every POST under `/portal/{token}/…` returns the same view.
 
 ## GET /portal/{token}/forms?ingredient=<free text>

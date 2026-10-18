@@ -60,6 +60,7 @@ class ProfileUpdate(BaseModel):
     contact_name: str | None = Field(default=None, max_length=120)
     email: str | None = Field(default=None, max_length=200)
     phone: str | None = Field(default=None, max_length=40)
+    logo_url: str | None = Field(default=None, max_length=400, description="Site path or http(s) URL; empty removes it")
     delivery_days: list[Day] | None = None
     min_order_eur: float | None = Field(default=None, ge=0)
     shipping_eur: float | None = Field(default=None, ge=0)

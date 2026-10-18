@@ -10,7 +10,7 @@ from typing import Literal
 from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
 
-from . import auth, portal, repo, restaurant, views
+from . import repo, restaurant, views
 from .errors import AppError, from_value_error
 from .store import Store, active_profile_id
 from .textfmt import Money, lang_from_request, restaurant_lang
@@ -31,11 +31,11 @@ def _reader(request: Request) -> str:
     return getattr(request.state, "user_id", None) or "restaurant"
 
 
-def portal_url(store: Store, supplier_id: str) -> tuple[str, bool]:
-    """Absolute supplier portal URL; the flag is true when a new token was created (state must be saved)."""
-    created = not store.suppliers[supplier_id].get("portal_token")
-    token = portal.portal_token(store, supplier_id)
-    return f"{auth.app_origins()[0]}/supplier/portal/{token}", created
+@router.get("/views/shell")
+def shell(request: Request, profile_id: str | None = None):
+    """Header, navigation and footer data for every restaurant page."""
+    store, lang, money = _ctx(request, profile_id)
+    return views.shell_view(store, lang, money)
 
 
 @router.get("/views/week")
@@ -81,25 +81,13 @@ def supplier_detail(supplier_id: str, request: Request, profile_id: str | None =
     store, lang, money = _ctx(request, profile_id)
     if supplier_id not in store.suppliers:
         raise AppError(404, "not_found", "supplier not found")
-    url, created = portal_url(store, supplier_id)
-    if created:
-        repo.save_state(store.data)
-    return views.supplier_detail_view(store, supplier_id, lang, money, url)
+    return views.supplier_detail_view(store, supplier_id, lang, money)
 
 
 @router.get("/views/clarifications")
 def clarifications(request: Request, profile_id: str | None = None):
     store, lang, _ = _ctx(request, profile_id)
-    offers = {o["id"]: o for o in store.offers}
-    urls, changed = {}, False
-    for c in store.clarifications:
-        sid = offers.get(c["offer_id"], {}).get("supplier_id")
-        if c["state"] != "draft" and sid and sid not in urls:
-            urls[sid], created = portal_url(store, sid)
-            changed |= created
-    if changed:
-        repo.save_state(store.data)
-    return views.clarifications_view(store, lang, urls)
+    return views.clarifications_view(store, lang)
 
 
 @router.get("/views/profile")
@@ -132,7 +120,8 @@ def move_rule(profile_id: str, body: MoveRule, request: Request):
 # --- restaurant pages ---------------------------------------------------------------------------------
 
 class RestaurantProfile(BaseModel):
-    values: dict[str, str | None]
+    values: dict[str, str | None] = {}
+    logo_url: str | None = Field(default=None, max_length=400, description="Site path or http(s) URL; empty restores the default")
 
 
 @router.get("/restaurant/profile")
@@ -146,6 +135,8 @@ def put_restaurant_profile(body: RestaurantProfile, request: Request):
     store, lang, _ = _ctx(request)
     try:
         restaurant.set_profile_text(store.data, body.values)
+        if "logo_url" in body.model_fields_set:
+            restaurant.set_logo_url(store.data, body.logo_url)
     except ValueError as e:
         raise from_value_error(e, 422)
     repo.save_state(store.data)

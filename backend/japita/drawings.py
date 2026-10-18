@@ -80,6 +80,25 @@ def reference(name, hint="", attributes=None):
             "needs_drawing": fallback, "tree": variant(base["tree"], base["state"], info["state"])}
 
 
+def library_reference(name, hint="", attributes=None):
+    """The approved library drawing (or the generic one) without reading the drawing cache."""
+    info = identify(name, hint, attributes)
+    base = (base_drawing(info["ingredient"], info["form"]) if info["ingredient"] else None) or generic(info["form"])
+    fallback = base["ingredient"] == "generic"
+    return {"key": base["key"], "source": "fallback" if fallback else "library", "state": info["state"],
+            "needs_drawing": fallback, "tree": variant(base["tree"], base["state"], info["state"])}
+
+
+def offer_drawing(offer):
+    """Drawing for an offer: cached generated art when the database is reachable, else the library drawing.
+    Reads only; never starts a model call."""
+    try:
+        return reference(offer["product"], offer["ingredient"], offer.get("attributes"))
+    except Exception:  # no database configured (pure view builders) or a transient database error
+        log.debug("drawing cache unavailable", exc_info=True)
+        return library_reference(offer["product"], offer["ingredient"], offer.get("attributes"))
+
+
 def offer_view(offer):
     return {**offer, "drawing": reference(offer["product"], offer["ingredient"], offer.get("attributes"))}
 
