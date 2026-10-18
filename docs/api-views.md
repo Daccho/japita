@@ -117,6 +117,29 @@ Creates the portal token when missing.
 Products for ingredients the restaurant does not buy stay listed with status `not_ingredient`
 ("Not one of the restaurant's ingredients").
 
+## GET /views/import-checks
+
+EU import and labelling rule checks for every offer, from the sourced ruleset in
+`backend/japita/data/import_rules.json` (judged in `japita/rules.py`, no LLM). Decision support, not clearance. Texts in
+`it` / `en` (rule texts also exist in `ja`).
+
+```jsonc
+{ "lang", "accessed": "2026-10-18", "disclaimer", "outcome_texts": { "ok", "info", "needs_review", "missing_document" },
+  "rules": [{ "rule_id", "title", "source": { "title", "url", "accessed" } }],
+  "offers": [{ "offer_id", "product", "ingredient", "supplier_id", "supplier", "is_restaurant_ingredient",
+               "checks": [ImportCheck], "summary": ImportSummary }] }
+```
+
+`ImportCheck`: `{ "rule_id", "outcome": "ok" | "info" | "needs_review" | "missing_document", "outcome_text", "title",
+"explanation", "source": { "title", "url", "accessed" }, "blocks_order", "missing_field"?, "missing_field_label"? }`.
+`missing_field` is the offer attribute a supplier question can fill (`draft_clarification` / the clarification flow).
+
+`ImportSummary`: `{ "counts": { "ok", "info", "needs_review", "missing_document" }, "worst" | null, "worst_text" | null,
+"attention" (needs_review + missing_document), "blocks_order" }`. Each offer in `/views/suppliers/{id}` and each
+selected plan line in `/views/basket` carries `import_checks: ImportSummary`. The checks do not change plan
+feasibility, except that a `missing_document` for a rule marked `blocks_order` makes the offer not orderable (reason code
+`import_document_missing`); no rule in the current ruleset is marked `blocks_order`.
+
 ## GET /views/clarifications
 
 ```jsonc
