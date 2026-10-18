@@ -43,12 +43,9 @@ export default function SupplierPage() {
 
   return (
     <div lang="ja" className="min-h-screen bg-aj-page">
-      <div className="border-b-2 border-aj-ink bg-aj-yolk px-4 py-3 text-center text-sm font-bold text-aj-ink">
-        {req?.notice_ja ?? "これはデモ用のテスト仕入先画面です。実際の取引・発注は行われません。"}
-      </div>
 
       <div className="mx-auto max-w-2xl px-4 py-8">
-        <p className="text-xs tracking-widest text-aj-muted">JAPITA ・ 仕入先様向け お問い合わせ（テスト）</p>
+        <p className="text-xs tracking-widest text-aj-muted">JAPITA ・ 仕入先様向け お問い合わせ</p>
 
         {error && <p className="mt-4 rounded-[10px] bg-aj-chili-tint p-3 text-sm font-bold text-aj-chili-text">{error}</p>}
         {!req && !error && <p className="mt-6 text-aj-muted">読み込み中…</p>}

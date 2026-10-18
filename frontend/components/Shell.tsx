@@ -30,7 +30,6 @@ export function Footer() {
   const bowls = BOWLS.reduce((s, k) => s + (week?.servings[k] ?? 0), 0);
   return (
     <footer className="jp-footer">
-      <span>{t("foot.sample")}</span>
       {week?.dates?.length === 2 && (
         <span>{t("foot.week", { dates: d.range(week.dates[0], week.dates[1]), bowls: bowls.toLocaleString("en-IE") })}</span>
       )}
@@ -119,9 +118,6 @@ export default function Shell({ children }: { children: ReactNode }) {
               Kumo Ramen
               <br />
               {t("side.place")}
-              <br />
-              <br />
-              {t("side.demo")}
             </div>
           </aside>
           <main className="jp-body">

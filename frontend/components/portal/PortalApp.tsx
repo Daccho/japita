@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CheckCircle2, ClipboardList, Info, LinkIcon, MessageSquareText, Package, RefreshCw, Store, WifiOff } from "lucide-react";
+import { CheckCircle2, ClipboardList, LinkIcon, MessageSquareText, Package, RefreshCw, Store, WifiOff } from "lucide-react";
 import { portalApi, PortalError, type PortalView } from "@/lib/portal";
 import { PortalLangProvider, useLang, type Lang } from "./i18n";
 import { OrdersTab } from "./OrdersTab";
@@ -20,7 +20,7 @@ export function PortalApp({ token }: { token: string }) {
 }
 
 function Portal({ token }: { token: string }) {
-  const { t, lang } = useLang();
+  const { t } = useLang();
   const [view, setView] = useState<PortalView | null>(null);
   const [failure, setFailure] = useState<"notfound" | "offline" | null>(null);
   const [tab, setTab] = useState<Tab | null>(null);
@@ -110,7 +110,6 @@ function Portal({ token }: { token: string }) {
     { id: "products", label: t.tabProducts, icon: Package },
   ];
   const props: TabProps = { view, token, onView: setView, reload, notify };
-  const notice = lang === "en" && view.notice_en ? view.notice_en : view.notice_ja;
 
   return (
     <Shell>
@@ -126,10 +125,6 @@ function Portal({ token }: { token: string }) {
           </div>
           <LangToggle />
         </div>
-        <p className="mt-3 flex items-start gap-2 rounded-[10px] bg-white px-3 py-2 text-xs font-medium leading-relaxed text-aj-ink">
-          <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-          {notice}
-        </p>
       </header>
 
       <nav className="sticky top-0 z-10 border-b-2 border-aj-ink bg-white px-4 py-2.5">

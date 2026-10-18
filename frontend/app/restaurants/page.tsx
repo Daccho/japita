@@ -151,9 +151,6 @@ export default function WeekPage() {
                 {t("wk.planned", { v: money(spending.planned_eur) })}
               </p>
             )}
-            <p className="jp-muted" style={{ fontSize: 11, marginTop: 10 }}>
-              {t("wk.spendNote")}
-            </p>
           </section>
           {suggested && (
             <section className="jp-advisor">

@@ -30,7 +30,6 @@ export default function Overview() {
       <section className="jp-panel">
         <div className="jp-line-head">
           <h2>{t("ov.editTitle")}</h2>
-          <span className="jp-badge">{t("side.demo")}</span>
         </div>
         <form
           onSubmit={(e) => {
@@ -80,7 +79,7 @@ export default function Overview() {
         </div>
         <div className="jp-profile-title">
           <span className="jp-profile-mark">
-            <Image src="/kumo-demo-logo.webp" alt="Kumo Ramen demo logo" width={50} height={50} />
+            <Image src="/kumo-demo-logo.webp" alt="Kumo Ramen logo" width={50} height={50} />
           </span>
           <div>
             <h2>Kumo Ramen Milano</h2>
@@ -103,7 +102,6 @@ export default function Overview() {
         <details className="jp-source">
           <summary style={{ cursor: "pointer" }}>{t("ov.notes")}</summary>
           <div className="jp-source-body">
-            <p className="jp-section-note">{t("ov.notesNote")}</p>
             <blockquote className="jp-owner-notes">{p.ownerNotes}</blockquote>
           </div>
         </details>

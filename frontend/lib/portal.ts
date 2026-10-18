@@ -80,8 +80,6 @@ export type PortalProduct = {
 };
 
 export type PortalView = {
-  notice_ja: string;
-  notice_en?: string;
   restaurant: string;
   supplier: { id: string; name: string };
   requests: PortalRequest[];

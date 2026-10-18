@@ -131,7 +131,7 @@ def supplier_accept(store: Store, supplier_id: str, po_id: str, delivery_date: s
     po["acknowledgment"] = {"ack_id": f"ACK-{secrets.token_hex(4).upper()}", "received_at": _now(),
                             "by": "supplier", "simulated": True, "note_ja": note_ja,
                             "note_translations": note_translations or {},
-                            "message": "Accepted on the test supplier portal (no real purchase)."}
+                            "message": "Accepted on the supplier portal."}
     po["state"] = "acknowledged"
     for ln in po["lines"]:
         if ln["purchase_qty"] > 0:
@@ -168,4 +168,4 @@ def spending(store: Store) -> dict:
     budget = store.profile["weekly_budget_eur"]
     return {"budget_eur": budget, "planned_eur": status["delivered_total_eur"] if status else None,
             "committed_eur": committed, "remaining_eur": round(budget - committed, 2),
-            "note": "Committed spending covers simulated demo orders only; nothing is paid."}
+            "note": "Committed spending covers accepted orders; payments are handled outside Japita."}

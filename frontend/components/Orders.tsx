@@ -98,9 +98,6 @@ export default function Orders({ orders, canSubmit }: { orders: PurchaseOrder[];
           </article>
         );
       })}
-      <p className="jp-muted" style={{ fontSize: 11, marginTop: 10 }}>
-        {t("po.simulated")}
-      </p>
     </div>
   );
 }

@@ -136,9 +136,7 @@ def view(store: Store, sup: dict) -> dict:
                  "pending_update": o.get("pending_update"), "pending_new": bool(o.get("pending_new")),
                  "form": product_form(store, o["ingredient"])}
                 for o in store.offers if o["supplier_id"] == sup["id"]]
-    return {"notice_ja": "これはデモ用のテストサプライヤー画面です。実際の取引・発注は行われません。",
-            "notice_en": "This is a test supplier page for the demo. No real trades or orders take place.",
-            "restaurant": store.profile["name"], "supplier": {"id": sup["id"], "name": sup["name"]},
+    return {"restaurant": store.profile["name"], "supplier": {"id": sup["id"], "name": sup["name"]},
             "requests": requests, "orders": orders, "products": products,
             "new_product_forms": {ing: product_form(store, ing) for ing in store.profile["ingredients"]},
             "ingredient_ja": INGREDIENT_JA, "ingredient_en": INGREDIENT_EN}

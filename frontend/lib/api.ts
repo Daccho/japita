@@ -212,7 +212,6 @@ export type Clarification = {
   applied_value?: unknown;
 };
 export type SupplierRequest = {
-  notice_ja: string;
   restaurant: string;
   supplier: string;
   product: string;

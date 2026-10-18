@@ -427,7 +427,6 @@ def reply_clarification(clarification_id: str, body: Reply):
 
 # --- test supplier page (Japanese) -------------------------------------------------------------------
 
-SUPPLIER_NOTICE_JA = "これはデモ用のテスト仕入先画面です。実際の取引・発注は行われません。"
 
 
 def _supplier_view(store: Store, c: dict) -> dict:
@@ -435,7 +434,6 @@ def _supplier_view(store: Store, c: dict) -> dict:
     offer = store.offer(c["offer_id"])
     reply = c.get("reply")
     return {
-        "notice_ja": SUPPLIER_NOTICE_JA,
         "restaurant": store.profile["name"],
         "supplier": store.suppliers[offer["supplier_id"]]["name"],
         "product": offer["product"],
