@@ -296,7 +296,7 @@ def test_profile_budget_bounds_and_currency(client):
     assert r.status_code == 422
     r = client.put("/profiles/kumo-authentic?lang=en", json={**p, "weekly_budget_eur": None, "budget": {"amount": 1125.3, "currency": "USD"}})
     assert r.status_code == 200 and r.json()["weekly_budget_eur"] == 1000.0
-    assert r.json()["impact"]["text"].startswith("Cheapest basket:")
+    assert r.json()["impact"]["text"].startswith("Cheapest plan:")
     r = client.patch("/profiles/kumo-authentic/rules/move", json={"ingredient": "noodles", "field": "hydration_pct"})
     assert r.status_code == 200 and "impact" in r.json()
 
@@ -330,3 +330,12 @@ def test_portal_forms_lookup_and_localized_portal_error(client, sign_in_supplier
 def test_clean_answer_keeps_invalid_escapes_literal():
     assert views.clean_answer('{"text": "hydration \\le 30"}', {}) == "hydration \\le 30"
     assert views.clean_answer("plain S9 text", {}) == "plain S9 text"
+
+
+def test_profile_patch(client):
+    r = client.patch("/profiles/kumo-authentic?lang=en", json={"budget": {"amount": 1125.3, "currency": "USD"},
+                                                               "accepted_delivery_days": ["fri", "tue"]})
+    assert r.status_code == 200 and r.json()["budget"]["amount_eur"] == 1000.0
+    assert [d["day"] for d in r.json()["days"] if d["on"]] == ["tue", "fri"] and "impact" in r.json()
+    assert client.patch("/profiles/kumo-authentic", json={"accepted_delivery_days": ["xyz"]}).status_code == 422
+    assert client.patch("/profiles/kumo-authentic", json={"budget": {"amount": 1, "currency": "JPY"}}).status_code == 422

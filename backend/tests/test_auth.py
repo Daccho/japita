@@ -188,9 +188,19 @@ def test_portal_reply_by_request_id(client, sign_in_supplier):
     assert client.get(f"/supplier/requests/{c['token']}").status_code == 403
     client.post("/auth/logout", headers={"origin": APP})
     sign_in_supplier(client, "S3", APP)
-    r = client.post(f"/portal/me/requests/{c['id']}/reply", json={"value": 27}, headers={"origin": APP})
+    r = client.post(f"/portal/me/requests/{c['id']}/reply?lang=en", json={"value": 27}, headers={"origin": APP})
     assert r.status_code == 200, r.text
-    assert next(q for q in r.json()["requests"] if q["id"] == c["id"])["state"] == "replied"
+    q = next(q for q in r.json()["requests"] if q["id"] == c["id"])
+    assert q["state"] == "answered" and q["state_text"] == "Answered" and q["next_step_text"].startswith("After the")
+    client.post("/auth/logout", headers={"origin": APP})
+    login(client)
+    assert client.post(f"/clarifications/{c['id']}/apply", json={}, headers={"origin": APP}).status_code == 200
+    client.post("/auth/logout", headers={"origin": APP})
+    sign_in_supplier(client, "S3", APP)
+    q = next(q for q in client.get("/portal/me?lang=ja").json()["requests"] if q["id"] == c["id"])
+    assert q["state"] == "applied" and q["state_text"] == "店舗が反映しました" and q["next_step_text"] is None
+    feed = client.get("/portal/me/notifications?lang=en").json()
+    assert feed["items"][0]["body"] == "Kumo Ramen Milano applied your hydration answer."
 
 
 def test_supplier_notifications_and_decisions(client, sign_in_supplier):

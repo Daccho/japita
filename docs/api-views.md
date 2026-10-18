@@ -57,7 +57,7 @@ Header, navigation and footer for every restaurant page.
 { "id", "supplier", "state", "state_text", "badge": "ok" | "warning" | "neutral",
   "lines": [{ "offer_id", "text" }], "delivery_date", "delivery_text", "total_text",
   "changes": [{ "text", "note" | null }], "note" | null, "note_label",
-  "can_submit", "submit_text", "sending_text" }
+  "can_submit", "submit_key", "submit_text", "sending_text" }   // send submit_key as the Idempotency-Key header
 ```
 
 ## GET /views/basket?kind=
@@ -73,7 +73,7 @@ one (on time, else lowest cost, else first).
   "plans": [{ "kind", "title", "total_text", "total_eur", "vs_text", "timing": { "text", "warn" },
               "also_text" | null, "selected", "approved", "has_new", "savings_text" | null }],   // display order
   "selected": null | { "kind", "title", "prefs_text",
-      "lines": [{ "offer_id", "product", "ingredient", "ingredient_label", "supplier", "qty_text", "detail_text",
+      "lines": [{ "offer_id", "product", "drawing", "ingredient", "ingredient_label", "supplier", "qty_text", "detail_text",
                   "timing_text", "cost_text", "badge": { "text", "warn" } | null, "is_new", "new_text" | null }],
       "tradeoffs": [{ "ingredient", "ingredient_label", "preference", "field", "outcome", "text", "hint" }],
       "total_text", "total_eur", "goods_shipping_text", "budget_pct", "within_budget", "remaining_eur",
@@ -147,7 +147,7 @@ Products for ingredients the restaurant does not buy stay listed with status `no
               "applied_text" | null }] }
 ```
 
-## GET /views/profile · PATCH /profiles/{id}/rules/move · PUT /profiles/{id}
+## GET /views/profile · PATCH /profiles/{id}/rules/move · PATCH /profiles/{id} · PUT /profiles/{id}
 
 ```jsonc
 { "lang", "currency", "fx_note", "profile_id", "active_profile_id",
@@ -161,6 +161,9 @@ Products for ingredients the restaurant does not buy stay listed with status `no
   "priorities": [{ "key", "label", "value", "options": [{ "value", "label" }] }] }
 ```
 
+- `PATCH /profiles/{id}` `{ "budget"?: { "amount" (1–100000), "currency": EUR | USD | JPY }, "accepted_delivery_days"?:
+  ["mon", …], "priorities"?: { key: "low" | "medium" | "high" } }` (partial; budget converted at the ECB rate and
+  1–100000 EUR, `invalid_budget`) saves and returns the profile view plus `impact`, like the rule move.
 - `PATCH /profiles/{id}/rules/move` `{ "ingredient", "field", "to"?: "mandatory" | "negotiable" }` saves and returns
   the profile view plus `impact: { before_eur, after_eur, text }` (cheapest plan).
 - `PUT /profiles/{id}` accepts `budget: { amount (1–100000), currency: EUR | USD | JPY }` (converted at the ECB rate)
@@ -217,7 +220,10 @@ The existing view plus: `restaurant_name`, `restaurant_avatar`, `supplier_avatar
 `tabs: [{ id, label, intro, count }]`, `product_groups: [{ ingredient, title, product_ids }]`, `for_restaurant_text`,
 `empty: { requests | orders | products: { title, body } }`, `profile_view: { min_order_text, shipping_text,
 min_order_amount, shipping_amount, delivery_days_text, lead_time_text }`. Requests and orders are sorted (open first,
-newest first). Each request adds `state_text, question, sent_text, label, hint`; each order adds `title, number_text,
+newest first). Each request's `state` is `awaiting_reply` → `answered` (the supplier replied) → `applied` (the
+restaurant applied the answer) or `not_used` (the restaurant applied a different value); it adds `state_text, badge
+(warning | neutral | ok), next_step_text (answered only: "After the restaurant reviews it, any order will appear under
+Orders."), question, sent_text, label, hint`; each order adds `title, number_text,
 received_text, state_text, badge, delivery_label, delivery_text, goods_text, shipping_text, total_text, accepted_text,
 can_accept, can_change_delivery`, lines add `ingredient_name, pack_word (本/袋/bottle/bag), qty_text, cost_text`,
 changes add `from_text, to_text, at_text`; each product adds `ingredient_name, is_restaurant_ingredient,
@@ -236,7 +242,9 @@ delivery days joined, empty values "Not set").
 
 Same shape as `GET /notifications`; read state per supplier. Items (`kind`): `request` (questions awaiting this
 supplier's reply), `order` (orders sent and not yet accepted), `decision` (the restaurant applied or declined the
-supplier's product change, new product or profile change; newest first, the last 20 decisions are kept). Each item adds
+supplier's answer to a question — "Kumo Ramen Milano applied your hydration answer" —, product change, new product or
+profile change; newest first, the last 20 decisions are kept). Order items are titled "A new order arrived" /
+「新しい注文が届きました」. Each item adds
 `tab` (`requests` | `orders` | `products` | `profile`) and `href` = `?tab=<tab>`.
 
 ## GET /portal/{token}/forms?ingredient=<free text>
@@ -248,3 +256,10 @@ supplier's product change, new product or profile change; newest first, the last
 - Supplier spec values respect the form's min/max (hydration 0–100) and choices, in product proposals and form replies
   (`invalid_value`, 422).
 - A delivery change to the order's current date is rejected (`same_delivery_date`, 422).
+
+## Other defaults
+
+- `POST /evolus/weekly-intake` checks the restaurant's active profile unless `?profile_id=` names another.
+- Restaurant wording: the plans page is "Order plans" / "Piani d'ordine" (`nav.basket`, `bk.title`); the week view's
+  suggestion is "Suggested plan" / "Piano suggerito". Server texts never embed exchange rates; `fx_note` is the only
+  place a rate appears.

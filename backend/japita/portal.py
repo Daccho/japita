@@ -222,12 +222,32 @@ def reject_profile(store: Store, supplier_id: str) -> dict:
     return sup
 
 
+def answer_used(c: dict) -> bool:
+    """Whether the value the restaurant applied is the one read from the supplier's reply."""
+    ex = (c.get("reply") or {}).get("extraction") or {}
+    if not ex:
+        return False
+    if ex.get("status") == "ok":
+        return c.get("applied_value") == ex.get("value")
+    return c.get("applied_value") in (ex.get("read_1"), ex.get("read_2"))
+
+
+def request_state(c: dict) -> str:
+    """A question as the supplier sees it: awaiting_reply -> answered -> applied, or not_used when the restaurant
+    applied a different value."""
+    if c["state"] == "sent":
+        return "awaiting_reply"
+    if c["state"] == "supplier_replied":
+        return "answered"
+    return "applied" if answer_used(c) else "not_used"
+
+
 def view(store: Store, sup: dict, lang: str = "ja", money=None) -> dict:
     """Everything the supplier portal shows: only this supplier's requests, orders and products, with display
     texts in `lang` ("ja" or "en") and money in JPY (ja) or USD (en)."""
     offer_ids = {o["id"] for o in store.offers if o["supplier_id"] == sup["id"]}
     requests = [{"id": c["id"], "token": c["token"], "offer_id": c["offer_id"], "question_ja": c["text_ja"],
-                 "question_en": (c.get("translations") or {}).get("en"), "form": form(c["field"]), "state": "awaiting_reply" if c["state"] == "sent" else "replied",
+                 "question_en": (c.get("translations") or {}).get("en"), "form": form(c["field"]), "state": request_state(c),
                  "sent_at": c.get("sent_at"), "reply_ja": (c.get("reply") or {}).get("text_ja")}
                 for c in store.clarifications if c["offer_id"] in offer_ids and c.get("token")]
     approvals = {a["id"]: a["profile_id"] for a in store.data["approvals"]}

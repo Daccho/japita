@@ -10,7 +10,7 @@ from typing import Literal
 from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
 
-from . import repo, restaurant, views
+from . import fx, repo, restaurant, views
 from .errors import AppError, from_value_error
 from .store import Store, active_profile_id
 from .textfmt import Money, lang_from_request, restaurant_lang
@@ -112,6 +112,41 @@ def move_rule(profile_id: str, body: MoveRule, request: Request):
         views.move_rule(store.profile, body.ingredient, body.field, body.to)
     except ValueError as e:
         raise from_value_error(e, 422)
+    repo.save_state(store.data)
+    return {**views.profile_view(store, lang, money),
+            "impact": views.impact(before, views.cheapest_total(store), lang, money)}
+
+
+class BudgetIn(BaseModel):
+    amount: float = Field(ge=1, le=100000)
+    currency: Literal["EUR", "USD", "JPY"] = "EUR"
+
+
+class ProfilePatch(BaseModel):
+    budget: BudgetIn | None = None
+    accepted_delivery_days: list[Literal["mon", "tue", "wed", "thu", "fri", "sat", "sun"]] | None = None
+    priorities: dict[str, Literal["low", "medium", "high"]] | None = None
+
+
+@router.patch("/profiles/{profile_id}")
+def patch_profile(profile_id: str, body: ProfilePatch, request: Request):
+    """Change the budget (converted to EUR at the ECB rate), delivery days or priorities, save, and return the
+    profile view with the effect on the cheapest plan."""
+    store, lang, money = _ctx(request, profile_id)
+    before = views.cheapest_total(store)
+    p = store.profile
+    if body.budget is not None:
+        eur, _, _ = fx.to_eur(body.budget.amount, body.budget.currency)
+        if not 1 <= eur <= 100000:
+            raise AppError(422, "invalid_budget", "weekly budget must be between 1 and 100000")
+        p["weekly_budget_eur"] = eur
+    if body.accepted_delivery_days is not None:
+        p["accepted_delivery_days"] = [d for d in views.DAYS if d in body.accepted_delivery_days]
+    if body.priorities is not None:
+        unknown = set(body.priorities) - set(p.get("priorities", {}))
+        if unknown:
+            raise AppError(422, "invalid_input", f"unknown priority {sorted(unknown)[0]}")
+        p["priorities"] = {**p.get("priorities", {}), **body.priorities}
     repo.save_state(store.data)
     return {**views.profile_view(store, lang, money),
             "impact": views.impact(before, views.cheapest_total(store), lang, money)}

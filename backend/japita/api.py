@@ -17,7 +17,7 @@ from fastapi import FastAPI, File, Header, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field
 
-from . import auth, calc, fx, jobs, repo, views
+from . import auth, calc, fx, jobs, portal, repo, views
 from .agent import run_agent
 from .errors import AppError, from_value_error, install as install_error_handlers
 from .evolus import EvolusAgent, run_agent_evolus
@@ -457,6 +457,8 @@ def apply_clarification(clarification_id: str, body: ApplyReply, profile_id: str
         raise HTTPException(404, "clarification not found")
     except ValueError as e:
         raise from_value_error(e, 409)
+    portal.record_decision(store, store.offer(c["offer_id"])["supplier_id"], "answer", c["field"],
+                           "applied" if portal.answer_used(c) else "rejected")
     repo.save_state(data)
     return {"clarification": c, "baskets": calc.calculate_baskets(_store(profile_id))}
 

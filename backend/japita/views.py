@@ -139,6 +139,7 @@ def po_view(store: Store, po: dict, lang: str, money: Money, can_submit: bool) -
         "note": (ack.get("note_translations") or {}).get(lang),
         "note_label": t(lang, "po.note"),
         "can_submit": po["state"] == "approved" and can_submit,
+        "submit_key": f"{po['id']}-{po['approval_id']}",
         "submit_text": t(lang, "po.submit"), "sending_text": t(lang, "po.sending"),
     }
 
@@ -154,7 +155,9 @@ def _plan_line(store: Store, ln: dict, lang: str, money: Money, new: set[str]) -
     elif ln.get("arrives_in_time") is True:
         badge = {"text": t(lang, "bk.onTime"), "warn": False}
     is_new = ln["offer_id"] in new
+    offer = next((o for o in store.offers if o["id"] == ln["offer_id"]), None)
     return {"offer_id": ln["offer_id"], "product": ln["product"], "ingredient": ln["ingredient"],
+            "drawing": offer_drawing(offer) if offer else None,
             "ingredient_label": _ing(lang, ln["ingredient"]), "supplier": _sup(store, ln["supplier_id"]),
             "qty_text": f"{ln['packs']} × {qty(ln['pack_size'], ln['unit'])} = {qty(ln['purchase_qty'], ln['unit'])}",
             "detail_text": f"{_ing(lang, ln['ingredient'])} · {_sup(store, ln['supplier_id'])} · {ln['packs']} × "

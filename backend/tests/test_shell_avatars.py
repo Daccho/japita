@@ -45,7 +45,7 @@ def test_shell_view(store):
     assert v["account"] == {"name": "Kumo Ramen Milano", "avatar": {"url": "/kumo-demo-logo.webp", "initials": "KR"},
                             "place_text": "42 seats · Milan"}
     assert v["footer"]["week_text"].endswith("planned bowls") and v["footer"]["fx_note"].startswith("1 EUR = $")
-    assert v["nav_counts"]["basket"] == 3 and v["labels"]["nav.basket"] == "Basket"
+    assert v["nav_counts"]["basket"] == 3 and v["labels"]["nav.basket"] == "Order plans"
     it = views.shell_view(store, "it", Money("it"))
     assert it["footer"]["fx_note"] is None and it["account"]["place_text"] == "42 coperti · Milano"
 
@@ -71,3 +71,12 @@ def test_supplier_logo_goes_through_the_profile_proposal(store):
     assert portal.view(store, store.suppliers["S3"], "ja")["supplier_avatar"]["url"] == "https://cdn.example/hokuto.png"
     with pytest.raises(DomainError):
         portal.propose_profile(store, "S3", {"logo_url": "javascript:alert(1)"})
+
+
+def test_plan_lines_and_orders_carry_drawing_and_submit_key(store):
+    from japita import orders
+    v = views.basket_view(store, "en", Money("en"), "baseline")
+    assert all(ln["drawing"] for ln in v["selected"]["lines"])
+    orders.approve_basket(store, "baseline")
+    po = views.basket_view(store, "en", Money("en"))["orders"][0]
+    assert po["submit_key"] == f"{po['id']}-{store.data['purchase_orders'][0]['approval_id']}"

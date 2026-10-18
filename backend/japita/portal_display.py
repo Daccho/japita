@@ -3,10 +3,12 @@
 Adds fields to the portal view; the raw fields stay as they are for API users.
 """
 
-from .forms import FIELD_FORM_JA
+from .forms import FIELD_FORM_JA, form
 from .textfmt import Money, portal_day, portal_time, pt, qty
 
 TABS = ("requests", "orders", "products", "profile")
+REQUEST_STATE_KEYS = {"awaiting_reply": "awaitingReply", "answered": "answered", "applied": "applied",
+                      "not_used": "notUsed"}
 
 
 def _ingredient(view: dict, key: str, lang: str) -> str:
@@ -83,9 +85,11 @@ def decorate(store, view: dict, lang: str = "ja", money: Money | None = None) ->
     own = set(store.profile["ingredients"])
 
     view["requests"].sort(key=lambda r: r.get("sent_at") or "", reverse=True)
-    view["requests"].sort(key=lambda r: r["state"] == "replied")
+    view["requests"].sort(key=lambda r: r["state"] != "awaiting_reply")
     for r in view["requests"]:
-        r["state_text"] = pt(lang, "replied" if r["state"] == "replied" else "awaitingReply")
+        r["state_text"] = pt(lang, REQUEST_STATE_KEYS[r["state"]])
+        r["badge"] = {"awaiting_reply": "warning", "answered": "neutral", "applied": "ok", "not_used": "neutral"}[r["state"]]
+        r["next_step_text"] = pt(lang, "nextStep") if r["state"] == "answered" else None
         r["question"] = r["question_en"] if lang == "en" and r.get("question_en") else r["question_ja"]
         r["sent_text"] = pt(lang, "questionFrom", when=portal_time(r.get("sent_at"), lang))
         r["label"] = _label(r["form"], lang)
@@ -217,14 +221,18 @@ def notification_items(view: dict, decisions: list[dict], lang: str) -> list[dic
         if o["state"] != "submitted":
             continue
         items.append({"id": f"order-{o['id']}", "kind": "order", "badge": pt(lang, "nt.order"), "warn": True,
-                      "title": o["title"], "body": pt(lang, "nt.orderBody", date=o["delivery_text"], total=o["total_text"]),
+                      "title": pt(lang, "nt.orderTitle"), "body": pt(lang, "nt.orderBody", date=o["delivery_text"], total=o["total_text"]),
                       "tab": "orders", "href": "?tab=orders", "action": pt(lang, "nt.open")})
     for d in reversed(decisions):
-        tab = "profile" if d["kind"] == "profile" else "products"
+        tab = {"profile": "profile", "answer": "requests"}.get(d["kind"], "products")
+        target = d["target"]
+        if d["kind"] == "answer":
+            label = _label(form(target), lang)
+            target = label[:1].lower() + label[1:] if lang == "en" else label
         items.append({"id": f"decision-{d['id']}", "kind": "decision", "badge": pt(lang, "nt.decision"),
                       "warn": d["outcome"] == "rejected",
-                      "title": pt(lang, "nt.profileTarget") if d["kind"] == "profile" else d["target"],
-                      "body": pt(lang, f"nt.{d['outcome']}.{d['kind']}", r=r, target=d["target"]),
+                      "title": pt(lang, "nt.profileTarget") if d["kind"] == "profile" else target,
+                      "body": pt(lang, f"nt.{d['outcome']}.{d['kind']}", r=r, target=target),
                       "tab": tab, "href": f"?tab={tab}", "action": pt(lang, "nt.open")})
     return items
 
