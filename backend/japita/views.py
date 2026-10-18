@@ -655,32 +655,35 @@ def suppliers_view(store: Store, lang: str, money: Money, view: str = "existing"
             continue
         if discovering and q and not matches(q, haystack(s, offers)):
             continue
-        rows.append((s, offers))
+        preview_offers = offers
+        if discovering and q:
+            preview_offers = [o for o in offers if matches(q, haystack(s, [o]))] or offers
+        rows.append((s, offers, preview_offers))
 
     def cheapest(offers):
         return min(offers, key=_per_unit, default=None)
 
     rows.sort(key=lambda r: r[0]["name"].lower(), reverse=sort == "name-desc")
     if sort.startswith("price"):
-        priced = [r for r in rows if cheapest(r[1])]
-        unpriced = [r for r in rows if not cheapest(r[1])]
-        priced.sort(key=lambda r: _per_unit(cheapest(r[1])), reverse=sort == "price-desc")
+        priced = [r for r in rows if cheapest(r[2])]
+        unpriced = [r for r in rows if not cheapest(r[2])]
+        priced.sort(key=lambda r: _per_unit(cheapest(r[2])), reverse=sort == "price-desc")
         rows = priced + unpriced
 
     out = []
-    for s, offers in rows:
-        best = cheapest(offers)
+    for s, offers, preview_offers in rows:
+        best = cheapest(preview_offers)
         pending = any(o.get("pending_update") for o in offers) or bool(s.get("pending_profile"))
         out.append({
             "id": s["id"], "name": s["name"],
             "status_text": f"{t(lang, 'rel.' + s['relationship'])} · {t(lang, 'acct.' + s['account_status'])}",
             "pending": pending, "pending_text": t(lang, "pp.title") if pending else None,
             "avatar": avatar(s.get("logo_url"), s["name"]),
-            "drawing": offer_drawing(offers[0]) if offers else None, "image_alt": t(lang, "of.illustrative"),
-            "product": offers[0]["product"] if offers else "—",
+            "drawing": offer_drawing(preview_offers[0]) if preview_offers else None, "image_alt": t(lang, "of.illustrative"),
+            "product": preview_offers[0]["product"] if preview_offers else "—",
             "product_count": len(offers),
             "product_count_text": t(lang, "sup.product1") if len(offers) == 1 else t(lang, "sup.products", n=len(offers)),
-            "price_text": (t(lang, "sup.fromPrice", p=unit_price(best, money)) if len(offers) > 1
+            "price_text": (t(lang, "sup.fromPrice", p=unit_price(best, money)) if len(preview_offers) > 1
                            else unit_price(best, money)) if best else "—",
             "price_pack_text": t(lang, "of.pack", size=qty(best["pack_size"], best["unit"]),
                                  price=money(best["price_eur"])) if best else None,

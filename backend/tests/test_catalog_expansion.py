@@ -3,6 +3,8 @@ import copy
 import json
 from pathlib import Path
 
+import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
@@ -52,6 +54,22 @@ def test_expanded_catalog_searches_are_read_only_and_do_not_invent_geography():
     result = views.suppliers_view(store, "it", Money("it"), "candidate", "carote")
     assert [r["id"] for r in result["rows"]] == ["S-lib-vegetables"]
     assert store.data == before
+
+
+@pytest.mark.parametrize("query,product,price,ingredient", [
+    ("quinoa", "Quinoa", 5.8, "quinoa"),
+    ("limone", "Lemon", 2.7, "lemon"),
+    ("ピスタチオ", "Pistachios", 18.5, "pistachios"),
+])
+def test_discovery_previews_the_matched_product_and_price(query, product, price, ingredient):
+    store = Store.load(FIXTURE)
+    result = views.suppliers_view(store, "en", Money("en"), "candidate", query)
+    assert len(result["rows"]) == 1
+    row = result["rows"][0]
+    assert row["product"].startswith(product + " ")
+    assert row["drawing"]["key"] == ingredient
+    assert row["cheapest_unit_eur"] == price
+    assert row["product_count"] == len([o for o in store.offers if o["supplier_id"] == row["id"]])
 
 
 def test_expansion_does_not_change_recipe_preferences_or_demo_basket():
@@ -114,4 +132,40 @@ def test_additive_catalog_import_respects_restaurant_workspace(tmp_path, monkeyp
     assert repo.is_empty(repo.DEFAULT_WORKSPACE)
     assert demo_catalog.import_catalog("second") == {"suppliers": 9, "offers": 119}
     assert len(repo.load_state("second")["offers"]) == 119
+    engine.dispose()
+
+
+@pytest.mark.parametrize("enabled", [False, True])
+def test_demo_startup_adds_missing_catalog_only_when_enabled(tmp_path, monkeypatch, enabled):
+    from japita import api, auth
+    engine = create_engine(f"sqlite:///{tmp_path / 'startup.db'}", connect_args={"check_same_thread": False})
+    repo.Base.metadata.create_all(engine)
+    monkeypatch.setattr(repo, "_engine", engine)
+    monkeypatch.setenv("DEMO_ACCOUNTS", "1" if enabled else "0")
+    monkeypatch.setattr(auth, "ensure_demo_accounts", lambda: [])
+    monkeypatch.setattr(drawings, "start", lambda **kw: None)
+    monkeypatch.setattr(drawings, "stop", lambda: None)
+    original = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    original["offers"] = [o for o in original["offers"] if not o["id"].startswith("O-lib-")]
+    original["suppliers"] = {k: v for k, v in original["suppliers"].items() if not k.startswith("S-lib-")}
+    original["week"]["stock"]["noodles"]["usable"] = 1234
+    repo.save_state(original)
+    repo.save_state(repo.blank_state("Other restaurant"), "other")
+    before = repo.load_state()
+    before_other = repo.load_state("other")
+    with TestClient(api.app):
+        pass
+    after = repo.load_state()
+    assert len(after["offers"]) == (129 if enabled else 10)
+    for key in ("week", "recipe", "profiles", "approvals", "purchase_orders"):
+        assert after[key] == before[key]
+    assert repo.load_state("other") == before_other
+    if enabled:
+        with Session(engine) as session, session.begin():
+            row = session.get(repo.Record, (repo.DEFAULT_WORKSPACE, "offer", "O-lib-carrots"))
+            row.data = {**row.data, "price_eur": 99}
+        with TestClient(api.app):
+            pass
+        assert len(repo.load_state()["offers"]) == 129
+        assert Store(repo.load_state()).offer("O-lib-carrots")["price_eur"] == 99
     engine.dispose()

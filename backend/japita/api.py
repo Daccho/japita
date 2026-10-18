@@ -37,6 +37,16 @@ def _demo_accounts() -> None:
         return
     if created:
         logging.getLogger("japita.auth").info("demo accounts ready: %s", ", ".join(created))
+    if os.environ.get("DEMO_ACCOUNTS") == "1":
+        try:
+            # Existing hosted demos need additive catalog updates after a code deploy, not a destructive reseed.
+            if "kumo-authentic" in repo.load_state(repo.DEFAULT_WORKSPACE)["profiles"]:
+                from .demo_catalog import import_catalog
+                added = import_catalog(repo.DEFAULT_WORKSPACE)
+                if any(added.values()):
+                    logging.getLogger("japita.catalog").info("demo catalog additions: %s", added)
+        except Exception:
+            logging.getLogger("japita.catalog").exception("demo catalog additions could not be prepared")
 
 
 @asynccontextmanager
