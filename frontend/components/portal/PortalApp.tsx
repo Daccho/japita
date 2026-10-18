@@ -163,6 +163,7 @@ function Portal({
       nav={nav}
       sidebarFoot={name ? { name, place: me?.place_text ?? view?.for_restaurant_text, avatar: me?.avatar ?? view?.supplier_avatar } : null}
     >
+      <div className="jp-portal-page">
       {!view || !section || !props ? (
         error ? (
           <div style={{ maxWidth: 520 }}>
@@ -189,6 +190,7 @@ function Portal({
           </div>
         </>
       )}
+      </div>
     </AppShell>
   );
 }

@@ -1,17 +1,21 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { use, useEffect, useState, type FormEvent } from "react";
 import { ArrowLeft, ChefHat, Factory, Loader2, PackageOpen } from "lucide-react";
+import Image from "next/image";
 import { AppHeader } from "@/components/AppShell";
 import { useInitialLang } from "@/lib/initial-lang";
 import { LANG_COOKIE, LOGIN_LANG_COOKIE, PORTAL_LANG_COOKIE, saveLangCookie } from "@/lib/lang-cookies";
 import { AuthError, login, me, safeNext, signup, type Me, type Role } from "@/lib/auth";
 
+// Library drawings of what Japanese kitchens in Europe buy, shown on the role choice.
+const DRAWINGS = ["glass-noodles", "cheddar", "cream", "scallops", "sardines", "duck", "avocado"];
+
 type LoginLang = "en" | "it" | "ja";
 const LANGS: LoginLang[] = ["en", "it", "ja"];
 type Msg =
-  | "who" | "restaurant" | "restaurantNote" | "supplier" | "supplierNote" | "title" | "back" | "id" | "password"
+  | "tagline" | "lede" | "who" | "whoSignup" | "restaurant" | "restaurantNote" | "supplier" | "supplierNote" | "title" | "back" | "id" | "password"
   | "submit" | "signingIn" | "invalid" | "throttled" | "offline"
   | "newHere" | "create" | "haveAccount" | "signIn" | "signupTitle" | "restaurantName" | "supplierName" | "city"
   | "country" | "contactName" | "email" | "idHint" | "passwordHint" | "creating" | "restaurantStart"
@@ -20,7 +24,9 @@ type Msg =
 // The entry page speaks all three languages of the product: English (default), Italian, Japanese.
 const DICT: Record<LoginLang, Record<Msg, string>> = {
   en: {
-    who: "Who is signing in?", restaurant: "Restaurant", restaurantNote: "Weekly purchasing, suppliers and baskets",
+    tagline: "Purchasing for Japanese restaurants in Europe",
+    lede: "Compare suppliers, avoid stockouts and order in your language. Your suppliers reply in theirs.",
+    who: "Who is signing in?", whoSignup: "Which account do you want to create?", restaurant: "Restaurant", restaurantNote: "Weekly purchasing, suppliers and baskets",
     supplier: "Supplier", supplierNote: "Orders and questions from restaurants", title: "Sign in to Japita",
     back: "Change", id: "Login ID", password: "Password", submit: "Sign in", signingIn: "Signing in…",
     invalid: "Login ID or password is not correct.", throttled: "Too many attempts. Wait a few minutes and try again.",
@@ -37,7 +43,9 @@ const DICT: Record<LoginLang, Record<Msg, string>> = {
     tooMany: "Too many new accounts from this network. Try again later.",
   },
   it: {
-    who: "Chi sta accedendo?", restaurant: "Ristorante", restaurantNote: "Acquisti settimanali, fornitori e carrelli",
+    tagline: "Gli acquisti per i ristoranti giapponesi in Europa",
+    lede: "Confronta i fornitori, evita le rotture di stock e ordina nella tua lingua. I fornitori rispondono nella loro.",
+    who: "Chi sta accedendo?", whoSignup: "Che account vuoi creare?", restaurant: "Ristorante", restaurantNote: "Acquisti settimanali, fornitori e carrelli",
     supplier: "Fornitore", supplierNote: "Ordini e domande dai ristoranti", title: "Accedi a Japita",
     back: "Cambia", id: "ID di accesso", password: "Password", submit: "Accedi", signingIn: "Accesso in corso…",
     invalid: "ID di accesso o password non corretti.", throttled: "Troppi tentativi. Attendi qualche minuto e riprova.",
@@ -54,7 +62,9 @@ const DICT: Record<LoginLang, Record<Msg, string>> = {
     tooMany: "Troppi nuovi account da questa rete. Riprova più tardi.",
   },
   ja: {
-    who: "どちらでログインしますか？", restaurant: "飲食店", restaurantNote: "毎週の仕入れ、仕入先、買い物かご",
+    tagline: "ヨーロッパの日本食レストランの仕入れを、ひとつに",
+    lede: "仕入先を比べ、欠品を防ぎ、自分の言葉で発注。仕入先は自分の言葉で答えられます。",
+    who: "どちらでログインしますか？", whoSignup: "どちらのアカウントを作成しますか？", restaurant: "飲食店", restaurantNote: "毎週の仕入れ、仕入先、買い物かご",
     supplier: "サプライヤー", supplierNote: "飲食店からの注文と問い合わせ", title: "Japitaにログイン",
     back: "戻る", id: "ログインID", password: "パスワード", submit: "ログイン", signingIn: "ログイン中…",
     invalid: "ログインIDまたはパスワードが正しくありません。", throttled: "試行回数が多すぎます。数分後にもう一度お試しください。",
@@ -75,7 +85,7 @@ const DICT: Record<LoginLang, Record<Msg, string>> = {
 type SignupFields = { name: string; city: string; country: string; contact_name: string; email: string };
 const EMPTY_SIGNUP: SignupFields = { name: "", city: "", country: "", contact_name: "", email: "" };
 
-function LoginForm() {
+function LoginForm({ initialRole, initialMode }: { initialRole: Role | null; initialMode: Mode }) {
   const initial = useInitialLang().login;
   const [lang, setLangState] = useState<LoginLang>(LANGS.includes(initial as LoginLang) ? (initial as LoginLang) : "en");
   const t = (k: Msg) => DICT[lang][k];
@@ -84,8 +94,8 @@ function LoginForm() {
     saveLangCookie(LOGIN_LANG_COOKIE, l);
   };
   const router = useRouter();
-  const [role, setRole] = useState<Role | null>(null);
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [role, setRole] = useState<Role | null>(initialRole);
+  const [mode, setMode] = useState<Mode>(initialMode);
   const [fields, setFields] = useState<SignupFields>(EMPTY_SIGNUP);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -109,10 +119,32 @@ function LoginForm() {
     }
   }
 
+  // The role and the sign-in/sign-up choice live in the query (?role=…&mode=signup), so reload and links keep them.
+  function go(r: Role | null, m: Mode) {
+    const q = new URLSearchParams(window.location.search);
+    if (r) q.set("role", r); else q.delete("role");
+    if (m === "signup") q.set("mode", "signup"); else q.delete("mode");
+    const qs = q.toString();
+    window.history.pushState(null, "", `${window.location.pathname}${qs ? `?${qs}` : ""}`);
+    setRole(r);
+    setMode(m);
+    setError(null);
+    setBusy(null);
+    setPassword("");
+  }
+
   useEffect(() => {
-    // "/" is the role choice; "/login?role=..." opens that side's sign-in form directly.
-    const r = new URLSearchParams(window.location.search).get("role");
-    if (r === "restaurant" || r === "supplier") setRole(r);
+    const onPop = () => {
+      const q = new URLSearchParams(window.location.search);
+      setRole(parseRole(q.get("role")));
+      setMode(parseMode(q.get("mode")));
+      setError(null);
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  useEffect(() => {
     me().then((u) => u && enter(u)).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -126,10 +158,8 @@ function LoginForm() {
     else setError(fallback);
   }
 
-  function switchMode(m: "signin" | "signup") {
-    setMode(m);
-    setError(null);
-    setPassword("");
+  function switchMode(m: Mode) {
+    go(role, m);
   }
 
   async function submitSignup(e: FormEvent) {
@@ -185,10 +215,22 @@ function LoginForm() {
       }
     />
     <main className="jp-login">
-      <section className="jp-panel jp-login-card">
+      {!role && (
+        <div className="jp-login-hero">
+          <div className="jp-login-drawings" aria-hidden>
+            {DRAWINGS.map((d, i) => (
+              <Image key={d} src={`/drawings/${d}.svg`} alt="" width={64} height={64} unoptimized priority
+                     style={{ animationDelay: `${i * 90}ms, ${600 + i * 90}ms` }} />
+            ))}
+          </div>
+          <p className="jp-login-tagline">{t("tagline")}</p>
+          <p className="jp-login-lede">{t("lede")}</p>
+        </div>
+      )}
+      <section className={`jp-panel jp-login-card${role ? "" : " jp-login-card-choice"}`}>
         {!role ? (
           <>
-            <h1>{t("who")}</h1>
+            <h1>{t(mode === "signup" ? "whoSignup" : "who")}</h1>
             <div className="jp-login-roles">
               {(
                 [
@@ -196,7 +238,7 @@ function LoginForm() {
                   ["supplier", "supplier", "supplierNote"],
                 ] as const
               ).map(([r, label, note]) => (
-                <button key={r} type="button" className="jp-login-role" onClick={() => setRole(r)}>
+                <button key={r} type="button" className="jp-login-role" onClick={() => go(r, mode)}>
                   <span className="jp-login-tile" aria-hidden>
                     {r === "restaurant" ? (
                       <ChefHat />
@@ -214,11 +256,17 @@ function LoginForm() {
                 </button>
               ))}
             </div>
+            <p className="jp-login-note">
+              {mode === "signup" ? t("haveAccount") : t("newHere")}{" "}
+              <button type="button" className="jp-login-switch" onClick={() => go(null, mode === "signup" ? "signin" : "signup")}>
+                {mode === "signup" ? t("signIn") : t("create")}
+              </button>
+            </p>
           </>
         ) : (
           <>
             <div className="jp-login-head">
-              <button type="button" className="jp-action" onClick={() => { setRole(null); setMode("signin"); setError(null); setBusy(null); }}>
+              <button type="button" className="jp-action" onClick={() => go(null, mode)}>
                 <ArrowLeft aria-hidden />
                 {t("back")}
               </button>
@@ -303,11 +351,18 @@ function LoginForm() {
   );
 }
 
-export default function LoginPage() {
+type Mode = "signin" | "signup";
+type Query = Record<string, string | string[] | undefined>;
+const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? null;
+const parseRole = (v: string | null): Role | null => (v === "restaurant" || v === "supplier" ? v : null);
+const parseMode = (v: string | null): Mode => (v === "signup" ? "signup" : "signin");
+
+export default function LoginPage({ searchParams }: { searchParams: Promise<Query> }) {
+  const q = use(searchParams);
   return (
     <div className="jp">
       <div className="jp-app">
-        <LoginForm />
+        <LoginForm initialRole={parseRole(first(q.role))} initialMode={parseMode(first(q.mode))} />
       </div>
     </div>
   );
