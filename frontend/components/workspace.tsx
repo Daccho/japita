@@ -40,7 +40,6 @@ type Ctx = {
   profileId: string;
   setProfileId: (id: string) => void;
   data: Data | null;
-  live: boolean; // false while showing cached or build-time data and the API is still waking up
   refresh: () => Promise<void>;
   advisorOpen: boolean;
   setAdvisorOpen: (open: boolean) => void;
@@ -63,7 +62,6 @@ const idle = { running: false, startedAt: null, result: null, error: null };
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [profileId, setProfileState] = useState<string>("kumo-authentic");
   const [data, setData] = useState<Data | null>(null);
-  const [live, setLive] = useState(false);
   const [advisorOpen, setAdvisorOpen] = useState(false);
   const [advisor, setAdvisor] = useState<Job<AgentAnswer>>(idle);
   const [weekly, setWeekly] = useState<Job<WeeklyCheck>>(idle);
@@ -77,11 +75,12 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     } catch {}
   }, []);
 
-  // Show the last data this signed-in browser saw at once; live data replaces it. Nothing restaurant-specific
-  // is bundled into the public JavaScript, and the cache is cleared on sign-out and on 401.
+  // Show the last data this signed-in browser saw for this profile at once; without it, the current data stays
+  // on screen until the new data arrives. Nothing restaurant-specific is bundled into the public JavaScript,
+  // and the cache is cleared on sign-out and on 401.
   useEffect(() => {
-    setLive(false);
-    setData(cached(profileId));
+    const saved = cached(profileId);
+    if (saved) setData(saved);
   }, [profileId]);
 
   const setProfileId = (id: string) => {
@@ -103,7 +102,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     if (pid !== profileRef.current) return;
     const next = { state, baskets, timeline, approval, spending };
     setData(next);
-    setLive(true);
     try {
       localStorage.setItem(CACHE_KEY + pid, JSON.stringify(next));
     } catch {}
@@ -169,7 +167,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         profileId,
         setProfileId,
         data,
-        live,
         refresh,
         advisorOpen,
         setAdvisorOpen,

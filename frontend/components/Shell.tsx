@@ -51,19 +51,6 @@ function FirstLoad() {
   );
 }
 
-// Small, non-blocking hint while cached data is shown and the API is waking up.
-function SyncHint() {
-  const { t } = useI18n();
-  const { live } = useWorkspace();
-  if (live) return null;
-  return (
-    <span className="jp-muted" role="status" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12 }}>
-      <Loader2 className="jp-spinner" aria-hidden style={{ width: 14, height: 14 }} />
-      {t("load.sync")}
-    </span>
-  );
-}
-
 export default function Shell({ children }: { children: ReactNode }) {
   const { t } = useI18n();
   const path = usePathname();
@@ -94,7 +81,6 @@ export default function Shell({ children }: { children: ReactNode }) {
               ))}
             </div>
             <LangToggle />
-            <SyncHint />
             <div className="jp-account">
               <span className="jp-muted">{user.display_name}</span>
               <button type="button" className="jp-action" onClick={signOut}>
