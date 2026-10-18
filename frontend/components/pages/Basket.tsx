@@ -22,6 +22,7 @@ export default function Basket({ initial, initialPlan, questions }: { initial: B
   const toast = useToast();
   const [kind, setKindState] = useState<string | null>(initialPlan);
   const [busy, setBusy] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const pathFor = (k: string | null) => `/views/basket?lang=${lang}${k ? `&kind=${encodeURIComponent(k)}` : ""}`;
   const path = pathFor(kind);
   const { data: v } = useView<BasketView>(path, path === pathFor(initialPlan) ? initial : null);
@@ -38,7 +39,9 @@ export default function Basket({ initial, initialPlan, questions }: { initial: B
     if (!s) return;
     setBusy(true);
     try {
-      await api.approveBasket(s.kind);
+      if (s.send_key) await api.approveAndSend(s.kind, s.send_key);
+      else await api.approveBasket(s.kind);
+      setConfirming(false);
       setKind(null);
       bump();
     } catch (e) {
@@ -203,12 +206,37 @@ export default function Basket({ initial, initialPlan, questions }: { initial: B
                   {s.approval.text}
                 </Badge>
               ) : (
-                s.can_approve && (
-                  <button id="approve" type="button" className="jp-action jp-primary" disabled={busy} onClick={approve}>
+                s.can_approve &&
+                (confirming && s.confirm ? (
+                  <div className="jp-proposal" role="alertdialog" aria-label={s.confirm.title} style={{ marginTop: 0 }}>
+                    <h3>{s.confirm.title}</h3>
+                    <p style={{ margin: "6px 0 10px" }}>{s.confirm.text}</p>
+                    <dl className="jp-diff">
+                      {s.confirm.lines.map((ln) => (
+                        <span key={ln.supplier} style={{ display: "contents" }}>
+                          <dt>{ln.supplier}</dt>
+                          <dd>
+                            <strong>{ln.total_text}</strong>
+                          </dd>
+                        </span>
+                      ))}
+                    </dl>
+                    <div className="jp-form-actions">
+                      <button type="button" className="jp-action jp-primary" disabled={busy} onClick={approve}>
+                        <Check aria-hidden />
+                        {busy ? s.approving_text : s.confirm.confirm_text}
+                      </button>
+                      <button type="button" className="jp-action" disabled={busy} onClick={() => setConfirming(false)}>
+                        {s.confirm.cancel_text}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button id="approve" type="button" className="jp-action jp-primary" disabled={busy} onClick={() => (s.confirm ? setConfirming(true) : approve())}>
                     <Check aria-hidden />
                     {busy ? s.approving_text : s.approve_text}
                   </button>
-                )
+                ))
               )}
               <p className="jp-muted" style={{ fontSize: 11, marginTop: 10 }}>
                 {L("bk.approveNote")}

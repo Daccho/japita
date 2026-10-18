@@ -136,6 +136,8 @@ export type ProfileUpdate = Partial<Omit<SupplierProfile, "min_order_eur" | "shi
 
 export type Avatar = { url: string | null; initials: string };
 export type PortalTab = "requests" | "orders" | "products" | "profile";
+export const PORTAL_TABS: PortalTab[] = ["requests", "orders", "products", "profile"];
+export const isTab = (v: string | null | undefined): v is PortalTab => !!v && (PORTAL_TABS as string[]).includes(v);
 
 export type PortalView = {
   restaurant: string;

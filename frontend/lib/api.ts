@@ -255,6 +255,8 @@ export type BasketView = Money & {
     can_approve: boolean;
     approve_text: string;
     approving_text: string;
+    send_key?: string;
+    confirm?: { title: string; text: string; lines: { supplier: string; total_text: string }[]; confirm_text: string; cancel_text: string } | null;
   };
   settled: null | {
     title: string;
@@ -442,6 +444,7 @@ export const api = {
   applyClarification: (id: string, value?: unknown) =>
     request(`/clarifications/${enc(id)}/apply`, json("POST", value === undefined ? {} : { value })),
   approveBasket: (kind: string) => request("/baskets/approve", json("POST", { kind })),
+  approveAndSend: (kind: string, key: string) => request("/baskets/approve-and-send", json("POST", { kind }, { "Idempotency-Key": key })),
   submitOrder: (poId: string, key: string) =>
     request(`/purchase-orders/${enc(poId)}/submit`, { method: "POST", headers: { "Idempotency-Key": key } }),
   applySupplierUpdate: (offerId: string) => request(`/offers/${enc(offerId)}/supplier-update/apply`, { method: "POST" }),

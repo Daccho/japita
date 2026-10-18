@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { isTab, PortalApp, type PortalMe } from "@/components/portal/PortalApp";
+import { PortalApp, type PortalMe } from "@/components/portal/PortalApp";
+import { isTab } from "@/lib/portal";
 import type { NotificationFeed } from "@/components/Notifications";
 import { PORTAL_LANG_COOKIE } from "@/lib/lang-cookies";
 import type { PortalView } from "@/lib/portal";

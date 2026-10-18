@@ -244,7 +244,8 @@ export function AppHeader({
         )}
       </div>
       <div className={`jp-top-controls ${hasMenu ? "jp-has-menu" : ""}`}>
-        {controls && <div className="jp-top-wide">{controls}</div>}
+        {/* On phones the account menu carries the language toggle; without an account it stays in the header. */}
+        {controls && <div className={account ? "jp-top-wide" : "jp-top-controls-always"}>{controls}</div>}
         <div className="jp-toolbar jp-header-bell">
           <Notifications />
         </div>

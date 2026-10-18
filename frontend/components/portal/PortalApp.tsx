@@ -8,7 +8,7 @@ import { LiveProvider, EmptyState, useToast, useView } from "@/components/live";
 import { NotificationsProvider, type NotificationFeed } from "@/components/Notifications";
 import PageHeader from "@/components/PageHeader";
 import { logout } from "@/lib/auth";
-import type { PortalTab, PortalView } from "@/lib/portal";
+import { isTab, PORTAL_TABS, type PortalTab, type PortalView } from "@/lib/portal";
 import { PortalLangProvider, saveLang, useLang, type Lang } from "./i18n";
 import { OrdersTab } from "./OrdersTab";
 import { ProductsTab } from "./ProductsTab";
@@ -24,7 +24,7 @@ export type PortalMe = {
   place_text?: string | null;
 };
 
-const TABS: PortalTab[] = ["requests", "orders", "products", "profile"];
+const TABS = PORTAL_TABS;
 const ICONS: Record<PortalTab, NavItem["icon"]> = {
   requests: MessageSquareText,
   orders: ClipboardList,
@@ -32,7 +32,6 @@ const ICONS: Record<PortalTab, NavItem["icon"]> = {
   profile: Building2,
 };
 
-export const isTab = (v: string | null | undefined): v is PortalTab => !!v && (TABS as string[]).includes(v);
 
 /** The signed-in supplier's portal: server-rendered view data, kept fresh by polling and after each action. */
 export function PortalApp({

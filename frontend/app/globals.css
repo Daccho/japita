@@ -1662,3 +1662,4 @@
 /* Supplier portal product card: drawing beside the name and price. */
 .jp .jp-app .jp-portal-product-head { display:flex; align-items:flex-start; gap:12px; min-width:0; }
 .jp .jp-app .jp-portal-product-drawing { display:grid; place-items:center; flex-shrink:0; width:64px; height:64px; border:var(--aj-border-strong); border-radius:var(--aj-radius-card); background:var(--aj-yolk-tint); }
+.jp .jp-app .jp-top-controls-always { display:flex; align-items:center; gap:10px; }
