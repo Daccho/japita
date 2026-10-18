@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { useInitialLang } from "@/lib/initial-lang";
 import { LANG_COOKIE, saveLangCookie } from "@/lib/lang-cookies";
+import { moneyTools, useRates, type MoneyTools } from "@/lib/money";
 
 // Restaurant workspace strings. Italian is the default (the restaurant is in Milan); English is for judges.
 // The supplier portal is Japanese only and does not use this.
@@ -348,7 +349,7 @@ const EN = {
   "by.toPref": "Make preference",
   "by.toReq": "Make required",
   "by.none": "No rules.",
-  "by.budget": "Purchasing budget · EUR per week",
+  "by.budget": "Purchasing budget · {c} per week",
   "by.budgetNote": "For the three active ingredients.",
   "by.days": "Accepted delivery days",
   "by.priorities": "Purchasing priorities",
@@ -736,7 +737,7 @@ const IT: Record<Key, string> = {
   "by.toPref": "Rendi preferenza",
   "by.toReq": "Rendi obbligatorio",
   "by.none": "Nessuna regola.",
-  "by.budget": "Budget di acquisto · EUR a settimana",
+  "by.budget": "Budget di acquisto · {c} a settimana",
   "by.budgetNote": "Per i tre ingredienti attivi.",
   "by.days": "Giorni di consegna accettati",
   "by.priorities": "Priorità di acquisto",
@@ -792,10 +793,16 @@ const STR: Record<Lang, Record<Key, string>> = { en: EN, it: IT };
 
 export type T = (key: Key, vars?: Record<string, string | number>) => string;
 
-const Ctx = createContext<{ lang: Lang; setLang: (l: Lang) => void; t: T }>({
+// Italian shows EUR; English shows USD converted with the ECB reference rate.
+const fxFor = (lang: Lang, rates: ReturnType<typeof useRates>) =>
+  lang === "it" ? moneyTools("EUR", "it-IT", rates) : moneyTools("USD", "en-US", rates);
+
+const Ctx = createContext<{ lang: Lang; setLang: (l: Lang) => void; t: T; fx: MoneyTools; money: MoneyTools["money"] }>({
   lang: "it",
   setLang: () => {},
   t: (k) => k,
+  fx: fxFor("it", null),
+  money: fxFor("it", null).money,
 });
 
 const KEY = "japita.lang";
@@ -834,7 +841,10 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     return s;
   };
 
-  return <Ctx.Provider value={{ lang, setLang, t }}>{children}</Ctx.Provider>;
+  const rates = useRates();
+  const fx = fxFor(lang, rates);
+
+  return <Ctx.Provider value={{ lang, setLang, t, fx, money: fx.money }}>{children}</Ctx.Provider>;
 }
 
 export const useI18n = () => useContext(Ctx);

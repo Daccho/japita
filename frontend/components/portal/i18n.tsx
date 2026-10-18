@@ -5,6 +5,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { useInitialLang } from "@/lib/initial-lang";
 import { PORTAL_LANG_COOKIE, saveLangCookie } from "@/lib/lang-cookies";
+import { moneyTools, useRates, type MoneyTools } from "@/lib/money";
 
 export type Lang = "ja" | "en";
 
@@ -231,8 +232,12 @@ const en: Dict = {
 const DICTS: Record<Lang, Dict> = { ja, en };
 const STORAGE_KEY = "japita.portal.lang";
 
-type Ctx = { lang: Lang; t: Dict; setLang: (l: Lang) => void };
-const LangContext = createContext<Ctx>({ lang: "ja", t: ja, setLang: () => {} });
+// Japanese shows JPY; English shows USD. Both are converted from EUR with the ECB reference rate.
+const fxFor = (lang: Lang, rates: ReturnType<typeof useRates>) =>
+  lang === "ja" ? moneyTools("JPY", "ja-JP", rates, "欧州中央銀行") : moneyTools("USD", "en-US", rates, "ECB");
+
+type Ctx = { lang: Lang; t: Dict; setLang: (l: Lang) => void; fx: MoneyTools };
+const LangContext = createContext<Ctx>({ lang: "ja", t: ja, setLang: () => {}, fx: fxFor("ja", null) });
 
 export function PortalLangProvider({ children }: { children: ReactNode }) {
   const initial = useInitialLang().portal;
@@ -262,7 +267,8 @@ export function PortalLangProvider({ children }: { children: ReactNode }) {
       // storage unavailable: choice lasts for this visit only
     }
   }, []);
-  return <LangContext.Provider value={{ lang, t: DICTS[lang], setLang }}>{children}</LangContext.Provider>;
+  const rates = useRates();
+  return <LangContext.Provider value={{ lang, t: DICTS[lang], setLang, fx: fxFor(lang, rates) }}>{children}</LangContext.Provider>;
 }
 
 export const useLang = () => useContext(LangContext);

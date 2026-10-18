@@ -5,7 +5,7 @@ import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Check, Loader2, RotateCcw, Sparkles, Store, Truck, X } from "lucide-react";
-import { errorText, money } from "@/lib/api";
+import { errorText } from "@/lib/api";
 import { useI18n, useLabel, type Key } from "@/lib/i18n";
 import { useElapsed, useWorkspace } from "@/components/workspace";
 import { suggestedBasket } from "@/components/helpers";
@@ -41,7 +41,7 @@ export function Markdown({ text }: { text: string }) {
 }
 
 function AdvisorBody() {
-  const { t, lang } = useI18n();
+  const { t, lang, money } = useI18n();
   const label = useLabel();
   const { data, advisor, ask, setAdvisorOpen } = useWorkspace();
   const [question, setQuestion] = useState("");

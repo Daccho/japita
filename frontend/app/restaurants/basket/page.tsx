@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Check, Sparkles, Store, TriangleAlert } from "lucide-react";
-import { api, errorText, money, qty, type Basket } from "@/lib/api";
+import { api, errorText, qty, type Basket } from "@/lib/api";
 import { useDates, useI18n, useLabel } from "@/lib/i18n";
 import { useWorkspace } from "@/components/workspace";
 import { findBasket, KIND_ORDER, suggestedBasket } from "@/components/helpers";
@@ -11,10 +11,10 @@ import PageHeader from "@/components/PageHeader";
 import Orders from "@/components/Orders";
 import Clarifications from "@/components/Clarifications";
 
-const signed = (n: number) => `${n > 0 ? "+" : n < 0 ? "−" : ""}${money(Math.abs(n))}`;
+const signed = (n: number, money: (eur: number) => string) => `${n > 0 ? "+" : n < 0 ? "−" : ""}${money(Math.abs(n))}`;
 
 function Options({ baskets, selected, onSelect }: { baskets: Basket[]; selected: Basket; onSelect: (b: Basket) => void }) {
-  const { t } = useI18n();
+  const { t, money } = useI18n();
   const label = useLabel();
   const sorted = [...baskets].sort((a, b) => KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind));
   return (
@@ -27,7 +27,7 @@ function Options({ baskets, selected, onSelect }: { baskets: Basket[]; selected:
             {b.kind === "baseline"
               ? t("bk.sameAsBaseline").replace(/^./, (c) => c.toUpperCase())
               : b.vs_baseline_eur !== undefined
-                ? t("bk.vsBaseline", { d: signed(b.vs_baseline_eur) })
+                ? t("bk.vsBaseline", { d: signed(b.vs_baseline_eur, money) })
                 : ""}
           </small>
           <span style={{ display: "flex", gap: 5, flexWrap: "wrap", marginTop: 8 }}>
@@ -43,7 +43,7 @@ function Options({ baskets, selected, onSelect }: { baskets: Basket[]; selected:
 }
 
 export default function BasketPage() {
-  const { t } = useI18n();
+  const { t, money } = useI18n();
   const label = useLabel();
   const d = useDates();
   const { data, profileId, refresh, ask, advisor } = useWorkspace();
@@ -180,7 +180,7 @@ export default function BasketPage() {
                 {selected.within_budget
                   ? t("bk.remaining", { r: money(budget - selected.delivered_total_eur), b: money(budget) })
                   : t("bk.over", { r: money(selected.delivered_total_eur - budget), b: money(budget) })}
-                {selected.kind !== "baseline" && selected.vs_baseline_eur !== undefined && ` ${t("bk.vsBaseline", { d: signed(selected.vs_baseline_eur) })}.`}
+                {selected.kind !== "baseline" && selected.vs_baseline_eur !== undefined && ` ${t("bk.vsBaseline", { d: signed(selected.vs_baseline_eur, money) })}.`}
               </p>
               {error && <p className="jp-error">{error}</p>}
               {approval?.stale && approvedBasket === selected && <p className="jp-error">{t("bk.stale")}</p>}

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ArrowRight, CalendarClock, CalendarDays, CheckCircle2, ClipboardList, Package, Truck } from "lucide-react";
 import { portalApi, type PortalOrder, type PortalView } from "@/lib/portal";
-import { errorMessage, formatDate, formatDateTime, formatEur, formatQty, ingredientName, packWord } from "./format";
+import { errorMessage, formatDate, formatDateTime, formatQty, ingredientName, packWord } from "./format";
 import { useLang } from "./i18n";
 import { Button, Card, Chip, EmptyState, ErrorBox, Label, NoteInput, inputClass } from "./ui";
 import type { TabProps } from "./types";
@@ -34,7 +34,7 @@ export function OrdersTab(props: TabProps) {
 }
 
 function OrderCard({ order, token, onView, notify }: TabProps & { order: PortalOrder }) {
-  const { t, lang } = useLang();
+  const { t, lang, fx } = useLang();
   const accepted = order.state === "acknowledged";
   const [date, setDate] = useState(order.delivery_date);
   const [note, setNote] = useState("");
@@ -110,7 +110,7 @@ function OrderCard({ order, token, onView, notify }: TabProps & { order: PortalO
                 <span className="ml-1 whitespace-nowrap">({t.total(formatQty(ln.purchase_qty, ln.unit))})</span>
               </p>
             </div>
-            <span className="shrink-0 text-sm font-bold tabular-nums text-aj-ink">{formatEur(ln.cost_eur)}</span>
+            <span className="shrink-0 text-sm font-bold tabular-nums text-aj-ink">{fx.money(ln.cost_eur)}</span>
           </li>
         ))}
       </ul>
@@ -118,15 +118,15 @@ function OrderCard({ order, token, onView, notify }: TabProps & { order: PortalO
       <dl className="mt-1 space-y-1 border-t border-aj-line pt-3 text-sm">
         <div className="flex justify-between text-aj-muted">
           <dt>{t.subtotal}</dt>
-          <dd className="tabular-nums">{formatEur(order.goods_eur)}</dd>
+          <dd className="tabular-nums">{fx.money(order.goods_eur)}</dd>
         </div>
         <div className="flex justify-between text-aj-muted">
           <dt>{t.shipping}</dt>
-          <dd className="tabular-nums">{order.shipping_eur ? formatEur(order.shipping_eur) : t.free}</dd>
+          <dd className="tabular-nums">{order.shipping_eur ? fx.money(order.shipping_eur) : t.free}</dd>
         </div>
         <div className="flex justify-between pt-1 text-base font-bold text-aj-ink">
           <dt>{t.grandTotal}</dt>
-          <dd className="tabular-nums">{formatEur(order.total_eur)}</dd>
+          <dd className="tabular-nums">{fx.money(order.total_eur)}</dd>
         </div>
       </dl>
 

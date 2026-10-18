@@ -416,10 +416,9 @@ export const api = {
     request<SupplierRequest>(`/supplier/requests/${encodeURIComponent(token)}/reply`, json("POST", { text_ja: textJa })),
 };
 
-export const money = (n: number | null | undefined, unknown = "?") =>
-  n === null || n === undefined
-    ? unknown
-    : `€${n.toLocaleString("en-IE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+// Menu prices are the restaurant's own selling prices in Italy and always stay in EUR.
+export const menuEur = (n: number) =>
+  `€${n.toLocaleString("en-IE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 // 76800 g -> "76.8 kg"; 9000 ml -> "9 L".
 export const qty = (n: number, unit: string) =>
@@ -430,5 +429,5 @@ export const qty = (n: number, unit: string) =>
     : `${n} ${unit}`;
 
 // Price per kg or per L.
-export const unitPrice = (o: Pick<Offer, "price_eur" | "pack_size" | "unit">) =>
+export const unitPrice = (o: Pick<Offer, "price_eur" | "pack_size" | "unit">, money: (eur: number) => string) =>
   `${money((o.price_eur / o.pack_size) * 1000)} / ${o.unit === "g" ? "kg" : "L"}`;

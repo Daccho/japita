@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { Clock, Globe2, PackagePlus, Pencil, Plus, ShoppingBasket, X } from "lucide-react";
+import { formatEurPlain, type MoneyTools } from "@/lib/money";
 import { portalApi, type FormField, type Origin, type PortalProduct, type ProductUpdate } from "@/lib/portal";
 import {
   errorMessage,
   fieldLabel,
   formatDate,
   formatDateTime,
-  formatEur,
   formatQty,
   formatValue,
   ingredientName,
@@ -99,14 +99,14 @@ export function ProductsTab(props: TabProps) {
 }
 
 function PendingBox({ product }: { product: PortalProduct }) {
-  const { t, lang } = useLang();
+  const { t, lang, fx } = useLang();
   const u = product.pending_update;
   if (!u) return null;
   const fieldByName = new Map(product.form.map((f) => [f.field, f]));
   const changes: [string, string][] = [];
   if (!product.pending_new) {
     if (u.product !== undefined) changes.push([t.productName, u.product]);
-    if (u.price_eur !== undefined) changes.push([t.price, formatEur(u.price_eur)]);
+    if (u.price_eur !== undefined) changes.push([t.price, fx.money(u.price_eur)]);
     if (u.pack_size !== undefined) changes.push([t.packSize, formatQty(u.pack_size, product.unit)]);
     for (const [k, v] of Object.entries(u.attributes ?? {})) {
       const f = fieldByName.get(k);
@@ -142,7 +142,7 @@ function PendingBox({ product }: { product: PortalProduct }) {
 }
 
 function ProductCard({ product: p, token, onView, notify }: TabProps & { product: PortalProduct }) {
-  const { t, lang } = useLang();
+  const { t, lang, fx } = useLang();
   const [editing, setEditing] = useState(false);
   return (
     <Card>
@@ -155,7 +155,7 @@ function ProductCard({ product: p, token, onView, notify }: TabProps & { product
         )}
       </div>
       <p className="mt-1 text-sm text-aj-ink">
-        <span className="text-lg font-bold tabular-nums">{formatEur(p.price_eur)}</span>
+        <span className="text-lg font-bold tabular-nums">{fx.money(p.price_eur)}</span>
         <span className="text-aj-muted"> / {formatQty(p.pack_size, p.unit)}</span>
       </p>
 
@@ -200,9 +200,12 @@ function EditForm({
   notify,
   onClose,
 }: Pick<TabProps, "token" | "onView" | "notify"> & { product: PortalProduct; onClose: () => void }) {
-  const { t, lang } = useLang();
+  const { t, lang, fx: liveFx } = useLang();
+  // Currency and rate are fixed while the form is open, so the shown price and the submitted one match.
+  const [fx] = useState(liveFx);
   const [name, setName] = useState(p.product);
-  const [price, setPrice] = useState(String(p.price_eur));
+  const shownPrice = fx.fromEur(p.price_eur);
+  const [price, setPrice] = useState(String(shownPrice));
   const [pack, setPack] = useState(String(p.pack_size));
   const [values, setValues] = useState<Values>(() => initialValues(p.form, p.attributes));
   const [note, setNote] = useState("");
@@ -219,7 +222,10 @@ function EditForm({
     if (packN === null) return setError(t.invalidPack);
     const body: ProductUpdate = { attributes: {} };
     if (name.trim() && name.trim() !== p.product) body.product = name.trim();
-    if (priceN !== p.price_eur) body.price_eur = priceN;
+    if (priceN !== shownPrice) {
+      body.price = priceN;
+      body.currency = fx.currency;
+    }
     if (packN !== p.pack_size) body.pack_size = packN;
     const before = initialValues(p.form, p.attributes);
     for (const f of p.form) {
@@ -230,7 +236,7 @@ function EditForm({
     }
     if (note.trim()) body.note_ja = note.trim();
     const changed =
-      body.product !== undefined || body.price_eur !== undefined || body.pack_size !== undefined || Object.keys(body.attributes).length > 0;
+      body.product !== undefined || body.price !== undefined || body.pack_size !== undefined || Object.keys(body.attributes).length > 0;
     if (!changed) return setError(t.nothingChanged);
     setBusy(true);
     try {
@@ -253,7 +259,7 @@ function EditForm({
       <div className="grid grid-cols-2 gap-3">
         <label className="block">
           <Label>{t.pricePerPack}</Label>
-          <UnitInput value={price} onChange={setPrice} unit="€" />
+          <PriceInput value={price} onChange={setPrice} fx={fx} lang={lang} />
         </label>
         <label className="block">
           <Label>{t.packSize}</Label>
@@ -281,6 +287,19 @@ function EditForm({
   );
 }
 
+/** Price in the shown currency, with the EUR amount the restaurant will see. */
+function PriceInput({ value, onChange, fx, lang }: { value: string; onChange: (v: string) => void; fx: MoneyTools; lang: Lang }) {
+  const n = parseAmount(value, true);
+  return (
+    <>
+      <UnitInput value={value} onChange={onChange} unit={fx.symbol} />
+      {fx.currency !== "EUR" && n !== null && (
+        <p className="mt-1 text-xs text-aj-muted tabular-nums">≈ {formatEurPlain(fx.toEur(n), lang === "ja" ? "ja-JP" : "en-US")}</p>
+      )}
+    </>
+  );
+}
+
 function UnitInput({ value, onChange, unit }: { value: string; onChange: (v: string) => void; unit: string }) {
   return (
     <div className="relative">
@@ -299,7 +318,7 @@ function UnitInput({ value, onChange, unit }: { value: string; onChange: (v: str
 }
 
 function NewProductForm({ view, token, onView, notify, onClose }: TabProps & { onClose: () => void }) {
-  const { t, lang } = useLang();
+  const { t, lang, fx } = useLang();
   const ingredients = Object.keys(view.new_product_forms);
   const known = (key: string) => [key, view.ingredient_ja[key], view.ingredient_en?.[key]].filter(Boolean) as string[];
   const [ingredientText, setIngredientText] = useState("");
@@ -347,7 +366,8 @@ function NewProductForm({ view, token, onView, notify, onClose }: TabProps & { o
           product: name.trim(),
           unit,
           pack_size: packN,
-          price_eur: priceN,
+          price: priceN,
+          currency: fx.currency,
           origin_route: origin,
           attributes,
           ...(note.trim() && { note_ja: note.trim() }),
@@ -420,7 +440,7 @@ function NewProductForm({ view, token, onView, notify, onClose }: TabProps & { o
         </div>
         <label className="block">
           <Label>{t.priceNew}</Label>
-          <UnitInput value={price} onChange={setPrice} unit="€" />
+          <PriceInput value={price} onChange={setPrice} fx={fx} lang={lang} />
         </label>
         <div>
           <Label>{t.origin}</Label>

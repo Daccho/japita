@@ -3,9 +3,6 @@
 import { PortalError, type FormField, type Origin } from "@/lib/portal";
 import type { Lang } from "./i18n";
 
-const eur = new Intl.NumberFormat("ja-JP", { style: "currency", currency: "EUR", minimumFractionDigits: 2 });
-export const formatEur = (v: number | null | undefined) => (v == null ? "—" : eur.format(v));
-
 const WEEKDAYS: Record<Lang, string[]> = {
   ja: ["日", "月", "火", "水", "木", "金", "土"],
   en: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],

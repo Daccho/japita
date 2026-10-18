@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ClipboardCheck, Loader2, TriangleAlert } from "lucide-react";
-import { errorText, money, qty } from "@/lib/api";
+import { errorText, qty } from "@/lib/api";
 import { useDates, useI18n, useLabel } from "@/lib/i18n";
 import { useElapsed, useWorkspace } from "@/components/workspace";
 import { suggestedBasket } from "@/components/helpers";
@@ -45,7 +45,7 @@ function WeeklyCheck() {
 }
 
 export default function WeekPage() {
-  const { t } = useI18n();
+  const { t, money } = useI18n();
   const label = useLabel();
   const d = useDates();
   const { data } = useWorkspace();

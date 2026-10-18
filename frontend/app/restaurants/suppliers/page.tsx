@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Check, CircleHelp, Copy, Filter, Leaf, Link2, MapPin, Search, X } from "lucide-react";
-import { api, errorText, money, qty, unitPrice, type Evidence, type Offer, type Supplier } from "@/lib/api";
+import { api, errorText, qty, unitPrice, type Evidence, type Offer, type Supplier } from "@/lib/api";
 import { useDates, useI18n, useLabel, type Key } from "@/lib/i18n";
 import { useWorkspace } from "@/components/workspace";
 import { copyText, fmtValue, offerImage } from "@/components/helpers";
@@ -41,7 +41,7 @@ function matches(query: string, text: string) {
 }
 
 function OfferCard({ offer, evidence }: { offer: Offer; evidence?: Evidence }) {
-  const { t, lang } = useI18n();
+  const { t, lang, money } = useI18n();
   const label = useLabel();
   const d = useDates();
   const { refresh } = useWorkspace();
@@ -117,7 +117,7 @@ function OfferCard({ offer, evidence }: { offer: Offer; evidence?: Evidence }) {
       </div>
       <div className="jp-offer-meta">
         <span>{t("of.pack", { size: qty(offer.pack_size, offer.unit), price: money(offer.price_eur) })}</span>
-        <span>{unitPrice(offer)}</span>
+        <span>{unitPrice(offer, money)}</span>
       </div>
       {evidence ? (
         <div className="jp-detail" style={{ marginTop: 4 }}>
@@ -201,7 +201,7 @@ function OfferCard({ offer, evidence }: { offer: Offer; evidence?: Evidence }) {
 }
 
 function SupplierDetail({ supplier, offers }: { supplier: Supplier; offers: Offer[] }) {
-  const { t } = useI18n();
+  const { t, money } = useI18n();
   const d = useDates();
   const { profileId } = useWorkspace();
   const [evidence, setEvidence] = useState<Record<string, Evidence>>({});
@@ -253,7 +253,7 @@ function SupplierDetail({ supplier, offers }: { supplier: Supplier; offers: Offe
 }
 
 export default function SuppliersPage() {
-  const { t } = useI18n();
+  const { t, money } = useI18n();
   const label = useLabel();
   const { data } = useWorkspace();
   const [view, setView] = useState<View>("existing");
@@ -479,7 +479,7 @@ export default function SuppliersPage() {
                       <small>{offers.length === 1 ? t("sup.product1") : t("sup.products", { n: offers.length })}</small>
                     </div>
                     <div className="jp-supplier-price">
-                      {best ? (offers.length > 1 ? t("sup.fromPrice", { p: unitPrice(best) }) : unitPrice(best)) : "—"}
+                      {best ? (offers.length > 1 ? t("sup.fromPrice", { p: unitPrice(best, money) }) : unitPrice(best, money)) : "—"}
                       {best && <small>{t("of.pack", { size: qty(best.pack_size, best.unit), price: money(best.price_eur) })}</small>}
                     </div>
                     <button type="button" className="jp-action" aria-expanded={open} onClick={() => setExpanded(open ? null : s.id)}>

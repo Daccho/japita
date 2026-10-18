@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { CalendarDays, Check, Clock, Send } from "lucide-react";
 import Link from "next/link";
-import { api, errorCodeOf, errorText, money, qty, type PurchaseOrder } from "@/lib/api";
+import { api, errorCodeOf, errorText, qty, type PurchaseOrder } from "@/lib/api";
 import { useDates, useI18n, type Key } from "@/lib/i18n";
 import { useWorkspace } from "@/components/workspace";
 import { idempotencyKey } from "@/components/helpers";
@@ -17,7 +17,7 @@ const STATE_KEY: Record<PurchaseOrder["state"], Key> = {
 
 // Supplier orders created by a basket approval: send each one, then follow the supplier's confirmation.
 export default function Orders({ orders, canSubmit }: { orders: PurchaseOrder[]; canSubmit: boolean }) {
-  const { t, lang } = useI18n();
+  const { t, lang, money } = useI18n();
   const d = useDates();
   const { refresh } = useWorkspace();
   const [busy, setBusy] = useState<string | null>(null);

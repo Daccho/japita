@@ -20,7 +20,7 @@ export function PortalApp({ token }: { token: string }) {
 }
 
 function Portal({ token }: { token: string }) {
-  const { t } = useLang();
+  const { t, fx } = useLang();
   const [view, setView] = useState<PortalView | null>(null);
   const [failure, setFailure] = useState<"notfound" | "offline" | null>(null);
   const [tab, setTab] = useState<Tab | null>(null);
@@ -159,6 +159,7 @@ function Portal({ token }: { token: string }) {
         {tab === "requests" && <RequestsTab {...props} />}
         {tab === "orders" && <OrdersTab {...props} />}
         {tab === "products" && <ProductsTab {...props} />}
+        {fx.note && tab !== "requests" && <p className="mt-6 text-center text-xs text-aj-muted tabular-nums">{fx.note}</p>}
       </main>
 
       {toast && (

@@ -56,6 +56,7 @@ export type Origin = "japan" | "europe" | "italy";
 export type PendingUpdate = {
   product?: string;
   price_eur?: number;
+  price_input?: PriceInput;
   pack_size?: number;
   attributes?: Record<string, unknown>;
   note_ja?: string | null;
@@ -90,9 +91,17 @@ export type PortalView = {
   ingredient_en?: Record<string, string>;
 };
 
+export type Currency = "EUR" | "JPY" | "USD";
+
+/** What the supplier typed, before conversion to EUR. */
+export type PriceInput = { amount: number; currency: Currency; rate: number; rate_date: string | null };
+
 export type ProductUpdate = {
   product?: string;
   price_eur?: number;
+  /** Price in `currency`; the API converts it to EUR with the current ECB rate. */
+  price?: number;
+  currency?: Currency;
   pack_size?: number;
   attributes: Record<string, unknown>;
   note_ja?: string;
@@ -103,7 +112,9 @@ export type NewProduct = {
   product: string;
   unit: "g" | "ml";
   pack_size: number;
-  price_eur: number;
+  price_eur?: number;
+  price?: number;
+  currency?: Currency;
   origin_route: Origin;
   attributes: Record<string, unknown>;
   note_ja?: string;

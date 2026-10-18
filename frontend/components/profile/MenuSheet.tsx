@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Check, Pencil } from "lucide-react";
-import { money, qty } from "@/lib/api";
+import { menuEur, qty } from "@/lib/api";
 import { useI18n, useLabel } from "@/lib/i18n";
 import { useStored, useWorkspace } from "@/components/workspace";
 import { MENU, MENU_GROUPS, PROFILE_DEFAULTS, type MenuItem } from "@/components/menuData";
@@ -156,7 +156,7 @@ export default function MenuSheet() {
                       ) : m.price_eur === null ? (
                         t("mn.various")
                       ) : (
-                        money(m.price_eur).replace(".00", "")
+                        menuEur(m.price_eur).replace(".00", "")
                       )}
                     </span>
                   </div>

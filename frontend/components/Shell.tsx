@@ -23,7 +23,7 @@ const NAV: { href: string; key: Key; icon: typeof Store }[] = [
 const BOWLS = ["tonkotsu", "set_full", "set_kaedama", "veggie_miso"];
 
 export function Footer() {
-  const { t } = useI18n();
+  const { t, fx } = useI18n();
   const d = useDates();
   const { data } = useWorkspace();
   const week = data?.state.week;
@@ -33,6 +33,7 @@ export function Footer() {
       {week?.dates?.length === 2 && (
         <span>{t("foot.week", { dates: d.range(week.dates[0], week.dates[1]), bowls: bowls.toLocaleString("en-IE") })}</span>
       )}
+      {fx.note && <span>{fx.note}</span>}
     </footer>
   );
 }

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowDown, ArrowUp } from "lucide-react";
-import { api, errorText, money, type BasketResult, type Day, type Profile, type Rule } from "@/lib/api";
+import { api, errorText, type BasketResult, type Day, type Profile, type Rule } from "@/lib/api";
 import { useDates, useI18n, useLabel, type Key } from "@/lib/i18n";
 import { useWorkspace } from "@/components/workspace";
 import { findBasket } from "@/components/helpers";
@@ -13,7 +13,7 @@ const cheapest = (r: BasketResult) => findBasket(r, "lowest_cost")?.delivered_to
 
 // The active profile's real purchasing rules (backend). Moving a rule and saving recalculates every basket.
 export default function BuyingPreferences() {
-  const { t } = useI18n();
+  const { t, money, fx } = useI18n();
   const label = useLabel();
   const d = useDates();
   const { data, profileId, refresh } = useWorkspace();
@@ -87,14 +87,14 @@ export default function BuyingPreferences() {
       ))}
       <div className="jp-field-grid" style={{ marginTop: 20 }}>
         <label className="jp-field">
-          {t("by.budget")}
+          {t("by.budget", { c: fx.currency })}
           <input
             type="number"
             min={1}
             max={100000}
             step={1}
-            value={p.weekly_budget_eur}
-            onChange={(e) => Number(e.target.value) > 0 && edit({ ...p, weekly_budget_eur: Number(e.target.value) })}
+            value={Math.round(fx.fromEur(p.weekly_budget_eur))}
+            onChange={(e) => Number(e.target.value) > 0 && edit({ ...p, weekly_budget_eur: fx.toEur(Number(e.target.value)) })}
           />
           <small className="jp-muted">{t("by.budgetNote")}</small>
         </label>
