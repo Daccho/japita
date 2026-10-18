@@ -28,11 +28,11 @@ const DICT: Record<LoginLang, Record<Msg, string>> = {
     newHere: "New to Japita?", create: "Create an account", haveAccount: "Already have an account?", signIn: "Sign in",
     signupTitle: "Create your Japita account", restaurantName: "Restaurant name", supplierName: "Company name",
     city: "City", country: "Country", contactName: "Contact person", email: "Email",
-    idHint: "3–64 characters: lowercase letters, digits, '.', '_' or '-'", passwordHint: "At least 12 characters",
+    idHint: "3–64 characters: lowercase letters, digits, '.', '_' or '-'", passwordHint: "At least 8 characters",
     creating: "Creating…",
     restaurantStart: "Your workspace starts empty: add your menu, weekly servings and suppliers.",
     supplierStart: "Restaurants on Japita will see you as a new supplier. They confirm your terms before ordering.",
-    taken: "This login ID is already in use.", weak: "The password needs at least 12 characters.",
+    taken: "This login ID is already in use.", weak: "The password needs at least 8 characters.",
     badId: "Use 3–64 lowercase letters, digits, '.', '_' or '-'.",
     tooMany: "Too many new accounts from this network. Try again later.",
   },
@@ -45,11 +45,11 @@ const DICT: Record<LoginLang, Record<Msg, string>> = {
     newHere: "Nuovo su Japita?", create: "Crea un account", haveAccount: "Hai già un account?", signIn: "Accedi",
     signupTitle: "Crea il tuo account Japita", restaurantName: "Nome del ristorante", supplierName: "Nome dell'azienda",
     city: "Città", country: "Paese", contactName: "Referente", email: "Email",
-    idHint: "3–64 caratteri: lettere minuscole, cifre, '.', '_' o '-'", passwordHint: "Almeno 12 caratteri",
+    idHint: "3–64 caratteri: lettere minuscole, cifre, '.', '_' o '-'", passwordHint: "Almeno 8 caratteri",
     creating: "Creazione in corso…",
     restaurantStart: "Il tuo spazio di lavoro parte vuoto: aggiungi menu, coperti settimanali e fornitori.",
     supplierStart: "I ristoranti su Japita ti vedranno come nuovo fornitore. Confermano le tue condizioni prima di ordinare.",
-    taken: "Questo ID di accesso è già in uso.", weak: "La password deve avere almeno 12 caratteri.",
+    taken: "Questo ID di accesso è già in uso.", weak: "La password deve avere almeno 8 caratteri.",
     badId: "Usa 3–64 lettere minuscole, cifre, '.', '_' o '-'.",
     tooMany: "Troppi nuovi account da questa rete. Riprova più tardi.",
   },
@@ -62,11 +62,11 @@ const DICT: Record<LoginLang, Record<Msg, string>> = {
     newHere: "はじめてご利用ですか？", create: "アカウントを作成", haveAccount: "アカウントをお持ちですか？",
     signIn: "ログイン", signupTitle: "Japitaのアカウントを作成", restaurantName: "店舗名", supplierName: "会社名",
     city: "都市", country: "国", contactName: "担当者名", email: "メールアドレス",
-    idHint: "3〜64文字：英小文字・数字・「.」「_」「-」", passwordHint: "12文字以上",
+    idHint: "3〜64文字：英小文字・数字・「.」「_」「-」", passwordHint: "8文字以上",
     creating: "作成中…",
     restaurantStart: "ワークスペースは空の状態から始まります。メニュー、週の食数、仕入先を登録してください。",
     supplierStart: "Japitaの飲食店に新しい仕入先として表示されます。発注の前に飲食店が取引条件を確認します。",
-    taken: "このログインIDはすでに使われています。", weak: "パスワードは12文字以上にしてください。",
+    taken: "このログインIDはすでに使われています。", weak: "パスワードは8文字以上にしてください。",
     badId: "英小文字・数字・「.」「_」「-」で3〜64文字にしてください。",
     tooMany: "このネットワークからの新規作成が多すぎます。しばらくしてからお試しください。",
   },
@@ -246,7 +246,7 @@ function LoginForm() {
                   <label className="jp-field">
                     {t("password")}
                     <input
-                      name="password" type="password" autoComplete="new-password" required minLength={12} maxLength={1024}
+                      name="password" type="password" autoComplete="new-password" required minLength={8} maxLength={1024}
                       value={password} onChange={(e) => setPassword(e.target.value)} aria-describedby="signup-pw-hint"
                     />
                     <small id="signup-pw-hint" className="jp-muted">{t("passwordHint")}</small>
@@ -254,7 +254,7 @@ function LoginForm() {
                   {error && <p className="jp-error" role="alert">{t(error)}</p>}
                   <button
                     type="submit" className="jp-action jp-primary jp-login-submit"
-                    disabled={!!busy || !fields.name.trim() || !username || password.length < 12}
+                    disabled={!!busy || !fields.name.trim() || !username || password.length < 8}
                   >
                     {busy === "signup" && <Loader2 className="jp-spinner" aria-hidden />}
                     {busy === "signup" ? t("creating") : t("create")}

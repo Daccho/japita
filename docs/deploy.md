@@ -34,7 +34,7 @@ Status: deployed. Web app https://japita.vercel.app, API https://japita-api.onre
    | `restaurant1`, `restaurant2`, `restaurant3` | Restaurant (Kumo Ramen Milano) | `/restaurants` |
    | `supplier1` / `supplier2` / `supplier3` | Supplier S1 Tokyo Shokuhin / S2 Pasta Fresca / S3 EuroAsia | `/suppliers` |
 
-   Real accounts are created with `DATABASE_URL='<neon>' uv run python -m japita.auth add-user <id> --name "<name>" [--role supplier --supplier S1]` (password at least 12 characters).
+   Real accounts are created with `DATABASE_URL='<neon>' uv run python -m japita.auth add-user <id> --name "<name>" [--role supplier --supplier S1]` (password at least 8 characters).
 4. **Vercel:**
    1. Choose Add New → Project and import `Daccho/japita`.
    2. Set the root directory to `frontend`. The framework is detected as Next.js.

@@ -43,7 +43,7 @@ SESSION_TTL = timedelta(days=7)
 LOGIN_FAILURES_MAX = 10          # per login ID within LOGIN_FAILURE_WINDOW
 LOGIN_FAILURE_WINDOW = 15 * 60   # seconds
 USERNAME_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{2,63}$")
-MIN_PASSWORD_LEN = 12
+MIN_PASSWORD_LEN = 8
 
 # Reached without a session. Everything else is denied by default, so new routes are protected automatically.
 PUBLIC_PATHS = [
