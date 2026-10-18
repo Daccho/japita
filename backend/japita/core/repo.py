@@ -5,7 +5,7 @@ offers, requests, orders). The demo restaurants share DEFAULT_WORKSPACE. load_st
 workspace (`use_workspace`, set by the auth middleware). Suppliers that sign up themselves are kept in DIRECTORY and
 appear in every workspace as candidates until that restaurant saves its own copy.
 
-Run `uv run python -m japita.repo seed <file>` to load existing data (e.g. tests/fixtures/kumo.json).
+Run `uv run python -m japita.core.repo seed <file>` to load existing data (e.g. tests/fixtures/kumo.json).
 """
 
 import contextvars
@@ -113,7 +113,7 @@ class DrawingMatch(Base):
 
 
 class RuleSet(Base):
-    """One version of the import rule set (rules.py). Exactly one row is active; restaurant state saves and seeding
+    """One version of the import rule set (import_rules/rules.py). Exactly one row is active; restaurant state saves and seeding
     never touch this table."""
     __tablename__ = "import_rule_sets"
     version = Column(Integer, primary_key=True, autoincrement=False)
@@ -386,6 +386,6 @@ if __name__ == "__main__":
     import sys
 
     if len(sys.argv) != 3 or sys.argv[1] != "seed":
-        sys.exit("usage: python -m japita.repo seed <file.json>")
+        sys.exit("usage: python -m japita.core.repo seed <file.json>")
     seed(Path(sys.argv[2]))
     print(f"seeded from {sys.argv[2]}")

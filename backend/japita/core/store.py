@@ -9,7 +9,8 @@ import secrets
 from datetime import datetime, timezone
 from pathlib import Path
 
-from japita.core.errors import DomainError
+from japita.core import repo
+from japita.core.errors import AppError, DomainError
 
 # Decided inside the restaurant (e.g. the chef tastes a sample), so never asked of a supplier.
 OWNER_DECIDED_FIELDS = {"chef_approved"}
@@ -148,3 +149,12 @@ class Store:
         c["state"] = "replied"
         c["applied_value"] = value
         return c
+
+
+def load_store(profile_id: str | None = None) -> Store:
+    """The current workspace's state for one profile (the active profile by default); 404 for an unknown one."""
+    data = repo.load_state()
+    pid = profile_id or active_profile_id(data)
+    if pid not in data["profiles"]:
+        raise AppError(404, "not_found", f"profile {pid!r} not found; create one with PUT /profiles/{{id}}")
+    return Store(data, pid)

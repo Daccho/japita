@@ -64,7 +64,7 @@ docker compose up -d db
 
 cd backend && uv sync
 export DATABASE_URL=postgresql+psycopg://japita:japita@localhost:5432/japita   # local docker Postgres
-uv run python -m japita.repo seed tests/fixtures/kumo.json                    # fictional demo data
+uv run python -m japita.core.repo seed tests/fixtures/kumo.json                    # fictional demo data
 DEMO_ACCOUNTS=1 APP_ORIGIN=http://localhost:3000 uv run uvicorn japita.api:app --reload   # http://localhost:8000/docs
 
 # second terminal
@@ -89,9 +89,9 @@ Sign in at http://localhost:3000 with `restaurant1` / `restaurant1` (or any demo
 cd backend
 export DATABASE_URL=postgresql+psycopg://japita:japita@localhost:5432/japita
 uv run pytest                                              # offline tests
-uv run python -m japita.smoke                              # check the real model endpoint
-uv run python -m japita.repo seed tests/fixtures/kumo.json # reset demo data
-uv run python -m japita.auth add-user <id> --name "<name>" [--role supplier --supplier S1]   # real account (prompts for a password)
+uv run python -m japita.core.smoke                              # check the real model endpoint
+uv run python -m japita.core.repo seed tests/fixtures/kumo.json # reset demo data
+uv run python -m japita.accounts.auth add-user <id> --name "<name>" [--role supplier --supplier S1]   # real account (prompts for a password)
 ```
 
 Deployment: [docs/deploy.md](docs/deploy.md). Own vLLM and Evolus setup: [docs/setup.md](docs/setup.md). Project plan: [plan.md](plan.md).
@@ -102,7 +102,7 @@ The connected app starts with a restaurant/supplier choice and login ID/password
 
 The app and mockup use the selected JP seal and option-04 Japita wordmark. Current branding assets and their provenance are documented in [mockup/assets/README.md](mockup/assets/README.md).
 
-The shared ingredient library covers everyday restaurant staples across cuisines, with multilingual names and matching fictional products. Existing databases can receive the additions with the additive `python -m japita.demo_catalog` importer after explicitly selecting a local `DATABASE_URL`; it preserves owner edits and orders. Coverage and data limits are in [product drawings and the expanded catalog](docs/product-drawings.md#expanded-fictional-product-catalog).
+The shared ingredient library covers everyday restaurant staples across cuisines, with multilingual names and matching fictional products. Existing databases can receive the additions with the additive `python -m japita.catalog.demo` importer after explicitly selecting a local `DATABASE_URL`; it preserves owner edits and orders. Coverage and data limits are in [product drawings and the expanded catalog](docs/product-drawings.md#expanded-fictional-product-catalog).
 
 The connected restaurant menu supports adding dishes and saving their ingredients on the backend; those ingredients also populate My suppliers filters. Approved flat drawings replace product photos. Unknown foods queue background generation through the existing AMD model settings, with validated SVG and a packaging fallback. The connected `/drawings-review` page manages the cache; the standalone [library preview](mockup/drawings-preview.html) shows the approved artwork. See [docs/product-drawings.md](docs/product-drawings.md) for setup, persistence and verification boundaries.
 

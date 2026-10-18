@@ -9,10 +9,17 @@ import json
 import mimetypes
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from typing import Any
 
 from pydantic import BaseModel, ValidationError
 
 from japita.core.llm import LLM
+
+
+def describe_field(label: str, sample: Any) -> str:
+    """A field description for the model: its label and the expected kind of value, from a sample value."""
+    kind = "true/false" if isinstance(sample, bool) else "number" if isinstance(sample, (int, float)) else f'string such as "{sample}"'
+    return f"{label} ({kind})"
 
 
 class FieldRead(BaseModel):

@@ -19,7 +19,7 @@ git clone https://github.com/Daccho/japita.git && cd japita/deploy
 cp amd.env.example .env      # fill in SITE_HOST=<ip-with-dashes>.sslip.io, HF_TOKEN, VLLM_API_KEY, POSTGRES_PASSWORD
 docker compose -f docker-compose.amd.yml up -d --build
 docker compose -f docker-compose.amd.yml logs -f vllm      # first start downloads the model
-docker compose -f docker-compose.amd.yml exec api uv run python -m japita.repo seed tests/fixtures/kumo.json
+docker compose -f docker-compose.amd.yml exec api uv run python -m japita.core.repo seed tests/fixtures/kumo.json
 ```
 
 ## Check

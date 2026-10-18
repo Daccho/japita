@@ -10,10 +10,10 @@ the API through the frontend's /api proxy, so the cookie is first-party and Same
 Anyone can sign up (POST /auth/signup): a restaurant gets its own empty workspace (see `repo`), a supplier a new
 supplier record in the shared directory, visible to every restaurant as an unconfirmed candidate.
 An operator can also create accounts:
-    uv run python -m japita.auth add-user kumo-milano --name "Kumo Ramen Milano"   # prompts for the password
-    uv run python -m japita.auth add-user tokyo-shokuhin --name "Tokyo Shokuhin" --role supplier --supplier S1
-    uv run python -m japita.auth set-password kumo-milano
-    uv run python -m japita.auth set-name tokyo-shokuhin "Tokyo Shokuhin"
+    uv run python -m japita.accounts.auth add-user kumo-milano --name "Kumo Ramen Milano"   # prompts for the password
+    uv run python -m japita.accounts.auth add-user tokyo-shokuhin --name "Tokyo Shokuhin" --role supplier --supplier S1
+    uv run python -m japita.accounts.auth set-password kumo-milano
+    uv run python -m japita.accounts.auth set-name tokyo-shokuhin "Tokyo Shokuhin"
 """
 
 import argparse
@@ -452,7 +452,7 @@ def ensure_demo_accounts() -> list[str]:
 
 
 def main(argv: list[str] | None = None) -> None:
-    p = argparse.ArgumentParser(prog="python -m japita.auth")
+    p = argparse.ArgumentParser(prog="python -m japita.accounts.auth")
     sub = p.add_subparsers(dest="cmd", required=True)
     a = sub.add_parser("add-user", help="create an owner account")
     a.add_argument("username")

@@ -1,5 +1,5 @@
-// Typed client for the signed-in supplier's portal (Japanese / English). Shapes mirror backend/japita/portal.py and
-// portal_display.py: the view carries ready-to-show texts; this client only posts actions.
+// Typed client for the signed-in supplier's portal (Japanese / English). Shapes mirror backend/japita/portal/service.py and
+// portal/display.py: the view carries ready-to-show texts; this client only posts actions.
 
 const API_BASE = "/api"; // same-origin proxy, see next.config.ts
 

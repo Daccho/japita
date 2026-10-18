@@ -1,6 +1,6 @@
 """Milestone 1 smoke test against the real endpoint: model list, plain chat, Japanese reading, tool calling.
 
-Run: uv run python -m japita.smoke
+Run: uv run python -m japita.core.smoke
 """
 
 import json

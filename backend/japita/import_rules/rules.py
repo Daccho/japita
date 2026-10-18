@@ -273,7 +273,7 @@ def import_checks_view(store: Store, lang: str) -> dict:
 def _main(argv: list[str]) -> None:
     from japita.import_rules import rules_import
 
-    usage = "usage: python -m japita.rules import <file.csv|file.json> [--dry-run] | export [file.csv]"
+    usage = "usage: python -m japita.import_rules.rules import <file.csv|file.json> [--dry-run] | export [file.csv]"
     if not argv or argv[0] not in ("import", "export"):
         sys.exit(usage)
     if not os.environ.get("DATABASE_URL"):

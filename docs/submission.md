@@ -153,8 +153,8 @@ Every factual claim above, with its evidence. "Lead" means verified in this proj
 | Offline backend test suite (calculations, stock, orders, portal, sign-in, jobs, currency) | `backend/tests/` (68 offline test functions, some parametrized, plus 3 live tests; counted, not re-run, on 18 Oct 2026); re-run `uv run pytest -q` before submitting |
 | Dockerfile; no committed keys | `backend/Dockerfile`; `.env.example`; `.gitignore` |
 | MIT license | `LICENSE` |
-| Demo accounts restaurant1–3, supplier1–6 (S1–S6), password = login ID | `backend/japita/auth.py` (`DEMO_ACCOUNTS`), `render.yaml` (`DEMO_ACCOUNTS=1`) |
-| Prices shown in EUR/USD (workspace) and JPY/USD (portal) at the ECB reference rate | `backend/japita/fx.py`, `GET /fx`; `frontend/lib/money.ts` |
+| Demo accounts restaurant1–3, supplier1–6 (S1–S6), password = login ID | `backend/japita/accounts/auth.py` (`DEMO_ACCOUNTS`), `render.yaml` (`DEMO_ACCOUNTS=1`) |
+| Prices shown in EUR/USD (workspace) and JPY/USD (portal) at the ECB reference rate | `backend/japita/core/fx.py`, `GET /fx`; `frontend/lib/money.ts` |
 | Direct import from Japan is unrealistic for a same-week shortage | Lead (general logistics reasoning; not a cited source) |
 | Decision support only, no customs or legal clearance | `docs/compliance.md` |
 | Evolus track eligibility with hosted TokenFactory | **Awaiting organizer confirmation** |

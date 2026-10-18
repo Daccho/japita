@@ -1,6 +1,6 @@
 """Add the bundled fictional catalog without resetting owner edits or purchasing state.
 
-Run with an explicitly selected local DATABASE_URL: python -m japita.demo_catalog
+Run with an explicitly selected local DATABASE_URL: python -m japita.catalog.demo
 """
 import json
 from pathlib import Path

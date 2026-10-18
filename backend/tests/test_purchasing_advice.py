@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
 from japita import api
+from japita.advisor import api as advisor_api
 from japita.accounts import auth
 from japita.purchasing import calc
 from japita.purchasing import orders
@@ -207,7 +208,7 @@ def test_agent_run_does_not_overwrite_concurrent_edits_and_retains_followup_cont
     seen = []
     class FakeLLM:
         calls = []
-    monkeypatch.setattr(api, "LLM", FakeLLM)
+    monkeypatch.setattr(advisor_api, "LLM", FakeLLM)
     def fake_agent(llm, store, question, history):
         seen.append(history)
         c = store.add_clarification("O-noo-3", "hydration_pct", "加水率は？", "test")
@@ -217,12 +218,12 @@ def test_agent_run_does_not_overwrite_concurrent_edits_and_retains_followup_cont
             repo.save_state(latest)
         return AgentResult(answer=json.dumps({"recommended_kind": None, "focus": "missing_information",
                                               "evidence": [{"offer_id": c["offer_id"], "field": c["field"], "outcome": "missing_evidence"}]}))
-    monkeypatch.setattr(api, "run_agent", fake_agent)
-    first = api.answer_question(api.Question(question="What should I buy?", via="direct", conversation_id="same-chat"))
+    monkeypatch.setattr(advisor_api, "run_agent", fake_agent)
+    first = advisor_api.answer_question(advisor_api.Question(question="What should I buy?", via="direct", conversation_id="same-chat"))
     assert first["stale"]
     assert repo.load_state()["week"]["stock"]["noodles"]["usable"] == 21000
     assert not repo.load_state()["clarifications"]  # stale run does not add obsolete drafts
-    second = api.answer_question(api.Question(question="What about the frozen option?", via="direct", conversation_id="same-chat"))
+    second = advisor_api.answer_question(advisor_api.Question(question="What about the frozen option?", via="direct", conversation_id="same-chat"))
     assert not second["stale"] and second["explanation"]["validated"]
     assert seen[1][0]["content"] == "What should I buy?"
 

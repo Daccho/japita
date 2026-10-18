@@ -10,6 +10,7 @@ import threading
 import time
 
 import httpx
+from fastapi import APIRouter
 
 from japita.core.errors import DomainError
 
@@ -72,3 +73,12 @@ def _reset() -> None:
     """Forget cached rates (tests)."""
     with _lock:
         _cache.update(rates=None, date=None, fetched_at=0.0, failed_at=0.0)
+
+
+router = APIRouter(tags=["currency"])
+
+
+@router.get("/fx")
+def fx_rates():
+    """Latest ECB reference rates from EUR, for showing EUR prices in the UI language's currency."""
+    return rates()

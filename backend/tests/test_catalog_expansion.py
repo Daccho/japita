@@ -16,7 +16,7 @@ from japita.portal import service as portal
 from japita.core import repo
 from japita.advisor import tools
 from japita.views import service as views
-from japita.api import Offer, Supplier
+from japita.workspace.schemas import Offer, Supplier
 from japita.drawings.library import ingredient_key, library
 from japita.core.store import Store
 from japita.core.textfmt import Money, label
