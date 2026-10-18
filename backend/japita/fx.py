@@ -15,19 +15,19 @@ from .errors import DomainError
 
 log = logging.getLogger("japita.fx")
 
-URL = "https://api.frankfurter.app/latest?from=EUR&to=JPY,USD"
+URL = "https://api.frankfurter.dev/v1/latest?from=EUR&to=JPY,USD"
 SOURCE = "European Central Bank (Frankfurter)"
 TTL = 6 * 3600          # seconds a fetched rate is reused
 RETRY_AFTER = 10 * 60   # seconds before retrying after a failed fetch
 CURRENCIES = ("EUR", "JPY", "USD")
-FALLBACK = {"JPY": 160.0, "USD": 1.08}
+FALLBACK = {"JPY": 177.0, "USD": 1.12}
 
 _lock = threading.Lock()
 _cache: dict = {"rates": None, "date": None, "fetched_at": 0.0, "failed_at": 0.0}
 
 
 def _fetch() -> tuple[dict[str, float], str | None]:
-    r = httpx.get(URL, timeout=10)
+    r = httpx.get(URL, timeout=10, follow_redirects=True)
     r.raise_for_status()
     body = r.json()
     rates = {c: float(body["rates"][c]) for c in ("JPY", "USD")}
