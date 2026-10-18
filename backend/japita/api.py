@@ -17,14 +17,15 @@ from fastapi import FastAPI, File, Header, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field
 
-from . import auth, calc, fx, jobs, repo
+from . import auth, calc, fx, jobs, repo, views
 from .agent import run_agent
 from .errors import AppError, from_value_error, install as install_error_handlers
 from .evolus import EvolusAgent, run_agent_evolus
 from .extract import double_read, read_reply, translate
-from .forms import coerce as _coerce, display_ja, form as _form, spec_fields as _spec_fields
+from .forms import coerce as _coerce, display_ja, form as _form, in_range, spec_fields as _spec_fields
 from .llm import LLM
-from .store import Store
+from .store import Store, active_profile_id
+from .textfmt import Money, lang_from_request, restaurant_lang
 
 
 def _demo_accounts() -> None:
@@ -74,12 +75,18 @@ class IngredientPrefs(In):
     negotiable: list[Rule] = []
 
 
+class Budget(BaseModel):
+    amount: float = Field(ge=1, le=100000, description="Weekly budget in `currency`")
+    currency: Literal["EUR", "USD", "JPY"] = "EUR"
+
+
 class Profile(In):
     id: str
     name: str
     concept: str = ""
     menu_price_eur: list[float] = []
-    weekly_budget_eur: float
+    weekly_budget_eur: float | None = Field(default=None, ge=1, le=100000)
+    budget: Budget | None = Field(default=None, description="Weekly budget in a display currency; converted to EUR")
     priorities: dict[str, Literal["low", "medium", "high"]] = {}
     accepted_delivery_days: list[Day]
     ingredients: dict[str, IngredientPrefs]
@@ -175,14 +182,15 @@ class ApplyReply(BaseModel):
 
 class Question(BaseModel):
     question: str
-    profile_id: str = "kumo-authentic"
+    profile_id: str | None = None  # the restaurant's active profile when absent
+    lang: Literal["it", "en"] = Field(default="it", description="Language of the drafts list in the result")
     # "evolus": Evolus main agent (our Gemma on AMD) drives the loop; "direct": call the model endpoint directly
     via: Literal["evolus", "direct"] = "evolus" if os.environ.get("EVOLUS_AGENT_ID") else "direct"
 
 
 def _store(profile_id: str | None = None) -> Store:
     data = repo.load_state()
-    pid = profile_id or next(iter(data["profiles"]), None)
+    pid = profile_id or active_profile_id(data)
     if pid not in data["profiles"]:
         raise AppError(404, "not_found", f"profile {pid!r} not found; create one with PUT /profiles/{{id}}")
     return Store(data, pid)
@@ -225,13 +233,25 @@ def seed_state(fixture: str = "kumo", x_admin_key: str | None = Header(default=N
 
 
 @app.put("/profiles/{profile_id}")
-def put_profile(profile_id: str, body: Profile):
+def put_profile(profile_id: str, body: Profile, request: Request):
+    """Save a purchasing profile. The response adds `impact`: the cheapest plan total before and after."""
     data = repo.load_state()
-    data["profiles"][profile_id] = {**_dump(body), "id": profile_id}
+    profile = {**_dump(body), "id": profile_id}
+    profile.pop("impact", None)
+    budget = profile.pop("budget", None)
+    if budget is not None:
+        eur, _, _ = fx.to_eur(budget["amount"], budget["currency"])
+        profile["weekly_budget_eur"] = eur
+    if not profile.get("weekly_budget_eur") or not 1 <= profile["weekly_budget_eur"] <= 100000:
+        raise AppError(422, "invalid_budget", "weekly budget must be between 1 and 100000")
+    before = views.cheapest_total(Store(data, profile_id)) if profile_id in data["profiles"] else None
+    data["profiles"][profile_id] = profile
+    after = views.cheapest_total(Store(data, profile_id))
     repo.save_state(data)
     from .drawings import register_state
     register_state(data)
-    return data["profiles"][profile_id]
+    lang = restaurant_lang(lang_from_request(request))
+    return {**profile, "impact": views.impact(before, after, lang, Money(lang))}
 
 
 @app.put("/recipe")
@@ -391,7 +411,9 @@ def answer_question(body: Question) -> dict:
         calls = llm.calls
     repo.save_state(store.data)  # the agent may have saved clarification drafts
     repo.log_calls(calls, f"agent:{body.via}")
-    return {"via": body.via, "answer": result.answer, "steps": result.steps, "clarifications": store.clarifications}
+    return {"via": body.via, "answer": views.clean_answer(result.answer, views.answer_names(store)),
+            "answer_raw": result.answer, "steps": result.steps, "clarifications": store.clarifications,
+            "drafts": views.drafts_view(store, store.clarifications, body.lang)}
 
 
 @app.post("/agent/ask", status_code=202)
@@ -508,7 +530,8 @@ def supplier_reply(token: str, body: SupplierReply):
     if body.value is not None:
         # Entered in a typed form field by the supplier: no reading needed, only the note is translated.
         value = _coerce(body.value, sample)
-        if value is None:
+        choices = [ch["value"] for ch in _form(field).get("choices", [])]
+        if value is None or not in_range(field, value) or (choices and value not in choices):
             raise AppError(422, "invalid_value", "入力値の形式が正しくありません")
         source = f"[仕入先フォーム入力] {_form(field)['label_ja']}: {display_ja(body.value)}{_form(field).get('unit', '')}"
         extraction = {"status": "ok", "value": value, "read_1": value, "read_2": value, "source_text": source,
@@ -576,3 +599,7 @@ app.include_router(drawings_router)
 from .menu_api import router as menu_router  # noqa: E402
 
 app.include_router(menu_router)
+
+from .views_api import router as views_router  # noqa: E402
+
+app.include_router(views_router)

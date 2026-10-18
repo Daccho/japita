@@ -59,6 +59,14 @@ def coerce(value: Any, sample: Any) -> Any:
     return value
 
 
+def in_range(field: str, value: Any) -> bool:
+    """Whether a typed value respects the form's min/max (e.g. hydration 0-100 %)."""
+    f = FIELD_FORM_JA.get(field, {})
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        return True
+    return f.get("min", value) <= value <= f.get("max", value)
+
+
 CHOICE_JA = {c["value"]: c["label_ja"] for f in FIELD_FORM_JA.values() for c in f.get("choices", [])}
 
 

@@ -17,10 +17,13 @@ from sqlalchemy.orm import DeclarativeBase, Session
 
 load_dotenv()
 
-# Kinds stored one document per id; "recipe" and "week" are singletons stored under id "current".
+# Kinds stored one document per id; "recipe", "week" and restaurant settings are singletons stored under
+# id "current".
 COLLECTIONS = {"profile": "profiles", "supplier": "suppliers", "offer": "offers", "clarification": "clarifications",
                "approval": "approvals", "purchase_order": "purchase_orders"}
-SINGLETONS = {"recipe": "recipe", "week": "week"}
+SINGLETONS = {"recipe": "recipe", "week": "week", "restaurant_profile": "restaurant_profile",
+              "restaurant_links": "restaurant_links", "restaurant_settings": "restaurant_settings",
+              "notifications_seen": "notifications_seen"}
 
 JsonType = JSON().with_variant(JSONB(), "postgresql")
 

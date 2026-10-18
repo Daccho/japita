@@ -120,14 +120,17 @@ def check_evidence(store: Store, offer_id: str) -> dict:
 def orderability(store: Store, offer_id: str) -> dict:
     offer = store.offer(offer_id)
     sup = store.suppliers[offer["supplier_id"]]
-    reasons = []
+    reasons, codes = [], []
     if sup["account_status"] != "approved":
         reasons.append(f"supplier account is {sup['account_status']}")
+        codes.append(f"account_{sup['account_status']}")
     if sup["shipping_eur"] is None:
         reasons.append("shipping cost unknown")
+        codes.append("shipping_unknown")
     if not set(sup["delivery_days"]) & set(store.profile["accepted_delivery_days"]):
         reasons.append("no delivery day matches the restaurant's accepted days")
-    return {"orderable": not reasons, "reasons": reasons}
+        codes.append("no_delivery_day")
+    return {"orderable": not reasons, "reasons": reasons, "codes": codes}
 
 
 def line_for(store: Store, offer: dict, required: float) -> dict:
@@ -248,7 +251,7 @@ def calculate_baskets(store: Store) -> dict:
     to_buy = [ing for ing in eligible if needs.get(ing, {}).get("required", 0) > 0]
     missing = [ing for ing in to_buy if not eligible[ing]]
     if missing:
-        return {"baskets": [], "excluded": excluded, "infeasible_combinations": 0,
+        return {"baskets": [], "excluded": excluded, "infeasible_combinations": 0, "missing": missing,
                 "open_questions": open_questions(store),
                 "conflict": f"No eligible offer for: {', '.join(missing)}. Ask which constraint may change."}
 

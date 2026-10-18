@@ -6,7 +6,7 @@ Suppliers never change restaurant data directly: product updates and new product
 import secrets
 
 from .errors import DomainError
-from .forms import FIELD_FORM_JA, INGREDIENT_EN, INGREDIENT_JA, coerce, display_ja, form, spec_fields
+from .forms import FIELD_FORM_JA, INGREDIENT_EN, INGREDIENT_JA, coerce, display_ja, form, in_range, spec_fields
 from .store import Store, _now
 
 OWNER_ONLY_FIELDS = {"chef_approved"}  # decided inside the restaurant, never entered by a supplier
@@ -46,8 +46,8 @@ def _typed_attributes(store: Store, ingredient: str, attributes: dict) -> tuple[
             raise DomainError("unknown_field", f"field {field!r} cannot be entered by a supplier")
         value = coerce(raw, samples[field])
         choices = [c["value"] for c in FIELD_FORM_JA.get(field, {}).get("choices", [])]
-        if value is None or (choices and value not in choices):
-            raise DomainError("invalid_value", f"invalid value for {field}")
+        if value is None or (choices and value not in choices) or not in_range(field, value):
+            raise DomainError("invalid_value", f"invalid value for {field}", 422)
         values[field] = value
         label = FIELD_FORM_JA.get(field, {}).get("label_ja", field)
         evidence[field] = f"[サプライヤー入力] {label}: {display_ja(raw)}{FIELD_FORM_JA.get(field, {}).get('unit', '')}"
@@ -123,7 +123,9 @@ def apply_update(store: Store, offer_id: str) -> dict:
     offer["evidence"].update(proposal.get("evidence", {}))
     for field in proposal.get("attributes", {}):
         store.review_flags.get(offer_id, {}).pop(field, None)
-    offer.pop("pending_new", None)
+    if offer.pop("pending_new", None):
+        offer["from_supplier_proposal"] = True  # a new product that joined the catalog from the supplier portal
+    offer["applied_at"] = _now()
     offer["offer_date"] = proposal["submitted_at"][:10]
     return offer
 
@@ -192,8 +194,9 @@ def reject_profile(store: Store, supplier_id: str) -> dict:
     return sup
 
 
-def view(store: Store, sup: dict) -> dict:
-    """Everything the supplier portal shows: only this supplier's requests, orders and products."""
+def view(store: Store, sup: dict, lang: str = "ja", money=None) -> dict:
+    """Everything the supplier portal shows: only this supplier's requests, orders and products, with display
+    texts in `lang` ("ja" or "en") and money in JPY (ja) or USD (en)."""
     offer_ids = {o["id"] for o in store.offers if o["supplier_id"] == sup["id"]}
     requests = [{"id": c["id"], "token": c["token"], "offer_id": c["offer_id"], "question_ja": c["text_ja"],
                  "question_en": (c.get("translations") or {}).get("en"), "form": form(c["field"]), "state": "awaiting_reply" if c["state"] == "sent" else "replied",
@@ -221,8 +224,10 @@ def view(store: Store, sup: dict) -> dict:
                  "pending_update": o.get("pending_update"), "pending_new": bool(o.get("pending_new")),
                  "form": product_form(store, o["ingredient"])}
                 for o in store.offers if o["supplier_id"] == sup["id"]]
-    return {"restaurant": store.profile["name"], "supplier": {"id": sup["id"], "name": sup["name"]},
-            "profile": profile(sup), "pending_profile": sup.get("pending_profile"),
-            "requests": requests, "orders": orders, "products": products,
-            "new_product_forms": {ing: product_form(store, ing) for ing in store.profile["ingredients"]},
-            "ingredient_ja": INGREDIENT_JA, "ingredient_en": INGREDIENT_EN}
+    out = {"restaurant": store.profile["name"], "supplier": {"id": sup["id"], "name": sup["name"]},
+           "profile": profile(sup), "pending_profile": sup.get("pending_profile"),
+           "requests": requests, "orders": orders, "products": products,
+           "new_product_forms": {ing: product_form(store, ing) for ing in store.profile["ingredients"]},
+           "ingredient_ja": INGREDIENT_JA, "ingredient_en": INGREDIENT_EN}
+    from .portal_display import decorate
+    return decorate(store, out, lang, money)
