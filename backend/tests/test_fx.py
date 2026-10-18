@@ -99,9 +99,10 @@ def test_fx_is_public(client, monkeypatch):
     assert r.status_code == 200 and r.json()["rates"]["USD"] == 1.08
 
 
-def test_price_entered_in_jpy_is_stored_in_eur(client, monkeypatch):
+def test_price_entered_in_jpy_is_stored_in_eur(client, monkeypatch, sign_in_supplier):
     counting_fetch(monkeypatch)
     token = portal_token()
+    sign_in_supplier(client, "S3")
     h = {"origin": "http://localhost:3000"}
     r = client.post(f"/portal/{token}/products/O-noo-3", json={"price": 1000, "currency": "JPY"}, headers=h)
     assert r.status_code == 200, r.text

@@ -59,14 +59,18 @@ def test_every_error_has_a_stable_code(client):
     r = client.get("/no-such-route")
     assert r.status_code == 404 and r.json()["error"]["code"] == "not_found"
     r = client.get("/portal/not-a-token")
-    assert r.status_code == 404 and r.json()["error"]["code"] == "link_not_found"
+    assert r.status_code == 403 and r.json()["error"]["code"] == "forbidden"
     client.post("/auth/logout", headers={"origin": APP})
     r = client.get("/state")
     assert r.status_code == 401 and r.json()["error"] == {"code": "auth_required", "message": "not signed in"}
 
 
-def test_portal_refusals_have_domain_codes(client):
-    token = client.get("/suppliers/S1/portal-link").json()["token"]
+def test_portal_refusals_have_domain_codes(client, sign_in_supplier):
+    client.post("/auth/logout", headers={"origin": APP})
+    sign_in_supplier(client, "S1", APP)
+    r = client.get("/portal/not-a-token")
+    assert r.status_code == 404 and r.json()["error"]["code"] == "link_not_found"
+    token = "me"
     r = client.post(f"/portal/{token}/products/O-soy-1", json={}, headers={"origin": APP})
     assert r.status_code == 422 and r.json()["error"]["code"] == "nothing_to_update"
     r = client.post(f"/portal/{token}/products/O-soy-1", json={"attributes": {"bogus": 1}}, headers={"origin": APP})

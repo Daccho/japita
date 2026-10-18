@@ -104,8 +104,25 @@ def test_passkey_routes_are_gone(client):
     assert "passkeys" not in client.get("/auth/me").json()
 
 
-def test_supplier_token_pages_stay_public(client):
-    assert client.get("/portal/not-a-token").status_code == 404  # reached the route, not 401
+def test_portal_needs_the_suppliers_own_session(client, sign_in_supplier):
+    from japita import portal
+    from japita.store import Store
+    data = repo.load_state()
+    store = Store(data, next(iter(data["profiles"])))
+    own, other = portal.portal_token(store, "S3"), portal.portal_token(store, "S1")
+    repo.save_state(data)
+    for path in (f"/portal/{own}", "/portal/me", "/portal/me/notifications", f"/portal/{own}/forms?ingredient=x"):
+        assert client.get(path).status_code == 401, path
+    login(client)
+    assert client.get(f"/portal/{own}").status_code == 403 and client.get("/portal/me").status_code == 403
+    client.post("/auth/logout", headers={"origin": APP})
+    sign_in_supplier(client, "S3", APP)
+    assert client.get(f"/portal/{own}").status_code == 200
+    assert client.get("/portal/me").json()["supplier"]["id"] == "S3"
+    assert client.get(f"/portal/{other}").status_code == 403
+    assert client.post(f"/portal/{other}/profile", json={"phone": "1"}, headers={"origin": APP}).status_code == 403
+    assert client.get("/portal/not-a-token").status_code == 404
+    assert client.get("/state").status_code == 403
 
 
 def test_demo_accounts_only_with_flag(client, monkeypatch):
@@ -156,3 +173,21 @@ def test_startup_prepares_demo_accounts_and_runs_drawing_lifecycle(tmp_path, mon
         assert client.get("/menu").status_code == 200
         assert lifecycle == [("start", {"scan_catalog": True})]
     assert lifecycle[-1] == ("stop", {})
+
+
+def test_portal_reply_by_request_id(client, sign_in_supplier):
+    from japita.store import Store
+    data = repo.load_state()
+    store = Store(data, next(iter(data["profiles"])))
+    c = store.add_clarification("O-noo-3", "hydration_pct", "加水率を教えてください", "missing")
+    store.approve(c["id"])
+    repo.save_state(data)
+    sign_in_supplier(client, "S1", APP)
+    assert client.post(f"/portal/me/requests/{c['id']}/reply", json={"value": 27},
+                       headers={"origin": APP}).status_code == 404  # another supplier's question
+    assert client.get(f"/supplier/requests/{c['token']}").status_code == 403
+    client.post("/auth/logout", headers={"origin": APP})
+    sign_in_supplier(client, "S3", APP)
+    r = client.post(f"/portal/me/requests/{c['id']}/reply", json={"value": 27}, headers={"origin": APP})
+    assert r.status_code == 200, r.text
+    assert next(q for q in r.json()["requests"] if q["id"] == c["id"])["state"] == "replied"

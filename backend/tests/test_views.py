@@ -313,9 +313,10 @@ def test_links_and_overview_validation_with_localized_errors(client):
     assert client.put("/restaurant/profile", json={"values": {"seats": "x" * 200}}).status_code == 422
 
 
-def test_portal_forms_lookup_and_localized_portal_error(client):
-    link = client.get("/suppliers/S3/portal-link").json()
-    token = link["token"]
+def test_portal_forms_lookup_and_localized_portal_error(client, sign_in_supplier):
+    client.post("/auth/logout")
+    sign_in_supplier(client, "S3", APP)
+    token = "me"
     r = client.get(f"/portal/{token}/forms?ingredient=醤油").json()
     assert r["ingredient"] == "soy_sauce" and r["default_unit"] == "ml" and r["form"]
     assert client.get(f"/portal/{token}/forms?ingredient=白味噌").json() == {

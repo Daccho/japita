@@ -497,28 +497,32 @@ def _supplier_view(store: Store, c: dict) -> dict:
     }
 
 
-def _by_token(token: str) -> tuple[dict, Store, dict]:
+def _by_token(token: str, request: Request) -> tuple[dict, Store, dict]:
+    """A question sent to the signed-in supplier; a question about another supplier's product is refused (403)."""
     data = repo.load_state()
     store = Store(data, next(iter(data["profiles"])))
     try:
-        return data, store, store.clarification_by_token(token)
+        c = store.clarification_by_token(token)
     except StopIteration:
         raise AppError(404, "link_not_found", "依頼が見つかりません（リンクをご確認ください）")
+    if store.offer(c["offer_id"])["supplier_id"] != getattr(request.state, "supplier_id", None):
+        raise AppError(403, "forbidden", "this request belongs to another supplier")
+    return data, store, c
 
 
 @app.get("/supplier/requests/{token}")
-def supplier_request(token: str):
-    _, store, c = _by_token(token)
+def supplier_request(token: str, request: Request):
+    _, store, c = _by_token(token, request)
     return _supplier_view(store, c)
 
 
 @app.post("/supplier/requests/{token}/reply")
-def supplier_reply(token: str, body: SupplierReply):
+def supplier_reply(token: str, body: SupplierReply, request: Request):
     """Test supplier answers in Japanese. Gemma double-reads the value and translates for the owner.
 
     The offer is unchanged until the owner applies the reply (POST /clarifications/{id}/apply).
     """
-    data, store, c = _by_token(token)
+    data, store, c = _by_token(token, request)
     if c["state"] != "sent":
         raise AppError(409, "reply_already_sent", "この依頼にはすでにご回答いただいています")
     if body.value is None and not (body.text_ja or "").strip():
@@ -553,6 +557,22 @@ def supplier_reply(token: str, body: SupplierReply):
     repo.save_state(data)
     repo.log_calls(llm.calls, f"supplier_reply:{c['id']}")
     return _supplier_view(store, c)
+
+
+@app.post("/portal/{portal_token}/requests/{clarification_id}/reply")
+def portal_request_reply(portal_token: str, clarification_id: str, body: SupplierReply, request: Request):
+    """The same reply from the portal (`/portal/me/requests/{id}/reply`): the question is found by id among the
+    signed-in supplier's requests; returns the updated portal view."""
+    from .portal_api import _load, _view
+    _, store, sup = _load(portal_token, request)
+    offers = {o["id"] for o in store.offers if o["supplier_id"] == sup["id"]}
+    c = next((c for c in store.clarifications if c["id"] == clarification_id and c["offer_id"] in offers
+              and c.get("token")), None)
+    if c is None:
+        raise AppError(404, "link_not_found", "依頼が見つかりません（リンクをご確認ください）")
+    supplier_reply(c["token"], body, request)
+    _, store, sup = _load(portal_token, request)
+    return _view(store, sup, request)
 
 
 # --- Currency ----------------------------------------------------------------------------------------

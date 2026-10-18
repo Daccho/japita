@@ -88,13 +88,23 @@ def _profile_changes(body: ProfileUpdate) -> dict:
     return d
 
 
-def _load(token: str) -> tuple[dict, Store, dict]:
+def _load(token: str, request: Request) -> tuple[dict, Store, dict]:
+    """The signed-in supplier's data. `token` is "me" or that supplier's own link token; another supplier's token
+    is refused (403)."""
     data = repo.load_state()
     store = Store(data, next(iter(data["profiles"])))
+    sid = getattr(request.state, "supplier_id", None)
+    if sid not in store.suppliers:
+        raise AppError(403, "forbidden", "supplier account required")
+    if token == "me":
+        return data, store, store.suppliers[sid]
     try:
-        return data, store, portal.supplier_by_token(store, token)
+        sup = portal.supplier_by_token(store, token)
     except KeyError:
         raise AppError(404, "link_not_found", "ページが見つかりません（リンクをご確認ください）")
+    if sup["id"] != sid:
+        raise AppError(403, "forbidden", "this portal belongs to another supplier")
+    return data, store, sup
 
 
 def _priced(body: BaseModel) -> dict:
@@ -122,28 +132,16 @@ def _translations(note_ja: str | None) -> tuple[dict, list]:
         return {}, llm.calls
 
 
-@router.get("/suppliers/{supplier_id}/portal-link")
-def portal_link(supplier_id: str):
-    """Restaurant action: the private link to share with this supplier."""
-    data = repo.load_state()
-    store = Store(data, next(iter(data["profiles"])))
-    if supplier_id not in store.suppliers:
-        raise HTTPException(404, "supplier not found")
-    token = portal.portal_token(store, supplier_id)
-    repo.save_state(data)
-    return {"supplier_id": supplier_id, "token": token, "path": f"/supplier/portal/{token}"}
-
-
 def _view(store: Store, sup: dict, request: Request) -> dict:
     lang = portal_lang(lang_from_request(request, portal=True))
     return portal.view(store, sup, lang, Money(lang))
 
 
 @router.get("/portal/{token}/forms")
-def portal_forms(token: str, ingredient: str = ""):
+def portal_forms(token: str, request: Request, ingredient: str = ""):
     """Spec fields for a new product: free-text ingredient -> the restaurant's ingredient (or null), its usual unit
     and the form fields a supplier can fill in."""
-    _, store, _ = _load(token)
+    _, store, _ = _load(token, request)
     key = portal.match_ingredient(store, ingredient[:60]) if ingredient.strip() else None
     unit = next((ln["unit"] for ln in store.recipe.get("lines", []) if ln["ingredient"] == key), "g")
     return {"ingredient": key, "ingredient_ja": INGREDIENT_JA.get(key) if key else None,
@@ -153,13 +151,13 @@ def portal_forms(token: str, ingredient: str = ""):
 
 @router.get("/portal/{token}")
 def portal_view(token: str, request: Request):
-    _, store, sup = _load(token)
+    _, store, sup = _load(token, request)
     return _view(store, sup, request)
 
 
 @router.post("/portal/{token}/orders/{po_id}/accept")
 def portal_accept(token: str, po_id: str, body: Accept, request: Request):
-    data, store, sup = _load(token)
+    data, store, sup = _load(token, request)
     tr, calls = _translations(body.note_ja)
     try:
         orders.supplier_accept(store, sup["id"], po_id, body.delivery_date, body.note_ja, tr)
@@ -174,7 +172,7 @@ def portal_accept(token: str, po_id: str, body: Accept, request: Request):
 
 @router.post("/portal/{token}/orders/{po_id}/delivery")
 def portal_change_delivery(token: str, po_id: str, body: ChangeDelivery, request: Request):
-    data, store, sup = _load(token)
+    data, store, sup = _load(token, request)
     tr, calls = _translations(body.note_ja)
     try:
         orders.supplier_change_delivery(store, sup["id"], po_id, body.delivery_date, body.note_ja, tr)
@@ -189,7 +187,7 @@ def portal_change_delivery(token: str, po_id: str, body: ChangeDelivery, request
 
 @router.post("/portal/{token}/products/{offer_id}")
 def portal_update_product(token: str, offer_id: str, body: ProductUpdate, request: Request):
-    data, store, sup = _load(token)
+    data, store, sup = _load(token, request)
     try:
         changes = _priced(body)
     except ValueError as e:
@@ -208,7 +206,7 @@ def portal_update_product(token: str, offer_id: str, body: ProductUpdate, reques
 
 @router.post("/portal/{token}/products")
 def portal_new_product(token: str, body: NewProduct, request: Request):
-    data, store, sup = _load(token)
+    data, store, sup = _load(token, request)
     try:
         product = _priced(body)
         if product.get("price_eur") is None:
@@ -229,7 +227,7 @@ def portal_new_product(token: str, body: NewProduct, request: Request):
 
 @router.post("/portal/{token}/profile")
 def portal_update_profile(token: str, body: ProfileUpdate, request: Request):
-    data, store, sup = _load(token)
+    data, store, sup = _load(token, request)
     try:
         changes = _profile_changes(body)
     except ValueError as e:

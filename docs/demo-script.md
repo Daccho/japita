@@ -19,11 +19,11 @@ On an ordinary Monday, a ramen shop in Milan learns that its Friday noodles will
 | Owner of Kumo Ramen Milano | `restaurant1` / `restaurant1` | Desktop browser, English |
 | S3 EuroAsia Foods B.V. (frozen Japanese noodles, the backup) | `supplier3` / `supplier3` | Phone, 日本語 |
 | S1 Tokyo Shokuhin (soy sauce) | `supplier1` / `supplier1` | Second browser (off camera or short cut) |
-| S6 Nippon Ramen Supply Europe (kikurage) | no account | Shared link from **Suppliers → Supplier link** (off camera) |
+| S6 Daikoku Shoten Milano (kikurage) | `supplier6` / `supplier6` | Private window (off camera) |
 
 `restaurant2` and `restaurant3` open the same Kumo Ramen Milano workspace. `supplier2` is S2 Pasta Fresca Ramen Milano, the noodle maker whose Friday delivery is late; it has no part in the on-time basket.
 
-The on-time basket has three supplier orders: **S1** Tokyo Shokuhin (soy sauce), **S3** EuroAsia Foods B.V. (noodles) and **S6** Nippon Ramen Supply Europe (kikurage). S6 has no demo account. To confirm its order, open **Suppliers → My suppliers → Nippon Ramen Supply Europe**, press **Supplier link** (it copies `https://japita.vercel.app/supplier/portal/<token>`), and open that link in a private window. Shared links work without sign-in.
+The on-time basket has three supplier orders: **S1** Tokyo Shokuhin (soy sauce), **S3** EuroAsia Foods B.V. (noodles) and **S6** Nippon Ramen Supply Europe (kikurage). To confirm the S6 order, sign in as `supplier6` / `supplier6` in a private window. Every supplier signs in; there are no shared portal links.
 
 ## Pre-recording checklist
 
@@ -31,7 +31,7 @@ The on-time basket has three supplier orders: **S1** Tokyo Shokuhin (soy sauce),
       `curl -X POST https://japita-api.onrender.com/state/seed -H "X-Admin-Key: $ADMIN_KEY"`
       Then reload the workspace: the bell shows the noodle alert, and **Basket → Questions to suppliers** says "No questions yet."
 - [ ] **Wake the API.** About a minute before recording, open `https://japita-api.onrender.com/docs` and wait until it loads. The free Render instance sleeps after about 15 minutes. If the entry page says "Cannot reach the server. It may be waking up", wait and retry.
-- [ ] **One session per browser.** Each browser holds one sign-in. Use the desktop browser for `restaurant1`, the phone for `supplier3`, and a second browser or private window for `supplier1` and the S6 shared link. To change role in the same browser, press **Sign out** first.
+- [ ] **One session per browser.** Each browser holds one sign-in. Use the desktop browser for `restaurant1`, the phone for `supplier3`, and a second browser or private window for `supplier1` and `supplier6`. To change role in the same browser, press **Sign out** first.
 - [ ] **Owner workspace:** desktop browser at about 1440×900, zoom 110–125%. Sign in once in rehearsal so the browser has the workspace cached; sign out before the take.
 - [ ] **Currency.** The English workspace shows prices in **USD**, converted from EUR with the day's ECB reference rate (the footer shows "1 EUR = $… · ECB <date>"). The Italian workspace shows EUR. The narration uses the euro figures, so caption them on screen (e.g. "€444.10") next to the USD amounts, or toggle **IT** for a second on the key card (scene 6). The ECB conversion is part of the current build; check the footer in rehearsal.
 - [ ] **Supplier portal:** a phone (screen-mirrored or recorded separately), or a narrow browser window at about 390×844 with device emulation. On the entry page choose **日本語**, so the portal opens in Japanese and shows prices in JPY.
@@ -88,7 +88,7 @@ Timestamps refer to the **edited** video.
 - **Highlight:** the Japanese, phone-first portal; "送信中…（店舗向けに翻訳しています）" then "回答を送信しました。ありがとうございます。"
 - **Narration EN:** "The supplier opens Japita on their phone, in Japanese. They type 27 percent into the field and add a short comment. Gemma translates the comment for the restaurant."
 - **Narration JA:** 「仕入れ先はスマホでJapitaを開きます。画面は日本語です。加水率の欄に27%と入力し、短いコメントを添えて送信。コメントはGemmaが店舗向けに翻訳します。」
-- **Cut note:** speed up the sign-in and typing 2×. A supplier without an account can use the shared link from **Copy link** instead; mask the token if the URL bar is visible.
+- **Cut note:** speed up the sign-in and typing 2×. Every supplier signs in with its own account.
 
 ### Scene 6 — Apply, recalculate, change priorities (1:28–1:55)
 
@@ -102,7 +102,7 @@ Timestamps refer to the **edited** video.
 ### Scene 7 — Approve and order (1:55–2:22)
 
 - **Screen:** Basket → **Supplier orders**; phone portal **受注** tab; This week.
-- **Clicks:** **Approve this basket** → three orders "Ready to send" (Tokyo Shokuhin, EuroAsia Foods B.V., Nippon Ramen Supply Europe) → **Send to supplier** on each → "Sent to supplier, waiting for confirmation". Phone: **受注** → the order ("受注待ち", 納品日 pre-filled with the restaurant's date) → **受注する** → "注文を受注しました。" Desktop: the EuroAsia order shows **Confirmed by supplier**; bell "Order confirmed". Off camera, `supplier1` accepts the soy order in a second browser and the S6 shared link accepts the kikurage order. Back to **This week**.
+- **Clicks:** **Approve this basket** → three orders "Ready to send" (Tokyo Shokuhin, EuroAsia Foods B.V., Nippon Ramen Supply Europe) → **Send to supplier** on each → "Sent to supplier, waiting for confirmation". Phone: **受注** → the order ("受注待ち", 納品日 pre-filled with the restaurant's date) → **受注する** → "注文を受注しました。" Desktop: the EuroAsia order shows **Confirmed by supplier**; bell "Order confirmed". Off camera, `supplier1` accepts the soy order in a second browser and `supplier6` accepts the kikurage order. Back to **This week**.
 - **Highlight:** one order per supplier; the status change on the restaurant side; on This week the noodle alert is gone and **Spending this week → Committed** shows €444.10 of the €900 budget.
 - **Narration EN:** "The owner approves the basket, and Japita splits it into one order per supplier. Each order is sent only when the owner presses Send. The supplier accepts on the phone with a delivery date, and the Friday stockout is gone. Committed spending: €444.10 of a €900 budget. All data here is fictional, and no real purchase or payment happens."
 - **Narration JA:** 「オーナーがバスケットを承認すると、仕入れ先ごとの注文に分かれます。送信ボタンを押したときだけ注文が送られます。仕入れ先はスマホで納品日を確認して「受注する」を押し、金曜の欠品は解消。確定支出は予算900ユーロ中444.10ユーロです。データはすべて架空で、実際の購入や支払いは発生しません。」

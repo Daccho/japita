@@ -28,7 +28,7 @@ Alternatives: "Japita: buy right this week" · "Japita: suppliers in one place, 
 **Target user.** Owners and purchasing managers of independent restaurants that rely on specialty ingredients from several suppliers. Our first demo customer is a Japanese ramen restaurant in Milan during a normal purchasing week.
 
 **What Japita does.** Japita puts existing suppliers, new candidate suppliers, offers, specifications, and spending in one workspace. Its advisor answers one question: *what should we buy this week, from which suppliers, and why does that fit our restaurant?*
-- **Sign-in:** one entry page in English, Italian, or Japanese. Restaurants and suppliers sign in with a login ID and password; suppliers can also open a shared link without an account.
+- **Sign-in:** one entry page in English, Italian, or Japanese. Restaurants and suppliers sign in with a login ID and password; each supplier sees only its own portal.
 - **Restaurant workspace** (Italian or English): This week (needs, a tappable 7-day stock strip per ingredient, orders, spending, weekly check), Suppliers (my suppliers and discovery of new ones), Basket (side-by-side options, including one that arrives on time), and Restaurant profile (menu and buying rules). Prices are stored in euros and shown in EUR (Italian) or USD (English) at the daily ECB reference rate.
 - **Notifications:** a bell for delivery delays, stockouts, supplier replies, proposals, and order confirmations.
 - **Purchasing advisor:** a floating assistant. Questions run as background jobs (about 1–2 minutes) and the UI shows the elapsed time.
@@ -106,10 +106,13 @@ Open https://japita.vercel.app, choose a language (EN / IT / 日本語), then **
 | --- | --- | --- |
 | `restaurant1`, `restaurant2`, `restaurant3` | Restaurant: Kumo Ramen Milano (all three share one workspace) | `/restaurants` |
 | `supplier1` | Supplier S1 Tokyo Shokuhin (soy sauce) | `/suppliers` |
-| `supplier2` | Supplier S2 Pasta Fresca Ramen Milano (fresh noodles, the delayed delivery) | `/suppliers` |
-| `supplier3` | Supplier S3 EuroAsia Foods B.V. (frozen Japanese noodles, the backup) | `/suppliers` |
+| `supplier2` | Supplier S2 Sakura Seimen Milano (fresh noodles, the delayed delivery) | `/suppliers` |
+| `supplier3` | Supplier S3 Hokuto Shoji Europe B.V. (frozen Japanese noodles, the backup) | `/suppliers` |
+| `supplier4` | Supplier S4 Fujimi Seimen Lombardia (fresh noodles) | `/suppliers` |
+| `supplier5` | Supplier S5 Hakata Shokuhin Boeki (kikurage, candidate) | `/suppliers` |
+| `supplier6` | Supplier S6 Daikoku Shoten Milano (kikurage) | `/suppliers` |
 
-Suggested path: sign in as `restaurant1` → bell → Basket → **Ask the advisor to draft the question** → **Approve and send**. In a second browser, sign in as `supplier3` (日本語) → 依頼 → answer 27 → 回答を送信. Back in the workspace: **Apply 27 and recalculate** → **Approve this basket** → **Send to supplier**. Then `supplier3` → 受注 → 受注する. S6 Nippon Ramen Supply Europe has no account; its portal opens from **Suppliers → Supplier link**.
+Suggested path: sign in as `restaurant1` → bell → Basket → **Ask the advisor to draft the question** → **Approve and send**. In a second browser, sign in as `supplier3` (日本語) → 依頼 → answer 27 → 回答を送信. Back in the workspace: **Apply 27 and recalculate** → **Approve this basket** → **Send to supplier**. Then `supplier3` → 受注 → 受注する. The kikurage order goes to S6: sign in as `supplier6` → 受注 → 受注する.
 
 All restaurants, suppliers, prices, orders, and messages are fictional. No real orders or payments happen. Judges share the same data, so it may already be in a later state; the team can reset it on request.
 
@@ -150,7 +153,7 @@ Every factual claim above, with its evidence. "Lead" means verified in this proj
 | Offline backend test suite (calculations, stock, orders, portal, sign-in, jobs, currency) | `backend/tests/` (68 offline test functions, some parametrized, plus 3 live tests; counted, not re-run, on 18 Oct 2026); re-run `uv run pytest -q` before submitting |
 | Dockerfile; no committed keys | `backend/Dockerfile`; `.env.example`; `.gitignore` |
 | MIT license | `LICENSE` |
-| Demo accounts restaurant1–3, supplier1–3, password = login ID | `backend/japita/auth.py` (`DEMO_ACCOUNTS`), `render.yaml` (`DEMO_ACCOUNTS=1`) |
+| Demo accounts restaurant1–3, supplier1–6 (S1–S6), password = login ID | `backend/japita/auth.py` (`DEMO_ACCOUNTS`), `render.yaml` (`DEMO_ACCOUNTS=1`) |
 | Prices shown in EUR/USD (workspace) and JPY/USD (portal) at the ECB reference rate | `backend/japita/fx.py`, `GET /fx`; `frontend/lib/money.ts` |
 | Direct import from Japan is unrealistic for a same-week shortage | Lead (general logistics reasoning; not a cited source) |
 | Decision support only, no customs or legal clearance | `docs/compliance.md` |

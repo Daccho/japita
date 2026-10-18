@@ -1,6 +1,7 @@
 """Owner sign-in: login ID + password (Argon2id), with server-side sessions.
 
-Every API route requires a restaurant session unless it is listed in PUBLIC_PATHS (see `require_session`).
+Every API route requires a restaurant session unless it is listed in PUBLIC_PATHS; supplier portal routes
+(SUPPLIER_PATHS) require the supplier's own session instead (see `require_session`).
 Accounts have a role: "restaurant" (the owner workspace) or "supplier" (a test supplier, linked to one supplier ID,
 which may only open its own portal). The role is checked on the server for every request.
 The session is an opaque random token in an HttpOnly cookie; only its SHA-256 is stored. The browser reaches
@@ -46,12 +47,16 @@ MIN_PASSWORD_LEN = 12
 # Reached without a session. Everything else is denied by default, so new routes are protected automatically.
 PUBLIC_PATHS = [
     re.compile(r"^/auth/(login|logout|me)$"),
-    re.compile(r"^/supplier/requests/[^/]+(/reply)?$"),  # test supplier page: secret link token
-    re.compile(r"^/portal/[^/]+(/.*)?$"),                # supplier portal: secret link token
     re.compile(r"^/state/seed$"),                        # guarded by X-Admin-Key instead
     re.compile(r"^/health(/.*)?$"),
     re.compile(r"^/fx$"),                                # public ECB reference rates
     re.compile(r"^/(docs|redoc|openapi\.json)$"),
+]
+# Supplier routes: a signed-in supplier account; each handler also checks the link token belongs to that supplier
+# ("me" in place of the token means the signed-in supplier).
+SUPPLIER_PATHS = [
+    re.compile(r"^/portal/[^/]+(/.*)?$"),
+    re.compile(r"^/supplier/requests/[^/]+(/reply)?$"),
 ]
 ROLES = ("restaurant", "supplier")
 UNSAFE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
@@ -184,8 +189,12 @@ async def require_session(request: Request, call_next):
             user = session_user(s, request)
             if user is None:
                 return errors.response(401, "auth_required", "not signed in")
+            if any(p.match(request.url.path) for p in SUPPLIER_PATHS):
+                if user.role != "supplier" or not user.supplier_id:
+                    return errors.response(403, "forbidden", "supplier account required")
+                request.state.supplier_id = user.supplier_id
             # /auth/* routes check their own role; every other protected route is the restaurant workspace.
-            if user.role != "restaurant" and not request.url.path.startswith("/auth/"):
+            elif user.role != "restaurant" and not request.url.path.startswith("/auth/"):
                 return errors.response(403, "forbidden", "restaurant account required")
             request.state.user_id = user.id
     return await call_next(request)
@@ -327,8 +336,8 @@ def _read_password() -> str:
 # Public demo accounts for the fictional dataset: the login ID is also the password (shared with judges).
 # Created or reset on startup only when DEMO_ACCOUNTS=1, so real deployments never get them by accident.
 DEMO_ACCOUNTS = [("restaurant1", "restaurant", None), ("restaurant2", "restaurant", None),
-                 ("restaurant3", "restaurant", None), ("supplier1", "supplier", "S1"),
-                 ("supplier2", "supplier", "S2"), ("supplier3", "supplier", "S3")]
+                 ("restaurant3", "restaurant", None),
+                 *((f"supplier{i}", "supplier", f"S{i}") for i in range(1, 7))]
 
 
 def ensure_demo_accounts() -> list[str]:

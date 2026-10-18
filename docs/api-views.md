@@ -2,7 +2,12 @@
 
 Ready-to-render, localized data. Pages print the texts as they are; they never compute totals, statuses or wording.
 
-- **Session:** every route below needs the restaurant session, except `/portal/*` (secret link token).
+- **Session:** every route below needs the restaurant session, except `/portal/*` and `/supplier/requests/*`, which need
+  the signed-in supplier's own session (401 without a session, 403 for a restaurant session or another supplier's
+  token). `me` in place of the portal token means the signed-in supplier: `/portal/me`, `/portal/me/forms`,
+  `/portal/me/orders/{po_id}/accept`, `/portal/me/orders/{po_id}/delivery`, `/portal/me/products`,
+  `/portal/me/products/{offer_id}`, `/portal/me/profile`, `/portal/me/requests/{id}/reply`,
+  `/portal/me/notifications`, `/portal/me/notifications/seen`. Token paths stay as authenticated aliases.
 - **Language:** `?lang=` or the `japita_lang` cookie (restaurant: `it` default, `en`) / `japita_portal_lang` cookie
   (portal: `ja` default, `en`).
 - **Money:** stored in EUR; shown as `it` → EUR (`493,80 €`), `en` → USD (`$555.67`), `ja` → JPY (`¥87,803`), using the
@@ -206,7 +211,7 @@ avatar uses its `logo_url` when the restaurant applied one.
 "answer_raw", "steps", "clarifications", "drafts": [{ "id", "product", "field_label", "translation", "text" }] }`.
 The request takes `lang: it | en` for the drafts; `profile_id` defaults to the active profile.
 
-## Supplier portal: GET /portal/{token}?lang=ja|en
+## Supplier portal: GET /portal/me?lang=ja|en (or /portal/{token})
 
 The existing view plus: `restaurant_name`, `restaurant_avatar`, `supplier_avatar`, `lang`, `currency`, `fx_note`, `default_tab`, `counts: { requests, orders, products, profile }`,
 `tabs: [{ id, label, intro, count }]`, `product_groups: [{ ingredient, title, product_ids }]`, `for_restaurant_text`,
@@ -219,7 +224,9 @@ changes add `from_text, to_text, at_text`; each product adds `ingredient_name, i
 not_ingredient_text, price_text, price_amount, pack_text, origin_text, updated_text, attribute_rows, pending_view,
 drawing`. The profile includes `logo_url`; `POST …/profile` accepts `logo_url` (same rules as the restaurant logo;
 empty removes it) as part of the profile proposal the restaurant applies or rejects.
-Every POST under `/portal/{token}/…` returns the same view.
+Every POST under `/portal/{token}/…` returns the same view, including
+`POST /portal/me/requests/{request_id}/reply` `{ "value"?, "note_ja"?, "text_ja"? }` (the request id from `requests[].id`;
+404 for another supplier's question).
 
 ## GET /portal/{token}/forms?ingredient=<free text>
 

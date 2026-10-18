@@ -17,10 +17,13 @@ Open https://japita.vercel.app, choose a language (EN / IT / 日本語), choose 
 | --- | --- | --- |
 | `restaurant1`, `restaurant2`, `restaurant3` | Restaurant: Kumo Ramen Milano (one shared workspace) | `/restaurants` |
 | `supplier1` | S1 Tokyo Shokuhin (soy sauce) | `/suppliers` |
-| `supplier2` | S2 Pasta Fresca Ramen Milano (fresh noodles) | `/suppliers` |
-| `supplier3` | S3 EuroAsia Foods B.V. (frozen Japanese noodles, the backup) | `/suppliers` |
+| `supplier2` | S2 Sakura Seimen Milano (fresh noodles, the delayed delivery) | `/suppliers` |
+| `supplier3` | S3 Hokuto Shoji Europe B.V. (frozen Japanese noodles, the backup) | `/suppliers` |
+| `supplier4` | S4 Fujimi Seimen Lombardia (fresh noodles) | `/suppliers` |
+| `supplier5` | S5 Hakata Shokuhin Boeki (kikurage, candidate) | `/suppliers` |
+| `supplier6` | S6 Daikoku Shoten Milano (kikurage) | `/suppliers` |
 
-Suppliers without an account open their portal from a shared link (`/supplier/portal/<token>`, copied with **Supplier link** on the Suppliers page). It works without sign-in.
+Every supplier signs in to its own portal; the portal and its API answer only that supplier's session.
 
 ## How it works
 
@@ -33,7 +36,7 @@ The demo restaurant is Kumo Ramen Milano, a Hakata-style tonkotsu shop in Milan.
 
 **Restaurant workspace** (`/restaurants`, Italian or English): This week, Suppliers (my suppliers and discovery), Basket, and Restaurant profile; bell notifications; a floating purchasing advisor whose questions run as background jobs (about 1–2 minutes, with the elapsed time shown); a weekly check that runs an Evolus workflow. Prices are stored in EUR and shown in EUR (Italian) or USD (English) at the daily ECB reference rate.
 
-**Supplier portal** (`/suppliers` or a shared link, Japanese or English, phone-first): tabs 依頼 (requests), 受注 (orders), and 商品 (products). Suppliers answer questions, accept orders (受注する) with a delivery date and change it later, and propose product updates or new products. Prices are shown and entered in JPY (Japanese) or USD (English).
+**Supplier portal** (`/suppliers` after sign-in, Japanese or English, phone-first): tabs 依頼 (requests), 受注 (orders), and 商品 (products). Suppliers answer questions, accept orders (受注する) with a delivery date and change it later, and propose product updates or new products. Prices are shown and entered in JPY (Japanese) or USD (English).
 
 Python calculates all the numbers: needs, pack rounding, minimum orders, shipping, delivery timing, and daily stock with usable-until dates. Gemma interprets, translates, and explains. Web: Next.js on Vercel. API: FastAPI on Render, with Postgres on Neon.
 
