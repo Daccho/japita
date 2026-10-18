@@ -191,3 +191,29 @@ def test_portal_reply_by_request_id(client, sign_in_supplier):
     r = client.post(f"/portal/me/requests/{c['id']}/reply", json={"value": 27}, headers={"origin": APP})
     assert r.status_code == 200, r.text
     assert next(q for q in r.json()["requests"] if q["id"] == c["id"])["state"] == "replied"
+
+
+def test_supplier_notifications_and_decisions(client, sign_in_supplier):
+    from japita.store import Store
+    data = repo.load_state()
+    store = Store(data, next(iter(data["profiles"])))
+    c = store.add_clarification("O-noo-3", "hydration_pct", "加水率を教えてください", "missing")
+    store.approve(c["id"])
+    repo.save_state(data)
+    sign_in_supplier(client, "S3", APP)
+    feed = client.get("/portal/me/notifications?lang=en").json()
+    assert [i["kind"] for i in feed["items"]] == ["request"] and feed["unread"] == 1
+    assert feed["items"][0]["href"] == "?tab=requests" and feed["items"][0]["tab"] == "requests"
+    r = client.post("/portal/me/profile", json={"phone": "+31 20 000"}, headers={"origin": APP})
+    assert r.json()["pending_profile_view"]["changes"] == [{"label": "電話番号", "value": "+31 20 000"}]
+    seen = client.post("/portal/me/notifications/seen", json={"ids": [feed["items"][0]["id"]]}, headers={"origin": APP})
+    assert seen.json()["unread"] == 0
+    client.post("/auth/logout", headers={"origin": APP})
+    login(client)
+    assert client.post("/suppliers/S3/profile-update/reject", headers={"origin": APP}).status_code == 200
+    client.post("/auth/logout", headers={"origin": APP})
+    sign_in_supplier(client, "S3", APP)
+    feed = client.get("/portal/me/notifications?lang=ja").json()
+    decision = next(i for i in feed["items"] if i["kind"] == "decision")
+    assert decision["unread"] and decision["tab"] == "profile" and "見送りました" in decision["body"]
+    assert feed["unread"] == 1

@@ -111,6 +111,20 @@ def propose_new(store: Store, supplier_id: str, data: dict) -> dict:
     return offer
 
 
+DECISIONS_KEPT = 20
+
+
+def record_decision(store: Store, supplier_id: str, kind: str, target: str, outcome: str) -> dict:
+    """Remember the restaurant's decision on a supplier proposal (kind "product", "new_product" or "profile"; outcome
+    "applied" or "rejected") for the supplier's notifications. The last 20 are kept."""
+    sup = store.suppliers[supplier_id]
+    at = _now()
+    d = {"id": f"{kind}-{len(sup.get('decisions', []))}-{at}", "kind": kind, "target": target, "outcome": outcome,
+         "at": at}
+    sup["decisions"] = [*sup.get("decisions", []), d][-DECISIONS_KEPT:]
+    return d
+
+
 def apply_update(store: Store, offer_id: str) -> dict:
     """Restaurant action: accept the supplier's proposal into the catalog used for comparisons."""
     offer = store.offer(offer_id)
@@ -126,8 +140,10 @@ def apply_update(store: Store, offer_id: str) -> dict:
     offer["evidence"].update(proposal.get("evidence", {}))
     for field in proposal.get("attributes", {}):
         store.review_flags.get(offer_id, {}).pop(field, None)
-    if offer.pop("pending_new", None):
+    is_new = bool(offer.pop("pending_new", None))
+    if is_new:
         offer["from_supplier_proposal"] = True  # a new product that joined the catalog from the supplier portal
+    record_decision(store, offer["supplier_id"], "new_product" if is_new else "product", offer["product"], "applied")
     offer["applied_at"] = _now()
     offer["offer_date"] = proposal["submitted_at"][:10]
     return offer
@@ -137,6 +153,8 @@ def reject_update(store: Store, offer_id: str) -> dict:
     offer = store.offer(offer_id)
     if offer.pop("pending_update", None) is None:
         raise DomainError("no_pending_update", "no pending supplier update")
+    record_decision(store, offer["supplier_id"], "new_product" if offer.get("pending_new") else "product",
+                    offer["product"], "rejected")
     if offer.get("pending_new"):
         store.data["offers"] = [o for o in store.offers if o["id"] != offer_id]
     return offer
@@ -192,6 +210,7 @@ def apply_profile(store: Store, supplier_id: str) -> dict:
     if proposal is None:
         raise DomainError("no_pending_update", "no pending supplier update")
     sup.update(proposal["changes"])
+    record_decision(store, supplier_id, "profile", sup["name"], "applied")
     return sup
 
 
@@ -199,6 +218,7 @@ def reject_profile(store: Store, supplier_id: str) -> dict:
     sup = store.suppliers[supplier_id]
     if sup.pop("pending_profile", None) is None:
         raise DomainError("no_pending_update", "no pending supplier update")
+    record_decision(store, supplier_id, "profile", sup["name"], "rejected")
     return sup
 
 

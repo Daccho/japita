@@ -228,6 +228,17 @@ Every POST under `/portal/{token}/…` returns the same view, including
 `POST /portal/me/requests/{request_id}/reply` `{ "value"?, "note_ja"?, "text_ja"? }` (the request id from `requests[].id`;
 404 for another supplier's question).
 
+`pending_profile_view`: `null`, or the supplier's own waiting profile proposal in the shape of `products[].pending_view`:
+`{ "title", "sent_text", "body": null, "changes": [{ "label", "value" }], "note_ja" }` (money in the portal currency,
+delivery days joined, empty values "Not set").
+
+## GET /portal/me/notifications?lang=ja|en · POST /portal/me/notifications/seen `{ "ids": [...] }`
+
+Same shape as `GET /notifications`; read state per supplier. Items (`kind`): `request` (questions awaiting this
+supplier's reply), `order` (orders sent and not yet accepted), `decision` (the restaurant applied or declined the
+supplier's product change, new product or profile change; newest first, the last 20 decisions are kept). Each item adds
+`tab` (`requests` | `orders` | `products` | `profile`) and `href` = `?tab=<tab>`.
+
 ## GET /portal/{token}/forms?ingredient=<free text>
 
 `{ "ingredient": key | null, "ingredient_ja", "ingredient_en", "default_unit": "g" | "ml", "form": [FormField] }`.

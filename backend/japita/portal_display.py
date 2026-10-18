@@ -38,6 +38,44 @@ def pack_word(ingredient: str, count: float, lang: str) -> str:
     return ("bottle" if count == 1 else "bottles") if bottle else ("bag" if count == 1 else "bags")
 
 
+PROFILE_LABELS = {"name": "companyName", "country": "country", "address": "address", "city": "city",
+                  "contact_name": "contactName", "email": "email", "phone": "phone", "logo_url": "logoUrl",
+                  "delivery_days": "deliveryDays", "min_order_eur": "minOrder", "shipping_eur": "shippingFee",
+                  "lead_time_days": "leadTime"}
+
+
+def _days_text(days, lang: str) -> str:
+    names = pt(lang, "dayNames")
+    return ("・" if lang == "ja" else ", ").join(names[d] for d in days or [])
+
+
+def _lead_text(n, lang: str) -> str:
+    return f"{n}{pt(lang, 'days')}" if lang == "ja" else f"{n} {pt(lang, 'days')}"
+
+
+def _profile_change_text(field: str, value, lang: str, money: Money) -> str:
+    if value is None or value == "" or value == []:
+        return pt(lang, "notSet")
+    if field == "delivery_days":
+        return _days_text(value, lang)
+    if field in ("min_order_eur", "shipping_eur"):
+        return money(value)
+    if field == "lead_time_days":
+        return _lead_text(value, lang)
+    return str(value)
+
+
+def pending_profile_view(pending: dict | None, lang: str, money: Money) -> dict | None:
+    """The supplier's own profile proposal while it waits for the restaurant (same shape as products' pending_view)."""
+    if not pending:
+        return None
+    return {"title": pt(lang, "pendingReview"),
+            "sent_text": pt(lang, "sentAt", when=portal_time(pending.get("submitted_at"), lang)), "body": None,
+            "changes": [{"label": pt(lang, PROFILE_LABELS.get(k, k)), "value": _profile_change_text(k, v, lang, money)}
+                        for k, v in pending["changes"].items()],
+            "note_ja": pending.get("note_ja")}
+
+
 def decorate(store, view: dict, lang: str = "ja", money: Money | None = None) -> dict:
     lang = lang if lang in ("ja", "en") else "ja"
     money = money or Money(lang)
@@ -145,6 +183,7 @@ def decorate(store, view: dict, lang: str = "ja", money: Money | None = None) ->
         tabs=[{"id": tab, "label": pt(lang, f"tab{tab.capitalize()}"), "intro": pt(lang, f"intro{tab.capitalize()}"),
                "count": counts[tab]} for tab in TABS],
         for_restaurant_text=pt(lang, "forRestaurant", r=restaurant),
+        pending_profile_view=pending_profile_view(view.get("pending_profile"), lang, money),
         empty={"requests": {"title": pt(lang, "noRequests"), "body": pt(lang, "noRequestsBody", r=restaurant)},
                "orders": {"title": pt(lang, "noOrders"), "body": pt(lang, "noOrdersBody", r=restaurant)},
                "products": {"title": pt(lang, "noProducts"), "body": pt(lang, "noProductsBody")}},
@@ -153,10 +192,47 @@ def decorate(store, view: dict, lang: str = "ja", money: Money | None = None) ->
             "shipping_text": money(prof["shipping_eur"]) if prof.get("shipping_eur") is not None else pt(lang, "notSet"),
             "min_order_amount": money.amount(prof["min_order_eur"]) if prof.get("min_order_eur") is not None else None,
             "shipping_amount": money.amount(prof["shipping_eur"]) if prof.get("shipping_eur") is not None else None,
-            "delivery_days_text": "・".join(pt(lang, "dayNames")[d] for d in prof.get("delivery_days") or [])
-            if lang == "ja" else ", ".join(pt(lang, "dayNames")[d] for d in prof.get("delivery_days") or []),
+            "delivery_days_text": _days_text(prof.get("delivery_days"), lang),
             "lead_time_text": f"{prof['lead_time_days']}{pt(lang, 'days')}" if lang == "ja" and prof.get("lead_time_days") is not None
             else f"{prof['lead_time_days']} {pt(lang, 'days')}" if prof.get("lead_time_days") is not None else pt(lang, "notSet"),
         },
     )
     return view
+
+
+def notification_items(view: dict, decisions: list[dict], lang: str) -> list[dict]:
+    """What needs the supplier's attention, from a decorated portal view: open requests, orders to accept, and the
+    restaurant's decisions on the supplier's proposals (newest first). Ids are stable for read state."""
+    r = view["restaurant"]
+    items = []
+    products = {p["id"]: p["product"] for p in view["products"]}
+    for q in view["requests"]:
+        if q["state"] != "awaiting_reply":
+            continue
+        product = products.get(q["offer_id"], "")
+        items.append({"id": f"request-{q['id']}", "kind": "request", "badge": pt(lang, "nt.request"), "warn": True,
+                      "title": product or q["label"], "body": pt(lang, "nt.requestBody", r=r, product=product),
+                      "tab": "requests", "href": "?tab=requests", "action": pt(lang, "nt.open")})
+    for o in view["orders"]:
+        if o["state"] != "submitted":
+            continue
+        items.append({"id": f"order-{o['id']}", "kind": "order", "badge": pt(lang, "nt.order"), "warn": True,
+                      "title": o["title"], "body": pt(lang, "nt.orderBody", date=o["delivery_text"], total=o["total_text"]),
+                      "tab": "orders", "href": "?tab=orders", "action": pt(lang, "nt.open")})
+    for d in reversed(decisions):
+        tab = "profile" if d["kind"] == "profile" else "products"
+        items.append({"id": f"decision-{d['id']}", "kind": "decision", "badge": pt(lang, "nt.decision"),
+                      "warn": d["outcome"] == "rejected",
+                      "title": pt(lang, "nt.profileTarget") if d["kind"] == "profile" else d["target"],
+                      "body": pt(lang, f"nt.{d['outcome']}.{d['kind']}", r=r, target=d["target"]),
+                      "tab": tab, "href": f"?tab={tab}", "action": pt(lang, "nt.open")})
+    return items
+
+
+def notifications_view(items: list[dict], seen: set[str], lang: str) -> dict:
+    for i in items:
+        i["unread"] = i["id"] not in seen
+    unread = sum(i["unread"] for i in items)
+    return {"lang": lang, "title": pt(lang, "nt.title"), "close_label": pt(lang, "nt.close"),
+            "empty_text": None if items else pt(lang, "nt.none"),
+            "aria": pt(lang, "nt.aria", n=unread) if unread else pt(lang, "nt.title"), "unread": unread, "items": items}

@@ -149,6 +149,35 @@ def portal_forms(token: str, request: Request, ingredient: str = ""):
             "default_unit": unit, "form": portal.product_form(store, key) if key else []}
 
 
+class Seen(BaseModel):
+    ids: list[str] = Field(max_length=500)
+
+
+def _notifications(store: Store, sup: dict, request: Request, seen_ids: list[str] | None = None) -> dict:
+    """The supplier's notification feed (same shape as GET /notifications); read state per supplier."""
+    from . import views
+    from .portal_display import notification_items, notifications_view
+    lang = portal_lang(lang_from_request(request, portal=True))
+    items = notification_items(_view(store, sup, request), sup.get("decisions", []), lang)
+    reader = f"portal:{sup['id']}"
+    if seen_ids is not None:
+        views.mark_seen(store.data, reader, seen_ids, [i["id"] for i in items])
+        repo.save_state(store.data)
+    return notifications_view(items, views.seen_ids(store.data, reader), lang)
+
+
+@router.get("/portal/{token}/notifications")
+def portal_notifications(token: str, request: Request):
+    _, store, sup = _load(token, request)
+    return _notifications(store, sup, request)
+
+
+@router.post("/portal/{token}/notifications/seen")
+def portal_notifications_seen(token: str, body: Seen, request: Request):
+    _, store, sup = _load(token, request)
+    return _notifications(store, sup, request, body.ids)
+
+
 @router.get("/portal/{token}")
 def portal_view(token: str, request: Request):
     _, store, sup = _load(token, request)
