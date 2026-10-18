@@ -6,7 +6,9 @@ which may only open its own portal). The role is checked on the server for every
 The session is an opaque random token in an HttpOnly cookie; only its SHA-256 is stored. The browser reaches
 the API through the frontend's /api proxy, so the cookie is first-party and SameSite=Lax.
 
-There is no public sign-up: accounts are created by an operator.
+Anyone can sign up (POST /auth/signup): a restaurant gets its own empty workspace (see `repo`), a supplier a new
+supplier record in the shared directory, visible to every restaurant as an unconfirmed candidate.
+An operator can also create accounts:
     uv run python -m japita.auth add-user kumo-milano --name "Kumo Ramen Milano"   # prompts for the password
     uv run python -m japita.auth add-user tokyo-shokuhin --name "Tokyo Shokuhin" --role supplier --supplier S1
     uv run python -m japita.auth set-password kumo-milano
@@ -45,7 +47,7 @@ MIN_PASSWORD_LEN = 12
 
 # Reached without a session. Everything else is denied by default, so new routes are protected automatically.
 PUBLIC_PATHS = [
-    re.compile(r"^/auth/(login|logout|me)$"),
+    re.compile(r"^/auth/(login|logout|me|signup)$"),
     re.compile(r"^/supplier/requests/[^/]+(/reply)?$"),  # test supplier page: secret link token
     re.compile(r"^/portal/[^/]+(/.*)?$"),                # supplier portal: secret link token
     re.compile(r"^/state/seed$"),                        # guarded by X-Admin-Key instead
@@ -89,6 +91,7 @@ class User(repo.Base):
     display_name = Column(String, nullable=False)
     role = Column(String, nullable=False, default="restaurant")
     supplier_id = Column(String)  # role "supplier" only
+    workspace = Column(String)    # role "restaurant": its data in repo; empty means the shared demo workspace
     password_hash = Column(String)
     created_at = Column(DateTime(timezone=True), default=_now)
 
@@ -188,6 +191,9 @@ async def require_session(request: Request, call_next):
             if user.role != "restaurant" and not request.url.path.startswith("/auth/"):
                 return errors.response(403, "forbidden", "restaurant account required")
             request.state.user_id = user.id
+            workspace = user.workspace if user.role == "restaurant" else None
+        with repo.use_workspace(workspace):
+            return await call_next(request)
     return await call_next(request)
 
 
@@ -251,6 +257,58 @@ def logout(request: Request, response: Response):
     return {"ok": True}
 
 
+SIGNUPS_PER_HOUR = 20  # per client address
+_signups: dict[str, deque] = defaultdict(deque)
+
+
+class Signup(BaseModel):
+    role: Literal["restaurant", "supplier"]
+    username: str = Field(max_length=64)
+    password: str = Field(max_length=1024)
+    name: str = Field(min_length=1, max_length=120, description="Restaurant or company name")
+    city: str = Field(default="", max_length=80)
+    country: str = Field(default="", max_length=60)
+    contact_name: str = Field(default="", max_length=120, description="Supplier accounts")
+    email: str = Field(default="", max_length=200, description="Supplier accounts")
+
+
+@router.post("/signup")
+def signup(body: Signup, request: Request, response: Response):
+    """Create an account and sign it in. Restaurant: a new empty workspace. Supplier: a new supplier record."""
+    username, name = body.username.strip().lower(), body.name.strip()
+    if not USERNAME_RE.match(username):
+        raise AppError(422, "invalid_username", "login ID: 3-64 characters, lowercase letters, digits, '.', '_' or '-'")
+    if len(body.password) < MIN_PASSWORD_LEN:
+        raise AppError(422, "weak_password", f"password must be at least {MIN_PASSWORD_LEN} characters")
+    if not name:
+        raise AppError(422, "invalid_input", "name is required")
+    q = _signups[request.client.host if request.client else "?"]
+    while q and q[0] < time.monotonic() - 3600:
+        q.popleft()
+    if len(q) >= SIGNUPS_PER_HOUR:
+        raise AppError(429, "too_many_attempts", "too many new accounts from this address; try again later")
+    with Session(repo.engine()) as s:
+        if s.scalar(select(User.id).where(User.username == username)):
+            raise AppError(409, "username_taken", "this login ID is already in use")
+        user = User(username=username, display_name=name, role=body.role, password_hash=hash_password(body.password))
+        if body.role == "restaurant":
+            user.workspace = repo.new_workspace_id()
+            location = ", ".join(v.strip() for v in (body.city, body.country) if v.strip())
+            repo.save_state(repo.blank_state(name, location), user.workspace)
+        else:
+            sup = repo.add_directory_supplier({k: v.strip() for k, v in {
+                "name": name, "city": body.city, "country": body.country, "contact_name": body.contact_name,
+                "email": body.email}.items()})
+            user.supplier_id = sup["id"]
+        s.add(user)
+        s.flush()
+        q.append(time.monotonic())
+        _start_session(s, response, user)
+        out = _me(s, user)
+        s.commit()
+    return out
+
+
 def _workspace_defaults(request: Request) -> dict:
     """Restaurant accounts: the purchasing profiles with labels in the request's language, and the active one."""
     from . import views
@@ -260,7 +318,7 @@ def _workspace_defaults(request: Request) -> dict:
     if lang not in ("it", "en", "ja"):
         lang = lang_from_request(request) or request.cookies.get("japita_login_lang")
     lang = lang if lang in ("it", "en", "ja") else "it"
-    listing = views.profiles_list(repo.load_state(), lang)
+    listing = views.profiles_list(repo.load_state(), lang)  # the caller sets the account's workspace
     return {**listing, "default_profile_id": listing["active_profile_id"], "lang": lang}
 
 
@@ -272,23 +330,34 @@ def me(request: Request):
         if user is None:
             raise HTTPException(401, "not signed in")
         out = _me(s, user)
+        workspace = user.workspace
     if out["role"] == "restaurant":
-        out.update(_workspace_defaults(request))
+        with repo.use_workspace(workspace):
+            out.update(_workspace_defaults(request))
     return out
 
 
 @router.get("/supplier/portal")
 def supplier_portal(user: User = Depends(current_user)):
-    """Supplier account: the link to its own portal. The supplier ID comes from the account, never the client."""
+    """Supplier account: its portal in each restaurant workspace that lists it (`portals`, demo first; `path` is
+    the first). The supplier ID comes from the account, never the client."""
     if user.role != "supplier" or not user.supplier_id:
         raise HTTPException(403, "supplier account required")
-    data = repo.load_state()
-    store = Store(data, next(iter(data["profiles"])))
-    if user.supplier_id not in store.suppliers:
+    portals = []
+    for workspace in repo.workspaces():
+        data = repo.load_state(workspace)
+        if user.supplier_id not in data["suppliers"] or not data["profiles"]:
+            continue
+        store = Store(data, next(iter(data["profiles"])))
+        created = not store.suppliers[user.supplier_id].get("portal_token")
+        token = portal.portal_token(store, user.supplier_id)
+        if created:
+            repo.save_state(data, workspace)
+        restaurant = next(iter(data["profiles"].values()))["name"]
+        portals.append({"restaurant": restaurant, "path": f"/supplier/portal/{token}"})
+    if not portals:
         raise HTTPException(404, "supplier not found")
-    token = portal.portal_token(store, user.supplier_id)
-    repo.save_state(data)
-    return {"supplier_id": user.supplier_id, "path": f"/supplier/portal/{token}"}
+    return {"supplier_id": user.supplier_id, "path": portals[0]["path"], "portals": portals}
 
 
 # --- operator CLI -------------------------------------------------------------------------------

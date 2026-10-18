@@ -1542,6 +1542,10 @@
 .jp .jp-login-submit { width:100%; padding:12px; font-size:14px; }
 .jp .jp-login-note { font-size:12px; margin:0; }
 .jp .jp-login-card .jp-error { margin:0 0 14px; }
+.jp .jp-login-switch { padding:0; border:0; background:none; color:inherit; font:inherit; font-weight:600; text-decoration:underline; text-underline-offset:2px; cursor:pointer; }
+.jp .jp-login-card .jp-field small { display:block; margin-top:4px; font-size:12px; }
+.jp .jp-portal-switch { display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:10px 16px; font-size:13px; }
+.jp .jp-portal-switch select { font:inherit; padding:4px 8px; max-width:100%; }
 .jp .jp-account { display:flex; align-items:center; gap:8px; font-size:12px; }
 
 /* Sign-in page in the Ajitama style: yolk band, ink-bordered card, pressed-edge role choices. */
