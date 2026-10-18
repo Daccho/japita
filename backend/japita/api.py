@@ -8,6 +8,7 @@ import logging
 import os
 import secrets
 import time
+from contextlib import asynccontextmanager
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any, Literal
@@ -25,13 +26,7 @@ from .forms import coerce as _coerce, display_ja, form as _form, spec_fields as 
 from .llm import LLM
 from .store import Store
 
-app = FastAPI(title="Japita API")
-app.add_middleware(CORSMiddleware, allow_origins=auth.app_origins(), allow_methods=["*"], allow_headers=["*"])
-app.middleware("http")(auth.require_session)  # outermost: every non-public route needs a restaurant session
-app.include_router(auth.router)
 
-
-@app.on_event("startup")
 def _demo_accounts() -> None:
     try:
         created = auth.ensure_demo_accounts()  # no-op unless DEMO_ACCOUNTS=1
@@ -40,6 +35,23 @@ def _demo_accounts() -> None:
         return
     if created:
         logging.getLogger("japita.auth").info("demo accounts ready: %s", ", ".join(created))
+
+
+@asynccontextmanager
+async def lifespan(app):
+    from . import drawings
+    _demo_accounts()
+    drawings.start(scan_catalog=True)
+    try:
+        yield
+    finally:
+        drawings.stop()
+
+
+app = FastAPI(title="Japita API", lifespan=lifespan)
+app.add_middleware(CORSMiddleware, allow_origins=auth.app_origins(), allow_methods=["*"], allow_headers=["*"])
+app.middleware("http")(auth.require_session)  # outermost: every non-public route needs a restaurant session
+app.include_router(auth.router)
 app.include_router(jobs.router)
 install_error_handlers(app)
 
@@ -184,7 +196,10 @@ def _dump(m: BaseModel) -> dict:
 
 @app.get("/state")
 def get_state():
-    return repo.load_state()
+    from .menu_api import menu_view
+    from .drawings import offer_view
+    data = repo.load_state()
+    return {**data, "offers": [offer_view(offer) for offer in data["offers"]], "menu": menu_view(data)}
 
 
 FIXTURES = Path(__file__).resolve().parent.parent / "tests" / "fixtures"
@@ -203,6 +218,8 @@ def seed_state(fixture: str = "kumo", x_admin_key: str | None = Header(default=N
     if not fixture.isidentifier() or not p.is_file():
         raise HTTPException(404, f"fixture {fixture!r} not found")
     repo.seed(p)
+    from .drawings import register_state
+    register_state(repo.load_state())
     auth.ensure_demo_accounts()  # display names follow the reloaded data
     return {"seeded": fixture}
 
@@ -212,14 +229,21 @@ def put_profile(profile_id: str, body: Profile):
     data = repo.load_state()
     data["profiles"][profile_id] = {**_dump(body), "id": profile_id}
     repo.save_state(data)
+    from .drawings import register_state
+    register_state(data)
     return data["profiles"][profile_id]
 
 
 @app.put("/recipe")
 def put_recipe(body: Recipe):
     data = repo.load_state()
-    data["recipe"] = _dump(body)
+    recipe = _dump(body)
+    if "menu_items" not in recipe and "menu_items" in data.get("recipe", {}):
+        recipe["menu_items"] = data["recipe"]["menu_items"]
+    data["recipe"] = recipe
     repo.save_state(data)
+    from .drawings import register_state
+    register_state(data)
     return data["recipe"]
 
 
@@ -256,7 +280,8 @@ def delete_supplier(supplier_id: str):
 
 @app.get("/offers")
 def list_offers(ingredient: str | None = None):
-    return [o for o in repo.load_state()["offers"] if not ingredient or o["ingredient"] == ingredient]
+    from .drawings import offer_view
+    return [offer_view(o) for o in repo.load_state()["offers"] if not ingredient or o["ingredient"] == ingredient]
 
 
 @app.put("/offers/{offer_id}")
@@ -268,7 +293,9 @@ def put_offer(offer_id: str, body: Offer):
     data["offers"] = [o for o in data["offers"] if o["id"] != offer_id] + [offer]
     data["review_flags"].pop(offer_id, None)  # edited by a person: previous double-read flags no longer apply
     repo.save_state(data)
-    return offer
+    from .drawings import offer_view, register
+    register(offer["product"], offer["ingredient"], offer["attributes"])
+    return offer_view(offer)
 
 
 @app.delete("/offers/{offer_id}")
@@ -327,6 +354,8 @@ async def upload_spec(offer_id: str, file: UploadFile = File(...)):
         data["review_flags"].pop(offer_id, None)
     repo.save_state(data)
     repo.log_calls(llm.calls, f"spec_double_read:{offer_id}")
+    from .drawings import register
+    register(offer["product"], offer["ingredient"], offer["attributes"])
     return {"offer_id": offer_id, "fields": result, "elapsed_ms": elapsed_ms,
             "calls": [c.__dict__ for c in llm.calls]}
 
@@ -539,3 +568,11 @@ app.include_router(orders_router)
 from .portal_api import router as portal_router  # noqa: E402
 
 app.include_router(portal_router)
+
+from .drawings_api import router as drawings_router  # noqa: E402
+
+app.include_router(drawings_router)
+
+from .menu_api import router as menu_router  # noqa: E402
+
+app.include_router(menu_router)

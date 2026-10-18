@@ -7,6 +7,8 @@ from html.parser import HTMLParser
 import json
 from pathlib import Path
 import re
+import unicodedata
+import sys
 
 
 ROOT = Path(__file__).resolve().parent
@@ -29,6 +31,38 @@ def embed_images(fragment):
     before, rest = fragment.split(IMAGE_START, 1)
     _, after = rest.split(IMAGE_END, 1)
     return before + IMAGE_START + '\n      const imageAssets = ' + json.dumps(assets, separators=(',', ':')) + ';\n      ' + IMAGE_END + after
+
+
+def embed_ingredient_aliases(fragment):
+    start, end = '/* JAPITA_INGREDIENT_ALIASES_START */', '/* JAPITA_INGREDIENT_ALIASES_END */'
+    if fragment.count(start) != 1 or fragment.count(end) != 1:
+        raise ValueError('Mockup must contain exactly one ingredient alias block.')
+    path = ROOT.parent / 'backend/japita/assets/product-drawings/manifest.json'
+    drawings = json.loads(path.read_text(encoding='utf-8'))['drawings']
+    aliases = {re.sub(r'[\W_]+', ' ', unicodedata.normalize('NFKC', alias).casefold()).strip(): item['ingredient']
+               for item in drawings if item['ingredient'] != 'generic' for alias in item['aliases']}
+    before, rest = fragment.split(start, 1)
+    _, after = rest.split(end, 1)
+    return before + start + '\n      const menuIngredientAliases = ' + json.dumps(aliases, ensure_ascii=False, separators=(',', ':')) + ';\n      ' + end + after
+
+
+def embed_drawings(fragment):
+    start, end = '/* JAPITA_DRAWINGS_START */', '/* JAPITA_DRAWINGS_END */'
+    if fragment.count(start) != 1 or fragment.count(end) != 1:
+        raise ValueError('Mockup must contain exactly one product drawing block.')
+    sys.path.insert(0, str(ROOT.parent / 'backend'))
+    from japita.drawings_library import drawing_svg, library
+    keys = {'fresh-noodles': 'ramen-fresh-tray', 'frozen-noodles': 'ramen-frozen-box',
+            'soy-sauce': 'soy-sauce-tin', 'mayu-oil': 'black-garlic-oil-bottle'}
+    assets = {}
+    for name, key in keys.items():
+        svg = drawing_svg(key).strip().replace('<svg ', '<svg class="jp-product-art" ')
+        for color in library()['palette'].values():
+            svg = svg.replace('"' + color['color'] + '"', '"var(' + color['token'] + ')"')
+        assets[name] = svg
+    before, rest = fragment.split(start, 1)
+    _, after = rest.split(end, 1)
+    return before + start + '\n      const productDrawings = ' + json.dumps(assets, separators=(',', ':')) + ';\n      ' + end + after
 
 
 class DocumentPolicy(HTMLParser):
@@ -56,7 +90,7 @@ def refresh(check=False):
     existing = preview.read_text(encoding='utf-8')
     source = ROOT / 'japita-workspace.html'
     saved_fragment = source.read_text(encoding='utf-8').strip()
-    fragment = embed_images(saved_fragment)
+    fragment = embed_drawings(embed_ingredient_aliases(embed_images(saved_fragment)))
     match = re.search(r'\bdata-srcdoc="([^"]*)"', existing)
     if not match:
         raise ValueError('Preview must contain the sandboxed data-srcdoc iframe.')

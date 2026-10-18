@@ -6,8 +6,9 @@ Read [Current design scope](../README.md#current-design-scope) for the boundary 
 
 - `japita-workspace.html`: editable HTML/CSS/JavaScript fragment; the source of truth for the interface.
 - `index.html`: ready-to-open standalone preview with its runtime, sandboxed iframe, and Content Security Policies included.
-- `refresh-preview.py`: Python 3 standard-library script that updates the preview from the fragment while preserving the sandbox and both CSPs. No package installation is needed.
+- `refresh-preview.py`: Python 3 standard-library script that embeds canonical product SVGs and updates the preview from the fragment while preserving the sandbox and both CSPs. No package installation is needed.
 - `assets/`: supplied Japita branding, the temporary Kumo logo, and illustrative supplier photos. Provenance and image prompts are in `assets/README.md`. The refresh script embeds the WebP assets into the fragment and preview.
+- `drawings-preview.html`: separate product illustration review, regenerated with `python mockup/refresh-drawings-preview.py`; status and canonical library location are in [product drawings](../docs/product-drawings.md).
 
 Open `index.html` in a browser. In Codex, ask the agent to open its absolute `file:///` URL with `open_in_codex`, browser target, placement `right`. This places the mockup beside the conversation. The exported preview includes its own runtime; the fragment alone is intended for inline visualization rendering. Initial loading of the preview's approved CDN assets needs an internet connection.
 
@@ -28,6 +29,6 @@ Suppliers opens in **My suppliers**, alongside **Discover new**. Each view has a
 
 The purchasing advisor opens from a floating bubble at the bottom right. Drag the bubble to move it; its position is stored locally. The popup contains the existing noodle-backup recommendation and basket actions.
 
-In Restaurant profile → Menu, the default view resembles a printed restaurant menu. Use the top-right pencil to edit dish names, descriptions, and prices directly on the paper. Text fields grow automatically; layout, typography, and dish order stay controlled. Use Save menu (or Ctrl/Cmd+S) or Cancel. Ingredient and purchasing plans expand beneath the menu and become editable in the same mode. Saved changes remain local to the preview.
+In Restaurant profile → Menu, the default view resembles a printed restaurant menu. Use the top-right pencil to edit dish names, descriptions, and prices directly on the paper, or Add dish within a section. Text fields grow automatically; layout, typography, and dish order stay controlled. Use Save menu (or Ctrl/Cmd+S) or Cancel. Ingredient and purchasing plans expand beneath the menu and become editable in the same mode. Saved ingredients populate My suppliers → Your ingredients. Saved changes remain local to this preview; the connected Next.js menu uses backend persistence.
 
 Current decisions, limitations, and the copyable continuation prompt are in [the mockup handoff](../docs/mockup-handoff.md).

@@ -95,9 +95,10 @@ def test_profile_update_rejected_or_invalid():
         portal.propose_profile(store, "S3", {"delivery_days": ["someday"]})
     with pytest.raises(ValueError):
         portal.propose_profile(store, "S3", {"name": "  "})
-    portal.propose_profile(store, "S3", {"name": "EuroAsia Foods"})
+    original = store.suppliers["S3"]["name"]
+    portal.propose_profile(store, "S3", {"name": "Another name"})
     portal.reject_profile(store, "S3")
-    assert store.suppliers["S3"]["name"] == "EuroAsia Foods B.V." and "pending_profile" not in store.suppliers["S3"]
+    assert store.suppliers["S3"]["name"] == original and "pending_profile" not in store.suppliers["S3"]
 
 
 def test_cut_is_a_choice():

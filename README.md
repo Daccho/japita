@@ -75,7 +75,8 @@ Sign in at http://localhost:3000 with `restaurant1` / `restaurant1` (or any demo
 | `LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY`, `LLM_BACKEND_LABEL` | OpenAI-compatible model endpoint on AMD, and the label logged with each call. |
 | `EVOLUS_API_KEY`, `EVOLUS_APPLICATION_ID`, `EVOLUS_AGENT_ID`, `EVOLUS_WORKFLOW_ID` | Evolus agent and workflow. Without `EVOLUS_AGENT_ID` the app calls the model directly. |
 | `DEMO_ACCOUNTS` | Backend: `1` creates the demo accounts above on startup (password = login ID). Leave unset for real deployments. |
-| `ADMIN_KEY` | Optional. When set, `POST /state/seed` requires `X-Admin-Key`. |
+| `ADMIN_KEY` | Required for drawing-review Regenerate/Delete; also protects `POST /state/seed` when set. Never expose it as a public frontend environment variable. |
+| `DRAWING_TIMEOUT_SECONDS` | Background drawing job budget, default 60 seconds (maximum 120). |
 | `APP_ORIGIN` | Backend: the web app's origin (default `http://localhost:3000`). CORS and the CSRF origin check use it; an `https://` origin makes the session cookie Secure. |
 | `API_ORIGIN` | Frontend: where `/api/*` is proxied (default `http://localhost:8000`; on Vercel the deployed Render API). |
 
@@ -89,5 +90,11 @@ uv run python -m japita.auth add-user <id> --name "<name>" [--role supplier --su
 ```
 
 Deployment: [docs/deploy.md](docs/deploy.md). Own vLLM and Evolus setup: [docs/setup.md](docs/setup.md). Project plan: [plan.md](plan.md).
+
+## Current design scope
+
+The connected app starts with a restaurant/supplier choice and login ID/password sign-in; the restaurant workspace lives at `/restaurants`. Accounts are provisioned through the backend CLI. A public marketing homepage, pricing page, and self-service restaurant registration remain future work. The static mockup in [`mockup/`](mockup/index.html) opens directly in a browser; see [docs/mockup-handoff.md](docs/mockup-handoff.md). Connecting the design to the backend follows [docs/design-integration.md](docs/design-integration.md).
+
+The connected restaurant menu supports adding dishes and saving their ingredients on the backend; those ingredients also populate My suppliers filters. Approved flat drawings replace product photos. Unknown foods queue background generation through the existing AMD model settings, with validated SVG and a packaging fallback. The connected `/drawings-review` page manages the cache; the standalone [library preview](mockup/drawings-preview.html) shows the approved artwork. See [docs/product-drawings.md](docs/product-drawings.md) for setup, persistence and verification boundaries.
 
 Licensed under [MIT](LICENSE).

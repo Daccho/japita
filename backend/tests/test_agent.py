@@ -54,7 +54,7 @@ def test_agent_is_reminded_once_to_draft_supplier_questions():
         (None, [tool_call(2, "draft_clarification", {
             "offer_id": "O-noo-3", "field": "hydration_pct",
             "text_ja": "博多細麺の加水率をご教示ください。", "reason": "hydration not stated"})]),
-        ("Keep the baseline; asked EuroAsia about hydration.", None),
+        ("Keep the baseline; asked Hokuto Shoji about hydration.", None),
     ]
     fake = FakeCompletions(script)
     llm = LLM(LLMConfig(base_url="http://fake", model="fake-gemma"), client=NS(chat=NS(completions=fake)))

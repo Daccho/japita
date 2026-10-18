@@ -77,7 +77,7 @@ export default function Shell({ children }: { children: ReactNode }) {
       }))}
       sidebarFoot={
         <>
-          Kumo Ramen
+          {user.display_name}
           <br />
           {t("side.place")}
         </>

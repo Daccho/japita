@@ -49,4 +49,3 @@ export const supplierPortal = () => call<{ supplier_id: string; path: string }>(
 export function safeNext(next: string | null): string {
   return next && /^\/(?![\/\\])/.test(next) && !next.includes("\\") && !next.startsWith("/login") ? next : "/restaurants";
 }
-

@@ -1,0 +1,1175 @@
+{
+  "version": 2,
+  "viewBox": "0 0 64 64",
+  "strokeWidth": 2.1,
+  "palette": {
+    "yolk": {
+      "color": "#F4BC2B",
+      "token": "--aj-yolk"
+    },
+    "container": {
+      "color": "#3A332B",
+      "token": "--aj-container"
+    },
+    "chili": {
+      "color": "#E0482B",
+      "token": "--aj-chili"
+    },
+    "ink": {
+      "color": "#1E1B18",
+      "token": "--aj-ink"
+    }
+  },
+  "drawings": [
+    {
+      "key": "ramen-fresh-tray",
+      "name": "Fresh ramen noodles · tray",
+      "ingredient": "noodles",
+      "form": "tray",
+      "state": "fresh",
+      "file": "ramen-fresh-tray.svg",
+      "aliases": [
+        "noodles",
+        "fresh ramen noodles",
+        "ramen noodles",
+        "Hakata noodles",
+        "fresh straight ramen noodles",
+        "ramen freschi",
+        "tagliolini ramen",
+        "nama ramen",
+        "namamen",
+        "麺",
+        "生ラーメン",
+        "生麺"
+      ],
+      "group": "Noodles & wrappers",
+      "source": "library",
+      "reference": false,
+      "revised": true
+    },
+    {
+      "key": "ramen-frozen-box",
+      "name": "Frozen ramen noodles · box",
+      "ingredient": "noodles",
+      "form": "box",
+      "state": "frozen",
+      "file": "ramen-frozen-box.svg",
+      "aliases": [
+        "noodles",
+        "frozen ramen noodles",
+        "frozen Hakata hosomen",
+        "ramen surgelati",
+        "ramen congelati",
+        "reito ramen",
+        "reitou ramen",
+        "冷凍ラーメン",
+        "冷凍麺"
+      ],
+      "group": "Noodles & wrappers",
+      "source": "library",
+      "reference": false,
+      "revised": true
+    },
+    {
+      "key": "soba-bundle",
+      "name": "Soba · dried bundle",
+      "ingredient": "soba",
+      "form": "bundle",
+      "state": "dried",
+      "file": "soba-bundle.svg",
+      "aliases": [
+        "soba",
+        "buckwheat noodles",
+        "spaghetti di grano saraceno",
+        "soba secca",
+        "kansoba",
+        "蕎麦",
+        "そば"
+      ],
+      "group": "Noodles & wrappers",
+      "source": "library",
+      "reference": true
+    },
+    {
+      "key": "soy-sauce-tin",
+      "name": "Soy sauce · 18 L tin",
+      "ingredient": "soy_sauce",
+      "form": "tin",
+      "state": "none",
+      "file": "soy-sauce-tin.svg",
+      "aliases": [
+        "soy sauce",
+        "soy sauce tin",
+        "18 L soy sauce",
+        "shoyu 18 L",
+        "salsa di soia latta",
+        "shoyu",
+        "shouyu",
+        "醤油",
+        "しょうゆ"
+      ],
+      "group": "Japanese pantry",
+      "source": "library",
+      "reference": true
+    },
+    {
+      "key": "black-garlic-oil-bottle",
+      "name": "Black garlic oil · bottle",
+      "ingredient": "black_garlic_oil",
+      "form": "bottle",
+      "state": "none",
+      "file": "black-garlic-oil-bottle.svg",
+      "aliases": [
+        "black garlic oil",
+        "mayu",
+        "ma-yu",
+        "olio di aglio nero",
+        "olio all aglio nero",
+        "マー油"
+      ],
+      "group": "Japanese pantry",
+      "source": "library",
+      "reference": true
+    },
+    {
+      "key": "udon-tray",
+      "name": "Udon · tray",
+      "ingredient": "udon",
+      "form": "tray",
+      "state": "fresh",
+      "file": "udon-tray.svg",
+      "aliases": [
+        "udon",
+        "thick noodles",
+        "udon freschi",
+        "nama udon",
+        "うどん"
+      ],
+      "group": "Noodles & wrappers",
+      "source": "library",
+      "reference": false,
+      "revised": true
+    },
+    {
+      "key": "gyoza-wrappers-stack",
+      "name": "Gyoza wrappers · stack",
+      "ingredient": "gyoza_wrappers",
+      "form": "stack",
+      "state": "none",
+      "file": "gyoza-wrappers-stack.svg",
+      "aliases": [
+        "gyoza wrappers",
+        "dumpling wrappers",
+        "sfoglie per gyoza",
+        "dischi per ravioli",
+        "gyoza no kawa",
+        "gyoza kawa",
+        "餃子の皮"
+      ],
+      "group": "Noodles & wrappers",
+      "source": "library",
+      "reference": false
+    },
+    {
+      "key": "soy-sauce-bottle",
+      "name": "Soy sauce · bottle",
+      "ingredient": "soy_sauce",
+      "form": "bottle",
+      "state": "none",
+      "file": "soy-sauce-bottle.svg",
+      "aliases": [
+        "soy sauce",
+        "koikuchi",
+        "honjozo",
+        "shoyu bottle",
+        "salsa di soia",
+        "soia",
+        "shoyu",
+        "shouyu",
+        "醤油",
+        "しょうゆ"
+      ],
+      "group": "Japanese pantry",
+      "source": "library",
+      "reference": false
+    },
+    {
+      "key": "mirin-bottle",
+      "name": "Mirin · bottle",
+      "ingredient": "mirin",
+      "form": "bottle",
+      "state": "none",
+      "file": "mirin-bottle.svg",
+      "aliases": [
+        "mirin",
+        "sweet rice wine",
+        "hon mirin",
+        "vino dolce di riso",
+        "みりん",
+        "本みりん"
+      ],
+      "group": "Japanese pantry",
+      "source": "library",
+      "reference": false
+    },
+    {
+      "key": "rice-vinegar-bottle",
+      "name": "Rice vinegar · bottle",
+      "ingredient": "rice_vinegar",
+      "form": "bottle",
+      "state": "none",
+      "file": "rice-vinegar-bottle.svg",
+      "aliases": [
+        "rice vinegar",
+        "aceto di riso",
+        "komezu",
+        "kome su",
+        "米酢"
+      ],
+      "group": "Japanese pantry",
+      "source": "library",
+      "reference": false
+    },
+    {
+      "key": "cooking-sake-bottle",
+      "name": "Cooking sake · bottle",
+      "ingredient": "cooking_sake",
+      "form": "bottle",
+      "state": "none",
+      "file": "cooking-sake-bottle.svg",
+      "aliases": [
+        "cooking sake",
+        "sake",
+        "sake da cucina",
+        "ryorishu",
+        "ryori sake",
+        "料理酒",
+        "日本酒"
+      ],
+      "group": "Japanese pantry",
+      "source": "library",
+      "reference": false
+    },
+    {
+      "key": "sesame-oil-bottle",
+      "name": "Sesame oil · bottle",
+      "ingredient": "sesame_oil",
+      "form": "bottle",
+      "state": "none",
+      "file": "sesame-oil-bottle.svg",
+      "aliases": [
+        "sesame oil",
+        "olio di sesamo",
+        "goma abura",
+        "goma oil",
+        "ごま油",
+        "胡麻油"
+      ],
+      "group": "Japanese pantry",
+      "source": "library",
+      "reference": false
+    },
+    {
+      "key": "rice-sack",
+      "name": "Short-grain rice · sack",
+      "ingredient": "rice",
+      "form": "sack",
+      "state": "none",
+      "file": "rice-sack.svg",
+      "aliases": [
+        "rice",
+        "short grain rice",
+        "riso",
+        "riso giapponese",
+        "kome",
+        "hakumai",
+        "米",
+        "白米"
+      ],
+      "group": "Japanese pantry",
+      "source": "library",
+      "reference": false,
+      "revised": true
+    },
+    {
+      "key": "miso-tub",
+      "name": "Miso · tub",
+      "ingredient": "miso",
+      "form": "tub",
+      "state": "none",
+      "file": "miso-tub.svg",
+      "aliases": [
+        "miso",
+        "miso paste",
+        "pasta di miso",
+        "miso tare",
+        "味噌",
+        "みそ"
+      ],
+      "group": "Japanese pantry",
+      "source": "library",
+      "reference": false
+    },
+    {
+      "key": "kombu-sheet",
+      "name": "Kombu · folded sheet",
+      "ingredient": "kombu",
+      "form": "sheet",
+      "state": "dried",
+      "file": "kombu-sheet.svg",
+      "aliases": [
+        "kombu",
+        "kelp",
+        "alga kombu",
+        "konbu",
+        "昆布",
+        "こんぶ"
+      ],
+      "group": "Japanese pantry",
+      "source": "library",
+      "reference": false
+    },
+    {
+      "key": "katsuobushi-bag",
+      "name": "Katsuobushi · bag of flakes",
+      "ingredient": "katsuobushi",
+      "form": "bag",
+      "state": "dried",
+      "file": "katsuobushi-bag.svg",
+      "aliases": [
+        "katsuobushi",
+        "bonito flakes",
+        "fiocchi di bonito",
+        "kezuribushi",
+        "鰹節",
+        "かつおぶし"
+      ],
+      "group": "Japanese pantry",
+      "source": "library",
+      "reference": false
+    },
+    {
+      "key": "nori-sheets",
+      "name": "Nori · stack of sheets",
+      "ingredient": "nori",
+      "form": "stack",
+      "state": "dried",
+      "file": "nori-sheets.svg",
+      "aliases": [
+        "nori",
+        "nori sheets",
+        "alga nori",
+        "fogli di nori",
+        "yaki nori",
+        "海苔",
+        "のり"
+      ],
+      "group": "Japanese pantry",
+      "source": "library",
+      "reference": false
+    },
+    {
+      "key": "sesame-seeds-bag",
+      "name": "Sesame seeds · bag",
+      "ingredient": "sesame_seeds",
+      "form": "bag",
+      "state": "none",
+      "file": "sesame-seeds-bag.svg",
+      "aliases": [
+        "sesame seeds",
+        "sesame",
+        "semi di sesamo",
+        "sesamo",
+        "goma",
+        "いりごま",
+        "胡麻"
+      ],
+      "group": "Japanese pantry",
+      "source": "library",
+      "reference": false
+    },
+    {
+      "key": "rayu-jar",
+      "name": "Chili oil / rayu · jar",
+      "ingredient": "chili_oil",
+      "form": "jar",
+      "state": "none",
+      "file": "rayu-jar.svg",
+      "aliases": [
+        "chili oil",
+        "rayu",
+        "ra-yu",
+        "olio piccante",
+        "olio al peperoncino",
+        "ラー油"
+      ],
+      "group": "Japanese pantry",
+      "source": "library",
+      "reference": false,
+      "revised": true
+    },
+    {
+      "key": "panko-bag",
+      "name": "Panko · bag",
+      "ingredient": "panko",
+      "form": "bag",
+      "state": "dried",
+      "file": "panko-bag.svg",
+      "aliases": [
+        "panko",
+        "breadcrumbs",
+        "pangrattato",
+        "pangrattato giapponese",
+        "パン粉"
+      ],
+      "group": "Japanese pantry",
+      "source": "library",
+      "reference": false
+    },
+    {
+      "key": "menma-jar",
+      "name": "Menma · jar",
+      "ingredient": "menma",
+      "form": "jar",
+      "state": "none",
+      "file": "menma-jar.svg",
+      "aliases": [
+        "menma",
+        "bamboo shoots",
+        "germogli di bambu",
+        "takenoko",
+        "メンマ",
+        "筍"
+      ],
+      "group": "Japanese pantry",
+      "source": "library",
+      "reference": false,
+      "revised": true
+    },
+    {
+      "key": "beni-shoga-jar",
+      "name": "Beni shoga · jar",
+      "ingredient": "pickled_red_ginger",
+      "form": "jar",
+      "state": "none",
+      "file": "beni-shoga-jar.svg",
+      "aliases": [
+        "pickled red ginger",
+        "beni shoga",
+        "beni shouga",
+        "zenzero rosso sottaceto",
+        "紅生姜",
+        "紅しょうが"
+      ],
+      "group": "Japanese pantry",
+      "source": "library",
+      "reference": false,
+      "revised": true
+    },
+    {
+      "key": "pork-bones-crate",
+      "name": "Pork bones · crate",
+      "ingredient": "pork_bones",
+      "form": "crate",
+      "state": "none",
+      "file": "pork-bones-crate.svg",
+      "aliases": [
+        "pork bones",
+        "ossa di maiale",
+        "tonkotsu",
+        "buta hone",
+        "豚骨"
+      ],
+      "group": "Proteins",
+      "source": "library",
+      "reference": false,
+      "revised": true
+    },
+    {
+      "key": "pork-belly-vacuum",
+      "name": "Pork belly · vacuum pack",
+      "ingredient": "pork_belly",
+      "form": "vacuum_pack",
+      "state": "none",
+      "file": "pork-belly-vacuum.svg",
+      "aliases": [
+        "pork belly",
+        "pancetta",
+        "pancia di maiale",
+        "butabara",
+        "buta bara",
+        "豚バラ"
+      ],
+      "group": "Proteins",
+      "source": "library",
+      "reference": false,
+      "revised": true
+    },
+    {
+      "key": "chicken-thighs-tray",
+      "name": "Chicken thighs · tray",
+      "ingredient": "chicken_thighs",
+      "form": "tray",
+      "state": "none",
+      "file": "chicken-thighs-tray.svg",
+      "aliases": [
+        "chicken thighs",
+        "cosce di pollo",
+        "sovracosce di pollo",
+        "tori momo",
+        "torimomo",
+        "鶏もも"
+      ],
+      "group": "Proteins",
+      "source": "library",
+      "reference": false,
+      "revised": true
+    },
+    {
+      "key": "eggs-tray",
+      "name": "Eggs · open carton",
+      "ingredient": "eggs",
+      "form": "carton",
+      "state": "none",
+      "file": "eggs-tray.svg",
+      "aliases": [
+        "eggs",
+        "egg",
+        "uova",
+        "uovo",
+        "tamago",
+        "卵",
+        "玉子"
+      ],
+      "group": "Proteins",
+      "source": "library",
+      "reference": false,
+      "revised": true
+    },
+    {
+      "key": "tofu-tray",
+      "name": "Tofu · block in tray",
+      "ingredient": "tofu",
+      "form": "tray",
+      "state": "none",
+      "file": "tofu-tray.svg",
+      "aliases": [
+        "tofu",
+        "tofu block",
+        "panetto di tofu",
+        "豆腐",
+        "とうふ"
+      ],
+      "group": "Proteins",
+      "source": "library",
+      "reference": false
+    },
+    {
+      "key": "salmon-tray",
+      "name": "Salmon · whole fish",
+      "ingredient": "salmon",
+      "form": "none",
+      "state": "none",
+      "file": "salmon-tray.svg",
+      "aliases": [
+        "salmon",
+        "salmon fillet",
+        "salmone",
+        "filetto di salmone",
+        "sake fish",
+        "shake",
+        "サーモン",
+        "鮭"
+      ],
+      "group": "Proteins",
+      "source": "library",
+      "reference": false,
+      "revised": true
+    },
+    {
+      "key": "spring-onions-bunch",
+      "name": "Spring onions · bunch",
+      "ingredient": "spring_onions",
+      "form": "bunch",
+      "state": "none",
+      "file": "spring-onions-bunch.svg",
+      "aliases": [
+        "spring onions",
+        "spring onion",
+        "scallion",
+        "scallions",
+        "green onion",
+        "cipollotto",
+        "cipollotti",
+        "negi",
+        "aonegi",
+        "葱",
+        "ねぎ"
+      ],
+      "group": "Produce",
+      "source": "library",
+      "reference": false
+    },
+    {
+      "key": "garlic-bulb",
+      "name": "Garlic · bulb",
+      "ingredient": "garlic",
+      "form": "bulb",
+      "state": "none",
+      "file": "garlic-bulb.svg",
+      "aliases": [
+        "garlic",
+        "garlic bulb",
+        "aglio",
+        "testa di aglio",
+        "ninniku",
+        "にんにく",
+        "大蒜"
+      ],
+      "group": "Produce",
+      "source": "library",
+      "reference": false,
+      "revised": true
+    },
+    {
+      "key": "ginger-root",
+      "name": "Ginger · root",
+      "ingredient": "ginger",
+      "form": "root",
+      "state": "none",
+      "file": "ginger-root.svg",
+      "aliases": [
+        "ginger",
+        "ginger root",
+        "zenzero",
+        "shoga",
+        "shouga",
+        "生姜",
+        "しょうが"
+      ],
+      "group": "Produce",
+      "source": "library",
+      "reference": false,
+      "revised": true
+    },
+    {
+      "key": "shiitake-crate",
+      "name": "Shiitake · crate",
+      "ingredient": "shiitake",
+      "form": "crate",
+      "state": "none",
+      "file": "shiitake-crate.svg",
+      "aliases": [
+        "shiitake",
+        "shiitake mushrooms",
+        "funghi shiitake",
+        "しいたけ",
+        "椎茸"
+      ],
+      "group": "Produce",
+      "source": "library",
+      "reference": false,
+      "revised": true
+    },
+    {
+      "key": "bean-sprouts-bag",
+      "name": "Bean sprouts · bag",
+      "ingredient": "bean_sprouts",
+      "form": "bag",
+      "state": "none",
+      "file": "bean-sprouts-bag.svg",
+      "aliases": [
+        "bean sprouts",
+        "germogli di soia",
+        "moyashi",
+        "もやし"
+      ],
+      "group": "Produce",
+      "source": "library",
+      "reference": false,
+      "revised": true
+    },
+    {
+      "key": "corn-can",
+      "name": "Corn · can",
+      "ingredient": "corn",
+      "form": "can",
+      "state": "none",
+      "file": "corn-can.svg",
+      "aliases": [
+        "corn",
+        "sweetcorn",
+        "mais",
+        "granturco",
+        "tomorokoshi",
+        "toumorokoshi",
+        "とうもろこし",
+        "コーン"
+      ],
+      "group": "Produce",
+      "source": "library",
+      "reference": false,
+      "revised": true
+    },
+    {
+      "key": "cabbage-head",
+      "name": "Cabbage · whole head",
+      "ingredient": "cabbage",
+      "form": "head",
+      "state": "none",
+      "file": "cabbage-head.svg",
+      "aliases": [
+        "cabbage",
+        "cavolo",
+        "cavolo cappuccio",
+        "kyabetsu",
+        "キャベツ"
+      ],
+      "group": "Produce",
+      "source": "library",
+      "reference": false
+    },
+    {
+      "key": "flour-sack",
+      "name": "Flour · sack",
+      "ingredient": "flour",
+      "form": "sack",
+      "state": "none",
+      "file": "flour-sack.svg",
+      "aliases": [
+        "flour",
+        "wheat flour",
+        "farina",
+        "farina di grano",
+        "komugiko",
+        "小麦粉"
+      ],
+      "group": "General staples",
+      "source": "library",
+      "reference": false
+    },
+    {
+      "key": "sugar-bag",
+      "name": "Sugar · bag",
+      "ingredient": "sugar",
+      "form": "bag",
+      "state": "none",
+      "file": "sugar-bag.svg",
+      "aliases": [
+        "sugar",
+        "zucchero",
+        "sato",
+        "satou",
+        "砂糖"
+      ],
+      "group": "General staples",
+      "source": "library",
+      "reference": false
+    },
+    {
+      "key": "salt-box",
+      "name": "Salt · box",
+      "ingredient": "salt",
+      "form": "box",
+      "state": "none",
+      "file": "salt-box.svg",
+      "aliases": [
+        "salt",
+        "sale",
+        "shio",
+        "塩"
+      ],
+      "group": "General staples",
+      "source": "library",
+      "reference": false
+    },
+    {
+      "key": "cooking-oil-jerrycan",
+      "name": "Cooking oil · jerrycan",
+      "ingredient": "cooking_oil",
+      "form": "jerrycan",
+      "state": "none",
+      "file": "cooking-oil-jerrycan.svg",
+      "aliases": [
+        "cooking oil",
+        "vegetable oil",
+        "olio da cucina",
+        "olio di semi",
+        "abura",
+        "shokuyoyu",
+        "食用油"
+      ],
+      "group": "General staples",
+      "source": "library",
+      "reference": false
+    },
+    {
+      "key": "olive-oil-tin",
+      "name": "Extra-virgin olive oil · tin",
+      "ingredient": "olive_oil",
+      "form": "tin",
+      "state": "none",
+      "file": "olive-oil-tin.svg",
+      "aliases": [
+        "olive oil",
+        "extra virgin olive oil",
+        "olio extravergine di oliva",
+        "olio evo",
+        "oribu oil",
+        "oriibu oiru",
+        "オリーブオイル"
+      ],
+      "group": "General staples",
+      "source": "library",
+      "reference": false
+    },
+    {
+      "key": "tomatoes-can",
+      "name": "Canned tomatoes · can",
+      "ingredient": "tomatoes",
+      "form": "can",
+      "state": "none",
+      "file": "tomatoes-can.svg",
+      "aliases": [
+        "tomatoes",
+        "canned tomatoes",
+        "pomodori pelati",
+        "pomodoro",
+        "passata",
+        "tomato kan",
+        "tomato",
+        "トマト缶"
+      ],
+      "group": "General staples",
+      "source": "library",
+      "reference": false
+    },
+    {
+      "key": "mozzarella-bag",
+      "name": "Mozzarella · bag",
+      "ingredient": "mozzarella",
+      "form": "bag",
+      "state": "none",
+      "file": "mozzarella-bag.svg",
+      "aliases": [
+        "mozzarella",
+        "mozzarella cheese",
+        "mozzarella in busta",
+        "mottsarera",
+        "モッツァレラ"
+      ],
+      "group": "General staples",
+      "source": "library",
+      "reference": false
+    },
+    {
+      "key": "parmigiano-wedge",
+      "name": "Parmigiano · wedge",
+      "ingredient": "parmigiano",
+      "form": "wedge",
+      "state": "none",
+      "file": "parmigiano-wedge.svg",
+      "aliases": [
+        "parmigiano",
+        "parmesan",
+        "parmigiano reggiano",
+        "parumijano",
+        "parmesan cheese",
+        "パルミジャーノ"
+      ],
+      "group": "General staples",
+      "source": "library",
+      "reference": false
+    },
+    {
+      "key": "butter-block",
+      "name": "Butter · block",
+      "ingredient": "butter",
+      "form": "block",
+      "state": "none",
+      "file": "butter-block.svg",
+      "aliases": [
+        "butter",
+        "burro",
+        "bata",
+        "bataa",
+        "バター"
+      ],
+      "group": "General staples",
+      "source": "library",
+      "reference": false
+    },
+    {
+      "key": "milk-carton",
+      "name": "Milk · carton",
+      "ingredient": "milk",
+      "form": "carton",
+      "state": "none",
+      "file": "milk-carton.svg",
+      "aliases": [
+        "milk",
+        "latte",
+        "gyunyu",
+        "gyuunyuu",
+        "牛乳",
+        "ミルク"
+      ],
+      "group": "General staples",
+      "source": "library",
+      "reference": false
+    },
+    {
+      "key": "kikurage-bag",
+      "name": "Dried kikurage · bag",
+      "ingredient": "kikurage",
+      "form": "bag",
+      "state": "dried",
+      "file": "kikurage-bag.svg",
+      "aliases": [
+        "kikurage",
+        "wood ear",
+        "wood ear mushrooms",
+        "dried kikurage",
+        "funghi orecchio di giuda",
+        "funghi neri",
+        "きくらげ",
+        "木耳"
+      ],
+      "group": "Current catalog additions",
+      "source": "library",
+      "reference": false
+    },
+    {
+      "key": "ramen-fresh-crate",
+      "name": "Fresh ramen noodles · crate",
+      "ingredient": "noodles",
+      "form": "crate",
+      "state": "fresh",
+      "file": "ramen-fresh-crate.svg",
+      "aliases": [
+        "noodles",
+        "fresh noodles crate",
+        "chilled noodles crate",
+        "ramen in cassetta",
+        "nama ramen crate"
+      ],
+      "group": "Current catalog additions",
+      "source": "library",
+      "reference": false,
+      "revised": true
+    },
+    {
+      "key": "generic-bag",
+      "name": "Generic bag",
+      "ingredient": "generic",
+      "form": "bag",
+      "state": "none",
+      "file": "generic-bag.svg",
+      "aliases": [
+        "generic",
+        "bag",
+        "busta",
+        "fukuro",
+        "袋"
+      ],
+      "group": "Packaging fallbacks",
+      "source": "library",
+      "reference": false
+    },
+    {
+      "key": "generic-sack",
+      "name": "Generic sack",
+      "ingredient": "generic",
+      "form": "sack",
+      "state": "none",
+      "file": "generic-sack.svg",
+      "aliases": [
+        "generic",
+        "sack",
+        "sacco",
+        "oobukuro"
+      ],
+      "group": "Packaging fallbacks",
+      "source": "library",
+      "reference": false
+    },
+    {
+      "key": "generic-box",
+      "name": "Generic box",
+      "ingredient": "generic",
+      "form": "box",
+      "state": "none",
+      "file": "generic-box.svg",
+      "aliases": [
+        "generic",
+        "box",
+        "scatola",
+        "hako",
+        "箱"
+      ],
+      "group": "Packaging fallbacks",
+      "source": "library",
+      "reference": false
+    },
+    {
+      "key": "generic-tin",
+      "name": "Generic tin",
+      "ingredient": "generic",
+      "form": "tin",
+      "state": "none",
+      "file": "generic-tin.svg",
+      "aliases": [
+        "generic",
+        "tin",
+        "latta",
+        "itto kan",
+        "一斗缶"
+      ],
+      "group": "Packaging fallbacks",
+      "source": "library",
+      "reference": false
+    },
+    {
+      "key": "generic-can",
+      "name": "Generic can",
+      "ingredient": "generic",
+      "form": "can",
+      "state": "none",
+      "file": "generic-can.svg",
+      "aliases": [
+        "generic",
+        "can",
+        "lattina",
+        "kan",
+        "缶"
+      ],
+      "group": "Packaging fallbacks",
+      "source": "library",
+      "reference": false
+    },
+    {
+      "key": "generic-bottle",
+      "name": "Generic bottle",
+      "ingredient": "generic",
+      "form": "bottle",
+      "state": "none",
+      "file": "generic-bottle.svg",
+      "aliases": [
+        "generic",
+        "bottle",
+        "bottiglia",
+        "bin",
+        "瓶"
+      ],
+      "group": "Packaging fallbacks",
+      "source": "library",
+      "reference": false
+    },
+    {
+      "key": "generic-jar",
+      "name": "Generic jar",
+      "ingredient": "generic",
+      "form": "jar",
+      "state": "none",
+      "file": "generic-jar.svg",
+      "aliases": [
+        "generic",
+        "jar",
+        "barattolo",
+        "hozon bin"
+      ],
+      "group": "Packaging fallbacks",
+      "source": "library",
+      "reference": false
+    },
+    {
+      "key": "generic-tub",
+      "name": "Generic tub",
+      "ingredient": "generic",
+      "form": "tub",
+      "state": "none",
+      "file": "generic-tub.svg",
+      "aliases": [
+        "generic",
+        "tub",
+        "vaschetta",
+        "pack"
+      ],
+      "group": "Packaging fallbacks",
+      "source": "library",
+      "reference": false
+    },
+    {
+      "key": "generic-tray",
+      "name": "Generic tray",
+      "ingredient": "generic",
+      "form": "tray",
+      "state": "none",
+      "file": "generic-tray.svg",
+      "aliases": [
+        "generic",
+        "tray",
+        "vassoio",
+        "torei",
+        "トレー"
+      ],
+      "group": "Packaging fallbacks",
+      "source": "library",
+      "reference": false
+    },
+    {
+      "key": "generic-crate",
+      "name": "Generic crate",
+      "ingredient": "generic",
+      "form": "crate",
+      "state": "none",
+      "file": "generic-crate.svg",
+      "aliases": [
+        "generic",
+        "crate",
+        "cassetta",
+        "kibako",
+        "木箱"
+      ],
+      "group": "Packaging fallbacks",
+      "source": "library",
+      "reference": false
+    },
+    {
+      "key": "generic-vacuum-pack",
+      "name": "Generic vacuum pack",
+      "ingredient": "generic",
+      "form": "vacuum_pack",
+      "state": "none",
+      "file": "generic-vacuum-pack.svg",
+      "aliases": [
+        "generic",
+        "vacuum pack",
+        "sottovuoto",
+        "shinku pack",
+        "真空パック"
+      ],
+      "group": "Packaging fallbacks",
+      "source": "library",
+      "reference": false
+    },
+    {
+      "key": "generic-bunch",
+      "name": "Generic bunch",
+      "ingredient": "generic",
+      "form": "bunch",
+      "state": "none",
+      "file": "generic-bunch.svg",
+      "aliases": [
+        "generic",
+        "bunch",
+        "mazzo",
+        "taba",
+        "束"
+      ],
+      "group": "Packaging fallbacks",
+      "source": "library",
+      "reference": false
+    }
+  ]
+}

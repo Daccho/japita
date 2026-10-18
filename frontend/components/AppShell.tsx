@@ -40,7 +40,7 @@ export default function AppShell({
   children: ReactNode;
   after?: ReactNode;
 }) {
-  const logo = <Image className="jp-brand-logo" src="/japita-logo.png" alt="Japita" width={112} height={56} priority />;
+  const logo = <Image className="jp-brand-logo" src="/japita-logo-ajitama-flat.svg" alt="Japita" width={128} height={92} priority />;
   return (
     <div className="jp">
       <div className="jp-app">

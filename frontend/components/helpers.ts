@@ -1,4 +1,4 @@
-import type { Basket, BasketKind, BasketResult, Offer } from "@/lib/api";
+import type { Basket, BasketKind, BasketResult } from "@/lib/api";
 
 export function findBasket(r: BasketResult | undefined, kind: string): Basket | undefined {
   return r?.baskets.find((b) => b.kind === kind || (b.also as string[]).includes(kind));
@@ -11,13 +11,6 @@ export function suggestedBasket(r: BasketResult | undefined): Basket | undefined
 }
 
 export const KIND_ORDER: BasketKind[] = ["baseline", "on_time", "lowest_cost", "best_fit", "fewest_suppliers"];
-
-// Illustrative product photos from mockup/assets (they do not establish product specifications).
-export function offerImage(o: Pick<Offer, "ingredient" | "attributes">): string | null {
-  if (o.ingredient === "noodles") return o.attributes.fresh === false ? "/frozen-noodles.webp" : "/fresh-noodles.webp";
-  if (o.ingredient === "soy_sauce") return "/soy-sauce.webp";
-  return null;
-}
 
 export function fmtValue(v: unknown, yes: string, no: string): string {
   if (v === null || v === undefined) return "—";

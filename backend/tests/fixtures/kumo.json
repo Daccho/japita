@@ -379,7 +379,7 @@
     },
     "S2": {
       "id": "S2",
-      "name": "Pasta Fresca Ramen Milano",
+      "name": "Sakura Seimen Milano",
       "relationship": "existing",
       "account_status": "approved",
       "min_order_eur": 80,
@@ -392,7 +392,7 @@
     },
     "S3": {
       "id": "S3",
-      "name": "EuroAsia Foods B.V.",
+      "name": "Hokuto Shoji Europe B.V.",
       "relationship": "candidate",
       "account_status": "approved",
       "min_order_eur": 200,
@@ -407,7 +407,7 @@
     },
     "S4": {
       "id": "S4",
-      "name": "Pastificio Lombardo Nord",
+      "name": "Fujimi Seimen Lombardia",
       "relationship": "candidate",
       "account_status": "approved",
       "min_order_eur": 100,
@@ -420,7 +420,7 @@
     },
     "S5": {
       "id": "S5",
-      "name": "Kyushu Direct Export",
+      "name": "Hakata Shokuhin Boeki",
       "relationship": "candidate",
       "account_status": "pending",
       "min_order_eur": 300,
@@ -431,7 +431,7 @@
     },
     "S6": {
       "id": "S6",
-      "name": "Nippon Ramen Supply Europe",
+      "name": "Daikoku Shoten Milano",
       "relationship": "existing",
       "account_status": "approved",
       "min_order_eur": 15,
