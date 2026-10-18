@@ -348,6 +348,10 @@
 .jp .jp-po + .jp-po { margin-top:12px; }
 .jp .jp-po { border:1px solid var(--jp-line); border-radius:10px; padding:14px; }
 .jp .jp-advisor-ask textarea { width:100%; min-height:70px; border:1px solid var(--jp-line); border-radius:8px; padding:9px 10px; background:var(--jp-bg); resize:vertical; font-size:13px; }
+.jp .jp-ghost { position:relative; }
+.jp .jp-ghost textarea { padding-bottom:24px; }
+.jp .jp-ghost-hint { position:absolute; right:8px; bottom:10px; padding:1px 6px; border:1px solid var(--jp-line); border-radius:4px; background:var(--jp-paper); color:var(--jp-muted); font:inherit; font-size:10.5px; pointer-events:none; }
+@media (hover:none) { .jp .jp-ghost-hint { display:none; } }
 .jp .jp-suggestions { display:grid; gap:6px; margin:10px 0; }
 .jp .jp-suggestions button { text-align:left; font-size:12px; padding:8px 10px; border:1px solid var(--jp-line); border-radius:8px; background:var(--jp-paper); cursor:pointer; }
 .jp .jp-suggestions button:hover { border-color:var(--jp-accent); }

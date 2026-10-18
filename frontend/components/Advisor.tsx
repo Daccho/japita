@@ -11,6 +11,7 @@ import { useElapsed, useWorkspace } from "@/components/workspace";
 import { suggestedBasket } from "@/components/helpers";
 
 const POS_KEY = "japita.advisor.position";
+const EXAMPLES: Key[] = ["adv.q1", "adv.q2", "adv.q3"];
 
 // The agent sometimes returns its final JSON envelope ({"action":"answer","text":...}) instead of plain text,
 // and may mention internal ids. Show only readable text: ids become product/supplier names.
@@ -45,10 +46,18 @@ function AdvisorBody() {
   const label = useLabel();
   const { data, advisor, ask, setAdvisorOpen } = useWorkspace();
   const [question, setQuestion] = useState("");
+  const [example, setExample] = useState(0);
   const elapsed = useElapsed(advisor.startedAt);
   const b = suggestedBasket(data?.baskets);
   const offers = data?.state.offers ?? [];
   const drafts = (advisor.result?.clarifications ?? []).filter((c) => c.state === "draft");
+
+  // The placeholder cycles through example questions; Tab on an empty box takes the one shown.
+  useEffect(() => {
+    if (question || advisor.running) return;
+    const id = setInterval(() => setExample((i) => (i + 1) % EXAMPLES.length), 5000);
+    return () => clearInterval(id);
+  }, [question, advisor.running]);
 
   const submit = (q: string) => {
     if (!q.trim()) return;
@@ -108,20 +117,32 @@ function AdvisorBody() {
               submit(question);
             }}
           >
-            <textarea
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              placeholder={t("adv.ph")}
-              aria-label={t("adv.ask")}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
-                  e.preventDefault();
-                  submit(question);
-                }
-              }}
-            />
+            <div className="jp-ghost">
+              <textarea
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+                placeholder={t(EXAMPLES[example])}
+                aria-label={t("adv.ask")}
+                onKeyDown={(e) => {
+                  if (e.key === "Tab" && !e.shiftKey && !question) {
+                    e.preventDefault();
+                    setQuestion(t(EXAMPLES[example]));
+                    return;
+                  }
+                  if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+                    e.preventDefault();
+                    submit(question);
+                  }
+                }}
+              />
+              {!question && (
+                <kbd className="jp-ghost-hint" aria-hidden>
+                  {t("adv.tab")}
+                </kbd>
+              )}
+            </div>
             <div className="jp-suggestions">
-              {(["adv.q1", "adv.q2", "adv.q3"] as Key[]).map((k) => (
+              {EXAMPLES.map((k) => (
                 <button key={k} type="button" onClick={() => submit(t(k))}>
                   {t(k)}
                 </button>
