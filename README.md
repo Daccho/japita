@@ -1,21 +1,41 @@
 # Japita
 
-**Japita is the weekly purchasing advisor for restaurants.** It puts your suppliers, offers, and spending in one place. It recommends what to buy this week, and from which supplier, based on quality, delivered price, and your own preferences. Gemma on AMD reads Japanese specifications and drafts supplier questions. A person approves every message, basket, and order.
+**Japita is the weekly purchasing advisor for restaurants.** It puts your suppliers, offers, and spending in one place. It recommends what to buy this week, and from which supplier, based on quality, delivered price, and your own preferences. Gemma on AMD reads Japanese specifications, drafts supplier questions, and translates supplier comments. A person approves every message, basket, and order.
 
-Built for the [AMD Developer Hackathon ACT III](https://lablab.ai/ai-hackathons/amd-developer-hackathon-act-iii). Tracks: Reinvent Commerce, plus Evolus Business Agents on AMD. Demo: `<APP_URL>` (placeholder) · Submission texts: [docs/submission.md](docs/submission.md)
+Built for the [AMD Developer Hackathon ACT III](https://lablab.ai/ai-hackathons/amd-developer-hackathon-act-iii). Tracks: Reinvent Commerce, plus Evolus Business Agents on AMD.
 
-> **All data is fictional.** The restaurant, suppliers, offers, prices, and supplier replies are invented for the demo. Supplier orders are simulated: no real purchases or payments.
+- **Live app:** https://japita.vercel.app (API: https://japita-api.onrender.com; the free API sleeps when idle, so the first request can take up to a minute)
+- **Submission texts:** [docs/submission.md](docs/submission.md) · **Demo script:** [docs/demo-script.md](docs/demo-script.md)
+
+> **All data is fictional.** The restaurant, suppliers, offers, prices, orders, and supplier messages are invented for the demo. No real orders or payments happen.
+
+## Try it
+
+Open https://japita.vercel.app, choose a language (EN / IT / 日本語), choose **Restaurant** or **Supplier**, and sign in. The password equals the login ID.
+
+| Login ID | Side | Opens |
+| --- | --- | --- |
+| `restaurant1`, `restaurant2`, `restaurant3` | Restaurant: Kumo Ramen Milano (one shared workspace) | `/restaurants` |
+| `supplier1` | S1 Tokyo Shokuhin (soy sauce) | `/suppliers` |
+| `supplier2` | S2 Pasta Fresca Ramen Milano (fresh noodles) | `/suppliers` |
+| `supplier3` | S3 EuroAsia Foods B.V. (frozen Japanese noodles, the backup) | `/suppliers` |
+
+Suppliers without an account open their portal from a shared link (`/supplier/portal/<token>`, copied with **Supplier link** on the Suppliers page). It works without sign-in.
 
 ## How it works
 
 The demo restaurant is Kumo Ramen Milano, a Hakata-style tonkotsu shop in Milan. It buys fresh noodles, soy sauce, and dried kikurage.
 
-1. This week the Friday noodle delivery is late. The stock timeline shows a stockout on Friday (20.46 kg short). The usual basket (€493.80) arrives too late.
-2. A backup from an EU importer, frozen Japanese noodles, is missing its hydration spec. The agent drafts a question in business Japanese, with Italian and English translations. The owner approves it.
-3. The supplier types the answer into a field on Japita's Japanese phone portal; a free-text answer would instead be read twice by Gemma, with disagreements flagged for review. The owner applies it, and Japita builds an on-time basket for €444.10.
-4. The owner approves. Japita creates one purchase order per supplier. The supplier accepts with a delivery date, and the stockout clears.
+1. The Friday noodle delivery is late. The bell and the 7-day stock strip show a stockout on Fri 23 Oct (about 20 kg short that day, 76.8 kg over the week). The basket from the current suppliers (€493.80) arrives too late.
+2. A backup from an EU importer, frozen Japanese noodles, is missing its hydration spec. The advisor drafts a question in business Japanese, with a translation. The owner approves and sends it.
+3. The supplier answers in a typed field on Japita's Japanese phone portal and adds a comment, which Gemma translates. (A free-text answer is read twice by Gemma, and a disagreement is flagged for review.) The owner applies the answer, and Japita builds an on-time basket for €444.10, €49.70 less than the late baseline.
+4. The owner approves the basket. Japita creates one order per supplier, and the owner sends each one. Each supplier accepts with a delivery date; the stockout clears and committed spending shows €444.10 of €900.
 
-Python calculates all the numbers: needs, pack rounding, minimum orders, shipping, delivery timing, and daily stock with usable-until dates. Gemma interprets, translates, and explains. The restaurant workspace is in Italian and English (Next.js on Vercel). The API is FastAPI on Render, with Postgres on Neon.
+**Restaurant workspace** (`/restaurants`, Italian or English): This week, Suppliers (my suppliers and discovery), Basket, and Restaurant profile; bell notifications; a floating purchasing advisor whose questions run as background jobs (about 1–2 minutes, with the elapsed time shown); a weekly check that runs an Evolus workflow. Prices are stored in EUR and shown in EUR (Italian) or USD (English) at the daily ECB reference rate.
+
+**Supplier portal** (`/suppliers` or a shared link, Japanese or English, phone-first): tabs 依頼 (requests), 受注 (orders), and 商品 (products). Suppliers answer questions, accept orders (受注する) with a delivery date and change it later, and propose product updates or new products. Prices are shown and entered in JPY (Japanese) or USD (English).
+
+Python calculates all the numbers: needs, pack rounding, minimum orders, shipping, delivery timing, and daily stock with usable-until dates. Gemma interprets, translates, and explains. Web: Next.js on Vercel. API: FastAPI on Render, with Postgres on Neon.
 
 **AMD:** Inference runs on Google Gemma-4-31B-IT, served by AMD Radeon Cloud TokenFactory through an OpenAI-compatible API. Gemma on AMD handles:
 - agent tool calling;
@@ -31,39 +51,43 @@ Every model call is logged with its model, backend, and latency (`/llm-calls`, `
 
 Prerequisites: Docker, [uv](https://docs.astral.sh/uv/), Node.js 20+, [pnpm](https://pnpm.io/).
 
+The backend reads the root `.env`, which may point to the production database. Set `DATABASE_URL` explicitly on every backend command so it uses the local Postgres.
+
 ```bash
 cp .env.example .env    # fill in LLM_* and EVOLUS_*
-
 docker compose up -d db
+
 cd backend && uv sync
-uv run python -m japita.repo seed tests/fixtures/kumo.json   # fictional demo data
-uv run uvicorn japita.api:app --reload                       # http://localhost:8000/docs
+export DATABASE_URL=postgresql+psycopg://japita:japita@localhost:5432/japita   # local docker Postgres
+uv run python -m japita.repo seed tests/fixtures/kumo.json                    # fictional demo data
+DEMO_ACCOUNTS=1 APP_ORIGIN=http://localhost:3000 uv run uvicorn japita.api:app --reload   # http://localhost:8000/docs
 
 # second terminal
-cd frontend && pnpm install && pnpm dev                      # http://localhost:3000
+cd frontend && pnpm install
+API_ORIGIN=http://localhost:8000 pnpm dev                                      # http://localhost:3000
 ```
+
+Sign in at http://localhost:3000 with `restaurant1` / `restaurant1` (or any demo account above).
 
 | Variable | Purpose |
 | --- | --- |
-| `DATABASE_URL` | Postgres. The default matches `docker compose up -d db`. |
-| `LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY`, `LLM_BACKEND_LABEL` | OpenAI-compatible model endpoint on AMD, and the label shown with each call. |
+| `DATABASE_URL` | Postgres. Locally `postgresql+psycopg://japita:japita@localhost:5432/japita` (`docker compose up -d db`). |
+| `LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY`, `LLM_BACKEND_LABEL` | OpenAI-compatible model endpoint on AMD, and the label logged with each call. |
 | `EVOLUS_API_KEY`, `EVOLUS_APPLICATION_ID`, `EVOLUS_AGENT_ID`, `EVOLUS_WORKFLOW_ID` | Evolus agent and workflow. Without `EVOLUS_AGENT_ID` the app calls the model directly. |
+| `DEMO_ACCOUNTS` | Backend: `1` creates the demo accounts above on startup (password = login ID). Leave unset for real deployments. |
 | `ADMIN_KEY` | Optional. When set, `POST /state/seed` requires `X-Admin-Key`. |
 | `APP_ORIGIN` | Backend: the web app's origin (default `http://localhost:3000`). CORS and the CSRF origin check use it; an `https://` origin makes the session cookie Secure. |
-| `API_ORIGIN` | Frontend, build time: where `/api/*` is proxied (default `http://localhost:8000`). |
+| `API_ORIGIN` | Frontend: where `/api/*` is proxied (default `http://localhost:8000`; on Vercel the deployed Render API). |
 
 ```bash
 cd backend
-uv run pytest                              # offline tests
-uv run python -m japita.smoke              # check the real model endpoint
-uv run python -m japita.auth add-user kumo-milano --name "Kumo Ramen Milano"   # restaurant sign-in (prompts for a password)
-curl -X POST localhost:8000/state/seed     # reset demo data
+export DATABASE_URL=postgresql+psycopg://japita:japita@localhost:5432/japita
+uv run pytest                                              # offline tests
+uv run python -m japita.smoke                              # check the real model endpoint
+uv run python -m japita.repo seed tests/fixtures/kumo.json # reset demo data
+uv run python -m japita.auth add-user <id> --name "<name>" [--role supplier --supplier S1]   # real account (prompts for a password)
 ```
 
 Deployment: [docs/deploy.md](docs/deploy.md). Own vLLM and Evolus setup: [docs/setup.md](docs/setup.md). Project plan: [plan.md](plan.md).
-
-## Current design scope
-
-The workspace assumes a restaurant that has already registered and signed in. A public homepage, pricing page, restaurant registration, and sign-in are future work. The static mockup in [`mockup/`](mockup/index.html) opens directly in a browser; see [docs/mockup-handoff.md](docs/mockup-handoff.md). Connecting the design to the backend follows [docs/design-integration.md](docs/design-integration.md).
 
 Licensed under [MIT](LICENSE).
